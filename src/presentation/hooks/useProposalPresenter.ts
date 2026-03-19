@@ -69,7 +69,13 @@ export function useProposalPresenter() {
     setSelectedPkg(pkgName);
     setPendingAction('select');
     setGateOpen(true);
-  }, []);
+    const pkg = proposal?.packages.find((p) => p.displayName === pkgName);
+    analytics.track('package_selected', {
+      packageName: pkgName,
+      totalPrice: pkg?.total ?? 0,
+      personas: form?.personas ?? 0,
+    });
+  }, [proposal, form]);
 
   const openGateDirectly = useCallback((action: PendingAction, pkgName?: string) => {
     setPendingAction(action);

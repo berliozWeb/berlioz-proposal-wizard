@@ -55,9 +55,14 @@ export function useProposalPresenter() {
   }, []);
 
   const toggleAddon = useCallback((id: string) => {
-    setSelectedAddons((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedAddons((prev) => {
+      const removing = prev.includes(id);
+      analytics.track('addon_toggled', {
+        addon: ADDONS.find((a) => a.id === id)?.title ?? id,
+        action: removing ? 'removed' : 'added',
+      });
+      return removing ? prev.filter((x) => x !== id) : [...prev, id];
+    });
   }, []);
 
   const handlePackageSelect = useCallback((pkgName: string) => {

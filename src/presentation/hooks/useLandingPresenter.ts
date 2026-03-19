@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import type { IntakeForm } from '@/domain/entities/IntakeForm';
 import type { MenuItem, CartItem, MenuCategory } from '@/domain/entities/MenuItem';
 import { DEFAULT_INTAKE } from '@/domain/entities/IntakeForm';
+import { analytics } from '@/lib/mixpanel';
+import { DEFAULT_INTAKE } from '@/domain/entities/IntakeForm';
 
 export type AppPath = 'landing' | 'cotiza' | 'menu';
 

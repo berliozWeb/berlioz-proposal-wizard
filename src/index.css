@@ -90,6 +90,21 @@
   .animate-shake {
     animation: shake 0.3s ease-in-out;
   }
+  .lead-input {
+    height: 56px;
+    padding: 0 16px;
+    font-size: 18px;
+    border: 1.5px solid hsl(var(--forest));
+    border-radius: 12px;
+  }
+  .lead-input::placeholder {
+    font-weight: 600;
+    color: hsl(var(--forest));
+  }
+  .lead-input:focus {
+    border: 2px solid hsl(var(--gold));
+    box-shadow: none;
+  }
 }
 
 @keyframes bob {

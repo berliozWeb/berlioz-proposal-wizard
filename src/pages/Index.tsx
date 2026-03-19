@@ -56,7 +56,15 @@ const Index = () => {
             <HeroCards onCotiza={p.goToCotiza} onMenu={p.goToMenu} />
             <TopSellers onAdd={p.addToCart} onViewMenu={p.goToMenu} />
           </div>
-          <CategoryGrid onSelect={(cat) => { p.setCategory(cat); p.goToMenu(); }} />
+          <div
+            className="transition-all duration-400 ease-in-out"
+            style={{
+              opacity: isLeadComplete ? 1 : 0.4,
+              pointerEvents: isLeadComplete ? 'auto' : 'none',
+            }}
+          >
+            <CategoryGrid onSelect={(cat) => { p.setCategory(cat); p.goToMenu(); }} />
+          </div>
         </>
       )}
 

@@ -7,6 +7,7 @@ import { AppDependenciesProvider } from "@/presentation/providers/AppDependencie
 import Index from "./pages/Index.tsx";
 import Propuesta from "./pages/Propuesta.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AdminLeads from "./pages/AdminLeads.tsx";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/propuesta" element={<Propuesta />} />
+            <Route path="/admin-leads" element={<AdminLeads />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

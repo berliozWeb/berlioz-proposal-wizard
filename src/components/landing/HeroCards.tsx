@@ -1,5 +1,6 @@
 import { Calendar, Utensils, ArrowRight } from "lucide-react";
 import { analytics } from "@/lib/mixpanel";
+import { updateLastLeadPath } from "@/lib/leadStorage";
 
 const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
 
@@ -14,7 +15,7 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
       {/* Card A — Cotiza tu evento */}
       <button
         type="button"
-        onClick={() => { analytics.track('entry_point_selected', { path: 'evento' }); onCotiza(); }}
+        onClick={() => { updateLastLeadPath('evento'); analytics.track('entry_point_selected', { path: 'evento' }); onCotiza(); }}
         className="group relative overflow-hidden rounded-xl text-left transition-transform hover:scale-[1.02] active:scale-[0.99]"
         style={{ height: 240 }}
       >
@@ -42,7 +43,7 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
       {/* Card B — Explora el menú */}
       <button
         type="button"
-        onClick={() => { analytics.track('entry_point_selected', { path: 'menu' }); onMenu(); }}
+        onClick={() => { updateLastLeadPath('menu'); analytics.track('entry_point_selected', { path: 'menu' }); onMenu(); }}
         className="group relative overflow-hidden rounded-xl text-left transition-transform hover:scale-[1.02] active:scale-[0.99]"
         style={{ height: 240 }}
       >

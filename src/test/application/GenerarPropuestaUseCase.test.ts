@@ -17,7 +17,7 @@ describe('GenerarPropuestaUseCase', () => {
     const form = { ...DEFAULT_INTAKE, eventType: 'desayuno' as const };
     const result = useCase.execute(form);
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error.field).toBe('nivelEsperado');
+    if ('error' in result) expect(result.error.field).toBe('nivelEsperado');
   });
 
   it('fails when personas is 0', () => {

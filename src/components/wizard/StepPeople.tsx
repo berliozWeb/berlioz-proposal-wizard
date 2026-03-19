@@ -1,4 +1,6 @@
-import type { IntakeForm } from "@/types";
+import type { IntakeForm } from "@/domain/entities/IntakeForm";
+import { DELIVERY_PERIOD_OPTIONS, type DeliveryPeriod } from "@/domain/value-objects/DeliveryTime";
+import { getDateDisclaimer } from "@/domain/shared/BusinessRules";
 import { cn } from "@/lib/utils";
 
 interface StepPeopleProps {
@@ -6,39 +8,8 @@ interface StepPeopleProps {
   onChange: (form: IntakeForm) => void;
 }
 
-const MEXICAN_HOLIDAYS = [
-  '01-01', // Año Nuevo
-  '02-03', // Constitución
-  '03-17', // Natalicio de Benito Juárez
-  '05-01', // Día del Trabajo
-  '09-16', // Independencia
-  '11-17', // Revolución
-  '12-25', // Navidad
-];
-
-function getDateDisclaimer(dateStr: string): string | null {
-  if (!dateStr) return null;
-  const date = new Date(dateStr + 'T12:00:00');
-  const day = date.getDay(); // 0=Sun, 6=Sat
-  const mmdd = dateStr.slice(5); // "MM-DD"
-
-  if (day === 0 || MEXICAN_HOLIDAYS.includes(mmdd)) {
-    return '📌 Domingos y días festivos el pedido mínimo es $5,000 + IVA';
-  }
-  if (day === 6) {
-    return '📌 Los sábados el pedido mínimo es $3,000 + IVA';
-  }
-  return null;
-}
-
 const StepPeople = ({ form, onChange }: StepPeopleProps) => {
-  const deliveryOptions = [
-    { value: 'manana' as const, label: 'Mañana' },
-    { value: 'mediodia' as const, label: 'Mediodía' },
-    { value: 'noche' as const, label: 'Noche' },
-  ];
-
-  const toggleDelivery = (val: 'manana' | 'mediodia' | 'noche') => {
+  const toggleDelivery = (val: DeliveryPeriod) => {
     const current = form.entregasPorDia;
     const next = current.includes(val)
       ? current.filter((d) => d !== val)
@@ -98,13 +69,13 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
           onClick={() => onChange({ ...form, esMultiDia: !form.esMultiDia })}
           className={cn(
             "w-12 h-6 rounded-full transition-colors duration-200 relative",
-            form.esMultiDia ? "bg-primary" : "bg-muted"
+            form.esMultiDia ? "bg-primary" : "bg-muted",
           )}
         >
           <span
             className={cn(
               "absolute top-0.5 w-5 h-5 rounded-full bg-background shadow transition-transform",
-              form.esMultiDia ? "translate-x-6" : "translate-x-0.5"
+              form.esMultiDia ? "translate-x-6" : "translate-x-0.5",
             )}
           />
         </button>
@@ -129,7 +100,7 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
               ¿Cuántas entregas por día?
             </label>
             <div className="flex gap-3">
-              {deliveryOptions.map((opt) => (
+              {DELIVERY_PERIOD_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
@@ -138,7 +109,7 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
                     "px-4 py-2 rounded-lg border text-sm font-medium transition-all",
                     form.entregasPorDia.includes(opt.value)
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                      : "border-border bg-card text-muted-foreground hover:border-primary/40",
                   )}
                 >
                   {opt.label}

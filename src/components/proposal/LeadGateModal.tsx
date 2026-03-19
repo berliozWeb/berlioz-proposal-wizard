@@ -1,24 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useCompanyAutocomplete } from "@/presentation/hooks/useCompanyAutocomplete";
 import { cn } from "@/lib/utils";
-
-const STORAGE_KEY = 'berlioz_companies';
-
-function getSavedCompanies(): string[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCompany(name: string) {
-  const companies = getSavedCompanies();
-  if (!companies.some((c) => c.toLowerCase() === name.toLowerCase())) {
-    companies.push(name);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(companies));
-  }
-}
 
 interface LeadGateModalProps {
   open: boolean;
@@ -33,42 +15,18 @@ const inputClass =
 
 const LeadGateModal = ({ open, onClose, defaultEmail, defaultEmpresa, onSubmit }: LeadGateModalProps) => {
   const [email, setEmail] = useState(defaultEmail || '');
-  const [empresa, setEmpresa] = useState(defaultEmpresa || '');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const autocomplete = useCompanyAutocomplete(defaultEmpresa || '');
 
   useEffect(() => {
     if (open) {
       setEmail(defaultEmail || '');
-      setEmpresa(defaultEmpresa || '');
+      autocomplete.setValue(defaultEmpresa || '');
     }
   }, [open, defaultEmail, defaultEmpresa]);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const handleEmpresaChange = (value: string) => {
-    setEmpresa(value);
-    const saved = getSavedCompanies();
-    const filtered = saved.filter((c) => c.toLowerCase().includes(value.toLowerCase()));
-    setSuggestions(filtered);
-    setShowDropdown(value.trim().length > 0);
-  };
-
-  const exactMatch = suggestions.some((s) => s.toLowerCase() === empresa.trim().toLowerCase());
-
   const handleSubmit = () => {
-    if (!email.trim() || !empresa.trim()) return;
-    saveCompany(empresa.trim());
-    onSubmit(email.trim(), empresa.trim());
+    if (!email.trim() || !autocomplete.value.trim()) return;
+    onSubmit(email.trim(), autocomplete.value.trim());
   };
 
   if (!open) return null;
@@ -95,36 +53,36 @@ const LeadGateModal = ({ open, onClose, defaultEmail, defaultEmpresa, onSubmit }
             />
           </div>
 
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative" ref={autocomplete.dropdownRef}>
             <label className="block text-sm font-medium text-foreground mb-1.5">Confirmar nombre de empresa</label>
             <input
               type="text"
-              value={empresa}
-              onChange={(e) => handleEmpresaChange(e.target.value)}
-              onFocus={() => { if (empresa.trim()) handleEmpresaChange(empresa); }}
+              value={autocomplete.value}
+              onChange={(e) => autocomplete.onChange(e.target.value)}
+              onFocus={autocomplete.onFocus}
               placeholder="Nombre de la empresa"
               className={inputClass}
               autoComplete="off"
             />
-            {showDropdown && (suggestions.length > 0 || (!exactMatch && empresa.trim())) && (
+            {autocomplete.showDropdown && (autocomplete.suggestions.length > 0 || (!autocomplete.exactMatch && autocomplete.value.trim())) && (
               <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-lg border border-border bg-card shadow-lg overflow-hidden">
-                {suggestions.map((s) => (
+                {autocomplete.suggestions.map((s) => (
                   <button
                     key={s}
                     type="button"
-                    onClick={() => { setEmpresa(s); setShowDropdown(false); }}
+                    onClick={() => autocomplete.selectCompany(s)}
                     className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                   >
                     {s}
                   </button>
                 ))}
-                {!exactMatch && empresa.trim() && (
+                {!autocomplete.exactMatch && autocomplete.value.trim() && (
                   <button
                     type="button"
-                    onClick={() => { saveCompany(empresa.trim()); setShowDropdown(false); }}
+                    onClick={autocomplete.saveNew}
                     className="w-full text-left px-4 py-2.5 text-sm text-primary font-medium hover:bg-muted transition-colors border-t border-border"
                   >
-                    + Agregar '{empresa.trim()}'
+                    + Agregar '{autocomplete.value.trim()}'
                   </button>
                 )}
               </div>
@@ -143,10 +101,10 @@ const LeadGateModal = ({ open, onClose, defaultEmail, defaultEmpresa, onSubmit }
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!email.trim() || !empresa.trim()}
+            disabled={!email.trim() || !autocomplete.value.trim()}
             className={cn(
               "flex-1 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-body text-sm font-semibold transition-colors",
-              (!email.trim() || !empresa.trim()) ? "opacity-40 cursor-not-allowed" : "hover:bg-primary/90"
+              (!email.trim() || !autocomplete.value.trim()) ? "opacity-40 cursor-not-allowed" : "hover:bg-primary/90",
             )}
           >
             Ver y descargar propuesta →

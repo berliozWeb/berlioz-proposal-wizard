@@ -1,31 +1,5 @@
 import { cn } from "@/lib/utils";
-
-export interface ExtraAddon {
-  id: string;
-  title: string;
-  subtitle: string;
-  note: string;
-  price: string;
-  cta?: string;
-}
-
-export const AVAILABLE_EXTRAS: ExtraAddon[] = [
-  {
-    id: 'tapas_logo',
-    title: 'Tapas personalizadas con tu logo',
-    subtitle: 'Impresión desde 50 piezas · 10 días hábiles de producción',
-    note: '¿No tienes tiempo? Podemos poner un sticker sobre la caja.',
-    price: 'Cotización personalizada',
-    cta: 'Solicitar cotización · hola@berlioz.mx',
-  },
-  {
-    id: 'sticker_caja',
-    title: 'Sticker personalizado en caja',
-    subtitle: 'Más rápido que tapas impresas · tú mandas a hacer el sticker',
-    note: 'Te pasamos las medidas de la tapa',
-    price: 'Sin costo adicional de Berlioz',
-  },
-];
+import { AVAILABLE_EXTRAS } from "@/domain/entities/ExtraAddon";
 
 interface ExtrasModalProps {
   open: boolean;
@@ -62,7 +36,7 @@ const ExtrasModal = ({ open, selectedExtras, onToggle, onSkip, onContinue }: Ext
                   "w-full text-left p-4 rounded-lg border-2 transition-all",
                   selected
                     ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/30"
+                    : "border-border hover:border-primary/30",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -78,7 +52,7 @@ const ExtrasModal = ({ open, selectedExtras, onToggle, onSkip, onContinue }: Ext
                     <span className="text-xs font-mono font-medium text-accent">{extra.price}</span>
                     <div className={cn(
                       "mt-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
-                      selected ? "border-primary bg-primary" : "border-border"
+                      selected ? "border-primary bg-primary" : "border-border",
                     )}>
                       {selected && (
                         <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

@@ -57,6 +57,7 @@ export function useLandingPresenter() {
   }, []);
 
   const selectEventType = useCallback((eventType: IntakeForm['eventType']) => {
+    analytics.track('event_type_selected', { eventType });
     setState((s) => ({
       ...s,
       eventType,

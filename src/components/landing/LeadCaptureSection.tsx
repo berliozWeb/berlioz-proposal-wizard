@@ -18,6 +18,17 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
 
   const handleArrowClick = () => {
     if (isComplete) {
+      analytics.track('lead_captured', {
+        nombre,
+        empresa,
+        timestamp: new Date().toISOString(),
+      });
+      analytics.identify(celular);
+      analytics.setUser({
+        '$name': nombre,
+        empresa,
+        celular,
+      });
       document.getElementById('entry-points')?.scrollIntoView({ behavior: 'smooth' });
     } else {
       setShaking(true);

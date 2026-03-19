@@ -95,6 +95,7 @@ export function useProposalPresenter() {
     });
 
     if (pendingAction === 'pdf') {
+      analytics.track('pdf_downloaded', { packageName: selectedPkg || 'N/A', empresa });
       window.print();
     } else if (pendingAction === 'email') {
       const subject = encodeURIComponent(`Propuesta Berlioz — ${empresa}`);

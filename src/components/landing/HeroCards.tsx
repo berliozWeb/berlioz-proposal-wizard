@@ -42,7 +42,7 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
       {/* Card B — Explora el menú */}
       <button
         type="button"
-        onClick={onMenu}
+        onClick={() => { analytics.track('entry_point_selected', { path: 'menu' }); onMenu(); }}
         className="group relative overflow-hidden rounded-xl text-left transition-transform hover:scale-[1.02] active:scale-[0.99]"
         style={{ height: 240 }}
       >

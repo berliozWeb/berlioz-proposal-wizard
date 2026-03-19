@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { IntakeForm } from '@/domain/entities/IntakeForm';
 import type { MenuItem, CartItem, MenuCategory } from '@/domain/entities/MenuItem';
 import { DEFAULT_INTAKE } from '@/domain/entities/IntakeForm';
+import { analytics } from '@/lib/mixpanel';
 
 export type AppPath = 'landing' | 'cotiza' | 'menu';
 
@@ -55,6 +56,7 @@ export function useLandingPresenter() {
   }, []);
 
   const selectEventType = useCallback((eventType: IntakeForm['eventType']) => {
+    analytics.track('event_type_selected', { eventType });
     setState((s) => ({
       ...s,
       eventType,

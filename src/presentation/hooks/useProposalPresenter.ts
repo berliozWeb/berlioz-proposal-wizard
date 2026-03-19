@@ -7,6 +7,7 @@ import type { Proposal } from '@/domain/entities/Proposal';
 import type { AgentState } from '@/domain/entities/AgentState';
 import type { CartItem } from '@/domain/entities/MenuItem';
 import { ADDONS } from '@/domain/entities/Addon';
+import { analytics } from '@/lib/mixpanel';
 
 export type PendingAction = 'select' | 'pdf' | 'email';
 export type ProposalPath = 'cotiza' | 'menu';
@@ -41,22 +42,40 @@ export function useProposalPresenter() {
     }
     if (proposalPath === 'cotiza') {
       generarPropuesta.executeWithPipeline(form, setAgents).then((result) => {
-        if (result.success) setProposal(result.data);
+        if (result.success) {
+          setProposal(result.data);
+          analytics.track('proposal_generated', {
+            personas: form.personas,
+            eventType: form.eventType,
+            packagesShown: result.data.packages.length,
+          });
+        }
       });
     }
   }, []);
 
   const toggleAddon = useCallback((id: string) => {
-    setSelectedAddons((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedAddons((prev) => {
+      const removing = prev.includes(id);
+      analytics.track('addon_toggled', {
+        addon: ADDONS.find((a) => a.id === id)?.title ?? id,
+        action: removing ? 'removed' : 'added',
+      });
+      return removing ? prev.filter((x) => x !== id) : [...prev, id];
+    });
   }, []);
 
   const handlePackageSelect = useCallback((pkgName: string) => {
     setSelectedPkg(pkgName);
     setPendingAction('select');
     setGateOpen(true);
-  }, []);
+    const pkg = proposal?.packages.find((p) => p.displayName === pkgName);
+    analytics.track('package_selected', {
+      packageName: pkgName,
+      totalPrice: pkg?.total ?? 0,
+      personas: form?.personas ?? 0,
+    });
+  }, [proposal, form]);
 
   const openGateDirectly = useCallback((action: PendingAction, pkgName?: string) => {
     setPendingAction(action);
@@ -76,6 +95,7 @@ export function useProposalPresenter() {
     });
 
     if (pendingAction === 'pdf') {
+      analytics.track('pdf_downloaded', { packageName: selectedPkg || 'N/A', empresa });
       window.print();
     } else if (pendingAction === 'email') {
       const subject = encodeURIComponent(`Propuesta Berlioz — ${empresa}`);

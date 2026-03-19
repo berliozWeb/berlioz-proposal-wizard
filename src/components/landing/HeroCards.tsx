@@ -49,9 +49,8 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
           src={`${CDN}/Surtido-Camille-Berlioz-bocadillos2_zkkuyr`}
           alt="Explora el menú"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: 'blur(1px)' }}
         />
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(201, 151, 58, 0.5)' }} />
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(201, 151, 58, 0.45)' }} />
         <div className="relative z-10 p-6 h-full flex flex-col justify-end">
           <Utensils className="w-7 h-7 text-white mb-3" />
           <h2 className="font-heading text-xl font-bold text-white mb-1">

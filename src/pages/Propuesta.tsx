@@ -41,9 +41,9 @@ const Propuesta = () => {
 
   const handlePrint = () => window.print();
   const handleEmail = () => {
-    const subject = encodeURIComponent(`Propuesta Berlioz — ${form.contacto.empresa}`);
-    const body = encodeURIComponent(`Hola ${form.contacto.atencion},\n\nAdjunto nuestra propuesta de catering para ${form.contacto.empresa}.\n\nQuedo a tus órdenes.\n\nBerlioz\nhola@berlioz.mx`);
-    window.open(`mailto:${form.contacto.email}?subject=${subject}&body=${body}`);
+    const subject = encodeURIComponent(`Propuesta Berlioz — ${form.empresa}`);
+    const body = encodeURIComponent(`Hola ${form.nombre},\n\nAdjunto nuestra propuesta de catering para ${form.empresa}.\n\nQuedo a tus órdenes.\n\nBerlioz\nhola@berlioz.mx`);
+    window.open(`mailto:?subject=${subject}&body=${body}`);
   };
 
   const handleSelect = (pkgName: string) => {

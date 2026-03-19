@@ -10,7 +10,7 @@ describe('GenerarPropuestaUseCase', () => {
   it('fails when eventType is empty', () => {
     const result = useCase.execute(DEFAULT_INTAKE);
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error.field).toBe('eventType');
+    if ('error' in result) expect(result.error.field).toBe('eventType');
   });
 
   it('fails when nivelEsperado is empty', () => {

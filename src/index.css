@@ -4,50 +4,51 @@
 
 @layer base {
   :root {
-    --background: 48 20% 98%;
-    --foreground: 60 7% 10%;
+    /* Berlioz Brand: Pantone 3025C (Azul) + Pantone 705C (Rosa) */
+    --background: 24 40% 96%;
+    --foreground: 195 100% 12%;
 
-    --card: 45 14% 96%;
-    --card-foreground: 60 7% 10%;
+    --card: 24 35% 94%;
+    --card-foreground: 195 100% 12%;
 
-    --popover: 48 20% 98%;
-    --popover-foreground: 60 7% 10%;
+    --popover: 24 40% 96%;
+    --popover-foreground: 195 100% 12%;
 
-    --primary: 156 36% 17%;
-    --primary-foreground: 45 30% 96%;
+    --primary: 192 100% 22%;
+    --primary-foreground: 24 50% 92%;
 
-    --secondary: 45 14% 96%;
-    --secondary-foreground: 156 36% 17%;
+    --secondary: 24 50% 92%;
+    --secondary-foreground: 192 100% 22%;
 
-    --muted: 43 12% 93%;
-    --muted-foreground: 40 5% 45%;
+    --muted: 24 20% 90%;
+    --muted-foreground: 195 20% 40%;
 
-    --accent: 40 55% 50%;
-    --accent-foreground: 48 20% 98%;
+    --accent: 24 50% 88%;
+    --accent-foreground: 192 100% 22%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 48 20% 98%;
+    --destructive-foreground: 24 40% 96%;
 
-    --success: 153 43% 30%;
-    --success-foreground: 48 20% 98%;
+    --success: 192 60% 30%;
+    --success-foreground: 24 40% 96%;
 
-    --border: 40 14% 90%;
-    --input: 40 14% 90%;
-    --ring: 156 36% 17%;
+    --border: 24 20% 87%;
+    --input: 24 20% 87%;
+    --ring: 192 100% 22%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 45 14% 96%;
-    --sidebar-foreground: 60 7% 10%;
-    --sidebar-primary: 156 36% 17%;
-    --sidebar-primary-foreground: 48 20% 98%;
-    --sidebar-accent: 40 55% 50%;
-    --sidebar-accent-foreground: 48 20% 98%;
-    --sidebar-border: 40 14% 90%;
-    --sidebar-ring: 156 36% 17%;
+    --sidebar-background: 24 35% 94%;
+    --sidebar-foreground: 195 100% 12%;
+    --sidebar-primary: 192 100% 22%;
+    --sidebar-primary-foreground: 24 40% 96%;
+    --sidebar-accent: 24 50% 88%;
+    --sidebar-accent-foreground: 192 100% 22%;
+    --sidebar-border: 24 20% 87%;
+    --sidebar-ring: 192 100% 22%;
 
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'DM Sans', sans-serif;
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Montserrat', sans-serif;
     --font-mono: 'DM Mono', monospace;
   }
 }
@@ -61,6 +62,8 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: 0.04em;
   }
 }
 
@@ -95,7 +98,7 @@
     break-inside: avoid;
     page-break-inside: avoid;
     box-shadow: none !important;
-    border: 1px solid #E8E6DF !important;
+    border: 1px solid hsl(24, 20%, 87%) !important;
   }
   .print-footer {
     position: fixed;
@@ -104,8 +107,8 @@
     right: 0;
     text-align: center;
     font-size: 9pt;
-    color: #666;
-    border-top: 1px solid #E8E6DF;
+    color: hsl(195, 20%, 40%);
+    border-top: 1px solid hsl(24, 20%, 87%);
     padding-top: 8px;
   }
 }

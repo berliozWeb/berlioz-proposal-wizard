@@ -94,15 +94,15 @@
     height: 56px;
     padding: 0 16px;
     font-size: 18px;
-    border: 1.5px solid hsl(var(--forest));
+    border: 1px solid hsl(var(--border));
     border-radius: 12px;
   }
   .lead-input::placeholder {
-    font-weight: 600;
-    color: hsl(var(--forest));
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
   }
   .lead-input:focus {
-    border: 2px solid hsl(var(--gold));
+    border: 1.5px solid hsl(var(--gold));
     box-shadow: none;
   }
 }

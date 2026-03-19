@@ -6,10 +6,9 @@ import StepEventType from "@/components/wizard/StepEventType";
 import StepPeople from "@/components/wizard/StepPeople";
 import StepSchedule from "@/components/wizard/StepSchedule";
 import StepLevel from "@/components/wizard/StepLevel";
-import StepContact from "@/components/wizard/StepContact";
 import { DEFAULT_INTAKE, type IntakeForm } from "@/types";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 4;
 
 const Index = () => {
   const [step, setStep] = useState(1);
@@ -18,11 +17,10 @@ const Index = () => {
 
   const canNext = (): boolean => {
     switch (step) {
-      case 1: return form.eventType !== '';
-      case 2: return form.personas >= 10 && form.fechaInicio !== '';
+      case 1: return form.nombre.trim() !== '' && form.empresa.trim() !== '' && form.celular.trim() !== '' && form.eventType !== '';
+      case 2: return form.personas > 0 && form.fechaInicio !== '';
       case 3: return form.horasEntrega.length > 0;
       case 4: return form.nivelEsperado !== '';
-      case 5: return form.contacto.nombre.trim() !== '' && form.contacto.empresa.trim() !== '' && form.contacto.email.trim() !== '' && form.contacto.atencion.trim() !== '';
       default: return false;
     }
   };
@@ -31,7 +29,17 @@ const Index = () => {
     if (step < TOTAL_STEPS) {
       setStep(step + 1);
     } else {
-      // Navigate to proposal with form data
+      // Save company to localStorage on completion
+      const key = 'berlioz_companies';
+      try {
+        const raw = localStorage.getItem(key);
+        const companies: string[] = raw ? JSON.parse(raw) : [];
+        if (!companies.some((c) => c.toLowerCase() === form.empresa.trim().toLowerCase())) {
+          companies.push(form.empresa.trim());
+          localStorage.setItem(key, JSON.stringify(companies));
+        }
+      } catch { /* ignore */ }
+
       navigate('/propuesta', { state: { form } });
     }
   };
@@ -42,7 +50,6 @@ const Index = () => {
       case 2: return <StepPeople form={form} onChange={setForm} />;
       case 3: return <StepSchedule form={form} onChange={setForm} />;
       case 4: return <StepLevel form={form} onChange={setForm} />;
-      case 5: return <StepContact form={form} onChange={setForm} />;
       default: return null;
     }
   };

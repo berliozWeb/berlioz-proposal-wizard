@@ -13,11 +13,9 @@ export function canAdvanceStep(step: number, form: IntakeForm): boolean {
       return form.personas > 0 && form.fechaInicio !== '';
     case 3:
       return form.horasEntrega.length > 0;
-    case 4:
-      return form.nivelEsperado !== '';
     default:
       return false;
   }
 }
 
-export const TOTAL_WIZARD_STEPS = 4;
+export const TOTAL_WIZARD_STEPS = 3;

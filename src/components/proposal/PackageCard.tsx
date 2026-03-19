@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { Package } from "@/domain/entities/Proposal";
 import { formatMXN } from "@/domain/value-objects/Money";
+import { PRICE_DISCLAIMER } from "@/domain/shared/BusinessRules";
 
 interface PackageCardProps {
   pkg: Package;
@@ -69,6 +70,11 @@ const PackageCard = ({ pkg, isRecommended, onSelect }: PackageCardProps) => (
         </div>
       </div>
     </div>
+
+    {/* Price disclaimer */}
+    <p className="mt-3 text-[11px] text-muted-foreground italic leading-snug">
+      {PRICE_DISCLAIMER}
+    </p>
 
     <button
       onClick={onSelect}

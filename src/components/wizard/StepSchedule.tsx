@@ -1,12 +1,11 @@
-import type { IntakeForm } from "@/types";
+import type { IntakeForm } from "@/domain/entities/IntakeForm";
+import { DELIVERY_HOURS } from "@/domain/value-objects/DeliveryTime";
 import { cn } from "@/lib/utils";
 
 interface StepScheduleProps {
   form: IntakeForm;
   onChange: (form: IntakeForm) => void;
 }
-
-const HOURS = ['7:00am', '9:00am', '1:00pm', '7:00pm'];
 
 const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
   const toggleHour = (h: string) => {
@@ -32,7 +31,7 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
           Horarios de entrega
         </label>
         <div className="flex flex-wrap gap-3">
-          {HOURS.map((h) => (
+          {DELIVERY_HOURS.map((h) => (
             <div key={h} className="flex flex-col items-center gap-1">
               <button
                 type="button"
@@ -41,7 +40,7 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
                   "px-5 py-3 rounded-lg border text-sm font-mono font-medium transition-all",
                   form.horasEntrega.includes(h)
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40",
                 )}
               >
                 {h}

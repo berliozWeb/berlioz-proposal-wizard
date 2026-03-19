@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { AgentState } from "@/types";
+import type { AgentState } from "@/domain/entities/AgentState";
 
 interface AgentCardProps {
   agent: AgentState;

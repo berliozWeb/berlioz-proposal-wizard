@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import type { Package } from "@/types";
+import type { Package } from "@/domain/entities/Proposal";
+import { formatMXN } from "@/domain/value-objects/Money";
 
 interface PackageCardProps {
   pkg: Package;
@@ -7,16 +8,13 @@ interface PackageCardProps {
   onSelect: () => void;
 }
 
-const formatMXN = (n: number) =>
-  new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
-
 const PackageCard = ({ pkg, isRecommended, onSelect }: PackageCardProps) => (
   <div
     className={cn(
       "proposal-card rounded-xl border bg-card p-6 flex flex-col transition-all relative",
       isRecommended
         ? "border-t-4 border-t-primary border-primary/30 shadow-lg scale-[1.02] z-10"
-        : "border-border shadow-sm"
+        : "border-border shadow-sm",
     )}
   >
     {isRecommended && (
@@ -78,7 +76,7 @@ const PackageCard = ({ pkg, isRecommended, onSelect }: PackageCardProps) => (
         "mt-4 w-full py-3 rounded-lg font-body font-semibold text-sm transition-all",
         isRecommended
           ? "bg-primary text-primary-foreground hover:bg-primary/90"
-          : "border border-primary text-primary hover:bg-primary/5"
+          : "border border-primary text-primary hover:bg-primary/5",
       )}
     >
       Seleccionar este paquete

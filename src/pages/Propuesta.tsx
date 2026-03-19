@@ -4,6 +4,8 @@ import BerliozHeader from "@/components/BerliozHeader";
 import PackageCard from "@/components/proposal/PackageCard";
 import LeadGateModal from "@/components/proposal/LeadGateModal";
 import LeadsViewerModal from "@/components/proposal/LeadsViewerModal";
+import ExtrasModal from "@/components/proposal/ExtrasModal";
+import { AVAILABLE_EXTRAS } from "@/components/proposal/ExtrasModal";
 import { runAgentPipeline } from "@/lib/agents";
 import type { IntakeForm, AgentState, Proposal } from "@/types";
 import { toast } from "sonner";
@@ -47,6 +49,8 @@ const Propuesta = () => {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
   const [leadsOpen, setLeadsOpen] = useState(false);
+  const [extrasOpen, setExtrasOpen] = useState(false);
+  const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [selectedPkg, setSelectedPkg] = useState('');
 
@@ -58,7 +62,24 @@ const Propuesta = () => {
     runAgentPipeline(form, setAgents).then(setProposal);
   }, []);
 
-  const openGate = useCallback((action: PendingAction, pkgName?: string) => {
+  const toggleExtra = (id: string) => {
+    setSelectedExtras((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handlePackageSelect = useCallback((pkgName: string) => {
+    setSelectedPkg(pkgName);
+    setPendingAction('select');
+    setExtrasOpen(true);
+  }, []);
+
+  const proceedToGate = useCallback(() => {
+    setExtrasOpen(false);
+    setGateOpen(true);
+  }, []);
+
+  const openGateDirectly = useCallback((action: PendingAction, pkgName?: string) => {
     setPendingAction(action);
     setSelectedPkg(pkgName || '');
     setGateOpen(true);
@@ -82,6 +103,10 @@ const Propuesta = () => {
   }, [form, proposal, pendingAction, selectedPkg]);
 
   if (!form) return null;
+
+  const extraLabels = selectedExtras
+    .map((id) => AVAILABLE_EXTRAS.find((e) => e.id === id)?.title)
+    .filter(Boolean);
 
   return (
     <div className="min-h-screen bg-background">
@@ -120,7 +145,7 @@ const Propuesta = () => {
                   key={pkg.id}
                   pkg={pkg}
                   isRecommended={pkg.id === 'recomendado'}
-                  onSelect={() => openGate('select', pkg.displayName)}
+                  onSelect={() => handlePackageSelect(pkg.displayName)}
                 />
               ))}
             </div>
@@ -129,6 +154,26 @@ const Propuesta = () => {
               <p className="text-sm text-muted-foreground italic mb-8 text-center">
                 💡 {proposal.recommendedReason}
               </p>
+            )}
+
+            {/* Extras note in proposal (visible in print) */}
+            {extraLabels.length > 0 && (
+              <div className="border border-accent/30 bg-accent/5 rounded-lg p-5 mb-8">
+                <h3 className="font-heading text-base font-semibold text-foreground mb-2">
+                  Servicios adicionales solicitados
+                </h3>
+                <ul className="space-y-1.5">
+                  {extraLabels.map((label, i) => (
+                    <li key={i} className="text-sm text-foreground flex gap-2">
+                      <span className="text-accent">✦</span>
+                      <span>{label}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground mt-3 italic">
+                  Nuestro equipo se pondrá en contacto para coordinar los detalles de personalización.
+                </p>
+              </div>
             )}
 
             {/* Business Rules */}
@@ -149,17 +194,17 @@ const Propuesta = () => {
 
             {/* Action bar */}
             <div className="no-print sticky bottom-0 bg-background/90 backdrop-blur border-t border-border py-4 flex flex-wrap gap-3 justify-center">
-              <button onClick={() => openGate('pdf')} className="px-5 py-2.5 rounded-lg border border-border text-foreground font-body text-sm font-medium hover:bg-muted transition-colors">
+              <button onClick={() => openGateDirectly('pdf')} className="px-5 py-2.5 rounded-lg border border-border text-foreground font-body text-sm font-medium hover:bg-muted transition-colors">
                 Descargar PDF
               </button>
-              <button onClick={() => openGate('email')} className="px-5 py-2.5 rounded-lg border border-border text-foreground font-body text-sm font-medium hover:bg-muted transition-colors">
+              <button onClick={() => openGateDirectly('email')} className="px-5 py-2.5 rounded-lg border border-border text-foreground font-body text-sm font-medium hover:bg-muted transition-colors">
                 Enviar por email
               </button>
               <button onClick={() => navigate('/')} className="px-5 py-2.5 rounded-lg border border-border text-foreground font-body text-sm font-medium hover:bg-muted transition-colors">
                 Modificar cotización
               </button>
               <button
-                onClick={() => openGate('select', 'Confirmar pedido')}
+                onClick={() => openGateDirectly('select', 'Confirmar pedido')}
                 className="px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-colors"
               >
                 Confirmar pedido →
@@ -184,6 +229,13 @@ const Propuesta = () => {
         )}
       </main>
 
+      <ExtrasModal
+        open={extrasOpen}
+        selectedExtras={selectedExtras}
+        onToggle={toggleExtra}
+        onSkip={proceedToGate}
+        onContinue={proceedToGate}
+      />
       <LeadGateModal
         open={gateOpen}
         onClose={() => setGateOpen(false)}

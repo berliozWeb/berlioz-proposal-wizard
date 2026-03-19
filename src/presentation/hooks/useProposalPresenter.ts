@@ -42,7 +42,14 @@ export function useProposalPresenter() {
     }
     if (proposalPath === 'cotiza') {
       generarPropuesta.executeWithPipeline(form, setAgents).then((result) => {
-        if (result.success) setProposal(result.data);
+        if (result.success) {
+          setProposal(result.data);
+          analytics.track('proposal_generated', {
+            personas: form.personas,
+            eventType: form.eventType,
+            packagesShown: result.data.packages.length,
+          });
+        }
       });
     }
   }, []);

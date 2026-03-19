@@ -1,4 +1,5 @@
 import MinimalHeader from "@/components/landing/MinimalHeader";
+import LeadCaptureSection from "@/components/landing/LeadCaptureSection";
 import HeroCards from "@/components/landing/HeroCards";
 import TopSellers from "@/components/landing/TopSellers";
 import CategoryGrid from "@/components/landing/CategoryGrid";
@@ -17,22 +18,35 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MinimalHeader
-        nombre={p.state.nombre}
-        empresa={p.state.empresa}
-        celular={p.state.celular}
-        onUpdate={p.updateLead}
-      />
-
-      {!isLeadComplete && p.state.path === 'landing' && (
-        <p className="text-center text-xs mt-1" style={{ color: 'hsl(var(--gold))' }}>
-          Completa tus datos para continuar
-        </p>
-      )}
+      <MinimalHeader />
 
       {p.state.path === 'landing' && (
         <>
+          {/* Hero headline */}
+          <section className="max-w-6xl mx-auto px-4 pt-12 pb-2 text-center">
+            <h1
+              className="font-heading font-bold text-foreground tracking-tight"
+              style={{ fontSize: 'clamp(2.2rem, 5vw, 3.8rem)' }}
+            >
+              ¿Qué se te antoja hoy?
+            </h1>
+            <p className="text-muted-foreground mt-3 text-base">
+              Comida corporativa lista en minutos · Ciudad de México
+            </p>
+          </section>
+
+          {/* Lead capture between headline and cards */}
+          <LeadCaptureSection
+            nombre={p.state.nombre}
+            empresa={p.state.empresa}
+            celular={p.state.celular}
+            onUpdate={p.updateLead}
+            isComplete={isLeadComplete}
+          />
+
+          {/* Entry points + rest of landing */}
           <div
+            id="entry-points"
             className="transition-all duration-400 ease-in-out"
             style={{
               opacity: isLeadComplete ? 1 : 0.4,

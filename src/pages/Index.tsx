@@ -30,8 +30,8 @@ const Index = () => {
             >
               ¿Qué hacemos hoy?
             </h1>
-            <p className="text-muted-foreground mt-3 text-base">
-              Comida corporativa lista en minutos · Ciudad de México
+             <p className="text-muted-foreground mt-3 text-base">
+               ¡Entregando desde 2015 comida fantástica!
             </p>
           </section>
 

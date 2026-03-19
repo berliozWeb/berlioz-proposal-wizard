@@ -38,7 +38,7 @@ export function generateProposalSync(form: IntakeForm): Proposal {
   return {
     proposalId: `BZ-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
     createdAt: now.toISOString(),
-    intro: `Estimado/a ${form.contacto.atencion}, en Berlioz nos da mucho gusto preparar esta propuesta de ${eventLabel.toLowerCase()} para ${form.contacto.empresa}. Nuestro compromiso es ofrecer una experiencia gastronómica memorable con ingredientes frescos y un servicio impecable.`,
+    intro: `Estimado/a ${form.nombre}, en Berlioz nos da mucho gusto preparar esta propuesta de ${eventLabel.toLowerCase()} para ${form.empresa}. Nuestro compromiso es ofrecer una experiencia gastronómica memorable con ingredientes frescos y un servicio impecable.`,
     packages,
     recommendedId: 'recomendado',
     recommendedReason: 'Ofrece el mejor equilibrio entre calidad, variedad y precio — es la opción que más eligen nuestros clientes corporativos.',

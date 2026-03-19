@@ -21,9 +21,8 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
           src={`${CDN}/cateringCorporativo12_a0kxxe`}
           alt="Cotiza tu evento"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: 'blur(1px)' }}
         />
-        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(28, 58, 47, 0.55)' }} />
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(28, 58, 47, 0.45)' }} />
         <div className="relative z-10 p-6 h-full flex flex-col justify-end">
           <Calendar className="w-7 h-7 text-white/70 mb-3" />
           <h2 className="font-heading text-xl font-bold text-white mb-1">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { IntakeForm } from '@/domain/entities/IntakeForm';
 import type { MenuItem, CartItem, MenuCategory } from '@/domain/entities/MenuItem';
 import { DEFAULT_INTAKE } from '@/domain/entities/IntakeForm';
+import { canSubmitCotizaForm } from '@/domain/shared/WizardValidation';
 import { analytics } from '@/lib/mixpanel';
 
 export type AppPath = 'landing' | 'cotiza' | 'menu';
@@ -126,11 +127,7 @@ export function useLandingPresenter() {
     navigate('/propuesta', { state: { form, path: 'menu', cart: state.cart } });
   }, [state, navigate]);
 
-  const canSubmitCotiza =
-    state.wizardForm.personas > 0 &&
-    state.wizardForm.fechaInicio !== '' &&
-    state.wizardForm.horasEntrega.length > 0 &&
-    state.eventType !== '';
+  const canSubmitCotiza = canSubmitCotizaForm(state.wizardForm, state.eventType);
 
   return {
     state,

@@ -82,8 +82,8 @@ const Propuesta = () => {
                   Ciudad de México, {new Date(proposal.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
                 <div className="mt-4 space-y-1 text-sm text-foreground">
-                  <p><span className="text-muted-foreground">Atención:</span> {form.contacto.atencion}</p>
-                  <p><span className="text-muted-foreground">Empresa:</span> {form.contacto.empresa}</p>
+                  <p><span className="text-muted-foreground">Atención:</span> {form.nombre}</p>
+                  <p><span className="text-muted-foreground">Empresa:</span> {form.empresa}</p>
                   <p><span className="text-muted-foreground">Evento:</span> {EVENT_LABELS[form.eventType]}</p>
                   <p><span className="text-muted-foreground">Fecha:</span> {form.fechaInicio}{form.fechaFin ? ` — ${form.fechaFin}` : ''}</p>
                   <p><span className="text-muted-foreground">Personas:</span> {form.personas}</p>

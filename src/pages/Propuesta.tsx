@@ -45,6 +45,15 @@ const Propuesta = () => {
                     <p><span className="text-muted-foreground">Evento:</span> {EVENT_TYPE_LABELS[p.form.eventType as EventType]}</p>
                     <p><span className="text-muted-foreground">Fecha:</span> {p.form.fechaInicio}</p>
                     <p><span className="text-muted-foreground">Personas:</span> {p.form.personas}</p>
+                    {p.form.codigoPostal && (
+                      <p><span className="text-muted-foreground">CP:</span> {p.form.codigoPostal}</p>
+                    )}
+                    {p.form.duracionEstimada > 0 && (
+                      <p><span className="text-muted-foreground">Duración:</span> {p.form.duracionEstimada}h</p>
+                    )}
+                    {p.form.tienePresupuesto && p.form.presupuestoPorPersona > 0 && (
+                      <p><span className="text-muted-foreground">Presupuesto:</span> ${p.form.presupuestoPorPersona}/persona</p>
+                    )}
                   </>
                 )}
               </div>

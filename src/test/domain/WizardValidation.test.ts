@@ -27,10 +27,7 @@ describe('WizardValidation', () => {
     expect(canAdvanceStep(3, withHour)).toBe(true);
   });
 
-  it('step 4: requires nivelEsperado', () => {
+  it('step 4+: returns false for unknown steps', () => {
     expect(canAdvanceStep(4, DEFAULT_INTAKE)).toBe(false);
-
-    const withLevel = { ...DEFAULT_INTAKE, nivelEsperado: 'balanceado' as const };
-    expect(canAdvanceStep(4, withLevel)).toBe(true);
   });
 });

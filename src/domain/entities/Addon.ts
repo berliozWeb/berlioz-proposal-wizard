@@ -8,6 +8,8 @@ export interface Addon {
   priceLabel: string;
   isFree?: boolean;
   image?: string;
+  /** If true, this addon has special interactive logic in AddonsBar */
+  isInteractive?: boolean;
 }
 
 export const ADDONS: Addon[] = [
@@ -26,6 +28,22 @@ export const ADDONS: Addon[] = [
     pricePerPerson: 140,
     priceLabel: '+$140/persona',
     image: `${CDN}/bag-snack_zbsxe6`,
+  },
+  {
+    id: 'canasta_snacks',
+    title: 'Canasta de Snacks',
+    subtitle: 'Canasta pre-armada (~50 piezas) entregada',
+    pricePerPerson: null,
+    priceLabel: 'Desde $1,500',
+  },
+  {
+    id: 'logo_caja',
+    title: 'Logo en caja',
+    subtitle: 'Tu marca impresa en cada caja de entrega',
+    pricePerPerson: 26,
+    priceLabel: '+$26/caja',
+    image: `${CDN}/PersonalizacionDeCajas_br9mlr`,
+    isInteractive: true,
   },
   {
     id: 'tapas_logo',
@@ -51,4 +69,21 @@ export const ADDONS: Addon[] = [
     priceLabel: '+$50/persona',
     image: `${CDN}/Aguas-de-sabor-Berlioz.jpg_guf7kw`,
   },
+  {
+    id: 'personal_servicio',
+    title: 'Personal de servicio',
+    subtitle: 'Meseros y/o personal de limpieza para tu evento',
+    pricePerPerson: null,
+    priceLabel: 'Desde $800/persona',
+    isInteractive: true,
+  },
 ];
+
+// Carrito de Snacks — only for ≥ 300 pieces
+export const CARRITO_SNACKS_ADDON: Addon = {
+  id: 'carrito_snacks',
+  title: 'Carrito de Snacks',
+  subtitle: 'Estación de snacks self-service para grupos grandes',
+  pricePerPerson: null,
+  priceLabel: 'Desde $4,500',
+};

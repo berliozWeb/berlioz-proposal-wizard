@@ -8,6 +8,11 @@ export interface IntakeForm {
   celular: string;
   eventType: EventType | '';
   personas: number;
+  codigoPostal: string;
+  horarioEvento: string;       // e.g. "09:00"
+  duracionEstimada: number;    // hours: 1,2,3,4,5,6
+  tienePresupuesto: boolean;
+  presupuestoPorPersona: number; // MXN per person (0 if no budget)
   fechaInicio: string;
   fechaFin?: string;
   esMultiDia: boolean;
@@ -31,6 +36,11 @@ export const DEFAULT_INTAKE: IntakeForm = {
   celular: '',
   eventType: '',
   personas: 30,
+  codigoPostal: '',
+  horarioEvento: '',
+  duracionEstimada: 3,
+  tienePresupuesto: false,
+  presupuestoPorPersona: 0,
   fechaInicio: '',
   fechaFin: '',
   esMultiDia: false,

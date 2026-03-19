@@ -3,7 +3,10 @@ import type { IntakeForm } from '@/domain/entities/IntakeForm';
 import type { Proposal, Package, PackageItem } from '@/domain/entities/Proposal';
 import type { AgentState } from '@/domain/entities/AgentState';
 import { EVENT_TYPE_LABELS, type EventType } from '@/domain/value-objects/EventType';
-import { BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_PER_TRIP, getDeliveryCount } from '@/domain/shared/BusinessRules';
+import {
+  BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_PER_TRIP,
+  getDeliveryCount, getDurationBlock, getBudgetTiers,
+} from '@/domain/shared/BusinessRules';
 import { calculateIVA, roundCents } from '@/domain/value-objects/Money';
 
 export class DeterministicProposalGenerator implements IProposalGenerator {
@@ -14,21 +17,44 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     );
     const deliveryFee = DELIVERY_FEE_PER_TRIP * deliveries;
     const eventLabel = EVENT_TYPE_LABELS[form.eventType as EventType] || 'Evento';
+    const durationBlock = getDurationBlock(form.duracionEstimada);
 
-    const packages: Package[] = [
-      this.buildPackage('basico', 'Esencial', 'Lo necesario, bien ejecutado',
-        `Un servicio funcional y confiable para ${numPeople} personas. Incluye los elementos clave para que tu equipo esté bien atendido sin complicaciones.`,
-        ['Entrega puntual garantizada', 'Menú clásico y confiable', 'Ideal para eventos recurrentes'],
-        form.eventType, 'economico', numPeople, deliveryFee),
-      this.buildPackage('recomendado', 'Equilibrado', 'La experiencia que tu equipo merece',
-        'Nuestro paquete más popular combina sabor, presentación y valor. Tu equipo disfrutará de una selección variada y cuidadosamente preparada que eleva cualquier jornada de trabajo.',
-        ['Variedad de opciones por persona', 'Incluye bebidas y snacks', 'Presentación profesional premium'],
-        form.eventType, 'balanceado', numPeople, deliveryFee),
-      this.buildPackage('premium', 'Experiencia Completa', 'Cada detalle cuenta',
-        'Una experiencia gastronómica integral con los mejores ingredientes, opciones gourmet y servicio de bebidas premium. Ideal para cuando quieres impresionar y consentir a tu equipo.',
-        ['Opciones gourmet y artesanales', 'Servicio completo de bebidas', 'Postres y snacks premium incluidos'],
-        form.eventType, 'premium', numPeople, deliveryFee),
-    ];
+    let packages: Package[];
+
+    if (form.tienePresupuesto && form.presupuestoPorPersona > 0) {
+      // Rule 2: Budget-based 3 tiers
+      const tiers = getBudgetTiers(form.presupuestoPorPersona);
+      packages = [
+        this.buildBudgetPackage('basico', 'Opción ajustada', 'Dentro de tu presupuesto',
+          `Propuesta ajustada a tu presupuesto de $${form.presupuestoPorPersona}/persona para ${numPeople} personas.`,
+          ['Dentro del presupuesto indicado', 'Menú cuidadosamente seleccionado', 'Calidad Berlioz garantizada'],
+          form.eventType, tiers.adjusted, numPeople, deliveryFee, durationBlock),
+        this.buildBudgetPackage('recomendado', 'Opción recomendada', 'Un paso más en experiencia',
+          'Nuestra recomendación: invierte un poco más por persona y eleva notablemente la experiencia gastronómica de tu equipo.',
+          ['Mejor variedad y presentación', 'Incluye elementos premium', 'La opción más elegida por nuestros clientes'],
+          form.eventType, tiers.recommended, numPeople, deliveryFee, durationBlock),
+        this.buildBudgetPackage('premium', 'Opción completa', 'La experiencia completa',
+          'Una experiencia gastronómica integral con ingredientes premium y servicio completo. Para cuando quieres impresionar.',
+          ['Opciones gourmet y artesanales', 'Servicio completo de bebidas', 'Presentación de primer nivel'],
+          form.eventType, tiers.complete, numPeople, deliveryFee, durationBlock),
+      ];
+    } else {
+      // Default 3 packages
+      packages = [
+        this.buildPackage('basico', 'Esencial', 'Lo necesario, bien ejecutado',
+          `Un servicio funcional y confiable para ${numPeople} personas.`,
+          ['Entrega puntual garantizada', 'Menú clásico y confiable', 'Ideal para eventos recurrentes'],
+          form.eventType, 'economico', numPeople, deliveryFee, durationBlock),
+        this.buildPackage('recomendado', 'Equilibrado', 'La experiencia que tu equipo merece',
+          'Nuestro paquete más popular combina sabor, presentación y valor.',
+          ['Variedad de opciones por persona', 'Incluye bebidas y snacks', 'Presentación profesional premium'],
+          form.eventType, 'balanceado', numPeople, deliveryFee, durationBlock),
+        this.buildPackage('premium', 'Experiencia Completa', 'Cada detalle cuenta',
+          'Una experiencia gastronómica integral con los mejores ingredientes.',
+          ['Opciones gourmet y artesanales', 'Servicio completo de bebidas', 'Postres y snacks premium incluidos'],
+          form.eventType, 'premium', numPeople, deliveryFee, durationBlock),
+      ];
+    }
 
     const now = new Date();
     const validUntil = new Date(now);
@@ -40,7 +66,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       intro: `Estimado/a ${form.nombre}, en Berlioz nos da mucho gusto preparar esta propuesta de ${eventLabel.toLowerCase()} para ${form.empresa}. Nuestro compromiso es ofrecer una experiencia gastronómica memorable con ingredientes frescos y un servicio impecable.`,
       packages,
       recommendedId: 'recomendado',
-      recommendedReason: 'Ofrece el mejor equilibrio entre calidad, variedad y precio — es la opción que más eligen nuestros clientes corporativos.',
+      recommendedReason: form.tienePresupuesto
+        ? 'Recomendamos invertir un poco más por persona — la diferencia en experiencia es notable.'
+        : 'Ofrece el mejor equilibrio entre calidad, variedad y precio — es la opción que más eligen nuestros clientes corporativos.',
       validUntil: validUntil.toISOString().split('T')[0],
       businessRules: BUSINESS_RULES,
     };
@@ -51,6 +79,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     onAgentUpdate: (agents: AgentState[]) => void,
   ): Promise<Proposal> {
     const eventLabel = EVENT_TYPE_LABELS[form.eventType as EventType] || form.eventType;
+    const durationBlock = getDurationBlock(form.duracionEstimada);
+    const hasBudget = form.tienePresupuesto && form.presupuestoPorPersona > 0;
+
     const agents: AgentState[] = [
       { id: 'discovery', name: 'Análisis del evento', icon: '🔍', status: 'idle', logs: [] },
       { id: 'menu', name: 'Selección de menú', icon: '🍽️', status: 'idle', logs: [] },
@@ -64,30 +95,50 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       onAgentUpdate([...agents]);
     };
 
+    // Discovery agent — Rule 3: duration determines product block
     update(0, 'running', 'Analizando tipo de evento...');
     await delay(800);
     update(0, 'running', `Evento: ${eventLabel}`);
-    await delay(600);
-    update(0, 'running', `${form.personas} personas detectadas`);
+    await delay(400);
+    update(0, 'running', `${form.personas} personas · Duración: ${form.duracionEstimada}h`);
+    await delay(400);
+    if (durationBlock === 'beverages_only') {
+      update(0, 'running', '⚡ Evento corto → solo bebidas recomendadas');
+    } else if (durationBlock === 'beverages_snacks') {
+      update(0, 'running', '🍿 Duración media → bebidas + snacks');
+    } else {
+      update(0, 'running', '🍽️ Evento largo → paquete completo de alimentos');
+    }
     await delay(500);
+    if (form.codigoPostal) {
+      update(0, 'running', `CP: ${form.codigoPostal} — verificando cobertura`);
+      await delay(400);
+    }
     update(0, 'done', 'Análisis completado ✓');
 
+    // Menu agent
     update(1, 'running', 'Consultando catálogo Berlioz...');
     await delay(700);
-    update(1, 'running', `Nivel: ${form.nivelEsperado}`);
-    await delay(800);
-    update(1, 'running', 'Seleccionando 3 paquetes...');
+    if (hasBudget) {
+      update(1, 'running', `Presupuesto: $${form.presupuestoPorPersona}/persona`);
+      await delay(500);
+      update(1, 'running', 'Generando 3 opciones: ajustada, recomendada y completa');
+    } else {
+      update(1, 'running', 'Seleccionando 3 paquetes estándar');
+    }
     await delay(600);
     update(1, 'done', 'Menús seleccionados ✓');
 
+    // Pricing agent
     update(2, 'running', 'Calculando precios unitarios...');
     await delay(600);
     update(2, 'running', 'Aplicando reglas de negocio...');
-    await delay(700);
-    update(2, 'running', 'Sumando IVA y envío...');
     await delay(500);
+    update(2, 'running', 'Precios excluyen IVA, envío y recargos');
+    await delay(400);
     update(2, 'done', 'Precios calculados ✓');
 
+    // Writer agent
     update(3, 'running', 'Escribiendo propuesta comercial...');
     await delay(900);
     update(3, 'running', 'Personalizando narrativas...');
@@ -99,9 +150,10 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
 
   private buildPackage(
     id: Package['id'], displayName: string, tagline: string, narrative: string,
-    highlights: string[], eventType: string, level: string, people: number, deliveryFee: number,
+    highlights: string[], eventType: string, level: string, people: number,
+    deliveryFee: number, durationBlock: string,
   ): Package {
-    const items = this.getItemsForLevel(eventType, level, people);
+    const items = this.getItemsForLevel(eventType, level, people, durationBlock);
     const subtotal = items.reduce((s, i) => s + i.subtotal, 0) + deliveryFee;
     const iva = calculateIVA(subtotal);
     return {
@@ -114,8 +166,59 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     };
   }
 
-  private getItemsForLevel(eventType: string, level: string, people: number): PackageItem[] {
+  private buildBudgetPackage(
+    id: Package['id'], displayName: string, tagline: string, narrative: string,
+    highlights: string[], eventType: string, targetPricePerPerson: number,
+    people: number, deliveryFee: number, durationBlock: string,
+  ): Package {
+    // Use the target price per person to select appropriate items
+    const level = targetPricePerPerson <= 180 ? 'economico' : targetPricePerPerson <= 300 ? 'balanceado' : 'premium';
+    const items = this.getItemsForLevel(eventType, level, people, durationBlock);
+    const subtotal = items.reduce((s, i) => s + i.subtotal, 0) + deliveryFee;
+    const iva = calculateIVA(subtotal);
+    return {
+      id, displayName, tagline, narrative, highlights, items,
+      subtotalBeforeIVA: subtotal,
+      iva,
+      deliveryFee,
+      total: roundCents(subtotal + iva),
+      pricePerPerson: roundCents((subtotal + iva) / people),
+    };
+  }
+
+  private getItemsForLevel(eventType: string, level: string, people: number, durationBlock: string): PackageItem[] {
     const items: PackageItem[] = [];
+
+    // Rule 3: Duration < 2h → beverages only
+    if (durationBlock === 'beverages_only') {
+      // Minimum: 2 drinks per person (café + agua)
+      items.push(makeItem('CA', 'Café de especialidad', 35, 1, people));
+      items.push(makeItem('AG', 'Agua natural', 25, 1, people));
+      if (level === 'balanceado' || level === 'premium') {
+        items.push(makeItem('TE', 'Té selección', 30, 1, people));
+      }
+      if (level === 'premium') {
+        items.push(makeItem('JU', 'Jugo natural', 45, 1, people));
+      }
+      return items;
+    }
+
+    // Rule 3: Duration 2-3h → beverages + snacks
+    if (durationBlock === 'beverages_snacks') {
+      items.push(makeItem('CA', 'Café de especialidad', 35, 1, people));
+      items.push(makeItem('AG', 'Agua natural', 25, 1, people));
+      if (level === 'economico') {
+        items.push(makeItem('SN', 'Surtido de Snacks', 300, 1, Math.ceil(people / 7)));
+      } else if (level === 'balanceado') {
+        items.push(makeItem('SC', 'Surtido Colette', 450, 1, Math.ceil(people / 7)));
+      } else {
+        items.push(makeItem('SV', 'Surtido Voltaire (bocadillos gourmet)', 750, 1, Math.ceil(people / 7)));
+      }
+      return items;
+    }
+
+    // Rule 3: Duration > 3h → full food package
+    // Original logic for full food, adapted by event type
 
     if (eventType === 'desayuno' || eventType === 'capacitacion') {
       if (level === 'economico') {

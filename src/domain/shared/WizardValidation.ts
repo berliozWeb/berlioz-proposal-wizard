@@ -1,4 +1,5 @@
 import type { IntakeForm } from '@/domain/entities/IntakeForm';
+import { isValidMexicanCP, getCutoffWarning } from './BusinessRules';
 
 export function canAdvanceStep(step: number, form: IntakeForm): boolean {
   switch (step) {
@@ -16,6 +17,21 @@ export function canAdvanceStep(step: number, form: IntakeForm): boolean {
     default:
       return false;
   }
+}
+
+/** Validation for the cotiza inline flow (landing page) */
+export function canSubmitCotizaForm(form: IntakeForm, eventType: string): boolean {
+  const cutoff = getCutoffWarning(form.fechaInicio);
+  if (cutoff?.blockSubmit) return false;
+
+  return (
+    form.personas > 0 &&
+    form.fechaInicio !== '' &&
+    isValidMexicanCP(form.codigoPostal) &&
+    form.horarioEvento !== '' &&
+    form.duracionEstimada > 0 &&
+    eventType !== ''
+  );
 }
 
 export const TOTAL_WIZARD_STEPS = 3;

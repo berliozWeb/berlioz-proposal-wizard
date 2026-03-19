@@ -124,7 +124,7 @@ const Propuesta = () => {
           <div className="max-w-5xl mx-auto">
             {/* Header */}
             <div className="mb-10">
-              <h1 className="font-heading text-3xl font-bold tracking-[0.15em] text-primary uppercase mb-1">BERLIOZ</h1>
+              <img src={berliozLogo} alt="Berlioz" className="h-8 mb-1" />
               <p className="text-sm text-muted-foreground font-mono">
                 Ciudad de México, {new Date(proposal.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>

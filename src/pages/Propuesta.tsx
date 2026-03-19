@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import berliozLogo from "@/assets/berlioz-logo.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import BerliozHeader from "@/components/BerliozHeader";
 import PackageCard from "@/components/proposal/PackageCard";

@@ -1,4 +1,4 @@
-import type { IntakeForm } from "@/types";
+import type { IntakeForm } from "@/domain/entities/IntakeForm";
 
 interface StepContactProps {
   form: IntakeForm;

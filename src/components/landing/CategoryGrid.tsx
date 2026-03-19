@@ -1,17 +1,14 @@
 import { MENU_CATEGORY_LABELS, type MenuCategory } from "@/domain/entities/MenuItem";
 
-import foodBreakfast from "@/assets/food-breakfast.jpg";
-import foodBoxlunch from "@/assets/food-boxlunch.jpg";
-import foodSalad from "@/assets/food-salad.jpg";
-import foodBerlioz from "@/assets/food-berlioz2.png";
+const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
 
 const CATEGORY_IMAGES: Record<MenuCategory, string> = {
-  coffee_break: foodSalad,
-  desayuno: foodBreakfast,
-  comida: foodBoxlunch,
-  tortas: foodBoxlunch,
-  surtidos: foodBerlioz,
-  bebidas: foodBreakfast,
+  coffee_break: `${CDN}/coffeebreak_PM_qlk47d`,
+  desayuno: `${CDN}/Pan-dulce-Berlioz-desayuno-zoom_k4cqtv`,
+  comida: `${CDN}/lunch-ciabatta_shrxzi`,
+  tortas: `${CDN}/tortas_gourmet2_devjfz`,
+  surtidos: `${CDN}/mini-BOX_ntjbxh`,
+  bebidas: `${CDN}/Snacks-saludables-Berlioz-scaled_pukfu4`,
 };
 
 interface CategoryGridProps {

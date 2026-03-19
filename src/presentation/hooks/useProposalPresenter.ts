@@ -7,6 +7,7 @@ import type { Proposal } from '@/domain/entities/Proposal';
 import type { AgentState } from '@/domain/entities/AgentState';
 import type { CartItem } from '@/domain/entities/MenuItem';
 import { ADDONS } from '@/domain/entities/Addon';
+import { analytics } from '@/lib/mixpanel';
 
 export type PendingAction = 'select' | 'pdf' | 'email';
 export type ProposalPath = 'cotiza' | 'menu';

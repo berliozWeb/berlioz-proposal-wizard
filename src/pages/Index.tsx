@@ -28,10 +28,10 @@ const Index = () => {
               className="font-heading font-bold text-foreground tracking-tight"
               style={{ fontSize: 'clamp(2.2rem, 5vw, 3.8rem)' }}
             >
-              ¿Qué se te antoja hoy?
+              ¿Qué hacemos hoy?
             </h1>
             <p className="text-muted-foreground mt-3 text-base">
-              Comida corporativa lista en minutos · Ciudad de México
+              ¡Entregando desde 2015 comida fantástica!
             </p>
           </section>
 

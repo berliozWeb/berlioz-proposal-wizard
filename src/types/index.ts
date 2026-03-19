@@ -1,4 +1,8 @@
 export interface IntakeForm {
+  // Lead capture (Step 1)
+  nombre: string;
+  empresa: string;
+  celular: string;
   eventType: 'desayuno' | 'coffee_break' | 'comida' | 'capacitacion' | 'evento_especial' | 'otro' | '';
   personas: number;
   fechaInicio: string;
@@ -72,6 +76,9 @@ export const BUSINESS_RULES = [
 ];
 
 export const DEFAULT_INTAKE: IntakeForm = {
+  nombre: '',
+  empresa: '',
+  celular: '',
   eventType: '',
   personas: 30,
   fechaInicio: '',

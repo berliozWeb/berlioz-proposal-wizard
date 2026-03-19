@@ -41,9 +41,9 @@ const Propuesta = () => {
 
   const handlePrint = () => window.print();
   const handleEmail = () => {
-    const subject = encodeURIComponent(`Propuesta Berlioz — ${form.contacto.empresa}`);
-    const body = encodeURIComponent(`Hola ${form.contacto.atencion},\n\nAdjunto nuestra propuesta de catering para ${form.contacto.empresa}.\n\nQuedo a tus órdenes.\n\nBerlioz\nhola@berlioz.mx`);
-    window.open(`mailto:${form.contacto.email}?subject=${subject}&body=${body}`);
+    const subject = encodeURIComponent(`Propuesta Berlioz — ${form.empresa}`);
+    const body = encodeURIComponent(`Hola ${form.nombre},\n\nAdjunto nuestra propuesta de catering para ${form.empresa}.\n\nQuedo a tus órdenes.\n\nBerlioz\nhola@berlioz.mx`);
+    window.open(`mailto:?subject=${subject}&body=${body}`);
   };
 
   const handleSelect = (pkgName: string) => {
@@ -82,8 +82,8 @@ const Propuesta = () => {
                   Ciudad de México, {new Date(proposal.createdAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
                 <div className="mt-4 space-y-1 text-sm text-foreground">
-                  <p><span className="text-muted-foreground">Atención:</span> {form.contacto.atencion}</p>
-                  <p><span className="text-muted-foreground">Empresa:</span> {form.contacto.empresa}</p>
+                  <p><span className="text-muted-foreground">Atención:</span> {form.nombre}</p>
+                  <p><span className="text-muted-foreground">Empresa:</span> {form.empresa}</p>
                   <p><span className="text-muted-foreground">Evento:</span> {EVENT_LABELS[form.eventType]}</p>
                   <p><span className="text-muted-foreground">Fecha:</span> {form.fechaInicio}{form.fechaFin ? ` — ${form.fechaFin}` : ''}</p>
                   <p><span className="text-muted-foreground">Personas:</span> {form.personas}</p>

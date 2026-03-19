@@ -33,20 +33,32 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
         </label>
         <div className="flex flex-wrap gap-3">
           {HOURS.map((h) => (
-            <button
-              key={h}
-              type="button"
-              onClick={() => toggleHour(h)}
-              className={cn(
-                "px-5 py-3 rounded-lg border text-sm font-mono font-medium transition-all",
-                form.horasEntrega.includes(h)
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/40"
+            <div key={h} className="flex flex-col items-center gap-1">
+              <button
+                type="button"
+                onClick={() => toggleHour(h)}
+                className={cn(
+                  "px-5 py-3 rounded-lg border text-sm font-mono font-medium transition-all",
+                  form.horasEntrega.includes(h)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40"
+                )}
+              >
+                {h}
+              </button>
+              {h === '7:00am' && (
+                <span className="text-[10px] text-accent font-medium">Cargo adicional antes de 7am</span>
               )}
-            >
-              {h}
-            </button>
+            </div>
           ))}
+        </div>
+        <div className="mt-3 space-y-1.5">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Menú de comidas disponible a partir de las 10am. Entregas antes de ese horario tienen cargo adicional.
+          </p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Pedidos de 80+ piezas aplican cargo logístico adicional.
+          </p>
         </div>
       </div>
 

@@ -6,6 +6,31 @@ interface StepPeopleProps {
   onChange: (form: IntakeForm) => void;
 }
 
+const MEXICAN_HOLIDAYS = [
+  '01-01', // Año Nuevo
+  '02-03', // Constitución
+  '03-17', // Natalicio de Benito Juárez
+  '05-01', // Día del Trabajo
+  '09-16', // Independencia
+  '11-17', // Revolución
+  '12-25', // Navidad
+];
+
+function getDateDisclaimer(dateStr: string): string | null {
+  if (!dateStr) return null;
+  const date = new Date(dateStr + 'T12:00:00');
+  const day = date.getDay(); // 0=Sun, 6=Sat
+  const mmdd = dateStr.slice(5); // "MM-DD"
+
+  if (day === 0 || MEXICAN_HOLIDAYS.includes(mmdd)) {
+    return '📌 Domingos y días festivos el pedido mínimo es $5,000 + IVA';
+  }
+  if (day === 6) {
+    return '📌 Los sábados el pedido mínimo es $3,000 + IVA';
+  }
+  return null;
+}
+
 const StepPeople = ({ form, onChange }: StepPeopleProps) => {
   const deliveryOptions = [
     { value: 'manana' as const, label: 'Mañana' },
@@ -20,6 +45,8 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
       : [...current, val];
     onChange({ ...form, entregasPorDia: next });
   };
+
+  const dateDisclaimer = getDateDisclaimer(form.fechaInicio);
 
   return (
     <div className="animate-slide-in space-y-6">
@@ -38,13 +65,14 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
         </label>
         <input
           type="number"
-          min={10}
-          max={2000}
-          value={form.personas}
-          onChange={(e) => onChange({ ...form, personas: Math.max(10, Math.min(2000, Number(e.target.value))) })}
-          className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-mono text-lg focus:outline-none focus:ring-2 focus:ring-ring"
+          value={form.personas || ''}
+          onChange={(e) => onChange({ ...form, personas: Number(e.target.value) || 0 })}
+          placeholder="Ej. 30"
+          className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-mono text-lg focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
-        <p className="text-xs text-muted-foreground mt-1">Mínimo 10, máximo 2,000</p>
+        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+          El monto mínimo para entrega a domicilio es $1,000 + IVA. Pedidos menores pueden recogerse en nuestra cocina en Col. Modelo Pensil sin costo de envío.
+        </p>
       </div>
 
       <div>
@@ -57,6 +85,11 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
           onChange={(e) => onChange({ ...form, fechaInicio: e.target.value })}
           className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-body focus:outline-none focus:ring-2 focus:ring-ring"
         />
+        {dateDisclaimer && (
+          <div className="mt-2 px-3 py-2 rounded-md bg-accent/10 border border-accent/20 text-sm text-foreground">
+            {dateDisclaimer}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

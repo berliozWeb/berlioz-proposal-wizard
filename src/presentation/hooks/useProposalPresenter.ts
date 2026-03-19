@@ -5,23 +5,32 @@ import { useDependencies } from '@/presentation/providers/AppDependenciesProvide
 import type { IntakeForm } from '@/domain/entities/IntakeForm';
 import type { Proposal } from '@/domain/entities/Proposal';
 import type { AgentState } from '@/domain/entities/AgentState';
-import { AVAILABLE_EXTRAS } from '@/domain/entities/ExtraAddon';
+import type { CartItem } from '@/domain/entities/MenuItem';
+import { ADDONS } from '@/domain/entities/Addon';
 
 export type PendingAction = 'select' | 'pdf' | 'email';
+export type ProposalPath = 'cotiza' | 'menu';
 
 export function useProposalPresenter() {
   const location = useLocation();
   const navigate = useNavigate();
   const { generarPropuesta, guardarLead } = useDependencies();
 
-  const form = (location.state as { form: IntakeForm })?.form;
+  const locState = location.state as {
+    form: IntakeForm;
+    path?: ProposalPath;
+    cart?: CartItem[];
+  } | null;
+
+  const form = locState?.form ?? null;
+  const proposalPath: ProposalPath = locState?.path || 'cotiza';
+  const cart: CartItem[] = locState?.cart || [];
 
   const [, setAgents] = useState<AgentState[]>([]);
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
   const [leadsOpen, setLeadsOpen] = useState(false);
-  const [extrasOpen, setExtrasOpen] = useState(false);
-  const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [selectedPkg, setSelectedPkg] = useState('');
 
@@ -30,13 +39,15 @@ export function useProposalPresenter() {
       navigate('/');
       return;
     }
-    generarPropuesta.executeWithPipeline(form, setAgents).then((result) => {
-      if (result.success) setProposal(result.data);
-    });
+    if (proposalPath === 'cotiza') {
+      generarPropuesta.executeWithPipeline(form, setAgents).then((result) => {
+        if (result.success) setProposal(result.data);
+      });
+    }
   }, []);
 
-  const toggleExtra = useCallback((id: string) => {
-    setSelectedExtras((prev) =>
+  const toggleAddon = useCallback((id: string) => {
+    setSelectedAddons((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }, []);
@@ -44,11 +55,6 @@ export function useProposalPresenter() {
   const handlePackageSelect = useCallback((pkgName: string) => {
     setSelectedPkg(pkgName);
     setPendingAction('select');
-    setExtrasOpen(true);
-  }, []);
-
-  const proceedToGate = useCallback(() => {
-    setExtrasOpen(false);
     setGateOpen(true);
   }, []);
 
@@ -59,7 +65,7 @@ export function useProposalPresenter() {
   }, []);
 
   const handleGateSubmit = useCallback((email: string, empresa: string) => {
-    if (!form || !proposal) return;
+    if (!form) return;
     setGateOpen(false);
 
     guardarLead.execute({
@@ -74,32 +80,32 @@ export function useProposalPresenter() {
     } else if (pendingAction === 'email') {
       const subject = encodeURIComponent(`Propuesta Berlioz — ${empresa}`);
       const body = encodeURIComponent(
-        `Hola ${form.nombre},\n\nAdjunto nuestra propuesta de catering para ${empresa}.\n\nQuedo a tus órdenes.\n\nBerlioz\nhola@berlioz.mx`,
+        `Hola ${form.nombre},\n\nAdjunto nuestra propuesta de catering para ${empresa}.\n\nBerlioz\nhola@berlioz.mx`,
       );
       window.open(`mailto:${email}?subject=${subject}&body=${body}`);
     } else if (pendingAction === 'select') {
-      toast.success(`Paquete "${selectedPkg}" seleccionado. Nos pondremos en contacto contigo.`);
+      toast.success(`Paquete "${selectedPkg}" seleccionado. Nos pondremos en contacto.`);
     }
-  }, [form, proposal, pendingAction, selectedPkg, guardarLead]);
+  }, [form, pendingAction, selectedPkg, guardarLead]);
 
-  const extraLabels = selectedExtras
-    .map((id) => AVAILABLE_EXTRAS.find((e) => e.id === id)?.title)
+  const addonLabels = selectedAddons
+    .map((id) => ADDONS.find((a) => a.id === id)?.title)
     .filter(Boolean) as string[];
 
   return {
     form,
     proposal,
+    proposalPath,
+    cart,
     gateOpen,
     setGateOpen,
     leadsOpen,
     setLeadsOpen,
-    extrasOpen,
-    selectedExtras,
+    selectedAddons,
     selectedPkg,
-    extraLabels,
-    toggleExtra,
+    addonLabels,
+    toggleAddon,
     handlePackageSelect,
-    proceedToGate,
     openGateDirectly,
     handleGateSubmit,
     navigateToWizard: () => navigate('/'),

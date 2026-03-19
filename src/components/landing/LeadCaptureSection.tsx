@@ -21,7 +21,6 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
     } else {
       setShaking(true);
       setTimeout(() => setShaking(false), 400);
-      // Focus the first empty field
       if (nombre.trim().length < 2) nombreRef.current?.focus();
       else if (empresa.trim().length < 2) empresaRef.current?.focus();
       else if (celular.trim().length < 2) celularRef.current?.focus();
@@ -29,11 +28,9 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
   };
 
   const inputClass = (value: string) =>
-    `flex-1 min-w-0 px-4 py-3 text-base rounded-xl bg-white text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-ring transition-all ${
+    `flex-1 min-w-0 rounded-xl bg-white text-foreground focus:outline-none transition-all lead-input ${
       !isComplete && shaking && value.trim().length < 2 ? 'animate-shake' : ''
     }`;
-
-  const inputStyle = { border: '1px solid #E8E6DF', fontSize: 16 };
 
   return (
     <section className="max-w-3xl mx-auto px-4 py-6">
@@ -48,7 +45,6 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
           onChange={(e) => onUpdate('nombre', e.target.value)}
           placeholder="Tu nombre"
           className={inputClass(nombre)}
-          style={inputStyle}
         />
         <input
           ref={empresaRef}
@@ -57,7 +53,6 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
           onChange={(e) => onUpdate('empresa', e.target.value)}
           placeholder="Tu empresa"
           className={inputClass(empresa)}
-          style={inputStyle}
         />
         <input
           ref={celularRef}
@@ -66,23 +61,21 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
           onChange={(e) => onUpdate('celular', e.target.value)}
           placeholder="Tu celular"
           className={inputClass(celular)}
-          style={inputStyle}
         />
       </div>
 
-      {/* Animated arrow button */}
+      {/* Bare animated arrow */}
       <div className="flex flex-col items-center mt-5">
         <button
           type="button"
           onClick={handleArrowClick}
-          className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 animate-bob"
+          className="animate-bob transition-all duration-300 bg-transparent border-none p-0 cursor-pointer"
           style={{
-            border: '2px solid hsl(var(--forest))',
-            background: isComplete ? 'hsl(var(--forest))' : 'transparent',
-            color: isComplete ? 'white' : 'hsl(var(--forest))',
+            color: isComplete ? 'hsl(var(--gold))' : 'hsl(var(--forest))',
+            transform: isComplete ? 'scale(1.2)' : 'scale(1)',
           }}
         >
-          <ChevronDown className="w-5 h-5" />
+          <ChevronDown className="w-7 h-7" strokeWidth={2.5} />
         </button>
 
         {!isComplete && (

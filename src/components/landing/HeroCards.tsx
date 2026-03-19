@@ -1,5 +1,6 @@
 import { Calendar, Utensils, ArrowRight } from "lucide-react";
-import foodSalad from "@/assets/food-salad.jpg";
+
+const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
 
 interface HeroCardsProps {
   onCotiza: () => void;
@@ -22,50 +23,51 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
       <button
         type="button"
         onClick={onCotiza}
-        className="group relative overflow-hidden rounded-xl p-8 text-left transition-transform hover:scale-[1.02] active:scale-[0.99]"
-        style={{ backgroundColor: 'hsl(155, 38%, 18%)' }}
+        className="group relative overflow-hidden rounded-xl min-h-[260px] text-left transition-transform hover:scale-[1.02] active:scale-[0.99]"
       >
-        <div className="relative z-10">
-          <Calendar className="w-8 h-8 text-forest-foreground/70 mb-4" />
-          <h2 className="font-heading text-2xl font-bold text-forest-foreground mb-2">
+        <img
+          src={`${CDN}/cateringCorporativo12_a0kxxe`}
+          alt="Cotiza tu evento"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+        <div className="relative z-10 p-8 h-full flex flex-col justify-end">
+          <Calendar className="w-8 h-8 text-white/70 mb-4" />
+          <h2 className="font-heading text-2xl font-bold text-white mb-2">
             Cotiza tu evento
           </h2>
-          <p className="text-forest-foreground/70 text-sm mb-6 leading-relaxed">
+          <p className="text-white/70 text-sm mb-6 leading-relaxed">
             Dinos qué necesitas y te armamos 3 propuestas
           </p>
-          <span
-            className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
-            style={{ backgroundColor: 'hsl(38, 55%, 50%)', color: 'hsl(155, 38%, 10%)' }}
-          >
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-gold text-primary w-fit">
             Listo en 2 min
           </span>
         </div>
-        <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-forest-foreground/40 group-hover:text-forest-foreground/70 transition-colors" />
+        <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/40 group-hover:text-white/70 transition-colors z-10" />
       </button>
 
       {/* Card B — Explora el menú */}
       <button
         type="button"
         onClick={onMenu}
-        className="group relative overflow-hidden rounded-xl text-left transition-transform hover:scale-[1.02] active:scale-[0.99] border-2"
-        style={{ borderColor: 'hsl(38, 55%, 50%)', backgroundColor: 'hsl(48, 30%, 98%)' }}
+        className="group relative overflow-hidden rounded-xl min-h-[260px] text-left transition-transform hover:scale-[1.02] active:scale-[0.99] border-2 border-gold"
       >
         <img
-          src={foodSalad}
+          src={`${CDN}/Surtido-Camille-Berlioz-bocadillos2_zkkuyr`}
           alt="Explora el menú"
-          className="absolute inset-0 w-full h-full object-cover opacity-20"
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        <div className="relative z-10 p-8">
-          <Utensils className="w-8 h-8 text-forest mb-4" />
-          <h2 className="font-heading text-2xl font-bold text-forest mb-2">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
+        <div className="relative z-10 p-8 h-full flex flex-col justify-end">
+          <Utensils className="w-8 h-8 text-white mb-4" />
+          <h2 className="font-heading text-2xl font-bold text-white mb-2">
             Explora el menú
           </h2>
-          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+          <p className="text-white/70 text-sm mb-6 leading-relaxed">
             Coffee break, desayunos, comidas y más
           </p>
         </div>
-        <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-forest/40 group-hover:text-forest/70 transition-colors z-10" />
+        <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/40 group-hover:text-white/70 transition-colors z-10" />
       </button>
     </div>
   </section>

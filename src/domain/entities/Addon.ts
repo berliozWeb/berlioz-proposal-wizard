@@ -1,3 +1,5 @@
+const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
+
 export interface Addon {
   id: string;
   title: string;
@@ -5,6 +7,7 @@ export interface Addon {
   pricePerPerson: number | null; // null = custom quote
   priceLabel: string;
   isFree?: boolean;
+  image?: string;
 }
 
 export const ADDONS: Addon[] = [
@@ -14,6 +17,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Servicio continuo durante todo el evento',
     pricePerPerson: 250,
     priceLabel: '+$250/persona',
+    image: `${CDN}/coffeebreak_AM_cafe_zhxb1e`,
   },
   {
     id: 'snack_bag',
@@ -21,6 +25,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Bolsa personalizada con snacks variados',
     pricePerPerson: 140,
     priceLabel: '+$140/persona',
+    image: `${CDN}/bag-snack_zbsxe6`,
   },
   {
     id: 'tapas_logo',
@@ -28,6 +33,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Impresión desde 50 piezas · 10 días hábiles',
     pricePerPerson: null,
     priceLabel: 'Cotización especial',
+    image: `${CDN}/PersonalizacionDeCajas_br9mlr`,
   },
   {
     id: 'sticker',
@@ -43,5 +49,6 @@ export const ADDONS: Addon[] = [
     subtitle: 'Variedad de sabores naturales',
     pricePerPerson: 50,
     priceLabel: '+$50/persona',
+    image: `${CDN}/Aguas-de-sabor-Berlioz.jpg_guf7kw`,
   },
 ];

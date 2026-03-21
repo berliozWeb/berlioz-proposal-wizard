@@ -17,7 +17,7 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
     onChange({ ...form, entregasPorDia: next });
   };
 
-  const dateDisclaimer = getDateDisclaimer(form.fechaInicio);
+  const dateWarning = getDateDisclaimer(form.fechaInicio);
   const cpValid = form.codigoPostal.length === 0 || isValidMexicanCP(form.codigoPostal);
   const cpCoverage = isValidMexicanCP(form.codigoPostal) ? getCPCoverage(form.codigoPostal) : null;
 
@@ -58,9 +58,14 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
           onChange={(e) => onChange({ ...form, fechaInicio: e.target.value })}
           className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-body focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        {dateDisclaimer && (
-          <div className="mt-2 px-3 py-2 rounded-md bg-accent/10 border border-accent/20 text-sm text-foreground">
-            {dateDisclaimer}
+        {dateWarning && (
+          <div className="mt-2 px-4 py-3 rounded-lg border-l-4 text-sm text-foreground"
+            style={{
+              background: dateWarning.type === 'orange' ? '#FFF7ED' : '#FDF3E0',
+              borderColor: dateWarning.type === 'orange' ? '#EA580C' : '#C9973A',
+              borderRadius: 8,
+            }}>
+            {dateWarning.message}
           </div>
         )}
       </div>

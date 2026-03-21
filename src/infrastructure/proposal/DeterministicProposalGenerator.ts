@@ -344,24 +344,21 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
   // ── DESAYUNO ──
   private addDesayunoItems(items: PackageItem[], level: string, people: number, cafeBoxes: number, surtidoSets: number) {
     if (level === 'economico') {
-      // Esencial: sin bebidas
-      if (people >= 20) {
+      // Comedor/Desayuno Berlioz: mín 10 pzas. Use breakfast_bag if < 10
+      if (people >= 10) {
         items.push(makeItem('desayuno_berlioz', 'Desayuno Berlioz', 170, 1, people));
       } else {
         items.push(makeItem('breakfast_bag', 'Breakfast Bag (Pavo)', 250, 1, people));
       }
     } else if (level === 'balanceado') {
-      // Equilibrado: + bebidas básicas (agua Bui)
       items.push(makeItem('breakfast_roma', 'Breakfast in Roma', 290, 1, people));
       items.push(makeItem('ensalada_fruta', 'Ensalada de Fruta', 50, 1, people));
       items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
-      // >15 personas: complemento coffee break
       if (people > 15) {
         const cbAmPrice = this.cbGroupPrice('cb_am_cafe', people, 3250);
         items.push(makeItem('cb_am_cafe', 'Coffee Break AM (complemento)', cbAmPrice, 1, 1));
       }
     } else {
-      // Premium: Café/Té + aguas + producto premium
       items.push(makeItem('breakfast_montreal', 'Breakfast in Montreal (Premium)', 410, 1, people));
       items.push(makeItem('ensalada_fruta', 'Ensalada de Fruta', 50, 1, people));
       items.push(makeItem('yogurt', 'Yogurt Orgánico', 50, 1, people));
@@ -395,19 +392,18 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
   // ── WORKING LUNCH ──
   private addWorkingLunchItems(items: PackageItem[], level: string, people: number, cafeBoxes: number, _surtidoSets: number) {
     if (level === 'economico') {
-      // Esencial: sin bebidas (precio base)
-      if (people >= 20) {
+      // Mini Box: sin mínimo. Comedor: mín 10.  Box Económica: mín 20.
+      if (people >= 10) {
         items.push(makeItem('comedor', 'Comedor Berlioz', 170, 1, people));
       } else {
+        // Mini Box has NO minimum — always available
         items.push(makeItem('mini_box', 'Mini Box', 170, 1, people));
       }
     } else if (level === 'balanceado') {
-      // Equilibrado: + agua Bui incluida
       items.push(makeItem('golden_box', 'Golden Box', 330, 1, people));
       items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
       items.push(makeItem('cookies', 'Cookies', 50, 1, people));
     } else {
-      // Premium: Café/Té + aguas + producto premium
       items.push(makeItem('pink_box', 'Pink Box (pasta al pesto)', 370, 1, people));
       items.push(makeItem('cafe_te', 'Café/Té Berlioz (café caliente)', 540, 1, cafeBoxes));
       items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
@@ -469,14 +465,14 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     const items: PackageItem[] = [];
 
     if (level === 'economico') {
-      // Morning: breakfast bag or desayuno
-      if (people >= 20) {
+      // Morning: desayuno (mín 10) or bag
+      if (people >= 10) {
         items.push(makeItem('desayuno_berlioz', 'Desayuno Berlioz (mañana)', 170, 1, people));
       } else {
         items.push(makeItem('breakfast_bag', 'Breakfast Bag Pavo (mañana)', 250, 1, people));
       }
-      // Midday: comedor or mini box
-      if (people >= 20) {
+      // Midday: comedor (mín 10) or mini_box (sin mínimo)
+      if (people >= 10) {
         items.push(makeItem('comedor', 'Comedor Berlioz (mediodía)', 170, 1, people));
       } else {
         items.push(makeItem('mini_box', 'Mini Box (mediodía)', 170, 1, people));

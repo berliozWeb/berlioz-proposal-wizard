@@ -10,12 +10,14 @@ describe('BusinessRules', () => {
     it('returns saturday disclaimer for a Saturday', () => {
       // 2026-03-21 is a Saturday
       const result = getDateDisclaimer('2026-03-21');
-      expect(result).toContain('sábados');
+      expect(result).not.toBeNull();
+      expect(result!.message).toContain('Sábados');
     });
 
     it('returns sunday/holiday disclaimer for Jan 1', () => {
       const result = getDateDisclaimer('2026-01-01');
-      expect(result).toContain('festivos');
+      expect(result).not.toBeNull();
+      expect(result!.message).toContain('festivos');
     });
 
     it('returns null for normal weekday', () => {

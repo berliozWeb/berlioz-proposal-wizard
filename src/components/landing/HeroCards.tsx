@@ -16,68 +16,72 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
       <button
         type="button"
         onClick={() => { updateLastLeadPath('evento'); analytics.track('entry_point_selected', { path: 'evento' }); onCotiza(); }}
-        className="group relative overflow-hidden text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
-        style={{ height: 320, borderRadius: 16 }}
+        className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
+        style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E8E6DF', background: '#fff' }}
       >
-        <img
-          src={`${WP}/2023/03/cateringCorporativo12.jpg`}
-          alt="Cotiza tu evento"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(135deg, rgba(28,58,47,0.75) 0%, rgba(28,58,47,0.4) 100%)' }}
-        />
-        <div className="relative z-10 p-8 h-full flex flex-col justify-end">
-          <Calendar className="w-7 h-7 text-white/80 mb-4" />
-          <h2
-            className="font-heading font-bold text-white mb-2"
-            style={{ fontSize: 28 }}
-          >
-            Cotiza tu evento
-          </h2>
-          <p className="font-body text-white/85 mb-5" style={{ fontSize: 14, lineHeight: 1.6 }}>
+        {/* Image banner */}
+        <div className="relative overflow-hidden" style={{ height: 200 }}>
+          <img
+            src={`${WP}/2023/03/cateringCorporativo12.jpg`}
+            alt="Cotiza tu evento"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.15) 100%)' }} />
+        </div>
+        {/* Text content below image */}
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Calendar className="w-5 h-5 shrink-0" style={{ color: 'hsl(var(--primary))' }} />
+            <h2 className="font-heading font-bold" style={{ fontSize: 20, color: 'hsl(var(--foreground))' }}>
+              Cotiza tu evento
+            </h2>
+          </div>
+          <p className="font-body text-muted-foreground mb-4" style={{ fontSize: 14, lineHeight: 1.6 }}>
             Dinos qué necesitas y te armamos 3 propuestas
           </p>
-          <span
-            className="inline-block px-4 py-1.5 rounded-full font-body font-semibold w-fit"
-            style={{ fontSize: 12, background: '#C9973A', color: '#fff' }}
-          >
-            Listo en 2 min
-          </span>
+          <div className="flex items-center justify-between">
+            <span
+              className="inline-block px-3 py-1 rounded-full font-body font-semibold"
+              style={{ fontSize: 11, background: 'hsl(var(--gold))', color: '#fff' }}
+            >
+              Listo en 2 min
+            </span>
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+          </div>
         </div>
-        <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/40 group-hover:text-white/80 transition-colors z-10" />
       </button>
 
       {/* Card B — Explora el menú */}
       <button
         type="button"
         onClick={() => { updateLastLeadPath('menu'); analytics.track('entry_point_selected', { path: 'menu' }); onMenu(); }}
-        className="group relative overflow-hidden text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
-        style={{ height: 320, borderRadius: 16 }}
+        className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
+        style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E8E6DF', background: '#fff' }}
       >
-        <img
-          src={`${WP}/2025/08/coffeebreak_AM_cafe.jpg`}
-          alt="Explora el menú"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div
-          className="absolute inset-0"
-          style={{ background: 'linear-gradient(135deg, rgba(201,151,58,0.65) 0%, rgba(201,151,58,0.3) 100%)' }}
-        />
-        <div className="relative z-10 p-8 h-full flex flex-col justify-end">
-          <Utensils className="w-7 h-7 text-white mb-4" />
-          <h2
-            className="font-heading font-bold text-white mb-2"
-            style={{ fontSize: 28 }}
-          >
-            Explora el menú
-          </h2>
-          <p className="font-body text-white/85" style={{ fontSize: 14, lineHeight: 1.6 }}>
+        {/* Image banner */}
+        <div className="relative overflow-hidden" style={{ height: 200 }}>
+          <img
+            src={`${WP}/2025/08/coffeebreak_AM_cafe.jpg`}
+            alt="Explora el menú"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.15) 100%)' }} />
+        </div>
+        {/* Text content below image */}
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Utensils className="w-5 h-5 shrink-0" style={{ color: 'hsl(var(--gold))' }} />
+            <h2 className="font-heading font-bold" style={{ fontSize: 20, color: 'hsl(var(--foreground))' }}>
+              Explora el menú
+            </h2>
+          </div>
+          <p className="font-body text-muted-foreground mb-4" style={{ fontSize: 14, lineHeight: 1.6 }}>
             Coffee break, desayunos, comidas y más
           </p>
+          <div className="flex items-center justify-end">
+            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+          </div>
         </div>
-        <ArrowRight className="absolute bottom-6 right-6 w-5 h-5 text-white/40 group-hover:text-white/80 transition-colors z-10" />
       </button>
     </div>
   </section>

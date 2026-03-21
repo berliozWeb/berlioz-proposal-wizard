@@ -53,7 +53,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Te pasamos las medidas de la tapa',
     pricePerPerson: 10,
     priceLabel: '$10/pza',
-    image: `${WP}/2016/01/PersonalizacionDeCajas.webp`,
+    image: `${WP}/2016/01/PersonalizacionDeCajas.jpg`,
   },
   {
     id: 'aguas_frescas',

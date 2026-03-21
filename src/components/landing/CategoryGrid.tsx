@@ -14,10 +14,17 @@ const CATEGORY_DESCRIPTORS: Partial<Record<MenuCategory, string>> = {
 
 interface CategoryGridProps {
   onSelect: (cat: MenuCategory) => void;
+  isLeadComplete: boolean;
+  onIncompleteClick: () => void;
 }
 
-const CategoryGrid = ({ onSelect }: CategoryGridProps) => {
+const CategoryGrid = ({ onSelect, isLeadComplete, onIncompleteClick }: CategoryGridProps) => {
   const categories = Object.entries(MENU_CATEGORY_LABELS) as [MenuCategory, string][];
+
+  const handleSelect = (cat: MenuCategory) => {
+    if (!isLeadComplete) { onIncompleteClick(); return; }
+    onSelect(cat);
+  };
 
   return (
     <section className="max-w-6xl mx-auto px-6" style={{ paddingTop: 64, paddingBottom: 64, borderTop: '1px solid #E8E6DF' }}>
@@ -30,7 +37,7 @@ const CategoryGrid = ({ onSelect }: CategoryGridProps) => {
           <button
             key={key}
             type="button"
-            onClick={() => onSelect(key)}
+            onClick={() => handleSelect(key)}
             className="group relative overflow-hidden text-left"
             style={{ borderRadius: 16, height: 200 }}
           >

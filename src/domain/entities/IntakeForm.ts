@@ -48,7 +48,7 @@ export const DEFAULT_INTAKE: IntakeForm = {
   empresa: '',
   celular: '',
   eventType: '',
-  personas: 10,
+  personas: 0,
   codigoPostal: '',
   horarioEvento: '',
   duracionEstimada: 3,

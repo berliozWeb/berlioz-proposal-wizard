@@ -195,6 +195,11 @@ const EventTypePills = ({ selected, onSelect }: EventTypePillsProps) => {
                 </div>
 
                 {/* Diet icons */}
+                {card.diets.length > 0 && (
+                  <p className="font-body mb-1" style={{ fontSize: 11, color: '#888880' }}>
+                    También tenemos opciones:
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-1.5">
                   {card.diets.map((d) => {
                     const tag = DIET_TAGS[d];

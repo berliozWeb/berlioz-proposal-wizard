@@ -88,7 +88,7 @@
     animation: bob 1.8s ease-in-out infinite;
   }
   .animate-shake {
-    animation: shake 0.3s ease-in-out;
+    animation: shake 0.4s ease-in-out;
   }
   .lead-input {
     height: 56px;

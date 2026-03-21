@@ -48,7 +48,7 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
         style={{ height: 240 }}
       >
         <img
-          src={`${CDN}/Surtido-Camille-Berlioz-bocadillos2_zkkuyr`}
+          src={`${WP}/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg`}
           alt="Explora el menú"
           className="absolute inset-0 w-full h-full object-cover"
         />

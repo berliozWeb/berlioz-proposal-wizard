@@ -444,7 +444,24 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       items.push(makeItem('salmon_box', 'Salmon Box', 410, 1, people));
       items.push(makeItem('surtido_camille', 'Surtido Camille (gourmet)', 700, 1, surtidoSets));
       items.push(makeItem('cafe_te', 'Café/Té Berlioz (café caliente)', 540, 1, cafeBoxes));
+  }
+
+  // ── FILMACIÓN / SCOUTING (portable, no table) ──
+  private addFilmacionItems(items: PackageItem[], level: string, people: number) {
+    if (level === 'economico') {
+      items.push(makeItem('box_eco_1', 'Box Económica 1 (Torta)', 150, 1, people));
+      items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
+    } else if (level === 'balanceado') {
+      items.push(makeItem('lunch_bag', 'Lunch Bag Pasta Pollo', 250, 1, people));
+      items.push(makeItem('snack_bag', 'Snack Bag Individual', 140, 1, people));
+      items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
+    } else {
+      items.push(makeItem('breakfast_bag', 'Breakfast Bag Pavo', 250, 1, people));
+      items.push(makeItem('lunch_bag', 'Lunch Bag Ciabatta Pavo', 250, 1, people));
+      items.push(makeItem('snack_bag', 'Snack Bag Individual', 140, 1, people));
+      items.push(makeItem('cafe_frio', 'Café Frío (latte orgánico)', 60, 1, people));
     }
+  }
   }
 
   // ── FULL DAY (5+h): desayuno + comida + coffee break ──

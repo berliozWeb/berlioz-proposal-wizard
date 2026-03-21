@@ -13,7 +13,7 @@ interface LeadCaptureSectionProps {
 const FIELD_LABEL_STYLE: React.CSSProperties = {
   fontSize: 10,
   letterSpacing: '0.3em',
-  color: '#C9973A',
+  color: 'hsl(var(--gold))',
   textTransform: 'uppercase' as const,
   marginBottom: 4,
   fontFamily: 'var(--font-body)',
@@ -21,11 +21,11 @@ const FIELD_LABEL_STYLE: React.CSSProperties = {
 
 const INPUT_STYLE: React.CSSProperties = {
   border: 'none',
-  borderBottom: '2px solid #1C3A2F',
+  borderBottom: '2px solid hsl(var(--primary))',
   background: 'transparent',
   padding: '12px 4px',
   fontSize: 16,
-  color: '#1C3A2F',
+  color: 'hsl(var(--foreground))',
   outline: 'none',
   width: '100%',
   fontFamily: 'var(--font-body)',
@@ -101,7 +101,7 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
 
   const getInputStyle = (fieldName: string, value: string): React.CSSProperties => ({
     ...INPUT_STYLE,
-    borderBottomColor: focusedField === fieldName ? '#C9973A' : '#1C3A2F',
+    borderBottomColor: focusedField === fieldName ? 'hsl(var(--gold))' : 'hsl(var(--primary))',
   });
 
   const shakeClass = (value: string) =>
@@ -199,7 +199,7 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
           onClick={handleArrowClick}
           className="animate-bob bg-transparent border-none p-0 cursor-pointer transition-all duration-300"
           style={{
-            color: isComplete ? '#C9973A' : '#1C3A2F',
+            color: isComplete ? 'hsl(var(--gold))' : 'hsl(var(--primary))',
             fontSize: 24,
             lineHeight: 1,
             transform: isComplete ? 'scale(1.3)' : 'scale(1)',
@@ -209,7 +209,7 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
         </button>
 
         {!isComplete && (
-          <p className="text-center font-body" style={{ fontSize: 12, marginTop: 12, color: '#C9973A' }}>
+          <p className="text-center font-body" style={{ fontSize: 12, marginTop: 12, color: 'hsl(var(--gold))' }}>
             Completa tus datos para continuar
           </p>
         )}

@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Playfair Display', 'serif'],
-        body: ['DM Sans', 'sans-serif'],
+        heading: ['Montserrat', 'sans-serif'],
+        body: ['Montserrat', 'sans-serif'],
         mono: ['DM Mono', 'monospace'],
       },
       colors: {

@@ -61,6 +61,9 @@ const DURATION_CARDS: DurationOption[] = [
   },
 ];
 
+const NO_ADDON_VALUE = 0;
+
+
 const SUGGESTED_PRODUCTS: Record<number, { name: string; price: string; image: string }[]> = {
   1: [
     { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },

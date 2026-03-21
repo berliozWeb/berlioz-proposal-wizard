@@ -1,17 +1,16 @@
 import { MENU_CATEGORY_LABELS, type MenuCategory } from "@/domain/entities/MenuItem";
 
-const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
 const WP = 'https://berlioz.mx/wp-content/uploads';
 
 const CATEGORY_IMAGES: Partial<Record<MenuCategory, string>> = {
-  coffee_break: `${CDN}/coffeebreak_PM_qlk47d`,
-  coffee_break_surtido: `${CDN}/Surtido-Camille-Berlioz-bocadillos_paaynm`,
-  coffee_break_individual: `${CDN}/Panque-de-pera-con-chocolate-berlioz-zoom-1_qxvouv`,
-  desayuno: `${CDN}/breakfast-ROMA-e1686675516812_bzzmzm`,
-  working_lunch: `${CDN}/Pasta-al-pesto-Pink-box-Berlioz-1_ijlkbj`,
-  working_lunch_economico: `${CDN}/comedorBERLIOZ_vvm0rz`,
-  tortas: `${CDN}/piropo-surtida_efarqs`,
-  bebidas: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg.webp`,
+  coffee_break: `${WP}/2025/08/coffeebreak_PM.jpg`,
+  coffee_break_surtido: `${WP}/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg`,
+  coffee_break_individual: `${WP}/2020/03/berlioz_fabian-21-scaled.jpg`,
+  desayuno: `${WP}/2023/03/berlioz_fabian-18-scaled-e1596123929266.jpg`,
+  working_lunch: `${WP}/2023/03/cateringCorporativo12.jpg`,
+  working_lunch_economico: `${WP}/2024/11/comedorBERLIOZ.jpg`,
+  tortas: `${WP}/2021/03/piropo-surtida.jpg`,
+  bebidas: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg`,
 };
 
 interface CategoryGridProps {

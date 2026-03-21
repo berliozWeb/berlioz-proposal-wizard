@@ -61,6 +61,9 @@ const DURATION_CARDS: DurationOption[] = [
   },
 ];
 
+const NO_ADDON_VALUE = 0;
+
+
 const SUGGESTED_PRODUCTS: Record<number, { name: string; price: string; image: string }[]> = {
   1: [
     { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },
@@ -136,9 +139,37 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
           type="number"
           value={form.personas || ''}
           onChange={(e) => onChange({ ...form, personas: Number(e.target.value) || 0 })}
-          placeholder="Ej. 10"
+          placeholder="Ej. 15"
           className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-mono text-lg focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
+        {form.personas >= 1 && form.personas <= 4 && (
+          <div
+            className="mt-3 font-body"
+            style={{
+              background: '#E8F4FD',
+              borderLeft: '3px solid #378ADD',
+              borderRadius: 8,
+              padding: 12,
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: 'hsl(var(--foreground))',
+            }}
+          >
+            💡 Para grupos de 1-4 personas te recomendamos recoger tu pedido en nuestra cocina — ¡y sin costo de envío!
+            <br />
+            📍 Lago Onega 285, Col. Modelo Pensil, CDMX
+            <br />
+            <a
+              href="https://maps.google.com/?q=Lago+Onega+285,+Col.+Modelo+Pensil,+CDMX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium hover:underline"
+              style={{ color: '#378ADD', fontSize: 12, marginTop: 4, display: 'inline-block' }}
+            >
+              Ver cómo llegar →
+            </a>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground mt-1.5">
           Berlioz entrega desde 4 personas · pedido promedio: 10-15 personas
         </p>
@@ -305,10 +336,43 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
               </button>
             );
           })}
+
+          {/* Sin complementos card */}
+          <button
+            type="button"
+            onClick={() => onChange({ ...form, duracionEstimada: NO_ADDON_VALUE })}
+            className={cn(
+              "w-full flex items-center justify-center gap-3 p-4 rounded-xl transition-all text-center",
+              form.duracionEstimada === NO_ADDON_VALUE
+                ? "ring-1 ring-primary/20 bg-primary/5"
+                : "hover:border-primary/40",
+            )}
+            style={{
+              border: form.duracionEstimada === NO_ADDON_VALUE
+                ? '2px solid hsl(var(--primary))'
+                : '2px dashed #D0CFC8',
+              background: form.duracionEstimada === NO_ADDON_VALUE ? undefined : '#FAFAF8',
+            }}
+          >
+            <div className="flex-1">
+              <p className="font-body font-bold text-sm" style={{ color: '#888880' }}>
+                ✈️ Sin complementos adicionales
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#888880' }}>
+                Solo lo esencial — sin bebidas extra ni snacks
+              </p>
+            </div>
+            <div className={cn(
+              "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center",
+              form.duracionEstimada === NO_ADDON_VALUE ? "border-primary bg-primary" : "border-muted-foreground/30",
+            )}>
+              {form.duracionEstimada === NO_ADDON_VALUE && <div className="w-2 h-2 rounded-full bg-white" />}
+            </div>
+          </button>
         </div>
 
         {/* Suggested products preview */}
-        {suggestedProducts.length > 0 && (
+        {suggestedProducts.length > 0 && form.duracionEstimada !== NO_ADDON_VALUE && (
           <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs font-medium text-muted-foreground mb-2.5">
               Vista previa de productos sugeridos

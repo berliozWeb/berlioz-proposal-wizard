@@ -6,16 +6,22 @@ import { Plus } from "lucide-react";
 interface TopSellersProps {
   onAdd: (item: MenuItem) => void;
   onViewMenu: () => void;
+  isLeadComplete: boolean;
+  onIncompleteClick: () => void;
 }
 
-const TopSellers = ({ onAdd, onViewMenu }: TopSellersProps) => {
+const TopSellers = ({ onAdd, onViewMenu, isLeadComplete, onIncompleteClick }: TopSellersProps) => {
   const items = getTopSellers();
+
+  const handleViewMenu = () => {
+    if (!isLeadComplete) { onIncompleteClick(); return; }
+    onViewMenu();
+  };
 
   return (
     <section className="max-w-6xl mx-auto px-6" style={{ paddingTop: 64, paddingBottom: 64, borderTop: '1px solid #E8E6DF' }}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          {/* Gold line accent */}
           <div style={{ width: 40, height: 2, background: '#C9973A', marginBottom: 12 }} />
           <h2 className="font-heading font-bold" style={{ fontSize: 24, color: '#1C3A2F' }}>
             Lo más pedido
@@ -23,7 +29,7 @@ const TopSellers = ({ onAdd, onViewMenu }: TopSellersProps) => {
         </div>
         <button
           type="button"
-          onClick={onViewMenu}
+          onClick={handleViewMenu}
           className="font-body font-medium hover:underline"
           style={{ fontSize: 14, color: '#C9973A' }}
         >
@@ -46,7 +52,6 @@ const TopSellers = ({ onAdd, onViewMenu }: TopSellersProps) => {
               className="snap-start shrink-0 w-48 overflow-hidden group"
               style={{ borderRadius: 12, border: '1px solid #E8E6DF', background: '#fff' }}
             >
-              {/* Photo takes ~65% of card */}
               <div className="overflow-hidden" style={{ height: 180 }}>
                 {item.image ? (
                   <img

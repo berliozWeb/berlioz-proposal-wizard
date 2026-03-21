@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import RadioCard from "./RadioCard";
 import type { IntakeForm } from "@/domain/entities/IntakeForm";
-import { EVENT_TYPE_OPTIONS } from "@/domain/value-objects/EventType";
+import { EVENT_TYPE_OPTIONS, EVENT_TYPE_DESCRIPTORS } from "@/domain/value-objects/EventType";
 import { useCompanyAutocomplete } from "@/presentation/hooks/useCompanyAutocomplete";
 import { cn } from "@/lib/utils";
 
@@ -114,6 +114,7 @@ const StepEventType = ({ form, onChange }: StepEventTypeProps) => {
               key={et.value}
               icon={et.icon}
               label={et.label}
+              descriptor={EVENT_TYPE_DESCRIPTORS[et.value]}
               selected={form.eventType === et.value}
               onClick={() => onChange({ ...form, eventType: et.value })}
             />

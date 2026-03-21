@@ -1,8 +1,7 @@
 import { Calendar, Utensils, ArrowRight } from "lucide-react";
 import { analytics } from "@/lib/mixpanel";
 import { updateLastLeadPath } from "@/lib/leadStorage";
-
-const WP = 'https://berlioz.mx/wp-content/uploads';
+import { HERO_IMAGES } from "@/domain/entities/ProductImages";
 
 interface HeroCardsProps {
   onCotiza: () => void;
@@ -19,20 +18,18 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
         className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
         style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E8E6DF', background: '#fff' }}
       >
-        {/* Image banner */}
         <div className="relative overflow-hidden" style={{ height: 200 }}>
           <img
-            src={`${WP}/2023/03/cateringCorporativo12.jpg`}
+            src={HERO_IMAGES.cotiza}
             alt="Cotiza tu evento"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.15) 100%)' }} />
         </div>
-        {/* Text content below image */}
         <div className="p-6">
           <div className="flex items-center gap-3 mb-2">
-            <Calendar className="w-5 h-5 shrink-0" style={{ color: 'hsl(var(--primary))' }} />
-            <h2 className="font-heading font-bold" style={{ fontSize: 20, color: 'hsl(var(--foreground))' }}>
+            <Calendar className="w-5 h-5 shrink-0 text-primary" />
+            <h2 className="font-heading font-bold text-foreground" style={{ fontSize: 20 }}>
               Cotiza tu evento
             </h2>
           </div>
@@ -41,8 +38,8 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
           </p>
           <div className="flex items-center justify-between">
             <span
-              className="inline-block px-3 py-1 rounded-full font-body font-semibold"
-              style={{ fontSize: 11, background: 'hsl(var(--gold))', color: '#fff' }}
+              className="inline-block px-3 py-1 rounded-full font-body font-semibold text-white"
+              style={{ fontSize: 11, background: 'hsl(var(--gold))' }}
             >
               Listo en 2 min
             </span>
@@ -58,20 +55,18 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
         className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
         style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E8E6DF', background: '#fff' }}
       >
-        {/* Image banner */}
         <div className="relative overflow-hidden" style={{ height: 200 }}>
           <img
-            src={`${WP}/2025/08/coffeebreak_AM_cafe.jpg`}
+            src={HERO_IMAGES.menu}
             alt="Explora el menú"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.15) 100%)' }} />
         </div>
-        {/* Text content below image */}
         <div className="p-6">
           <div className="flex items-center gap-3 mb-2">
             <Utensils className="w-5 h-5 shrink-0" style={{ color: 'hsl(var(--gold))' }} />
-            <h2 className="font-heading font-bold" style={{ fontSize: 20, color: 'hsl(var(--foreground))' }}>
+            <h2 className="font-heading font-bold text-foreground" style={{ fontSize: 20 }}>
               Explora el menú
             </h2>
           </div>

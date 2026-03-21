@@ -1009,6 +1009,11 @@ export const MENU_CATALOG: MenuItem[] = [
   },
 ];
 
+// Override all images with Cloudinary URLs
+MENU_CATALOG.forEach((item) => {
+  item.image = getProductImage(item.id);
+});
+
 // ── Helpers ──
 
 export function getTopSellers(): MenuItem[] {

@@ -4,11 +4,10 @@ export interface Addon {
   id: string;
   title: string;
   subtitle: string;
-  pricePerPerson: number | null; // null = custom quote
+  pricePerPerson: number | null;
   priceLabel: string;
   isFree?: boolean;
   image?: string;
-  /** If true, this addon has special interactive logic in AddonsBar */
   isInteractive?: boolean;
 }
 
@@ -19,7 +18,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Caja con café o agua para té (12 tazas). Precio fijo por unidad.',
     pricePerPerson: null,
     priceLabel: '$540/caja',
-    image: `${WP}/2015/01/17.jpg`,
+    image: ADDON_IMAGES.cafe_te_berlioz,
     isInteractive: true,
   },
   {
@@ -28,7 +27,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Bolsita individual de break',
     pricePerPerson: 140,
     priceLabel: '+$140/pza',
-    image: `${WP}/2023/12/bag-snack.jpg`,
+    image: ADDON_IMAGES.snack_bag,
   },
   {
     id: 'surtido_snacks',
@@ -44,7 +43,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Personaliza tus cajas con tu marca (mín. 50 pzas)',
     pricePerPerson: null,
     priceLabel: 'Desde $10/pza',
-    image: `${WP}/2016/01/PersonalizacionDeCajas.jpg`,
+    image: ADDON_IMAGES.logo_caja,
     isInteractive: true,
   },
   {
@@ -53,7 +52,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Te pasamos las medidas de la tapa',
     pricePerPerson: 10,
     priceLabel: '$10/pza',
-    image: `${WP}/2016/01/PersonalizacionDeCajas.jpg`,
+    image: ADDON_IMAGES.sticker,
   },
   {
     id: 'aguas_frescas',
@@ -61,7 +60,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Jamaica, limón con menta, coco, temporada',
     pricePerPerson: 45,
     priceLabel: '+$45/pza',
-    image: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg`,
+    image: ADDON_IMAGES.aguas_frescas,
   },
   {
     id: 'personal_servicio',

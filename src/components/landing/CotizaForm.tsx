@@ -6,7 +6,7 @@ import {
   getDurationNote,
   isValidMexicanCP,
   getCPCoverage,
-  PRICE_DISCLAIMER,
+  getTrafficAlert,
   TIME_SLOTS,
   calcSuggestedDelivery,
   getTimeWarnings,
@@ -24,26 +24,24 @@ interface CotizaFormProps {
 const DURATION_OPTIONS = [1, 2, 3, 4, 5, 6] as const;
 
 const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormProps) => {
-  const dateDisclaimer = getDateDisclaimer(form.fechaInicio);
+  const dateWarning = getDateDisclaimer(form.fechaInicio);
   const cutoffWarning = getCutoffWarning(form.fechaInicio);
   const durationNote = getDurationNote(form.duracionEstimada);
   const cpValid = form.codigoPostal.length === 0 || isValidMexicanCP(form.codigoPostal);
   const cpCoverage = isValidMexicanCP(form.codigoPostal) ? getCPCoverage(form.codigoPostal) : null;
 
   const suggestedDelivery = calcSuggestedDelivery(form.horarioEvento);
+  const deliveryTime = form.horasEntrega[0] || suggestedDelivery;
+  const trafficAlert = getTrafficAlert(deliveryTime, form.codigoPostal);
 
-  // Filter delivery time slots: only before or at event time
   const availableTimeSlots = form.horarioEvento
     ? TIME_SLOTS.filter((t) => t <= form.horarioEvento)
     : TIME_SLOTS;
 
-  const deliveryWarnings = getTimeWarnings(
-    form.horasEntrega[0] || suggestedDelivery,
-    form.eventType,
-    form.fechaInicio,
-  );
+  const deliveryWarnings = getTimeWarnings(deliveryTime, form.eventType, form.fechaInicio);
 
-  // Auto-set suggested delivery when event time changes
+  const isBlocked = cutoffWarning?.blockSubmit === true;
+
   const handleEventTimeChange = (time: string) => {
     const suggested = calcSuggestedDelivery(time);
     onChange({
@@ -107,10 +105,10 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
           <p className="text-xs text-destructive mt-1">Ingresa un código postal válido de 5 dígitos</p>
         )}
         {cpCoverage?.type === 'cdmx' && (
-          <p className="text-xs text-emerald-600 mt-1.5 font-medium">{cpCoverage.message}</p>
+          <p className="text-xs mt-1.5 font-medium" style={{ color: '#16a34a' }}>{cpCoverage.message}</p>
         )}
         {cpCoverage?.type === 'outside' && (
-          <div className="mt-2 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 text-xs text-foreground leading-relaxed">
+          <div className="mt-2 px-3 py-2 rounded-md text-xs text-foreground leading-relaxed" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
             {cpCoverage.message}
           </div>
         )}
@@ -127,26 +125,27 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
           onChange={(e) => onChange({ ...form, fechaInicio: e.target.value })}
           className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-body focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        {dateDisclaimer && (
-          <div className="mt-2 px-3 py-2 rounded-md bg-accent/10 border border-accent/20 text-sm text-foreground">
-            {dateDisclaimer}
+        {/* Weekend/holiday warning */}
+        {dateWarning && (
+          <div className="mt-2 px-4 py-3 rounded-lg border-l-4 text-sm text-foreground"
+            style={{
+              background: dateWarning.type === 'orange' ? '#FFF7ED' : '#FDF3E0',
+              borderColor: dateWarning.type === 'orange' ? '#EA580C' : '#C9973A',
+              borderRadius: 8,
+            }}>
+            {dateWarning.message}
           </div>
         )}
+        {/* Cutoff: red block */}
         {cutoffWarning?.type === 'red' && (
           <div className="mt-2 px-4 py-3 rounded-lg border-l-4 text-sm text-foreground"
-            style={{ background: '#FEE2E2', borderColor: '#DC2626' }}>
-            {cutoffWarning.message}
-          </div>
-        )}
-        {cutoffWarning?.type === 'yellow' && (
-          <div className="mt-2 px-4 py-3 rounded-lg border-l-4 text-sm text-foreground"
-            style={{ background: '#FDF3E0', borderColor: '#C9973A', borderRadius: 8 }}>
+            style={{ background: '#FEE2E2', borderColor: '#DC2626', borderRadius: 8 }}>
             {cutoffWarning.message}
           </div>
         )}
       </div>
 
-      {/* ═══ Horario del evento (30-min time picker) ═══ */}
+      {/* ═══ Horario del evento ═══ */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
           Horario del evento
@@ -167,10 +166,10 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
       {form.horarioEvento && (
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Hora de entrega — <span className="font-mono text-accent">{form.horasEntrega[0] || suggestedDelivery}</span>
+            Hora de entrega — <span className="font-mono text-accent">{deliveryTime}</span>
           </label>
           <select
-            value={form.horasEntrega[0] || suggestedDelivery}
+            value={deliveryTime}
             onChange={(e) => onChange({ ...form, horasEntrega: [e.target.value] })}
             className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-ring"
           >
@@ -184,10 +183,14 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
             Recomendamos 90 min de anticipación para garantizar tu entrega antes de que lleguen tus invitados
           </p>
           {deliveryWarnings.map((w, i) => (
-            <p key={i} className="text-xs text-amber-600 mt-1 font-medium">⚠️ {w}</p>
+            <p key={i} className="text-xs mt-1 font-medium" style={{ color: '#d97706' }}>⚠️ {w}</p>
           ))}
-
-          {/* Reception checkbox */}
+          {/* Traffic alert CDMX */}
+          {trafficAlert && (
+            <div className="mt-2 px-3 py-2 rounded-md text-xs text-foreground leading-relaxed" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8 }}>
+              {trafficAlert}
+            </div>
+          )}
           <label className="flex items-center gap-2 mt-3 cursor-pointer">
             <input
               type="checkbox"
@@ -332,7 +335,7 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
         <button
           type="button"
           onClick={onSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || isBlocked}
           className="flex-1 px-6 py-3 rounded-lg bg-forest text-forest-foreground font-body font-semibold transition-all hover:bg-forest/90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Generar propuesta →

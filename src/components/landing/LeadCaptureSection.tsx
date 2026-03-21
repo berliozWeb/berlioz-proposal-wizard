@@ -125,6 +125,7 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
           <div style={FIELD_LABEL_STYLE}>Nombre</div>
           <input
             ref={nombreRef}
+            id="lead-nombre-input"
             type="text"
             value={nombre}
             onChange={(e) => onUpdate('nombre', e.target.value)}

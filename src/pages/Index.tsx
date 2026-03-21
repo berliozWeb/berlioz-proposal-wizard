@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import MinimalHeader from "@/components/landing/MinimalHeader";
 import LeadCaptureSection from "@/components/landing/LeadCaptureSection";
 import HeroCards from "@/components/landing/HeroCards";
@@ -15,6 +16,17 @@ const Index = () => {
     p.state.nombre.trim().length >= 2 &&
     p.state.empresa.trim().length >= 2 &&
     p.state.celular.trim().length >= 2;
+
+  const handleIncompleteClick = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Small delay to let scroll start, then focus + trigger shake
+    setTimeout(() => {
+      const nombreInput = document.getElementById('lead-nombre-input') as HTMLInputElement | null;
+      nombreInput?.focus();
+      // Dispatch a custom event the LeadCaptureSection listens to
+      window.dispatchEvent(new CustomEvent('berlioz:shake-lead'));
+    }, 300);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,27 +56,24 @@ const Index = () => {
             isComplete={isLeadComplete}
           />
 
-          {/* Entry points — no opacity dimming, only pointer-events gate */}
-          <div
-            id="entry-points"
-            className="transition-all duration-400 ease-in-out"
-            style={{
-              pointerEvents: isLeadComplete ? 'auto' : 'none',
-              cursor: isLeadComplete ? undefined : 'not-allowed',
-            }}
-          >
-            <HeroCards onCotiza={p.goToCotiza} onMenu={p.goToMenu} />
-            <TopSellers onAdd={p.addToCart} onViewMenu={p.goToMenu} />
-          </div>
-          <div
-            className="transition-all duration-400 ease-in-out"
-            style={{
-              pointerEvents: isLeadComplete ? 'auto' : 'none',
-              cursor: isLeadComplete ? undefined : 'not-allowed',
-            }}
-          >
-            <CategoryGrid onSelect={(cat) => { p.setCategory(cat); p.goToMenu(); }} />
-          </div>
+          {/* Entry points */}
+          <HeroCards
+            onCotiza={p.goToCotiza}
+            onMenu={p.goToMenu}
+            isLeadComplete={isLeadComplete}
+            onIncompleteClick={handleIncompleteClick}
+          />
+          <TopSellers
+            onAdd={p.addToCart}
+            onViewMenu={p.goToMenu}
+            isLeadComplete={isLeadComplete}
+            onIncompleteClick={handleIncompleteClick}
+          />
+          <CategoryGrid
+            onSelect={(cat) => { p.setCategory(cat); p.goToMenu(); }}
+            isLeadComplete={isLeadComplete}
+            onIncompleteClick={handleIncompleteClick}
+          />
         </>
       )}
 

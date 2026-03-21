@@ -101,7 +101,7 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
 
   const getInputStyle = (fieldName: string, value: string): React.CSSProperties => ({
     ...INPUT_STYLE,
-    borderBottomColor: focusedField === fieldName ? '#C9973A' : '#1C3A2F',
+    borderBottomColor: focusedField === fieldName ? 'hsl(var(--gold))' : 'hsl(var(--primary))',
   });
 
   const shakeClass = (value: string) =>

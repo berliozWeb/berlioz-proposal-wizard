@@ -4,10 +4,17 @@ import type { Proposal, Package, PackageItem } from '@/domain/entities/Proposal'
 import type { AgentState } from '@/domain/entities/AgentState';
 import { EVENT_TYPE_LABELS, type EventType } from '@/domain/value-objects/EventType';
 import {
-  BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_PER_TRIP,
-  getDeliveryCount, getDurationBlock, getBudgetTiers,
+  BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_BASE,
+  getDeliveryCount, getDurationBlock, getBudgetTiers, AGENT_RULES,
 } from '@/domain/shared/BusinessRules';
 import { calculateIVA, roundCents } from '@/domain/value-objects/Money';
+import { MENU_CATALOG, getGroupPrice } from '@/domain/entities/MenuCatalog';
+import type { MenuItem } from '@/domain/entities/MenuItem';
+
+// ═══════════════════════════════════════════════════════════
+// REAL CATALOG-BASED PROPOSAL GENERATOR
+// Uses only products from Berlioz's official WooCommerce store
+// ═══════════════════════════════════════════════════════════
 
 export class DeterministicProposalGenerator implements IProposalGenerator {
   generate(form: IntakeForm): Proposal {
@@ -15,14 +22,13 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     const deliveries = getDeliveryCount(
       form.esMultiDia, form.entregasPorDia, form.horasEntrega, form.fechaInicio, form.fechaFin,
     );
-    const deliveryFee = DELIVERY_FEE_PER_TRIP * deliveries;
+    const deliveryFee = DELIVERY_FEE_BASE * deliveries;
     const eventLabel = EVENT_TYPE_LABELS[form.eventType as EventType] || 'Evento';
     const durationBlock = getDurationBlock(form.duracionEstimada);
 
     let packages: Package[];
 
     if (form.tienePresupuesto && form.presupuestoPorPersona > 0) {
-      // Rule 2: Budget-based 3 tiers
       const tiers = getBudgetTiers(form.presupuestoPorPersona);
       packages = [
         this.buildBudgetPackage('basico', 'Opción ajustada', 'Dentro de tu presupuesto',
@@ -30,16 +36,15 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
           ['Dentro del presupuesto indicado', 'Menú cuidadosamente seleccionado', 'Calidad Berlioz garantizada'],
           form.eventType, tiers.adjusted, numPeople, deliveryFee, durationBlock),
         this.buildBudgetPackage('recomendado', 'Opción recomendada', 'Un paso más en experiencia',
-          'Nuestra recomendación: invierte un poco más por persona y eleva notablemente la experiencia gastronómica de tu equipo.',
-          ['Mejor variedad y presentación', 'Incluye elementos premium', 'La opción más elegida por nuestros clientes'],
+          'Nuestra recomendación: invierte un poco más por persona y eleva notablemente la experiencia.',
+          ['Mejor variedad y presentación', 'Incluye elementos premium', 'La opción más elegida'],
           form.eventType, tiers.recommended, numPeople, deliveryFee, durationBlock),
         this.buildBudgetPackage('premium', 'Opción completa', 'La experiencia completa',
-          'Una experiencia gastronómica integral con ingredientes premium y servicio completo. Para cuando quieres impresionar.',
+          'Una experiencia gastronómica integral con ingredientes premium y servicio completo.',
           ['Opciones gourmet y artesanales', 'Servicio completo de bebidas', 'Presentación de primer nivel'],
           form.eventType, tiers.complete, numPeople, deliveryFee, durationBlock),
       ];
     } else {
-      // Default 3 packages
       packages = [
         this.buildPackage('basico', 'Esencial', 'Lo necesario, bien ejecutado',
           `Un servicio funcional y confiable para ${numPeople} personas.`,
@@ -47,11 +52,11 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
           form.eventType, 'economico', numPeople, deliveryFee, durationBlock),
         this.buildPackage('recomendado', 'Equilibrado', 'La experiencia que tu equipo merece',
           'Nuestro paquete más popular combina sabor, presentación y valor.',
-          ['Variedad de opciones por persona', 'Incluye bebidas y snacks', 'Presentación profesional premium'],
+          ['Variedad de opciones', 'Incluye bebidas', 'Presentación profesional premium'],
           form.eventType, 'balanceado', numPeople, deliveryFee, durationBlock),
         this.buildPackage('premium', 'Experiencia Completa', 'Cada detalle cuenta',
           'Una experiencia gastronómica integral con los mejores ingredientes.',
-          ['Opciones gourmet y artesanales', 'Servicio completo de bebidas', 'Postres y snacks premium incluidos'],
+          ['Opciones gourmet y artesanales', 'Servicio completo de bebidas', 'Postres y snacks premium'],
           form.eventType, 'premium', numPeople, deliveryFee, durationBlock),
       ];
     }
@@ -95,7 +100,7 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       onAgentUpdate([...agents]);
     };
 
-    // Discovery agent — Rule 3: duration determines product block
+    // Discovery
     update(0, 'running', 'Analizando tipo de evento...');
     await delay(800);
     update(0, 'running', `Evento: ${eventLabel}`);
@@ -110,39 +115,37 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       update(0, 'running', '🍽️ Evento largo → paquete completo de alimentos');
     }
     await delay(500);
-    if (form.codigoPostal) {
-      update(0, 'running', `CP: ${form.codigoPostal} — verificando cobertura`);
-      await delay(400);
-    }
+    update(0, 'running', `Reglas del agente: ${AGENT_RULES.length} reglas cargadas`);
+    await delay(400);
     update(0, 'done', 'Análisis completado ✓');
 
-    // Menu agent
-    update(1, 'running', 'Consultando catálogo Berlioz...');
+    // Menu
+    update(1, 'running', 'Consultando catálogo real Berlioz (WooCommerce)...');
     await delay(700);
+    update(1, 'running', `${MENU_CATALOG.length} productos en catálogo`);
+    await delay(400);
     if (hasBudget) {
       update(1, 'running', `Presupuesto: $${form.presupuestoPorPersona}/persona`);
       await delay(500);
       update(1, 'running', 'Generando 3 opciones: ajustada, recomendada y completa');
     } else {
-      update(1, 'running', 'Seleccionando 3 paquetes estándar');
+      update(1, 'running', 'Seleccionando 3 paquetes estándar del catálogo real');
     }
     await delay(600);
     update(1, 'done', 'Menús seleccionados ✓');
 
-    // Pricing agent
-    update(2, 'running', 'Calculando precios unitarios...');
+    // Pricing
+    update(2, 'running', 'Calculando precios con catálogo real...');
     await delay(600);
-    update(2, 'running', 'Aplicando reglas de negocio...');
-    await delay(500);
-    update(2, 'running', 'Precios excluyen IVA, envío y recargos');
+    update(2, 'running', 'Coffee Breaks → precio grupal (NO por persona)');
+    await delay(400);
+    update(2, 'running', `Envío: $${DELIVERY_FEE_BASE}/entrega. IVA 16% adicional.`);
     await delay(400);
     update(2, 'done', 'Precios calculados ✓');
 
-    // Writer agent
+    // Writer
     update(3, 'running', 'Escribiendo propuesta comercial...');
     await delay(900);
-    update(3, 'running', 'Personalizando narrativas...');
-    await delay(700);
     update(3, 'done', 'Propuesta lista ✓');
 
     return this.generate(form);
@@ -158,9 +161,7 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     const iva = calculateIVA(subtotal);
     return {
       id, displayName, tagline, narrative, highlights, items,
-      subtotalBeforeIVA: subtotal,
-      iva,
-      deliveryFee,
+      subtotalBeforeIVA: subtotal, iva, deliveryFee,
       total: roundCents(subtotal + iva),
       pricePerPerson: roundCents((subtotal + iva) / people),
     };
@@ -171,123 +172,139 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     highlights: string[], eventType: string, targetPricePerPerson: number,
     people: number, deliveryFee: number, durationBlock: string,
   ): Package {
-    // Use the target price per person to select appropriate items
-    const level = targetPricePerPerson <= 180 ? 'economico' : targetPricePerPerson <= 300 ? 'balanceado' : 'premium';
-    const items = this.getItemsForLevel(eventType, level, people, durationBlock);
-    const subtotal = items.reduce((s, i) => s + i.subtotal, 0) + deliveryFee;
-    const iva = calculateIVA(subtotal);
-    return {
-      id, displayName, tagline, narrative, highlights, items,
-      subtotalBeforeIVA: subtotal,
-      iva,
-      deliveryFee,
-      total: roundCents(subtotal + iva),
-      pricePerPerson: roundCents((subtotal + iva) / people),
-    };
+    const level = targetPricePerPerson <= 200 ? 'economico' : targetPricePerPerson <= 350 ? 'balanceado' : 'premium';
+    return this.buildPackage(id, displayName, tagline, narrative, highlights, eventType, level, people, deliveryFee, durationBlock);
+  }
+
+  private findItem(id: string): MenuItem | undefined {
+    return MENU_CATALOG.find(m => m.id === id);
   }
 
   private getItemsForLevel(eventType: string, level: string, people: number, durationBlock: string): PackageItem[] {
     const items: PackageItem[] = [];
 
-    // Rule 3: Duration < 2h → beverages only
+    // ── BEVERAGES ONLY (<2h) ──
     if (durationBlock === 'beverages_only') {
-      // Minimum: 2 drinks per person (café + agua)
-      items.push(makeItem('CA', 'Café de especialidad', 35, 1, people));
-      items.push(makeItem('AG', 'Agua natural', 25, 1, people));
+      items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
       if (level === 'balanceado' || level === 'premium') {
-        items.push(makeItem('TE', 'Té selección', 30, 1, people));
+        items.push(makeItem('agua_jamaica', 'Agua de Jamaica', 45, 1, people));
       }
       if (level === 'premium') {
-        items.push(makeItem('JU', 'Jugo natural', 45, 1, people));
+        items.push(makeItem('jugo_naranja', 'Jugo de Naranja (JUS Orgánico)', 60, 1, people));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       }
       return items;
     }
 
-    // Rule 3: Duration 2-3h → beverages + snacks
+    // ── BEVERAGES + SNACKS (2-3h) ──
     if (durationBlock === 'beverages_snacks') {
-      items.push(makeItem('CA', 'Café de especialidad', 35, 1, people));
-      items.push(makeItem('AG', 'Agua natural', 25, 1, people));
+      items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
       if (level === 'economico') {
-        items.push(makeItem('SN', 'Surtido de Snacks', 300, 1, Math.ceil(people / 7)));
+        items.push(makeItem('surtido_snacks', 'Surtido de Snacks', 300, 1, Math.ceil(people / 7)));
       } else if (level === 'balanceado') {
-        items.push(makeItem('SC', 'Surtido Colette', 450, 1, Math.ceil(people / 7)));
+        items.push(makeItem('surtido_colette', 'Surtido Colette (pan dulce francés)', 450, 1, Math.ceil(people / 7)));
+        items.push(makeItem('agua_jamaica', 'Agua de Jamaica', 45, 1, people));
       } else {
-        items.push(makeItem('SV', 'Surtido Voltaire (bocadillos gourmet)', 750, 1, Math.ceil(people / 7)));
+        items.push(makeItem('surtido_camille', 'Surtido Camille (bocadillos gourmet)', 700, 1, Math.ceil(people / 7)));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       }
       return items;
     }
 
-    // Rule 3: Duration > 3h → full food package
-    // Original logic for full food, adapted by event type
-
+    // ── FULL FOOD (>3h) ──
     if (eventType === 'desayuno' || eventType === 'capacitacion') {
       if (level === 'economico') {
-        items.push(makeItem('30', 'Desayuno Berlioz', 170, 1, people));
+        if (people >= 20) {
+          items.push(makeItem('desayuno_berlioz', 'Desayuno Berlioz', 170, 1, people));
+        } else {
+          items.push(makeItem('breakfast_bag', 'Breakfast Bag (Pavo)', 250, 1, people));
+        }
+        items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
       } else if (level === 'balanceado') {
-        items.push(makeItem('BR', 'Breakfast in Roma', 290, 1, people));
-        items.push(makeItem('FI', 'Ensalada de fruta fresca', 50, 1, people));
+        items.push(makeItem('breakfast_roma', 'Breakfast in Roma', 290, 1, people));
+        items.push(makeItem('ensalada_fruta', 'Ensalada de Fruta', 50, 1, people));
+        items.push(makeItem('agua_jamaica', 'Agua de Jamaica', 45, 1, people));
       } else {
-        items.push(makeItem('BM', 'Breakfast in Montreal (premium)', 410, 1, people));
-        items.push(makeItem('FI', 'Ensalada de fruta fresca', 50, 1, people));
-        items.push(makeItem('YO', 'Yogurt orgánico', 50, 1, people));
+        items.push(makeItem('breakfast_montreal', 'Breakfast in Montreal (Premium)', 410, 1, people));
+        items.push(makeItem('ensalada_fruta', 'Ensalada de Fruta', 50, 1, people));
+        items.push(makeItem('yogurt', 'Yogurt Orgánico', 50, 1, people));
+        items.push(makeItem('jugo_naranja', 'Jugo de Naranja (JUS Orgánico)', 60, 1, people));
       }
     }
 
     if (eventType === 'coffee_break') {
-      const sets = Math.ceil(people / 4);
+      // Group pricing for coffee breaks
+      const cbAm = this.findItem('cb_am_cafe');
+      const cbPm = this.findItem('cb_pm');
       if (level === 'economico') {
-        items.push(makeItem('CBA', 'Coffee Break AM (café)', 1440, 1, sets));
+        const price = cbPm ? getGroupPrice(cbPm, people) : 2800;
+        items.push(makeItem('cb_pm', 'Coffee Break PM', price, 1, 1));
       } else if (level === 'balanceado') {
-        items.push(makeItem('CBA', 'Coffee Break AM (café)', 1440, 1, sets));
-        items.push(makeItem('SC', 'Surtido Colette', 450, 1, Math.ceil(people / 7)));
+        const price = cbAm ? getGroupPrice(cbAm, people) : 3250;
+        items.push(makeItem('cb_am_cafe', 'Coffee Break AM - Café', price, 1, 1));
+        items.push(makeItem('surtido_snacks', 'Surtido de Snacks', 300, 1, Math.ceil(people / 7)));
       } else {
-        items.push(makeItem('CBA', 'Coffee Break AM (café)', 1440, 1, sets));
-        items.push(makeItem('SV', 'Surtido Voltaire (bocadillos gourmet)', 750, 1, Math.ceil(people / 7)));
-        items.push(makeItem('SZ', 'Surtido Zadig (postres)', 400, 1, Math.ceil(people / 7)));
+        const price = cbAm ? getGroupPrice(cbAm, people) : 3250;
+        items.push(makeItem('cb_am_cafe', 'Coffee Break AM - Café', price, 1, 1));
+        items.push(makeItem('surtido_camille', 'Surtido Camille (bocadillos gourmet)', 700, 1, Math.ceil(people / 7)));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       }
     }
 
     if (eventType === 'comida' || eventType === 'evento_especial') {
       if (level === 'economico') {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
+        if (people >= 20) {
+          items.push(makeItem('comedor', 'Comedor Berlioz', 170, 1, people));
+        } else {
+          items.push(makeItem('box_eco_2', 'Box Económica 2', 170, 1, people));
+        }
+        items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
       } else if (level === 'balanceado') {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
-        items.push(makeItem('PQ', 'Panqué artesanal', 50, 1, people));
-        items.push(makeItem('RF', 'Refresco/Agua', 50, 1, people));
+        items.push(makeItem('black_box', 'Black Box', 330, 1, people));
+        items.push(makeItem('agua_jamaica', 'Agua de Jamaica', 45, 1, people));
+        items.push(makeItem('cookies', 'Cookies', 50, 1, people));
       } else {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
-        items.push(makeItem('SC', 'Surtido Camille (bocadillos gourmet)', 700, 1, Math.ceil(people / 7)));
-        items.push(makeItem('PA', 'Paleta de hielo artesanal', 45, 1, people));
-        items.push(makeItem('33', 'Servicio café/té/agua 24hrs', 250, 1, people));
+        items.push(makeItem('pink_box', 'Pink Box (pasta al pesto)', 370, 1, people));
+        items.push(makeItem('surtido_camille', 'Surtido Camille (bocadillos gourmet)', 700, 1, Math.ceil(people / 7)));
+        items.push(makeItem('paleta', 'Paleta de Hielo', 45, 1, people));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       }
     }
 
     if (eventType === 'capacitacion') {
+      // Already handled desayuno above; add lunch items
       if (level === 'economico') {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
-        items.push(makeItem('33', 'Servicio café/té/agua', 250, 1, people));
+        if (people >= 20) {
+          items.push(makeItem('comedor', 'Comedor Berlioz (comida)', 170, 1, people));
+        }
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       } else if (level === 'balanceado') {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
-        items.push(makeItem('33', 'Servicio café/té/agua', 250, 1, people));
-        items.push(makeItem('SN', 'Surtido de Snacks', 300, 1, Math.ceil(people / 7)));
+        items.push(makeItem('golden_box', 'Golden Box (comida)', 330, 1, people));
+        items.push(makeItem('surtido_snacks', 'Surtido de Snacks', 300, 1, Math.ceil(people / 7)));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       } else {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
-        items.push(makeItem('33', 'Servicio café/té/agua', 250, 1, people));
-        items.push(makeItem('SV', 'Surtido Voltaire', 750, 1, Math.ceil(people / 7)));
-        items.push(makeItem('PA', 'Paleta de hielo artesanal', 45, 1, people));
+        items.push(makeItem('pink_box', 'Pink Box (comida)', 370, 1, people));
+        items.push(makeItem('surtido_voltaire', 'Surtido Voltaire (bocadillos)', 750, 1, Math.ceil(people / 7)));
+        items.push(makeItem('paleta', 'Paleta de Hielo', 45, 1, people));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       }
     }
 
     if (eventType === 'otro') {
       if (level === 'economico') {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
+        if (people >= 20) {
+          items.push(makeItem('comedor', 'Comedor Berlioz', 170, 1, people));
+        } else {
+          items.push(makeItem('mini_box', 'Mini Box', 170, 1, people));
+        }
+        items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
       } else if (level === 'balanceado') {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
-        items.push(makeItem('33', 'Servicio café/té/agua', 250, 1, people));
+        items.push(makeItem('black_box', 'Black Box', 330, 1, people));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       } else {
-        items.push(makeItem('31', 'Comedor Berlioz', 170, 1, people));
-        items.push(makeItem('33', 'Servicio café/té/agua', 250, 1, people));
-        items.push(makeItem('SC', 'Surtido Camille (gourmet)', 700, 1, Math.ceil(people / 7)));
+        items.push(makeItem('salmon_box', 'Salmon Box', 410, 1, people));
+        items.push(makeItem('surtido_camille', 'Surtido Camille (gourmet)', 700, 1, Math.ceil(people / 7)));
+        items.push(makeItem('cafe_te', 'Café/Té Berlioz (caja 12 tazas)', 540, 1, Math.ceil(people / 12)));
       }
     }
 

@@ -48,6 +48,16 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
   const celularRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Listen for external shake trigger (from incomplete clicks elsewhere)
+  useEffect(() => {
+    const handler = () => {
+      setShaking(true);
+      setTimeout(() => setShaking(false), 400);
+    };
+    window.addEventListener('berlioz:shake-lead', handler);
+    return () => window.removeEventListener('berlioz:shake-lead', handler);
+  }, []);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {

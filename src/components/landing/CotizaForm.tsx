@@ -336,10 +336,43 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
               </button>
             );
           })}
+
+          {/* Sin complementos card */}
+          <button
+            type="button"
+            onClick={() => onChange({ ...form, duracionEstimada: NO_ADDON_VALUE })}
+            className={cn(
+              "w-full flex items-center justify-center gap-3 p-4 rounded-xl transition-all text-center",
+              form.duracionEstimada === NO_ADDON_VALUE
+                ? "ring-1 ring-primary/20 bg-primary/5"
+                : "hover:border-primary/40",
+            )}
+            style={{
+              border: form.duracionEstimada === NO_ADDON_VALUE
+                ? '2px solid hsl(var(--primary))'
+                : '2px dashed #D0CFC8',
+              background: form.duracionEstimada === NO_ADDON_VALUE ? undefined : '#FAFAF8',
+            }}
+          >
+            <div className="flex-1">
+              <p className="font-body font-bold text-sm" style={{ color: '#888880' }}>
+                ✈️ Sin complementos adicionales
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#888880' }}>
+                Solo lo esencial — sin bebidas extra ni snacks
+              </p>
+            </div>
+            <div className={cn(
+              "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center",
+              form.duracionEstimada === NO_ADDON_VALUE ? "border-primary bg-primary" : "border-muted-foreground/30",
+            )}>
+              {form.duracionEstimada === NO_ADDON_VALUE && <div className="w-2 h-2 rounded-full bg-white" />}
+            </div>
+          </button>
         </div>
 
         {/* Suggested products preview */}
-        {suggestedProducts.length > 0 && (
+        {suggestedProducts.length > 0 && form.duracionEstimada !== NO_ADDON_VALUE && (
           <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
             <p className="text-xs font-medium text-muted-foreground mb-2.5">
               Vista previa de productos sugeridos

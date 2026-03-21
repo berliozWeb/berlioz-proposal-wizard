@@ -162,7 +162,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       } else if (form.eventType === 'capacitacion') {
         update(1, 'running', '🎓 Capacitación → desayuno + comida + coffee breaks');
       } else if (form.eventType === 'evento_especial') {
-        update(1, 'running', '🎉 Evento especial → boxes premium + surtidos + bebidas');
+        update(1, 'running', '🎉 Reunión ejecutiva → boxes premium + surtidos + bebidas');
+      } else if (form.eventType === 'filmacion') {
+        update(1, 'running', '🎬 Filmación → bags portables, sin mesa, fácil de comer');
       }
     }
     await delay(500);

@@ -23,19 +23,19 @@ const Index = () => {
       {p.state.path === 'landing' && (
         <>
           {/* Hero headline */}
-          <section className="max-w-6xl mx-auto px-4 pt-12 pb-2 text-center">
+          <section className="max-w-6xl mx-auto px-6 text-center" style={{ paddingTop: 64, paddingBottom: 8 }}>
             <h1
-              className="font-heading font-bold text-foreground tracking-tight"
-              style={{ fontSize: 'clamp(2.2rem, 5vw, 3.8rem)' }}
+              className="font-heading font-bold"
+              style={{ fontSize: 'clamp(2.8rem, 6vw, 4.5rem)', color: '#1C3A2F' }}
             >
-              ¿Qué hacemos hoy?
+              ¿Qué se te antoja hoy?
             </h1>
-             <p className="text-muted-foreground mt-3 text-base">
-               ¡Entregando desde 2015 comida fantástica!
+            <p className="font-body mt-4" style={{ fontSize: 16, color: '#C9973A', letterSpacing: '0.08em' }}>
+              Desayuno · Coffee Break · Working Lunch · Ciudad de México
             </p>
           </section>
 
-          {/* Lead capture between headline and cards */}
+          {/* Lead capture */}
           <LeadCaptureSection
             nombre={p.state.nombre}
             empresa={p.state.empresa}
@@ -44,13 +44,13 @@ const Index = () => {
             isComplete={isLeadComplete}
           />
 
-          {/* Entry points + rest of landing */}
+          {/* Entry points — no opacity dimming, only pointer-events gate */}
           <div
             id="entry-points"
             className="transition-all duration-400 ease-in-out"
             style={{
-              opacity: isLeadComplete ? 1 : 0.4,
               pointerEvents: isLeadComplete ? 'auto' : 'none',
+              cursor: isLeadComplete ? undefined : 'not-allowed',
             }}
           >
             <HeroCards onCotiza={p.goToCotiza} onMenu={p.goToMenu} />
@@ -59,8 +59,8 @@ const Index = () => {
           <div
             className="transition-all duration-400 ease-in-out"
             style={{
-              opacity: isLeadComplete ? 1 : 0.4,
               pointerEvents: isLeadComplete ? 'auto' : 'none',
+              cursor: isLeadComplete ? undefined : 'not-allowed',
             }}
           >
             <CategoryGrid onSelect={(cat) => { p.setCategory(cat); p.goToMenu(); }} />
@@ -85,11 +85,12 @@ const Index = () => {
           )}
           {!p.state.eventType && (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Selecciona un tipo de evento para continuar</p>
+              <p className="text-muted-foreground font-body">Selecciona un tipo de evento para continuar</p>
               <button
                 type="button"
                 onClick={p.goToLanding}
-                className="mt-4 text-sm text-primary font-medium hover:underline"
+                className="mt-4 font-body font-medium hover:underline"
+                style={{ fontSize: 14, color: '#C9973A' }}
               >
                 ← Volver al inicio
               </button>

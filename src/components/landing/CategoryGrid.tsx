@@ -13,6 +13,17 @@ const CATEGORY_IMAGES: Partial<Record<MenuCategory, string>> = {
   bebidas: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg`,
 };
 
+const CATEGORY_DESCRIPTORS: Partial<Record<MenuCategory, string>> = {
+  coffee_break: 'Desde 4 personas',
+  coffee_break_surtido: 'Para compartir',
+  coffee_break_individual: 'El complemento perfecto',
+  desayuno: '7am en adelante',
+  working_lunch: 'El favorito de Berlioz',
+  working_lunch_economico: 'El favorito de Berlioz',
+  tortas: 'Gourmet · Desde $280',
+  bebidas: 'El complemento perfecto',
+};
+
 interface CategoryGridProps {
   onSelect: (cat: MenuCategory) => void;
 }
@@ -21,8 +32,9 @@ const CategoryGrid = ({ onSelect }: CategoryGridProps) => {
   const categories = Object.entries(MENU_CATEGORY_LABELS) as [MenuCategory, string][];
 
   return (
-    <section id="category-grid" className="max-w-6xl mx-auto px-4 py-8">
-      <h2 className="font-heading text-lg font-semibold text-foreground mb-5">
+    <section className="max-w-6xl mx-auto px-6" style={{ paddingTop: 64, paddingBottom: 64, borderTop: '1px solid #E8E6DF' }}>
+      <div style={{ width: 40, height: 2, background: '#C9973A', marginBottom: 12 }} />
+      <h2 className="font-heading font-bold mb-6" style={{ fontSize: 24, color: '#1C3A2F' }}>
         Explora por categoría
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -31,7 +43,8 @@ const CategoryGrid = ({ onSelect }: CategoryGridProps) => {
             key={key}
             type="button"
             onClick={() => onSelect(key)}
-            className="group relative overflow-hidden rounded-xl aspect-[4/3] text-left"
+            className="group relative overflow-hidden text-left"
+            style={{ borderRadius: 16, height: 200 }}
           >
             {CATEGORY_IMAGES[key] ? (
               <img
@@ -42,10 +55,20 @@ const CategoryGrid = ({ onSelect }: CategoryGridProps) => {
             ) : (
               <div className="absolute inset-0 bg-muted" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <span className="absolute bottom-3 left-4 text-sm font-heading font-semibold text-white z-10">
-              {label}
-            </span>
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(to top, rgba(10,25,20,0.85) 0%, transparent 50%)' }}
+            />
+            <div className="absolute bottom-4 left-5 z-10">
+              <span className="font-heading font-bold text-white block" style={{ fontSize: 20 }}>
+                {label}
+              </span>
+              {CATEGORY_DESCRIPTORS[key] && (
+                <span className="font-body text-white/75 block" style={{ fontSize: 11, marginTop: 2 }}>
+                  {CATEGORY_DESCRIPTORS[key]}
+                </span>
+              )}
+            </div>
           </button>
         ))}
       </div>

@@ -54,8 +54,8 @@
     --sidebar-border: 40 15% 88%;
     --sidebar-ring: 192 100% 22%;
 
-    --font-heading: 'Montserrat', sans-serif;
-    --font-body: 'Montserrat', sans-serif;
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
     --font-mono: 'DM Mono', monospace;
   }
 }

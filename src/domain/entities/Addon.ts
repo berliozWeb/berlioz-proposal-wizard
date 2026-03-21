@@ -44,7 +44,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Personaliza tus cajas con tu marca (mín. 50 pzas)',
     pricePerPerson: null,
     priceLabel: 'Desde $10/pza',
-    image: `${WP}/2016/01/PersonalizacionDeCajas.webp`,
+    image: `${WP}/2016/01/PersonalizacionDeCajas.jpg`,
     isInteractive: true,
   },
   {

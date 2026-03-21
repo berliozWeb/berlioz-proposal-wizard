@@ -4,8 +4,9 @@ import type { Proposal, Package, PackageItem } from '@/domain/entities/Proposal'
 import type { AgentState } from '@/domain/entities/AgentState';
 import { EVENT_TYPE_LABELS, type EventType } from '@/domain/value-objects/EventType';
 import {
-  BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_BASE,
+  BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_BASE, DOUBLE_DELIVERY_FEE,
   getDeliveryCount, getDurationBlock, getBudgetTiers, AGENT_RULES,
+  needsDoubleDelivery,
   type DurationBlock,
 } from '@/domain/shared/BusinessRules';
 import { calculateIVA, roundCents } from '@/domain/value-objects/Money';

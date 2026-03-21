@@ -199,7 +199,7 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
           onClick={handleArrowClick}
           className="animate-bob bg-transparent border-none p-0 cursor-pointer transition-all duration-300"
           style={{
-            color: isComplete ? '#C9973A' : '#1C3A2F',
+            color: isComplete ? 'hsl(var(--gold))' : 'hsl(var(--primary))',
             fontSize: 24,
             lineHeight: 1,
             transform: isComplete ? 'scale(1.3)' : 'scale(1)',

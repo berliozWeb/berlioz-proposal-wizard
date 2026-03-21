@@ -1,4 +1,3 @@
-const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
 const WP = 'https://berlioz.mx/wp-content/uploads';
 
 export interface Addon {
@@ -45,7 +44,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Personaliza tus cajas con tu marca (mín. 50 pzas)',
     pricePerPerson: null,
     priceLabel: 'Desde $10/pza',
-    image: `${WP}/2016/01/PersonalizacionDeCajas.webp`,
+    image: `${WP}/2016/01/PersonalizacionDeCajas.jpg`,
     isInteractive: true,
   },
   {
@@ -54,7 +53,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Te pasamos las medidas de la tapa',
     pricePerPerson: 10,
     priceLabel: '$10/pza',
-    image: `${WP}/2016/01/PersonalizacionDeCajas.webp`,
+    image: `${WP}/2016/01/PersonalizacionDeCajas.jpg`,
   },
   {
     id: 'aguas_frescas',
@@ -62,7 +61,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Jamaica, limón con menta, coco, temporada',
     pricePerPerson: 45,
     priceLabel: '+$45/pza',
-    image: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg.webp`,
+    image: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg`,
   },
   {
     id: 'personal_servicio',

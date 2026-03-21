@@ -2,7 +2,7 @@ import { Calendar, Utensils, ArrowRight } from "lucide-react";
 import { analytics } from "@/lib/mixpanel";
 import { updateLastLeadPath } from "@/lib/leadStorage";
 
-const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
+const WP = 'https://berlioz.mx/wp-content/uploads';
 
 interface HeroCardsProps {
   onCotiza: () => void;
@@ -20,7 +20,7 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
         style={{ height: 240 }}
       >
         <img
-          src={`${CDN}/cateringCorporativo12_a0kxxe`}
+          src={`${WP}/2023/03/cateringCorporativo12.jpg`}
           alt="Cotiza tu evento"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -48,7 +48,7 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
         style={{ height: 240 }}
       >
         <img
-          src={`${CDN}/Surtido-Camille-Berlioz-bocadillos2_zkkuyr`}
+          src={`${WP}/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg`}
           alt="Explora el menú"
           className="absolute inset-0 w-full h-full object-cover"
         />

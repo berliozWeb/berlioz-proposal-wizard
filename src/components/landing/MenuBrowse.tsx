@@ -1,6 +1,6 @@
 import type { MenuItem, MenuCategory } from "@/domain/entities/MenuItem";
 import { MENU_CATEGORY_LABELS } from "@/domain/entities/MenuItem";
-import { MENU_CATALOG, getByCategory } from "@/domain/entities/MenuCatalog";
+import { MENU_CATALOG, getByCategory, getDisplayPrice } from "@/domain/entities/MenuCatalog";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { Plus, ArrowLeft, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -67,31 +67,43 @@ const MenuBrowse = ({
 
       {/* Items grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-24">
-        {items.map((item) => (
-          <div key={item.id} className="rounded-xl overflow-hidden border border-border bg-card group">
-            <div className="aspect-square overflow-hidden bg-muted">
-              {item.image ? (
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-3xl">🍽</div>
-              )}
-            </div>
-            <div className="p-3">
-              <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs font-mono font-medium text-foreground">{formatMXN(item.pricePerPerson)}/pers</span>
-                <button
-                  type="button"
-                  onClick={() => onAdd(item)}
-                  className="flex items-center gap-1 h-7 px-2.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                </button>
+        {items.map((item) => {
+          const displayPrice = getDisplayPrice(item, 10);
+          const priceLabel = item.pricingModel === 'per_group'
+            ? `~${formatMXN(displayPrice)}/pers`
+            : item.pricingModel === 'fixed'
+              ? formatMXN(item.pricePerPerson)
+              : `${formatMXN(item.pricePerPerson)}/pza`;
+
+          return (
+            <div key={item.id} className="rounded-xl overflow-hidden border border-border bg-card group">
+              <div className="aspect-square overflow-hidden bg-muted">
+                {item.image ? (
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-3xl">🍽</div>
+                )}
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+                {item.minQty && (
+                  <p className="text-[10px] text-accent mt-0.5">Mín. {item.minQty} pzas</p>
+                )}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs font-mono font-medium text-foreground">{priceLabel}</span>
+                  <button
+                    type="button"
+                    onClick={() => onAdd(item)}
+                    className="flex items-center gap-1 h-7 px-2.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Floating cart bar */}

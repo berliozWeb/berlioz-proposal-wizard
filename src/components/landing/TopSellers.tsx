@@ -1,5 +1,5 @@
 import type { MenuItem } from "@/domain/entities/MenuItem";
-import { getTopSellers } from "@/domain/entities/MenuCatalog";
+import { getTopSellers, getDisplayPrice } from "@/domain/entities/MenuCatalog";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { Plus } from "lucide-react";
 
@@ -27,38 +27,47 @@ const TopSellers = ({ onAdd, onViewMenu }: TopSellersProps) => {
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-3 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="snap-start shrink-0 w-44 rounded-xl overflow-hidden border border-border bg-card group"
-          >
-            <div className="aspect-square overflow-hidden bg-muted">
-              {item.image ? (
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-3xl">
-                  🍽
-                </div>
-              )}
+        {items.map((item) => {
+          const displayPrice = getDisplayPrice(item, 10);
+          const priceLabel = item.pricingModel === 'per_group'
+            ? `~${formatMXN(displayPrice)}/pers (10p)`
+            : item.pricingModel === 'fixed'
+              ? formatMXN(item.pricePerPerson)
+              : `${formatMXN(item.pricePerPerson)}/pers`;
+
+          return (
+            <div
+              key={item.id}
+              className="snap-start shrink-0 w-44 rounded-xl overflow-hidden border border-border bg-card group"
+            >
+              <div className="aspect-square overflow-hidden bg-muted">
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-3xl">
+                    🍽
+                  </div>
+                )}
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{priceLabel}</p>
+                <button
+                  type="button"
+                  onClick={() => onAdd(item)}
+                  className="mt-2 w-full flex items-center justify-center gap-1 h-8 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Agregar
+                </button>
+              </div>
             </div>
-            <div className="p-3">
-              <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatMXN(item.pricePerPerson)}/persona</p>
-              <button
-                type="button"
-                onClick={() => onAdd(item)}
-                className="mt-2 w-full flex items-center justify-center gap-1 h-8 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Agregar
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

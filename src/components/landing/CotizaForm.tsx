@@ -3,7 +3,6 @@ import { DIETARY_OPTIONS } from "@/domain/entities/IntakeForm";
 import {
   getDateDisclaimer,
   getCutoffWarning,
-  getDurationNote,
   isValidMexicanCP,
   getCPCoverage,
   getTrafficAlert,
@@ -21,12 +20,73 @@ interface CotizaFormProps {
   onBack: () => void;
 }
 
-const DURATION_OPTIONS = [1, 2, 3, 4, 5, 6] as const;
+const CL = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
+
+interface DurationOption {
+  value: number;
+  label: string;
+  suggestion: string;
+  priceHint: string;
+  image: string;
+}
+
+const DURATION_CARDS: DurationOption[] = [
+  {
+    value: 1,
+    label: '1 hora',
+    suggestion: 'Solo bebidas — café + agua',
+    priceHint: 'Desde $95/persona',
+    image: `${CL}/bui-natural_k8kmdy`,
+  },
+  {
+    value: 2,
+    label: '2-3 horas',
+    suggestion: 'Coffee Break — bebidas y snacks',
+    priceHint: 'Desde $240/persona',
+    image: `${CL}/coffeebreak_PM_qlk47d`,
+  },
+  {
+    value: 4,
+    label: '3-5 horas — Working Lunch',
+    suggestion: 'Comida principal + bebidas',
+    priceHint: 'Desde $280/persona',
+    image: `${CL}/Surtido-Camille-Berlioz-bocadillos_paaynm`,
+  },
+  {
+    value: 6,
+    label: 'Día completo (5h+)',
+    suggestion: 'Desayuno + comida + coffee break',
+    priceHint: 'Desde $580/persona',
+    image: `${CL}/cateringCorporativo12_a0kxxe`,
+  },
+];
+
+const SUGGESTED_PRODUCTS: Record<number, { name: string; price: string; image: string }[]> = {
+  1: [
+    { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },
+    { name: 'Café/Té Berlioz', price: '$540', image: `${CL}/17_izcp6g` },
+  ],
+  2: [
+    { name: 'Coffee Break AM', price: '$3,250', image: `${CL}/coffeebreak_AM_cafe_zhxb1e` },
+    { name: 'Surtido Camille', price: '$700', image: `${CL}/Surtido-Camille-Berlioz-bocadillos_paaynm` },
+    { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },
+  ],
+  4: [
+    { name: 'Golden Box', price: '$330/pza', image: `${CL}/berlioz_fabian-05-scaled_ruahji` },
+    { name: 'Surtido Snacks', price: '$300', image: `${CL}/Snacks-saludables-Berlioz-scaled_pukfu4` },
+    { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },
+  ],
+  6: [
+    { name: 'Breakfast in Roma', price: '$290/pza', image: `${CL}/breakfast-ROMA-e1686675516812_bzzmzm` },
+    { name: 'Pink Box', price: '$370/pza', image: `${CL}/Pasta-al-pesto-Pink-box-Berlioz-1_ijlkbj` },
+    { name: 'Coffee Break PM', price: '$2,800', image: `${CL}/coffeebreak_PM_qlk47d` },
+    { name: 'Café/Té Berlioz', price: '$540', image: `${CL}/17_izcp6g` },
+  ],
+};
 
 const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormProps) => {
   const dateWarning = getDateDisclaimer(form.fechaInicio);
   const cutoffWarning = getCutoffWarning(form.fechaInicio);
-  const durationNote = getDurationNote(form.duracionEstimada);
   const cpValid = form.codigoPostal.length === 0 || isValidMexicanCP(form.codigoPostal);
   const cpCoverage = isValidMexicanCP(form.codigoPostal) ? getCPCoverage(form.codigoPostal) : null;
 
@@ -39,7 +99,6 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
     : TIME_SLOTS;
 
   const deliveryWarnings = getTimeWarnings(deliveryTime, form.eventType, form.fechaInicio);
-
   const isBlocked = cutoffWarning?.blockSubmit === true;
 
   const handleEventTimeChange = (time: string) => {
@@ -58,6 +117,13 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
       : [...current, val];
     onChange({ ...form, restriccionesDieteticas: next });
   };
+
+  // Map form.duracionEstimada to the closest card value
+  const selectedDuration = DURATION_CARDS.reduce((prev, curr) =>
+    Math.abs(curr.value - form.duracionEstimada) < Math.abs(prev.value - form.duracionEstimada) ? curr : prev
+  );
+
+  const suggestedProducts = SUGGESTED_PRODUCTS[selectedDuration.value] || [];
 
   return (
     <div className="animate-slide-in space-y-6">
@@ -125,7 +191,6 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
           onChange={(e) => onChange({ ...form, fechaInicio: e.target.value })}
           className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-body focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        {/* Weekend/holiday warning */}
         {dateWarning && (
           <div className="mt-2 px-4 py-3 rounded-lg border-l-4 text-sm text-foreground"
             style={{
@@ -136,7 +201,6 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
             {dateWarning.message}
           </div>
         )}
-        {/* Cutoff: red block */}
         {cutoffWarning?.type === 'red' && (
           <div className="mt-2 px-4 py-3 rounded-lg border-l-4 text-sm text-foreground"
             style={{ background: '#FEE2E2', borderColor: '#DC2626', borderRadius: 8 }}>
@@ -180,12 +244,11 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
             ))}
           </select>
           <p className="text-xs text-muted-foreground mt-1.5">
-            Recomendamos 90 min de anticipación para garantizar tu entrega antes de que lleguen tus invitados
+            Recomendamos 90 min de anticipación para garantizar tu entrega
           </p>
           {deliveryWarnings.map((w, i) => (
             <p key={i} className="text-xs mt-1 font-medium" style={{ color: '#d97706' }}>⚠️ {w}</p>
           ))}
-          {/* Traffic alert CDMX */}
           {trafficAlert && (
             <div className="mt-2 px-3 py-2 rounded-md text-xs text-foreground leading-relaxed" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8 }}>
               {trafficAlert}
@@ -198,35 +261,70 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
               onChange={(e) => onChange({ ...form, confirmaRecepcion: e.target.checked })}
               className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
             />
-            <span className="text-xs text-muted-foreground">Sí, confirmo que habrá alguien para recibir el pedido a esa hora</span>
+            <span className="text-xs text-muted-foreground">Sí, confirmo que habrá alguien para recibir el pedido</span>
           </label>
         </div>
       )}
 
-      {/* ═══ Duración estimada ═══ */}
+      {/* ═══ Duration — Visual suggestion cards ═══ */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
-          Duración estimada — <span className="font-mono text-accent">{form.duracionEstimada}{form.duracionEstimada >= 6 ? '+' : ''}h</span>
+        <label className="block text-sm font-medium text-foreground mb-3">
+          ¿Cuánto dura tu evento?
         </label>
-        <div className="flex gap-2">
-          {DURATION_OPTIONS.map((h) => (
-            <button
-              key={h}
-              type="button"
-              onClick={() => onChange({ ...form, duracionEstimada: h })}
-              className={cn(
-                "flex-1 py-3 rounded-lg border text-sm font-mono font-medium transition-all",
-                form.duracionEstimada === h
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/40",
-              )}
-            >
-              {h}{h >= 6 ? '+' : ''}h
-            </button>
-          ))}
+        <div className="space-y-3">
+          {DURATION_CARDS.map((card) => {
+            const isSelected = selectedDuration.value === card.value;
+            return (
+              <button
+                key={card.value}
+                type="button"
+                onClick={() => onChange({ ...form, duracionEstimada: card.value })}
+                className={cn(
+                  "w-full flex items-center gap-4 p-3 rounded-xl border transition-all text-left",
+                  isSelected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border bg-card hover:border-primary/40",
+                )}
+              >
+                <img
+                  src={card.image}
+                  alt={card.label}
+                  className="w-20 h-20 rounded-lg object-cover shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-body font-bold text-foreground text-sm">{card.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{card.suggestion}</p>
+                  <p className="text-xs font-medium mt-1" style={{ color: 'hsl(var(--gold))' }}>{card.priceHint}</p>
+                </div>
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center",
+                  isSelected ? "border-primary bg-primary" : "border-muted-foreground/30",
+                )}>
+                  {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                </div>
+              </button>
+            );
+          })}
         </div>
-        {durationNote && (
-          <p className="text-xs text-accent mt-2 font-medium">💡 {durationNote}</p>
+
+        {/* Suggested products preview */}
+        {suggestedProducts.length > 0 && (
+          <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
+            <p className="text-xs font-medium text-muted-foreground mb-2.5">
+              Vista previa de productos sugeridos
+            </p>
+            <div className="space-y-2">
+              {suggestedProducts.map((prod, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <img src={prod.image} alt={prod.name} className="w-10 h-10 rounded-md object-cover shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{prod.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{prod.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

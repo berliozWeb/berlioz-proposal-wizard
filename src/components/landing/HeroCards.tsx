@@ -15,27 +15,30 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
       <button
         type="button"
         onClick={() => { updateLastLeadPath('evento'); analytics.track('entry_point_selected', { path: 'evento' }); onCotiza(); }}
-        className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
-        style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E8E6DF', background: '#fff' }}
+        className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99] flex overflow-hidden"
+        style={{ borderRadius: 16, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', height: 200 }}
       >
-        <div className="relative overflow-hidden" style={{ height: 200 }}>
+        {/* Left 40% — photo */}
+        <div className="relative w-[40%] shrink-0 overflow-hidden">
           <img
             src={HERO_IMAGES.cotiza}
             alt="Cotiza tu evento"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.15) 100%)' }} />
         </div>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Calendar className="w-5 h-5 shrink-0 text-primary" />
-            <h2 className="font-heading font-bold text-foreground" style={{ fontSize: 20 }}>
-              Cotiza tu evento
-            </h2>
+        {/* Right 60% — content */}
+        <div className="flex-1 p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2.5 mb-2">
+              <Calendar className="w-5 h-5 shrink-0 text-primary" />
+              <h2 className="font-heading font-bold text-foreground" style={{ fontSize: 22 }}>
+                Cotiza tu evento
+              </h2>
+            </div>
+            <p className="font-body text-muted-foreground" style={{ fontSize: 13, lineHeight: 1.6 }}>
+              Dinos qué necesitas y te armamos 3 propuestas personalizadas
+            </p>
           </div>
-          <p className="font-body text-muted-foreground mb-4" style={{ fontSize: 14, lineHeight: 1.6 }}>
-            Dinos qué necesitas y te armamos 3 propuestas
-          </p>
           <div className="flex items-center justify-between">
             <span
               className="inline-block px-3 py-1 rounded-full font-body font-semibold text-white"
@@ -52,27 +55,30 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
       <button
         type="button"
         onClick={() => { updateLastLeadPath('menu'); analytics.track('entry_point_selected', { path: 'menu' }); onMenu(); }}
-        className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99]"
-        style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E8E6DF', background: '#fff' }}
+        className="group text-left transition-transform duration-300 hover:scale-[1.02] active:scale-[0.99] flex overflow-hidden"
+        style={{ borderRadius: 16, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))', height: 200 }}
       >
-        <div className="relative overflow-hidden" style={{ height: 200 }}>
+        {/* Left 40% — photo */}
+        <div className="relative w-[40%] shrink-0 overflow-hidden">
           <img
             src={HERO_IMAGES.menu}
             alt="Explora el menú"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.15) 100%)' }} />
         </div>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Utensils className="w-5 h-5 shrink-0" style={{ color: 'hsl(var(--gold))' }} />
-            <h2 className="font-heading font-bold text-foreground" style={{ fontSize: 20 }}>
-              Explora el menú
-            </h2>
+        {/* Right 60% — content */}
+        <div className="flex-1 p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2.5 mb-2">
+              <Utensils className="w-5 h-5 shrink-0" style={{ color: 'hsl(var(--gold))' }} />
+              <h2 className="font-heading font-bold text-foreground" style={{ fontSize: 22 }}>
+                Explora el menú
+              </h2>
+            </div>
+            <p className="font-body text-muted-foreground" style={{ fontSize: 13, lineHeight: 1.6 }}>
+              Coffee break, desayunos, comidas y más
+            </p>
           </div>
-          <p className="font-body text-muted-foreground mb-4" style={{ fontSize: 14, lineHeight: 1.6 }}>
-            Coffee break, desayunos, comidas y más
-          </p>
           <div className="flex items-center justify-end">
             <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
           </div>

@@ -13,7 +13,7 @@ interface LeadCaptureSectionProps {
 const FIELD_LABEL_STYLE: React.CSSProperties = {
   fontSize: 10,
   letterSpacing: '0.3em',
-  color: '#C9973A',
+  color: 'hsl(var(--gold))',
   textTransform: 'uppercase' as const,
   marginBottom: 4,
   fontFamily: 'var(--font-body)',

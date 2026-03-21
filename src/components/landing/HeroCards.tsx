@@ -2,7 +2,7 @@ import { Calendar, Utensils, ArrowRight } from "lucide-react";
 import { analytics } from "@/lib/mixpanel";
 import { updateLastLeadPath } from "@/lib/leadStorage";
 
-const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
+const WP = 'https://berlioz.mx/wp-content/uploads';
 
 interface HeroCardsProps {
   onCotiza: () => void;

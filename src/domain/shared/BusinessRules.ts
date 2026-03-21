@@ -117,17 +117,20 @@ export function getCutoffWarning(dateStr: string): CutoffWarning | null {
 }
 
 // Duration-based suggestions
-export type DurationBlock = 'beverages_only' | 'beverages_snacks' | 'full_food';
+export type DurationBlock = 'beverages_only' | 'beverages_snacks' | 'full_food' | 'full_day';
 
 export function getDurationBlock(hours: number): DurationBlock {
   if (hours < 2) return 'beverages_only';
   if (hours <= 3) return 'beverages_snacks';
-  return 'full_food';
+  if (hours <= 5) return 'full_food';
+  return 'full_day'; // 5+ hours: desayuno + comida + coffee break
 }
 
 export function getDurationNote(hours: number): string | null {
-  if (hours < 2) return 'Para eventos cortos recomendamos solo bebidas';
-  return null;
+  if (hours < 2) return 'Para juntas cortas, lo ideal es tener bebidas disponibles';
+  if (hours <= 3) return '¿Quieres agregar un surtido dulce para el postre?';
+  if (hours <= 5) return 'Tu junta es larga — ¿quieres agregar bebidas para antes o después de comer?';
+  return 'Evento de día completo — incluimos desayuno, comida y coffee break';
 }
 
 // Budget tier multipliers

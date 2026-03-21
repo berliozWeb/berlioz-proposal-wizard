@@ -139,9 +139,37 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
           type="number"
           value={form.personas || ''}
           onChange={(e) => onChange({ ...form, personas: Number(e.target.value) || 0 })}
-          placeholder="Ej. 10"
+          placeholder="Ej. 15"
           className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-mono text-lg focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
+        {form.personas >= 1 && form.personas <= 4 && (
+          <div
+            className="mt-3 font-body"
+            style={{
+              background: '#E8F4FD',
+              borderLeft: '3px solid #378ADD',
+              borderRadius: 8,
+              padding: 12,
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: 'hsl(var(--foreground))',
+            }}
+          >
+            💡 Para grupos de 1-4 personas te recomendamos recoger tu pedido en nuestra cocina — ¡y sin costo de envío!
+            <br />
+            📍 Lago Onega 285, Col. Modelo Pensil, CDMX
+            <br />
+            <a
+              href="https://maps.google.com/?q=Lago+Onega+285,+Col.+Modelo+Pensil,+CDMX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium hover:underline"
+              style={{ color: '#378ADD', fontSize: 12, marginTop: 4, display: 'inline-block' }}
+            >
+              Ver cómo llegar →
+            </a>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground mt-1.5">
           Berlioz entrega desde 4 personas · pedido promedio: 10-15 personas
         </p>

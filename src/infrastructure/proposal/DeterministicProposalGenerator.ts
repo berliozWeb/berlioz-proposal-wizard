@@ -328,6 +328,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       case 'capacitacion':
         // Capacitación uses full_day logic regardless of duration
         return this.getFullDayItems(eventType, level, people, cafeBoxes, surtidoSets);
+      case 'filmacion':
+        this.addFilmacionItems(items, level, people);
+        break;
       case 'otro':
         this.addOtroItems(items, level, people, cafeBoxes, surtidoSets);
         break;

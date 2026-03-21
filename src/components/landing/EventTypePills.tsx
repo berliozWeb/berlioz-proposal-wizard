@@ -1,21 +1,22 @@
 import type { IntakeForm } from "@/domain/entities/IntakeForm";
 import { EVENT_TYPE_DESCRIPTORS } from "@/domain/value-objects/EventType";
 import { cn } from "@/lib/utils";
-
-const WP = 'https://berlioz.mx/wp-content/uploads';
+import { CATEGORY_IMAGES, FALLBACK_IMAGE } from "@/domain/entities/ProductImages";
 
 interface EventTypePillsProps {
   selected: IntakeForm['eventType'];
   onSelect: (type: IntakeForm['eventType']) => void;
 }
 
+const CL = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
+
 const pills = [
-  { value: 'desayuno' as const, label: 'Desayuno', image: `${WP}/2023/04/Healthy-breakfast-1.jpg` },
-  { value: 'coffee_break' as const, label: 'Coffee Break', image: `${WP}/2025/08/coffeebreak_AM_cafe.jpg` },
-  { value: 'comida' as const, label: 'Working Lunch', image: `${WP}/2023/03/cateringCorporativo12.jpg` },
-  { value: 'capacitacion' as const, label: 'Capacitación', image: `${WP}/2024/11/comedorBERLIOZ.jpg` },
-  { value: 'evento_especial' as const, label: 'Reunión ejecutiva', image: `${WP}/2024/10/web-_Mesa-de-trabajo-1.jpg` },
-  { value: 'filmacion' as const, label: 'Filmación', image: `${WP}/2023/03/breakfast-bag.jpg` },
+  { value: 'desayuno' as const, label: 'Desayuno', image: CATEGORY_IMAGES.desayuno },
+  { value: 'coffee_break' as const, label: 'Coffee Break', image: `${CL}/coffeebreak_AM_cafe_zhxb1e` },
+  { value: 'comida' as const, label: 'Working Lunch', image: FALLBACK_IMAGE },
+  { value: 'capacitacion' as const, label: 'Capacitación', image: `${CL}/comedorBERLIOZ_vvm0rz` },
+  { value: 'evento_especial' as const, label: 'Reunión ejecutiva', image: `${CL}/web-_Mesa-de-trabajo-1_n9hqc4` },
+  { value: 'filmacion' as const, label: 'Filmación', image: `${CL}/breakfast-bag_zctq0h` },
 ] as const;
 
 const EventTypePills = ({ selected, onSelect }: EventTypePillsProps) => (

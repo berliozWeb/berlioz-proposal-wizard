@@ -444,6 +444,7 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       items.push(makeItem('salmon_box', 'Salmon Box', 410, 1, people));
       items.push(makeItem('surtido_camille', 'Surtido Camille (gourmet)', 700, 1, surtidoSets));
       items.push(makeItem('cafe_te', 'Café/Té Berlioz (café caliente)', 540, 1, cafeBoxes));
+    }
   }
 
   // ── FILMACIÓN / SCOUTING (portable, no table) ──
@@ -461,7 +462,6 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       items.push(makeItem('snack_bag', 'Snack Bag Individual', 140, 1, people));
       items.push(makeItem('cafe_frio', 'Café Frío (latte orgánico)', 60, 1, people));
     }
-  }
   }
 
   // ── FULL DAY (5+h): desayuno + comida + coffee break ──

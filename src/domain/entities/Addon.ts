@@ -61,7 +61,7 @@ export const ADDONS: Addon[] = [
     subtitle: 'Jamaica, limón con menta, coco, temporada',
     pricePerPerson: 45,
     priceLabel: '+$45/pza',
-    image: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg.webp`,
+    image: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg`,
   },
   {
     id: 'personal_servicio',

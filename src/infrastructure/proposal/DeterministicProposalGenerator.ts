@@ -24,7 +24,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     const deliveries = getDeliveryCount(
       form.esMultiDia, form.entregasPorDia, form.horasEntrega, form.fechaInicio, form.fechaFin,
     );
-    const deliveryFee = DELIVERY_FEE_BASE * deliveries;
+    const doubleDelivery = needsDoubleDelivery(form.eventType, people);
+    const baseFee = doubleDelivery ? DOUBLE_DELIVERY_FEE : DELIVERY_FEE_BASE;
+    const deliveryFee = baseFee * deliveries;
     const eventLabel = EVENT_TYPE_LABELS[form.eventType as EventType] || 'Evento';
     const durationBlock = getDurationBlock(form.duracionEstimada);
 

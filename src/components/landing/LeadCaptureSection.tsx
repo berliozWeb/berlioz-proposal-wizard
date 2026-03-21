@@ -21,11 +21,11 @@ const FIELD_LABEL_STYLE: React.CSSProperties = {
 
 const INPUT_STYLE: React.CSSProperties = {
   border: 'none',
-  borderBottom: '2px solid #1C3A2F',
+  borderBottom: '2px solid hsl(var(--primary))',
   background: 'transparent',
   padding: '12px 4px',
   fontSize: 16,
-  color: '#1C3A2F',
+  color: 'hsl(var(--foreground))',
   outline: 'none',
   width: '100%',
   fontFamily: 'var(--font-body)',

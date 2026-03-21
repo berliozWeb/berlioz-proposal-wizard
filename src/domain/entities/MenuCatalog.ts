@@ -1,5 +1,7 @@
 import type { MenuItem } from './MenuItem';
+import { getProductImage } from './ProductImages';
 
+// Legacy WP base kept so individual items compile; overridden below.
 const WP = 'https://berlioz.mx/wp-content/uploads';
 
 // ═══════════════════════════════════════════════════════════
@@ -1006,6 +1008,11 @@ export const MENU_CATALOG: MenuItem[] = [
     image: `${WP}/2025/08/WhatsApp-Image-2025-07-08-at-4.45.22-PM.jpg`,
   },
 ];
+
+// Override all images with Cloudinary URLs
+MENU_CATALOG.forEach((item) => {
+  item.image = getProductImage(item.id);
+});
 
 // ── Helpers ──
 

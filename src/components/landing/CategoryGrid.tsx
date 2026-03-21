@@ -1,17 +1,5 @@
 import { MENU_CATEGORY_LABELS, type MenuCategory } from "@/domain/entities/MenuItem";
-
-const WP = 'https://berlioz.mx/wp-content/uploads';
-
-const CATEGORY_IMAGES: Partial<Record<MenuCategory, string>> = {
-  coffee_break: `${WP}/2025/08/coffeebreak_PM.jpg`,
-  coffee_break_surtido: `${WP}/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg`,
-  coffee_break_individual: `${WP}/2020/03/berlioz_fabian-21-scaled.jpg`,
-  desayuno: `${WP}/2023/03/berlioz_fabian-18-scaled-e1596123929266.jpg`,
-  working_lunch: `${WP}/2023/03/cateringCorporativo12.jpg`,
-  working_lunch_economico: `${WP}/2024/11/comedorBERLIOZ.jpg`,
-  tortas: `${WP}/2021/03/piropo-surtida.jpg`,
-  bebidas: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg`,
-};
+import { CATEGORY_IMAGES as CL_CATEGORY_IMAGES } from "@/domain/entities/ProductImages";
 
 const CATEGORY_DESCRIPTORS: Partial<Record<MenuCategory, string>> = {
   coffee_break: 'Desde 4 personas',
@@ -33,8 +21,8 @@ const CategoryGrid = ({ onSelect }: CategoryGridProps) => {
 
   return (
     <section className="max-w-6xl mx-auto px-6" style={{ paddingTop: 64, paddingBottom: 64, borderTop: '1px solid #E8E6DF' }}>
-      <div style={{ width: 40, height: 2, background: '#C9973A', marginBottom: 12 }} />
-      <h2 className="font-heading font-bold mb-6" style={{ fontSize: 24, color: '#1C3A2F' }}>
+      <div style={{ width: 40, height: 2, background: 'hsl(var(--gold))', marginBottom: 12 }} />
+      <h2 className="font-heading font-bold text-foreground mb-6" style={{ fontSize: 24 }}>
         Explora por categoría
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -46,15 +34,11 @@ const CategoryGrid = ({ onSelect }: CategoryGridProps) => {
             className="group relative overflow-hidden text-left"
             style={{ borderRadius: 16, height: 200 }}
           >
-            {CATEGORY_IMAGES[key] ? (
-              <img
-                src={CATEGORY_IMAGES[key]}
-                alt={label}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-muted" />
-            )}
+            <img
+              src={(CL_CATEGORY_IMAGES as Record<string, string>)[key] || CL_CATEGORY_IMAGES.working_lunch}
+              alt={label}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
             <div
               className="absolute inset-0"
               style={{ background: 'linear-gradient(to top, rgba(10,25,20,0.85) 0%, transparent 50%)' }}

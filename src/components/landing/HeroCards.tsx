@@ -20,7 +20,7 @@ const HeroCards = ({ onCotiza, onMenu }: HeroCardsProps) => (
         style={{ height: 240 }}
       >
         <img
-          src={`${CDN}/cateringCorporativo12_a0kxxe`}
+          src={`${WP}/2023/03/cateringCorporativo12.jpg`}
           alt="Cotiza tu evento"
           className="absolute inset-0 w-full h-full object-cover"
         />

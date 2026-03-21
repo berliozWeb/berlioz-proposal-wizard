@@ -25,12 +25,12 @@ const Index = () => {
           {/* Hero headline */}
           <section className="max-w-6xl mx-auto px-6 text-center" style={{ paddingTop: 64, paddingBottom: 8 }}>
             <h1
-              className="font-heading font-bold"
-              style={{ fontSize: 'clamp(2.8rem, 6vw, 4.5rem)', color: '#1C3A2F' }}
+              className="font-heading font-bold text-foreground"
+              style={{ fontSize: 'clamp(2.4rem, 5.5vw, 4rem)' }}
             >
               ¿Qué se te antoja hoy?
             </h1>
-            <p className="font-body mt-4" style={{ fontSize: 16, color: '#C9973A', letterSpacing: '0.08em' }}>
+            <p className="font-body mt-3 text-primary" style={{ fontSize: 14, letterSpacing: '0.08em' }}>
               Desayuno · Coffee Break · Working Lunch · Ciudad de México
             </p>
           </section>

@@ -209,7 +209,7 @@ const LeadCaptureSection = ({ nombre, empresa, celular, onUpdate, isComplete }: 
         </button>
 
         {!isComplete && (
-          <p className="text-center font-body" style={{ fontSize: 12, marginTop: 12, color: '#C9973A' }}>
+          <p className="text-center font-body" style={{ fontSize: 12, marginTop: 12, color: 'hsl(var(--gold))' }}>
             Completa tus datos para continuar
           </p>
         )}

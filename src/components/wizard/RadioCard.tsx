@@ -3,11 +3,12 @@ import { cn } from "@/lib/utils";
 interface RadioCardProps {
   icon: string;
   label: string;
+  descriptor?: string;
   selected: boolean;
   onClick: () => void;
 }
 
-const RadioCard = ({ icon, label, selected, onClick }: RadioCardProps) => (
+const RadioCard = ({ icon, label, descriptor, selected, onClick }: RadioCardProps) => (
   <button
     type="button"
     onClick={onClick}
@@ -21,6 +22,9 @@ const RadioCard = ({ icon, label, selected, onClick }: RadioCardProps) => (
   >
     <span className="text-3xl">{icon}</span>
     <span className="text-sm font-body font-medium text-foreground">{label}</span>
+    {descriptor && (
+      <span className="text-xs text-muted-foreground leading-tight">{descriptor}</span>
+    )}
   </button>
 );
 

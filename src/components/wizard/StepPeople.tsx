@@ -1,6 +1,6 @@
 import type { IntakeForm } from "@/domain/entities/IntakeForm";
 import { DELIVERY_PERIOD_OPTIONS, type DeliveryPeriod } from "@/domain/value-objects/DeliveryTime";
-import { getDateDisclaimer } from "@/domain/shared/BusinessRules";
+import { getDateDisclaimer, getCPCoverage, isValidMexicanCP } from "@/domain/shared/BusinessRules";
 import { cn } from "@/lib/utils";
 
 interface StepPeopleProps {
@@ -18,6 +18,8 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
   };
 
   const dateDisclaimer = getDateDisclaimer(form.fechaInicio);
+  const cpValid = form.codigoPostal.length === 0 || isValidMexicanCP(form.codigoPostal);
+  const cpCoverage = isValidMexicanCP(form.codigoPostal) ? getCPCoverage(form.codigoPostal) : null;
 
   return (
     <div className="animate-slide-in space-y-6">
@@ -38,11 +40,11 @@ const StepPeople = ({ form, onChange }: StepPeopleProps) => {
           type="number"
           value={form.personas || ''}
           onChange={(e) => onChange({ ...form, personas: Number(e.target.value) || 0 })}
-          placeholder="Ej. 30"
+          placeholder="Ej. 10"
           className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground font-mono text-lg focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         />
-        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-          El monto mínimo para entrega a domicilio es $1,000 + IVA. Pedidos menores pueden recogerse en nuestra cocina en Col. Modelo Pensil sin costo de envío.
+        <p className="text-xs text-muted-foreground mt-1.5">
+          Berlioz entrega desde 4 personas · pedido promedio: 10-15 personas
         </p>
       </div>
 

@@ -1,4 +1,5 @@
 import type { IntakeForm } from "@/domain/entities/IntakeForm";
+import { EVENT_TYPE_DESCRIPTORS } from "@/domain/value-objects/EventType";
 import { cn } from "@/lib/utils";
 
 const CDN = 'https://res.cloudinary.com/dsr7tnfh6/image/upload/w_800,q_auto,f_auto';
@@ -10,10 +11,11 @@ interface EventTypePillsProps {
 
 const pills = [
   { value: 'desayuno' as const, label: 'Desayuno', image: `${CDN}/Healthy-breakfast-1_wax9nd` },
-  { value: 'coffee_break' as const, label: 'Coffee break', image: `${CDN}/coffeebreak_AM_cafe_zhxb1e` },
-  { value: 'comida' as const, label: 'Comida', image: `${CDN}/comedorBERLIOZ_vvm0rz` },
+  { value: 'coffee_break' as const, label: 'Coffee Break', image: `${CDN}/coffeebreak_AM_cafe_zhxb1e` },
+  { value: 'comida' as const, label: 'Working Lunch', image: `${CDN}/comedorBERLIOZ_vvm0rz` },
   { value: 'capacitacion' as const, label: 'Capacitación', image: `${CDN}/berlioz_fabian-12-scaled_rscq5d` },
-  { value: 'evento_especial' as const, label: 'Evento especial', image: `${CDN}/web-_Mesa-de-trabajo-1_n9hqc4` },
+  { value: 'evento_especial' as const, label: 'Reunión ejecutiva', image: `${CDN}/web-_Mesa-de-trabajo-1_n9hqc4` },
+  { value: 'filmacion' as const, label: 'Filmación', image: `${CDN}/web-_Mesa-de-trabajo-1_n9hqc4` },
 ] as const;
 
 const EventTypePills = ({ selected, onSelect }: EventTypePillsProps) => (
@@ -40,7 +42,12 @@ const EventTypePills = ({ selected, onSelect }: EventTypePillsProps) => (
               selected === p.value ? "opacity-30" : "opacity-15 group-hover:opacity-25",
             )}
           />
-          <span className="relative z-10 text-foreground font-semibold">{p.label}</span>
+          <div className="relative z-10">
+            <span className="text-foreground font-semibold block">{p.label}</span>
+            {EVENT_TYPE_DESCRIPTORS[p.value] && (
+              <span className="text-xs text-muted-foreground block mt-0.5">{EVENT_TYPE_DESCRIPTORS[p.value]}</span>
+            )}
+          </div>
         </button>
       ))}
     </div>

@@ -66,14 +66,20 @@ const Propuesta = () => {
             {isCotiza && p.proposal && (
               <>
                 <div className="proposal-packages grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                  {p.proposal.packages.map((pkg) => (
-                    <PackageCard
-                      key={pkg.id}
-                      pkg={pkg}
-                      isRecommended={pkg.id === 'recomendado'}
-                      onSelect={() => p.handlePackageSelect(pkg.displayName)}
-                    />
-                  ))}
+                  {p.proposal.packages.map((pkg) => {
+                    const earlyDelivery = p.form.horasEntrega?.[0] && p.form.horasEntrega[0] < '07:30';
+                    const volume80 = p.form.personas >= 80;
+                    return (
+                      <PackageCard
+                        key={pkg.id}
+                        pkg={pkg}
+                        isRecommended={pkg.id === 'recomendado'}
+                        onSelect={() => p.handlePackageSelect(pkg.displayName)}
+                        earlyDeliverySurcharge={earlyDelivery}
+                        volumeSurcharge={volume80}
+                      />
+                    );
+                  })}
                 </div>
                 {p.proposal.recommendedReason && (
                   <p className="text-sm text-muted-foreground italic mb-8 text-center">

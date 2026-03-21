@@ -4,8 +4,9 @@ import type { Proposal, Package, PackageItem } from '@/domain/entities/Proposal'
 import type { AgentState } from '@/domain/entities/AgentState';
 import { EVENT_TYPE_LABELS, type EventType } from '@/domain/value-objects/EventType';
 import {
-  BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_BASE,
+  BUSINESS_RULES, PROPOSAL_VALIDITY_DAYS, DELIVERY_FEE_BASE, DOUBLE_DELIVERY_FEE,
   getDeliveryCount, getDurationBlock, getBudgetTiers, AGENT_RULES,
+  needsDoubleDelivery,
   type DurationBlock,
 } from '@/domain/shared/BusinessRules';
 import { calculateIVA, roundCents } from '@/domain/value-objects/Money';
@@ -23,7 +24,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     const deliveries = getDeliveryCount(
       form.esMultiDia, form.entregasPorDia, form.horasEntrega, form.fechaInicio, form.fechaFin,
     );
-    const deliveryFee = DELIVERY_FEE_BASE * deliveries;
+    const doubleDelivery = needsDoubleDelivery(form.eventType, people);
+    const baseFee = doubleDelivery ? DOUBLE_DELIVERY_FEE : DELIVERY_FEE_BASE;
+    const deliveryFee = baseFee * deliveries;
     const eventLabel = EVENT_TYPE_LABELS[form.eventType as EventType] || 'Evento';
     const durationBlock = getDurationBlock(form.duracionEstimada);
 
@@ -159,7 +162,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       } else if (form.eventType === 'capacitacion') {
         update(1, 'running', '🎓 Capacitación → desayuno + comida + coffee breaks');
       } else if (form.eventType === 'evento_especial') {
-        update(1, 'running', '🎉 Evento especial → boxes premium + surtidos + bebidas');
+        update(1, 'running', '🎉 Reunión ejecutiva → boxes premium + surtidos + bebidas');
+      } else if (form.eventType === 'filmacion') {
+        update(1, 'running', '🎬 Filmación → bags portables, sin mesa, fácil de comer');
       }
     }
     await delay(500);
@@ -323,6 +328,9 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       case 'capacitacion':
         // Capacitación uses full_day logic regardless of duration
         return this.getFullDayItems(eventType, level, people, cafeBoxes, surtidoSets);
+      case 'filmacion':
+        this.addFilmacionItems(items, level, people);
+        break;
       case 'otro':
         this.addOtroItems(items, level, people, cafeBoxes, surtidoSets);
         break;
@@ -436,6 +444,23 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
       items.push(makeItem('salmon_box', 'Salmon Box', 410, 1, people));
       items.push(makeItem('surtido_camille', 'Surtido Camille (gourmet)', 700, 1, surtidoSets));
       items.push(makeItem('cafe_te', 'Café/Té Berlioz (café caliente)', 540, 1, cafeBoxes));
+    }
+  }
+
+  // ── FILMACIÓN / SCOUTING (portable, no table) ──
+  private addFilmacionItems(items: PackageItem[], level: string, people: number) {
+    if (level === 'economico') {
+      items.push(makeItem('box_eco_1', 'Box Económica 1 (Torta)', 150, 1, people));
+      items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
+    } else if (level === 'balanceado') {
+      items.push(makeItem('lunch_bag', 'Lunch Bag Pasta Pollo', 250, 1, people));
+      items.push(makeItem('snack_bag', 'Snack Bag Individual', 140, 1, people));
+      items.push(makeItem('agua_bui', 'Agua Bui Natural', 50, 1, people));
+    } else {
+      items.push(makeItem('breakfast_bag', 'Breakfast Bag Pavo', 250, 1, people));
+      items.push(makeItem('lunch_bag', 'Lunch Bag Ciabatta Pavo', 250, 1, people));
+      items.push(makeItem('snack_bag', 'Snack Bag Individual', 140, 1, people));
+      items.push(makeItem('cafe_frio', 'Café Frío (latte orgánico)', 60, 1, people));
     }
   }
 

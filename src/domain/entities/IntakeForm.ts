@@ -2,6 +2,16 @@ import type { EventType } from '@/domain/value-objects/EventType';
 import type { ServiceLevel } from '@/domain/value-objects/ServiceLevel';
 import type { DeliveryPeriod } from '@/domain/value-objects/DeliveryTime';
 
+export type DietaryRestriction = 'vegetariano' | 'vegano' | 'sin_gluten' | 'sin_lactosa' | 'keto';
+
+export const DIETARY_OPTIONS: { value: DietaryRestriction; label: string }[] = [
+  { value: 'vegetariano', label: 'Vegetariano' },
+  { value: 'vegano', label: 'Vegano' },
+  { value: 'sin_gluten', label: 'Sin gluten' },
+  { value: 'sin_lactosa', label: 'Sin lactosa' },
+  { value: 'keto', label: 'Keto' },
+];
+
 export interface IntakeForm {
   nombre: string;
   empresa: string;
@@ -20,7 +30,10 @@ export interface IntakeForm {
   horasEntrega: string[];
   horasEvento: number;
   nivelEsperado: ServiceLevel | '';
+  tieneRestricciones: boolean;
+  restriccionesDieteticas: DietaryRestriction[];
   notasDieteticas?: string;
+  confirmaRecepcion: boolean;
   contacto: {
     nombre: string;
     empresa: string;
@@ -35,7 +48,7 @@ export const DEFAULT_INTAKE: IntakeForm = {
   empresa: '',
   celular: '',
   eventType: '',
-  personas: 30,
+  personas: 10,
   codigoPostal: '',
   horarioEvento: '',
   duracionEstimada: 3,
@@ -48,7 +61,10 @@ export const DEFAULT_INTAKE: IntakeForm = {
   horasEntrega: [],
   horasEvento: 4,
   nivelEsperado: '',
+  tieneRestricciones: false,
+  restriccionesDieteticas: [],
   notasDieteticas: '',
+  confirmaRecepcion: false,
   contacto: {
     nombre: '',
     empresa: '',

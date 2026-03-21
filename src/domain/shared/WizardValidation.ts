@@ -13,7 +13,7 @@ export function canAdvanceStep(step: number, form: IntakeForm): boolean {
     case 2:
       return form.personas > 0 && form.fechaInicio !== '';
     case 3:
-      return form.horasEntrega.length > 0;
+      return form.horasEntrega.length > 0 || form.horarioEvento !== '';
     default:
       return false;
   }

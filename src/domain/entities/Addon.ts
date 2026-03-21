@@ -1,4 +1,4 @@
-const WP = 'https://berlioz.mx/wp-content/uploads';
+import { ADDON_IMAGES, FALLBACK_IMAGE } from './ProductImages';
 
 export interface Addon {
   id: string;

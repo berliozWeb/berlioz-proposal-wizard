@@ -1,6 +1,8 @@
 import type { MenuItem } from './MenuItem';
+import { getProductImage } from './ProductImages';
 
-const WP = 'https://berlioz.mx/wp-content/uploads';
+// Images are resolved via getProductImage() at the end of this file.
+// No more direct WP URLs — all go through Cloudinary.
 
 // ═══════════════════════════════════════════════════════════
 // BERLIOZ — CATÁLOGO OFICIAL (WooCommerce real)

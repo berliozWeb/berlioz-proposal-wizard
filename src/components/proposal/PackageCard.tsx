@@ -2,11 +2,11 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Package, PackageItem } from "@/domain/entities/Proposal";
 import { formatMXN } from "@/domain/value-objects/Money";
-import { PRICE_DISCLAIMER, EARLY_DELIVERY_SURCHARGE } from "@/domain/shared/BusinessRules";
+import { EARLY_DELIVERY_SURCHARGE } from "@/domain/shared/BusinessRules";
 import { calculateIVA, roundCents } from "@/domain/value-objects/Money";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getProductImage } from "@/domain/entities/ProductImages";
 import { toast } from "sonner";
+import ProductSwapModal from "@/components/proposal/ProductSwapModal";
 
 // Hero image mapping: pick the most visual product per tier
 const HERO_PRODUCT_CODES: Record<string, string[]> = {
@@ -16,13 +16,11 @@ const HERO_PRODUCT_CODES: Record<string, string[]> = {
 };
 
 function getHeroImage(pkg: Package): string {
-  // Try finding a hero product from the tier mapping
   const tierCodes = HERO_PRODUCT_CODES[pkg.id] || [];
   for (const code of tierCodes) {
     const item = pkg.items.find(i => i.code === code || i.code.includes(code));
     if (item) return getProductImage(item.code);
   }
-  // Fallback: use the most expensive item
   const main = [...pkg.items].sort((a, b) => b.subtotal - a.subtotal)[0];
   return main ? getProductImage(main.code) : getProductImage('fallback');
 }
@@ -37,9 +35,8 @@ interface PackageCardProps {
 }
 
 const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, volumeSurcharge, editable = true }: PackageCardProps) => {
-  const [open, setOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [localItems, setLocalItems] = useState<PackageItem[]>(pkg.items);
+  const [swapIdx, setSwapIdx] = useState<number | null>(null);
 
   // Recalculate totals from local items
   const itemsSubtotal = localItems.reduce((s, i) => s + i.subtotal, 0);
@@ -47,7 +44,6 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
   const totalIVA = calculateIVA(totalSubtotal);
   const totalAmount = roundCents(totalSubtotal + totalIVA);
   const people = Math.max(1, localItems[0]?.totalQty || 1);
-  const perPersonPrice = roundCents(totalAmount / people);
 
   const heroImage = getHeroImage(pkg);
 
@@ -60,7 +56,6 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
       item.subtotal = item.unitPrice * newQty;
       updated[idx] = item;
 
-      // Toast for adding beverages to Esencial
       if (delta > 0 && pkg.id === 'basico' && (item.code.includes('agua') || item.code.includes('cafe'))) {
         toast.success('¡Buena elección! Las bebidas son lo más popular');
       }
@@ -72,6 +67,16 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
   const removeItem = (idx: number) => {
     if (localItems.length <= 1) return;
     setLocalItems(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSwap = (newItem: PackageItem) => {
+    if (swapIdx === null) return;
+    setLocalItems(prev => {
+      const updated = [...prev];
+      updated[swapIdx] = newItem;
+      return updated;
+    });
+    setSwapIdx(null);
   };
 
   return (
@@ -104,11 +109,15 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
       </div>
 
       <div className="p-5 flex flex-col flex-1">
-        {/* Prominent per-person price */}
-        <div className="mb-3">
-          <span className="font-mono text-3xl font-bold text-foreground">{formatMXN(perPersonPrice)}</span>
-          <span className="text-sm text-muted-foreground ml-1">/ persona</span>
+        {/* Total price for X people */}
+        <div className="mb-1">
+          <span className="font-mono text-3xl font-bold text-foreground">{formatMXN(totalSubtotal)}</span>
+          <span className="text-xs text-muted-foreground ml-1.5">+ I.V.A.</span>
         </div>
+        <p className="text-sm text-muted-foreground mb-3">
+          para <span className="font-semibold text-foreground">{people} personas</span>
+          <span className="text-xs ml-1">({formatMXN(roundCents(totalSubtotal / people))}/persona)</span>
+        </p>
 
         <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{pkg.narrative}</p>
 
@@ -121,122 +130,123 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
           ))}
         </ul>
 
-        {/* Editable items section */}
+        {/* Product cards — always visible, bigger cards */}
         {editable && (
-          <Collapsible open={editOpen} onOpenChange={setEditOpen} className="border-t border-border pt-3 mt-auto">
-            <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-medium text-primary hover:text-primary/80 transition-colors py-1">
-              <span>✏️ Personalizar selección</span>
-              <span className={cn("transition-transform", editOpen && "rotate-180")}>▾</span>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2 space-y-2">
-              {localItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 py-1.5">
-                  <img
-                    src={getProductImage(item.code)}
-                    alt={item.name}
-                    className="w-10 h-10 rounded-md object-cover shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatMXN(item.unitPrice)}/u</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => updateItemQty(idx, -1)}
-                      className="w-6 h-6 rounded border border-border text-xs flex items-center justify-center hover:bg-muted"
-                    >
-                      −
-                    </button>
-                    <span className="text-xs font-mono w-6 text-center">{item.totalQty}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateItemQty(idx, 1)}
-                      className="w-6 h-6 rounded border border-border text-xs flex items-center justify-center hover:bg-muted"
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="text-xs font-mono text-foreground w-16 text-right shrink-0">{formatMXN(item.subtotal)}</span>
-                  {localItems.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeItem(idx)}
-                      className="text-muted-foreground hover:text-destructive text-xs shrink-0"
-                    >
-                      🗑
-                    </button>
-                  )}
-                </div>
-              ))}
+          <div className="border-t border-border pt-4 mt-auto space-y-3">
+            <p className="text-xs font-medium text-muted-foreground mb-1">Productos incluidos</p>
+            {localItems.map((item, idx) => (
+              <div key={idx} className="rounded-lg border border-border bg-muted/30 overflow-hidden">
+                <img
+                  src={getProductImage(item.code)}
+                  alt={item.name}
+                  className="w-full h-28 object-cover"
+                />
+                <div className="p-3">
+                  <p className="text-sm font-medium text-foreground">{item.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{formatMXN(item.unitPrice)}/unidad</p>
 
-              {/* Totals */}
-              <div className="border-t border-border pt-2 mt-2 space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-foreground">Envío</span>
-                  <span className="font-mono">{formatMXN(pkg.deliveryFee)}</span>
-                </div>
-                {earlyDeliverySurcharge && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-amber-600">Cargo entrega temprana</span>
-                    <span className="font-mono text-amber-600">{formatMXN(EARLY_DELIVERY_SURCHARGE)}</span>
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateItemQty(idx, -1)}
+                        className="w-7 h-7 rounded border border-border text-sm flex items-center justify-center hover:bg-muted"
+                      >
+                        −
+                      </button>
+                      <span className="text-sm font-mono w-8 text-center">{item.totalQty}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateItemQty(idx, 1)}
+                        className="w-7 h-7 rounded border border-border text-sm flex items-center justify-center hover:bg-muted"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="text-sm font-mono font-semibold text-foreground">{formatMXN(item.subtotal)}</span>
                   </div>
-                )}
-                {volumeSurcharge && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-amber-600">Cargo logístico 80+ pzas</span>
-                    <span className="font-mono text-muted-foreground">Por confirmar</span>
+
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSwapIdx(idx)}
+                      className="text-xs text-primary font-medium hover:underline"
+                    >
+                      🔄 Reemplazar
+                    </button>
+                    {localItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(idx)}
+                        className="text-xs text-destructive font-medium hover:underline"
+                      >
+                        🗑 Eliminar
+                      </button>
+                    )}
                   </div>
-                )}
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-mono">{formatMXN(totalSubtotal)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">IVA (16%)</span>
-                  <span className="font-mono">{formatMXN(totalIVA)}</span>
-                </div>
-                <div className="flex justify-between text-sm font-semibold mt-1">
-                  <span>Total</span>
-                  <span className="font-mono">{formatMXN(totalAmount)}</span>
                 </div>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
+            ))}
+
+            {/* Totals */}
+            <div className="border-t border-border pt-3 space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-foreground">Envío</span>
+                <span className="font-mono">{formatMXN(pkg.deliveryFee)}</span>
+              </div>
+              {earlyDeliverySurcharge && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-amber-600">Cargo entrega temprana</span>
+                  <span className="font-mono text-amber-600">{formatMXN(EARLY_DELIVERY_SURCHARGE)}</span>
+                </div>
+              )}
+              {volumeSurcharge && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-amber-600">Cargo logístico 80+ pzas</span>
+                  <span className="font-mono text-muted-foreground">Por confirmar</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-mono">{formatMXN(totalSubtotal)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">IVA (16%)</span>
+                <span className="font-mono">{formatMXN(totalIVA)}</span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold mt-1">
+                <span>Total</span>
+                <span className="font-mono">{formatMXN(totalAmount)}</span>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Static breakdown (non-editable fallback) */}
+        {/* Non-editable fallback */}
         {!editable && (
-          <Collapsible open={open} onOpenChange={setOpen} className="border-t border-border pt-3 mt-auto">
-            <CollapsibleTrigger className="flex items-center justify-between w-full text-xs font-medium text-muted-foreground hover:text-foreground transition-colors py-1">
-              <span>Ver desglose completo</span>
-              <span className={cn("transition-transform", open && "rotate-180")}>▾</span>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-2">
-              <p className="text-xs font-mono text-muted-foreground mb-2 uppercase tracking-wide">Desglose</p>
-              {pkg.items.map((item, i) => (
-                <div key={i} className="flex justify-between text-xs py-1">
-                  <span className="text-foreground">{item.name} <span className="text-muted-foreground">×{item.totalQty}</span></span>
-                  <span className="font-mono text-foreground">{formatMXN(item.subtotal)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between text-xs py-1">
-                <span className="text-foreground">Envío</span>
-                <span className="font-mono text-foreground">{formatMXN(pkg.deliveryFee)}</span>
+          <div className="border-t border-border pt-3 mt-auto space-y-1">
+            {pkg.items.map((item, i) => (
+              <div key={i} className="flex justify-between text-xs py-1">
+                <span className="text-foreground">{item.name} <span className="text-muted-foreground">×{item.totalQty}</span></span>
+                <span className="font-mono text-foreground">{formatMXN(item.subtotal)}</span>
               </div>
-              <div className="border-t border-border mt-2 pt-2">
-                <div className="flex justify-between text-sm font-semibold mt-1">
-                  <span>Total</span>
-                  <span className="font-mono">{formatMXN(pkg.total)}</span>
-                </div>
+            ))}
+            <div className="flex justify-between text-xs py-1">
+              <span className="text-foreground">Envío</span>
+              <span className="font-mono text-foreground">{formatMXN(pkg.deliveryFee)}</span>
+            </div>
+            <div className="border-t border-border mt-2 pt-2">
+              <div className="flex justify-between text-sm font-semibold mt-1">
+                <span>Total</span>
+                <span className="font-mono">{formatMXN(pkg.total)}</span>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
+            </div>
+          </div>
         )}
 
         {/* Price disclaimer */}
         <p className="mt-3 text-[11px] italic leading-snug text-muted-foreground">
-          {PRICE_DISCLAIMER}
+          * Precios sin IVA (16%), costo de envío ($360/entrega) ni recargos por entrega temprana.
         </p>
 
         <button
@@ -251,6 +261,16 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
           Seleccionar este paquete
         </button>
       </div>
+
+      {/* Swap modal */}
+      {swapIdx !== null && (
+        <ProductSwapModal
+          open={swapIdx !== null}
+          onClose={() => setSwapIdx(null)}
+          currentItem={localItems[swapIdx]}
+          onSwap={handleSwap}
+        />
+      )}
     </div>
   );
 };

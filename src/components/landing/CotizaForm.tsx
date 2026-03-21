@@ -63,30 +63,6 @@ const DURATION_CARDS: DurationOption[] = [
 
 const NO_ADDON_VALUE = 0;
 
-
-const SUGGESTED_PRODUCTS: Record<number, { name: string; price: string; image: string }[]> = {
-  1: [
-    { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },
-    { name: 'Café/Té Berlioz', price: '$540', image: `${CL}/17_izcp6g` },
-  ],
-  2: [
-    { name: 'Coffee Break AM', price: '$3,250', image: `${CL}/coffeebreak_AM_cafe_zhxb1e` },
-    { name: 'Surtido Camille', price: '$700', image: `${CL}/Surtido-Camille-Berlioz-bocadillos_paaynm` },
-    { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },
-  ],
-  4: [
-    { name: 'Golden Box', price: '$330/pza', image: `${CL}/berlioz_fabian-05-scaled_ruahji` },
-    { name: 'Surtido Snacks', price: '$300', image: `${CL}/Snacks-saludables-Berlioz-scaled_pukfu4` },
-    { name: 'Agua Bui Natural', price: '$50/pza', image: `${CL}/bui-natural_k8kmdy` },
-  ],
-  6: [
-    { name: 'Breakfast in Roma', price: '$290/pza', image: `${CL}/breakfast-ROMA-e1686675516812_bzzmzm` },
-    { name: 'Pink Box', price: '$370/pza', image: `${CL}/Pasta-al-pesto-Pink-box-Berlioz-1_ijlkbj` },
-    { name: 'Coffee Break PM', price: '$2,800', image: `${CL}/coffeebreak_PM_qlk47d` },
-    { name: 'Café/Té Berlioz', price: '$540', image: `${CL}/17_izcp6g` },
-  ],
-};
-
 const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormProps) => {
   const dateWarning = getDateDisclaimer(form.fechaInicio);
   const cutoffWarning = getCutoffWarning(form.fechaInicio);
@@ -121,15 +97,92 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
     onChange({ ...form, restriccionesDieteticas: next });
   };
 
-  // Map form.duracionEstimada to the closest card value
-  const selectedDuration = DURATION_CARDS.reduce((prev, curr) =>
-    Math.abs(curr.value - form.duracionEstimada) < Math.abs(prev.value - form.duracionEstimada) ? curr : prev
-  );
+  // Duration selection
+  const selectedDuration = DURATION_CARDS.find(c => c.value === form.duracionEstimada);
+  const isNoAddon = form.duracionEstimada === NO_ADDON_VALUE;
 
-  const suggestedProducts = SUGGESTED_PRODUCTS[selectedDuration.value] || [];
+  // Show "sin complementos" only for short durations (1h)
+  const showNoAddonOption = form.duracionEstimada === 1 || isNoAddon;
 
   return (
     <div className="animate-slide-in space-y-6">
+      {/* ═══ DURATION FIRST ═══ */}
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-3">
+          ¿Cuánto dura tu evento?
+        </label>
+        <div className="space-y-3">
+          {DURATION_CARDS.map((card) => {
+            const isSelected = selectedDuration?.value === card.value && !isNoAddon;
+            return (
+              <button
+                key={card.value}
+                type="button"
+                onClick={() => onChange({ ...form, duracionEstimada: card.value })}
+                className={cn(
+                  "w-full flex items-center gap-4 p-3 rounded-xl border transition-all text-left",
+                  isSelected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border bg-card hover:border-primary/40",
+                )}
+              >
+                <img
+                  src={card.image}
+                  alt={card.label}
+                  className="w-20 h-20 rounded-lg object-cover shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-body font-bold text-foreground text-sm">{card.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{card.suggestion}</p>
+                  <p className="text-xs font-medium mt-1" style={{ color: 'hsl(var(--gold))' }}>{card.priceHint}</p>
+                </div>
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center",
+                  isSelected ? "border-primary bg-primary" : "border-muted-foreground/30",
+                )}>
+                  {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                </div>
+              </button>
+            );
+          })}
+
+          {/* Sin complementos — only show when 1h is selected or already active */}
+          {showNoAddonOption && (
+            <button
+              type="button"
+              onClick={() => onChange({ ...form, duracionEstimada: NO_ADDON_VALUE })}
+              className={cn(
+                "w-full flex items-center justify-center gap-3 p-4 rounded-xl transition-all text-center",
+                isNoAddon
+                  ? "ring-1 ring-primary/20 bg-primary/5"
+                  : "hover:border-primary/40",
+              )}
+              style={{
+                border: isNoAddon
+                  ? '2px solid hsl(var(--primary))'
+                  : '2px dashed #D0CFC8',
+                background: isNoAddon ? undefined : '#FAFAF8',
+              }}
+            >
+              <div className="flex-1">
+                <p className="font-body font-bold text-sm" style={{ color: '#888880' }}>
+                  Sin complementos adicionales
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: '#888880' }}>
+                  Solo lo esencial — sin bebidas extra ni snacks
+                </p>
+              </div>
+              <div className={cn(
+                "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center",
+                isNoAddon ? "border-primary bg-primary" : "border-muted-foreground/30",
+              )}>
+                {isNoAddon && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* ═══ Personas ═══ */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
@@ -296,101 +349,6 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
           </label>
         </div>
       )}
-
-      {/* ═══ Duration — Visual suggestion cards ═══ */}
-      <div>
-        <label className="block text-sm font-medium text-foreground mb-3">
-          ¿Cuánto dura tu evento?
-        </label>
-        <div className="space-y-3">
-          {DURATION_CARDS.map((card) => {
-            const isSelected = selectedDuration.value === card.value;
-            return (
-              <button
-                key={card.value}
-                type="button"
-                onClick={() => onChange({ ...form, duracionEstimada: card.value })}
-                className={cn(
-                  "w-full flex items-center gap-4 p-3 rounded-xl border transition-all text-left",
-                  isSelected
-                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                    : "border-border bg-card hover:border-primary/40",
-                )}
-              >
-                <img
-                  src={card.image}
-                  alt={card.label}
-                  className="w-20 h-20 rounded-lg object-cover shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-body font-bold text-foreground text-sm">{card.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{card.suggestion}</p>
-                  <p className="text-xs font-medium mt-1" style={{ color: 'hsl(var(--gold))' }}>{card.priceHint}</p>
-                </div>
-                <div className={cn(
-                  "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center",
-                  isSelected ? "border-primary bg-primary" : "border-muted-foreground/30",
-                )}>
-                  {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                </div>
-              </button>
-            );
-          })}
-
-          {/* Sin complementos card */}
-          <button
-            type="button"
-            onClick={() => onChange({ ...form, duracionEstimada: NO_ADDON_VALUE })}
-            className={cn(
-              "w-full flex items-center justify-center gap-3 p-4 rounded-xl transition-all text-center",
-              form.duracionEstimada === NO_ADDON_VALUE
-                ? "ring-1 ring-primary/20 bg-primary/5"
-                : "hover:border-primary/40",
-            )}
-            style={{
-              border: form.duracionEstimada === NO_ADDON_VALUE
-                ? '2px solid hsl(var(--primary))'
-                : '2px dashed #D0CFC8',
-              background: form.duracionEstimada === NO_ADDON_VALUE ? undefined : '#FAFAF8',
-            }}
-          >
-            <div className="flex-1">
-              <p className="font-body font-bold text-sm" style={{ color: '#888880' }}>
-                ✈️ Sin complementos adicionales
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#888880' }}>
-                Solo lo esencial — sin bebidas extra ni snacks
-              </p>
-            </div>
-            <div className={cn(
-              "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center",
-              form.duracionEstimada === NO_ADDON_VALUE ? "border-primary bg-primary" : "border-muted-foreground/30",
-            )}>
-              {form.duracionEstimada === NO_ADDON_VALUE && <div className="w-2 h-2 rounded-full bg-white" />}
-            </div>
-          </button>
-        </div>
-
-        {/* Suggested products preview */}
-        {suggestedProducts.length > 0 && form.duracionEstimada !== NO_ADDON_VALUE && (
-          <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
-            <p className="text-xs font-medium text-muted-foreground mb-2.5">
-              Vista previa de productos sugeridos
-            </p>
-            <div className="space-y-2">
-              {suggestedProducts.map((prod, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <img src={prod.image} alt={prod.name} className="w-10 h-10 rounded-md object-cover shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{prod.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{prod.price}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* ═══ Budget question ═══ */}
       <div className="border-t border-border pt-6">

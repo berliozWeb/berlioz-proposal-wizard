@@ -7,6 +7,12 @@ import LeadGateModal from "@/components/proposal/LeadGateModal";
 import LeadsViewerModal from "@/components/proposal/LeadsViewerModal";
 import { useProposalPresenter } from "@/presentation/hooks/useProposalPresenter";
 import { EVENT_TYPE_LABELS, type EventType } from "@/domain/value-objects/EventType";
+import {
+  PRICE_DISCLAIMER_BANNER,
+  getNudgeTriggers,
+  buildNudgeMailto,
+  shouldSuggestStaff,
+} from "@/domain/shared/BusinessRules";
 
 const Propuesta = () => {
   const p = useProposalPresenter();
@@ -16,6 +22,39 @@ const Propuesta = () => {
   const isCotiza = p.proposalPath === 'cotiza';
   const isMenu = p.proposalPath === 'menu';
   const personas = p.form.personas || 1;
+
+  const nudges = getNudgeTriggers({
+    personas: p.form.personas,
+    codigoPostal: p.form.codigoPostal,
+    eventType: p.form.eventType,
+    fechaInicio: p.form.fechaInicio,
+  });
+
+  const showNudge = nudges.length > 0;
+  const nudgeMailto = showNudge
+    ? buildNudgeMailto(p.form, nudges.map(n => n.reason).join('. '))
+    : '';
+
+  const showStaffSuggestion = shouldSuggestStaff(
+    p.form.eventType,
+    p.form.personas,
+    p.form.duracionEstimada,
+  );
+
+  const hasDietary = p.form.tieneRestricciones && p.form.restriccionesDieteticas.length > 0;
+  const dietaryLabels = hasDietary
+    ? p.form.restriccionesDieteticas.map(r => {
+        const map: Record<string, string> = {
+          vegetariano: 'Vegetariano', vegano: 'Vegano', sin_gluten: 'Sin gluten',
+          sin_lactosa: 'Sin lactosa', keto: 'Keto',
+        };
+        return map[r] || r;
+      })
+    : [];
+
+  const earlyDelivery = p.form.horasEntrega?.[0] && p.form.horasEntrega[0] < '07:30';
+  const volume80 = p.form.personas >= 80;
+  const isSmallGroup = personas <= 6 && p.form.eventType !== 'capacitacion';
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,26 +99,61 @@ const Propuesta = () => {
               {isCotiza && p.proposal && (
                 <p className="mt-6 text-foreground leading-relaxed">{p.proposal.intro}</p>
               )}
+
+              {/* Rule 9: Dietary restrictions badge */}
+              {hasDietary && (
+                <div className="mt-4 px-4 py-3 rounded-lg border border-accent/30 bg-accent/5">
+                  <p className="text-sm text-foreground font-medium">
+                    🥗 Cotización con opciones para: {dietaryLabels.join(', ')}
+                  </p>
+                  <a
+                    href="https://berlioz.mx/vegano-vegetariano"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary font-medium hover:underline mt-1 inline-block"
+                  >
+                    Ver sección completa → berlioz.mx/vegano-vegetariano
+                  </a>
+                </div>
+              )}
             </div>
+
+            {/* Rule 10: Small group shortcut */}
+            {isSmallGroup && (
+              <div className="mb-6 px-4 py-3 rounded-lg border border-border bg-muted/50">
+                <p className="text-sm text-foreground">
+                  ¿Solo necesitas unas cuantas cajas? Ve directo →{' '}
+                  <a href="https://berlioz.mx" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">
+                    berlioz.mx
+                  </a>
+                </p>
+              </div>
+            )}
+
+            {/* Rule 5: Sticky disclaimer banner ABOVE package cards */}
+            {isCotiza && p.proposal && (
+              <div
+                className="mb-6 px-4 py-3 rounded-lg border-l-4 text-xs leading-relaxed"
+                style={{ background: '#FDF3E0', borderColor: '#C9973A', borderRadius: 8 }}
+              >
+                {PRICE_DISCLAIMER_BANNER}
+              </div>
+            )}
 
             {/* Cotiza path: 3 packages */}
             {isCotiza && p.proposal && (
               <>
                 <div className="proposal-packages grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                  {p.proposal.packages.map((pkg) => {
-                    const earlyDelivery = p.form.horasEntrega?.[0] && p.form.horasEntrega[0] < '07:30';
-                    const volume80 = p.form.personas >= 80;
-                    return (
-                      <PackageCard
-                        key={pkg.id}
-                        pkg={pkg}
-                        isRecommended={pkg.id === 'recomendado'}
-                        onSelect={() => p.handlePackageSelect(pkg.displayName)}
-                        earlyDeliverySurcharge={earlyDelivery}
-                        volumeSurcharge={volume80}
-                      />
-                    );
-                  })}
+                  {p.proposal.packages.map((pkg) => (
+                    <PackageCard
+                      key={pkg.id}
+                      pkg={pkg}
+                      isRecommended={pkg.id === 'recomendado'}
+                      onSelect={() => p.handlePackageSelect(pkg.displayName)}
+                      earlyDeliverySurcharge={earlyDelivery}
+                      volumeSurcharge={volume80}
+                    />
+                  ))}
                 </div>
                 {p.proposal.recommendedReason && (
                   <p className="text-sm text-muted-foreground italic mb-8 text-center">
@@ -97,6 +171,18 @@ const Propuesta = () => {
                 selectedAddons={p.selectedAddons}
                 onSelect={(col) => p.handlePackageSelect(col === 'esencial' ? 'Esencial' : 'Plus +')}
               />
+            )}
+
+            {/* Rule 8: Proactive staff suggestion */}
+            {showStaffSuggestion && !p.selectedAddons.includes('personal_servicio') && (
+              <div className="mt-6 mb-4 px-4 py-3 rounded-lg border border-accent/30 bg-accent/5">
+                <p className="text-sm text-foreground font-medium">
+                  👥 Para eventos de este tamaño, muchos clientes agregan personal de apoyo. ¿Te interesa?
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  1-4 horas: $800/persona · 4-8 horas: $1,600/persona
+                </p>
+              </div>
             )}
 
             {/* Shared add-ons */}
@@ -120,6 +206,23 @@ const Propuesta = () => {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Rule 7: Nudge card for human contact */}
+            {showNudge && (
+              <div className="mt-8 px-5 py-4 rounded-xl" style={{ background: '#E8F0EB', border: '1px solid #1C3A2F', borderRadius: 12 }}>
+                <p className="text-sm text-foreground font-semibold mb-1">💬 ¿Te ayudamos personalmente?</p>
+                <p className="text-xs text-foreground mb-3">
+                  Nuestro equipo te contacta en menos de 2 horas en horario hábil.
+                </p>
+                <a
+                  href={nudgeMailto}
+                  className="inline-block px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                  style={{ background: '#1C3A2F', color: '#fff' }}
+                >
+                  Solicitar atención personalizada →
+                </a>
               </div>
             )}
 

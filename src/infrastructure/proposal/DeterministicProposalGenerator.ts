@@ -465,14 +465,14 @@ export class DeterministicProposalGenerator implements IProposalGenerator {
     const items: PackageItem[] = [];
 
     if (level === 'economico') {
-      // Morning: breakfast bag or desayuno
-      if (people >= 20) {
+      // Morning: desayuno (mín 10) or bag
+      if (people >= 10) {
         items.push(makeItem('desayuno_berlioz', 'Desayuno Berlioz (mañana)', 170, 1, people));
       } else {
         items.push(makeItem('breakfast_bag', 'Breakfast Bag Pavo (mañana)', 250, 1, people));
       }
-      // Midday: comedor or mini box
-      if (people >= 20) {
+      // Midday: comedor (mín 10) or mini_box (sin mínimo)
+      if (people >= 10) {
         items.push(makeItem('comedor', 'Comedor Berlioz (mediodía)', 170, 1, people));
       } else {
         items.push(makeItem('mini_box', 'Mini Box (mediodía)', 170, 1, people));

@@ -1,3 +1,4 @@
+import { useState, useCallback } from "react";
 import berliozLogo from "@/assets/berlioz-logo.png";
 import BerliozHeader from "@/components/BerliozHeader";
 import PackageCard from "@/components/proposal/PackageCard";
@@ -7,6 +8,10 @@ import LeadGateModal from "@/components/proposal/LeadGateModal";
 import LeadsViewerModal from "@/components/proposal/LeadsViewerModal";
 import { useProposalPresenter } from "@/presentation/hooks/useProposalPresenter";
 import { EVENT_TYPE_LABELS, type EventType } from "@/domain/value-objects/EventType";
+import { formatMXN } from "@/domain/value-objects/Money";
+import { calculateIVA, roundCents } from "@/domain/value-objects/Money";
+import { getSeasonalMessage } from "@/domain/entities/CrossSellData";
+import type { PackageItem } from "@/domain/entities/Proposal";
 import {
   PRICE_DISCLAIMER_BANNER,
   getNudgeTriggers,
@@ -16,6 +21,13 @@ import {
 
 const Propuesta = () => {
   const p = useProposalPresenter();
+
+  // Track modified packages
+  const [modifiedPkgs, setModifiedPkgs] = useState<Record<string, PackageItem[]>>({});
+
+  const handleItemsChange = useCallback((pkgId: string, items: PackageItem[]) => {
+    setModifiedPkgs(prev => ({ ...prev, [pkgId]: items }));
+  }, []);
 
   if (!p.form) return null;
 
@@ -55,6 +67,28 @@ const Propuesta = () => {
   const earlyDelivery = p.form.horasEntrega?.[0] && p.form.horasEntrega[0] < '07:30';
   const volume80 = p.form.personas >= 80;
   const isSmallGroup = personas <= 6 && p.form.eventType !== 'capacitacion';
+  const seasonalMsg = getSeasonalMessage(p.form.fechaInicio);
+
+  // Calculate live totals for comparison row and floating bar
+  const getPackageTotal = (pkgId: string) => {
+    const items = modifiedPkgs[pkgId];
+    const originalPkg = p.proposal?.packages.find(pk => pk.id === pkgId);
+    if (!originalPkg) return 0;
+    if (!items) return originalPkg.total;
+    const itemsSubtotal = items.reduce((s, i) => s + i.subtotal, 0);
+    const sub = itemsSubtotal + originalPkg.deliveryFee;
+    return roundCents(sub + calculateIVA(sub));
+  };
+
+  const anyModified = Object.keys(modifiedPkgs).length > 0;
+  const esencialTotal = getPackageTotal('basico');
+  const equilibradoTotal = getPackageTotal('recomendado');
+  const experienciaTotal = getPackageTotal('premium');
+
+  const diffEqVsEs = equilibradoTotal - esencialTotal;
+  const diffExVsEq = experienciaTotal - equilibradoTotal;
+  const pctEqVsEs = esencialTotal > 0 ? Math.round((diffEqVsEs / esencialTotal) * 100) : 0;
+  const pctExVsEq = equilibradoTotal > 0 ? Math.round((diffExVsEq / equilibradoTotal) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,7 +134,13 @@ const Propuesta = () => {
                 <p className="mt-6 text-foreground leading-relaxed">{p.proposal.intro}</p>
               )}
 
-              {/* Rule 9: Dietary restrictions badge */}
+              {/* Seasonal message */}
+              {seasonalMsg && (
+                <div className="mt-4 px-4 py-3 rounded-lg border border-accent/30 bg-accent/5">
+                  <p className="text-sm text-foreground">{seasonalMsg}</p>
+                </div>
+              )}
+
               {hasDietary && (
                 <div className="mt-4 px-4 py-3 rounded-lg border border-accent/30 bg-accent/5">
                   <p className="text-sm text-foreground font-medium">
@@ -118,7 +158,6 @@ const Propuesta = () => {
               )}
             </div>
 
-            {/* Rule 10: Small group shortcut */}
             {isSmallGroup && (
               <div className="mb-6 px-4 py-3 rounded-lg border border-border bg-muted/50">
                 <p className="text-sm text-foreground">
@@ -130,7 +169,6 @@ const Propuesta = () => {
               </div>
             )}
 
-            {/* Rule 5: Sticky disclaimer banner ABOVE package cards */}
             {isCotiza && p.proposal && (
               <div
                 className="mb-6 px-4 py-3 rounded-lg border-l-4 text-xs leading-relaxed"
@@ -140,10 +178,10 @@ const Propuesta = () => {
               </div>
             )}
 
-            {/* Cotiza path: 3 packages */}
+            {/* Package cards */}
             {isCotiza && p.proposal && (
               <>
-                <div className="proposal-packages grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="proposal-packages grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   {p.proposal.packages.map((pkg) => (
                     <PackageCard
                       key={pkg.id}
@@ -152,9 +190,24 @@ const Propuesta = () => {
                       onSelect={() => p.handlePackageSelect(pkg.displayName)}
                       earlyDeliverySurcharge={earlyDelivery}
                       volumeSurcharge={volume80}
+                      people={personas}
+                      onItemsChange={handleItemsChange}
                     />
                   ))}
                 </div>
+
+                {/* Comparison row */}
+                <div className="mb-8 px-4 py-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground space-y-1">
+                  <div className="flex justify-between">
+                    <span>Esencial vs Equilibrado:</span>
+                    <span className="font-mono font-medium text-foreground">+{formatMXN(diffEqVsEs)} (+{pctEqVsEs}%)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Equilibrado vs Experiencia:</span>
+                    <span className="font-mono font-medium text-foreground">+{formatMXN(diffExVsEq)} (+{pctExVsEq}%)</span>
+                  </div>
+                </div>
+
                 {p.proposal.recommendedReason && (
                   <p className="text-sm text-muted-foreground italic mb-8 text-center">
                     💡 {p.proposal.recommendedReason}
@@ -163,7 +216,6 @@ const Propuesta = () => {
               </>
             )}
 
-            {/* Menu path: 2-column proposal */}
             {isMenu && p.cart.length > 0 && (
               <MenuProposal
                 cart={p.cart}
@@ -173,7 +225,6 @@ const Propuesta = () => {
               />
             )}
 
-            {/* Rule 8: Proactive staff suggestion */}
             {showStaffSuggestion && !p.selectedAddons.includes('personal_servicio') && (
               <div className="mt-6 mb-4 px-4 py-3 rounded-lg border border-accent/30 bg-accent/5">
                 <p className="text-sm text-foreground font-medium">
@@ -185,14 +236,8 @@ const Propuesta = () => {
               </div>
             )}
 
-            {/* Shared add-ons */}
-            <AddonsBar
-              selected={p.selectedAddons}
-              onToggle={p.toggleAddon}
-              personas={personas}
-            />
+            <AddonsBar selected={p.selectedAddons} onToggle={p.toggleAddon} personas={personas} />
 
-            {/* Addon labels in print */}
             {p.addonLabels.length > 0 && (
               <div className="border border-accent/30 bg-accent/5 rounded-lg p-5 mt-8">
                 <h3 className="font-heading text-base font-semibold text-foreground mb-2">
@@ -201,15 +246,13 @@ const Propuesta = () => {
                 <ul className="space-y-1.5">
                   {p.addonLabels.map((label, i) => (
                     <li key={i} className="text-sm text-foreground flex gap-2">
-                      <span className="text-gold">✦</span>
-                      <span>{label}</span>
+                      <span className="text-gold">✦</span><span>{label}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* Rule 7: Nudge card for human contact */}
             {showNudge && (
               <div className="mt-8 px-5 py-4 rounded-xl" style={{ background: '#E8F0EB', border: '1px solid #1C3A2F', borderRadius: 12 }}>
                 <p className="text-sm text-foreground font-semibold mb-1">💬 ¿Te ayudamos personalmente?</p>
@@ -226,7 +269,6 @@ const Propuesta = () => {
               </div>
             )}
 
-            {/* Business Rules (cotiza only) */}
             {isCotiza && p.proposal && (
               <div className="border-t border-border pt-6 mb-8 mt-8">
                 <h3 className="font-heading text-lg font-semibold text-foreground mb-3">Condiciones generales</h3>
@@ -243,7 +285,6 @@ const Propuesta = () => {
               </div>
             )}
 
-            {/* Action bar */}
             <div className="no-print sticky bottom-0 bg-background/90 backdrop-blur border-t border-border py-4 flex flex-wrap gap-3 justify-center mt-8">
               <button onClick={() => p.openGateDirectly('pdf')} className="px-5 py-2.5 rounded-lg border border-border text-foreground font-body text-sm font-medium hover:bg-muted transition-colors">
                 Descargar PDF
@@ -277,6 +318,28 @@ const Propuesta = () => {
           </div>
         )}
       </main>
+
+      {/* Floating bar when modified */}
+      {anyModified && isCotiza && p.proposal && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur border-t border-border px-4 py-3 no-print">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>✏️ Propuesta personalizada ·</span>
+              <span className="font-mono font-medium text-foreground">Esencial {formatMXN(esencialTotal)}</span>
+              <span>·</span>
+              <span className="font-mono font-medium text-foreground">Equilibrado {formatMXN(equilibradoTotal)}</span>
+              <span>·</span>
+              <span className="font-mono font-medium text-foreground">Experiencia {formatMXN(experienciaTotal)}</span>
+            </div>
+            <button
+              onClick={() => p.openGateDirectly('pdf')}
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all shrink-0"
+            >
+              Descargar PDF →
+            </button>
+          </div>
+        </div>
+      )}
 
       <LeadGateModal
         open={p.gateOpen}

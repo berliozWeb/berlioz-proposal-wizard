@@ -1,35 +1,57 @@
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import BaseLayout from "@/components/layout/BaseLayout";
+import StepperProgress from "@/components/ui/StepperProgress";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import CheckoutStep1Cart from "@/components/checkout/CheckoutStep1Cart";
+import CheckoutStep2Delivery from "@/components/checkout/CheckoutStep2Delivery";
+import CheckoutStep3Payment from "@/components/checkout/CheckoutStep3Payment";
+import CheckoutStep4Confirmation from "@/components/checkout/CheckoutStep4Confirmation";
+
+const STEPS = [
+  { label: "Carrito" },
+  { label: "Entrega" },
+  { label: "Pago" },
+  { label: "Confirmación" },
+];
 
 const CheckoutPage = () => {
-  const { items, subtotal } = useCart();
+  const { items } = useCart();
+  const navigate = useNavigate();
+  const [step, setStep] = useState(0);
+  const [orderId, setOrderId] = useState<string | null>(() => {
+    return sessionStorage.getItem("berlioz_last_order_id");
+  });
 
-  if (items.length === 0) {
-    return (
-      <BaseLayout>
-        <div className="max-w-lg mx-auto px-6 py-20 text-center">
-          <h1 className="font-heading text-3xl text-foreground mb-4">Tu carrito está vacío</h1>
-          <p className="font-body text-muted-foreground mb-6">Agrega productos desde el menú para continuar.</p>
-          <a
-            href="/menu"
-            className="inline-flex items-center justify-center h-11 px-6 rounded-lg bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-primary/90 transition-colors"
-          >
-            Explorar menú
-          </a>
-        </div>
-      </BaseLayout>
-    );
-  }
+  // If we have a stored order and are on step 4, stay there
+  useEffect(() => {
+    if (orderId) setStep(3);
+  }, [orderId]);
+
+  // Redirect if cart is empty and not on confirmation
+  useEffect(() => {
+    if (items.length === 0 && step < 3 && !orderId) {
+      navigate("/menu");
+    }
+  }, [items.length, step, orderId, navigate]);
+
+  const handleOrderComplete = useCallback((newOrderId: string) => {
+    sessionStorage.setItem("berlioz_last_order_id", newOrderId);
+    setOrderId(newOrderId);
+    setStep(3);
+  }, []);
+
+  if (items.length === 0 && step < 3 && !orderId) return null;
 
   return (
     <BaseLayout>
-      <div className="max-w-3xl mx-auto px-6 py-16">
-        <h1 className="font-heading text-3xl text-foreground mb-6">Checkout</h1>
-        <div className="rounded-xl border border-border bg-card p-6">
-          <p className="font-body text-muted-foreground">
-            {items.length} producto{items.length > 1 ? "s" : ""} · Subtotal: ${subtotal.toLocaleString("es-MX")}
-          </p>
-        </div>
+      <StepperProgress steps={STEPS} currentStep={step} />
+      <div className="min-h-[calc(100vh-200px)]">
+        {step === 0 && <CheckoutStep1Cart onNext={() => setStep(1)} />}
+        {step === 1 && <CheckoutStep2Delivery onNext={() => setStep(2)} onBack={() => setStep(0)} />}
+        {step === 2 && <CheckoutStep3Payment onNext={handleOrderComplete} onBack={() => setStep(1)} />}
+        {step === 3 && <CheckoutStep4Confirmation orderId={orderId} />}
       </div>
     </BaseLayout>
   );

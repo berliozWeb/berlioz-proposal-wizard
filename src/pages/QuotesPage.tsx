@@ -62,7 +62,7 @@ const QuotesPage = () => {
     if (!user) return;
     (async () => {
       const { data } = await supabase.from("quotes").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-      setQuotes((data as Quote[]) || []);
+      setQuotes((data as unknown as Quote[]) || []);
       setLoading(false);
     })();
   }, [user]);

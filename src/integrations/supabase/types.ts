@@ -256,12 +256,19 @@ export type Database = {
           created_at: string
           email: string | null
           email_domain: string | null
+          fiscal_direccion: string | null
+          fiscal_razon_social: string | null
+          fiscal_regimen: string | null
+          fiscal_rfc: string | null
+          fiscal_uso_cfdi: string | null
           full_name: string | null
           id: string
           loyalty_points: number
+          notification_preferences: Json
           onboarding_complete: boolean
           order_frequency: Database["public"]["Enums"]["order_frequency"] | null
           profile_type: Database["public"]["Enums"]["profile_type"] | null
+          referral_code: string | null
           updated_at: string
         }
         Insert: {
@@ -270,14 +277,21 @@ export type Database = {
           created_at?: string
           email?: string | null
           email_domain?: string | null
+          fiscal_direccion?: string | null
+          fiscal_razon_social?: string | null
+          fiscal_regimen?: string | null
+          fiscal_rfc?: string | null
+          fiscal_uso_cfdi?: string | null
           full_name?: string | null
           id: string
           loyalty_points?: number
+          notification_preferences?: Json
           onboarding_complete?: boolean
           order_frequency?:
             | Database["public"]["Enums"]["order_frequency"]
             | null
           profile_type?: Database["public"]["Enums"]["profile_type"] | null
+          referral_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -286,14 +300,21 @@ export type Database = {
           created_at?: string
           email?: string | null
           email_domain?: string | null
+          fiscal_direccion?: string | null
+          fiscal_razon_social?: string | null
+          fiscal_regimen?: string | null
+          fiscal_rfc?: string | null
+          fiscal_uso_cfdi?: string | null
           full_name?: string | null
           id?: string
           loyalty_points?: number
+          notification_preferences?: Json
           onboarding_complete?: boolean
           order_frequency?:
             | Database["public"]["Enums"]["order_frequency"]
             | null
           profile_type?: Database["public"]["Enums"]["profile_type"] | null
+          referral_code?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -351,6 +372,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      scheduled_orders: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          delivery_address_id: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          items: Json
+          next_delivery_date: string | null
+          time_slot: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week?: number
+          delivery_address_id?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          items?: Json
+          next_delivery_date?: string | null
+          time_slot: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          delivery_address_id?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          items?: Json
+          next_delivery_date?: string | null
+          time_slot?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_orders_delivery_address_id_fkey"
+            columns: ["delivery_address_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

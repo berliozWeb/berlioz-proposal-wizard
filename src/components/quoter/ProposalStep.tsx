@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -10,8 +10,9 @@ import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMXN } from "@/domain/value-objects/Money";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import logoImg from "@/assets/berlioz-logo.png";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -232,53 +233,129 @@ export default function ProposalStep(props: ProposalStepProps) {
   };
 
   const handleExportPDF = () => {
-    const tier = selectedTier || "equilibrado";
-    const t = tierTotals[tier];
-    const items = packages[tier].items;
-    const doc = new jsPDF();
+    try {
+      const tier = selectedTier || "equilibrado";
+      const t = tierTotals[tier];
+      const items = packages[tier].items;
+      const doc = new jsPDF();
+      
+      const primaryColor = [0, 61, 91];
+      const secondaryColor = [100, 100, 100];
+      const accentColor = [190, 155, 123]; // gold/amber tone
 
-    doc.setFontSize(20); doc.setTextColor(0, 61, 91); doc.text("BERLIOZ", 14, 20);
-    doc.setFontSize(10); doc.setTextColor(100, 100, 100); doc.text("Cotización de Catering Corporativo", 14, 27);
-    doc.setFontSize(9); doc.setTextColor(0, 0, 0);
-    let y = 38;
-    doc.text(`Atención: ${clientName || "—"}`, 14, y);
-    doc.text(`Empresa: ${empresa || "—"}`, 14, y + 5);
-    doc.text(`Evento: ${eventLabel}`, 14, y + 10);
-    doc.text(`Fecha: ${date ? format(date, "d/MM/yyyy") : "—"}`, 14, y + 15);
-    doc.text(`Personas: ${people}`, 14, y + 20);
-    doc.text(`CP: ${postalCode || "—"}`, 14, y + 25);
-    doc.text(`Hora de entrega: ${deliveryTime || "—"}`, 120, y);
-    doc.text(`Duración: ${duration || "—"}`, 120, y + 5);
-    doc.text(`Cotización: ${quoteId}`, 120, y + 10);
-    doc.text(`Fecha cotización: ${format(new Date(), "d/MM/yyyy")}`, 120, y + 15);
+      // === HEADER ===
+      // Add logo
+      try {
+        doc.addImage(logoImg, "PNG", 14, 15, 30, 8);
+      } catch (e) {
+        // Log skip if image fails
+        doc.setFontSize(22); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]); 
+        doc.text("BERLIOZ", 14, 20);
+      }
 
-    const tableData = items.map(i => [i.productName, formatMXN(i.unitPrice), `${i.qty}`, formatMXN(i.unitPrice * i.qty)]);
-    (doc as any).autoTable({
-      startY: y + 35, head: [["Descripción", "Precio Unitario", "Cantidad", "Subtotal"]],
-      body: tableData, theme: "grid",
-      headStyles: { fillColor: [0, 61, 91], textColor: 255, fontSize: 9 },
-      bodyStyles: { fontSize: 9 },
-    });
+      doc.setFontSize(10); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]); 
+      doc.text("L'art de recevoir — Cotización Gourmet", 14, 30);
+      
+      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setLineWidth(0.5);
+      doc.line(14, 35, 196, 35);
 
-    const fy = (doc as any).lastAutoTable.finalY + 10;
-    doc.setFontSize(9);
-    doc.text(`Subtotal: ${formatMXN(t.subtotal)}`, 130, fy);
-    doc.text(`Envío: ${formatMXN(t.shipping)}`, 130, fy + 5);
-    if (t.early > 0) doc.text(`Recargo entrega temprana: ${formatMXN(t.early)}`, 130, fy + 10);
-    const offset = t.early > 0 ? 15 : 10;
-    doc.text(`IVA (16%): ${formatMXN(t.iva)}`, 130, fy + offset);
-    doc.setFontSize(12); doc.setTextColor(0, 61, 91);
-    doc.text(`Total: ${formatMXN(t.total)}`, 130, fy + offset + 7);
+      // === CLIENT INFO ===
+      doc.setFontSize(9); doc.setTextColor(0, 0, 0);
+      let y = 45;
+      
+      // Column 1
+      doc.setFont("helvetica", "bold"); doc.text("RECEPTOR", 14, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Atención: ${clientName || "—"}`, 14, y + 6);
+      doc.text(`Empresa: ${empresa || "—"}`, 14, y + 12);
+      doc.text(`Evento: ${eventLabel}`, 14, y + 18);
+      doc.text(`Zona (CP): ${postalCode || "—"}`, 14, y + 24);
 
-    doc.setFontSize(7); doc.setTextColor(120, 120, 120);
-    let ny = fy + offset + 20;
-    QUOTE_FOOTER_NOTES.forEach(note => { doc.text(`* ${note}`, 14, ny); ny += 4; });
-    ny += 4; doc.setFontSize(8); doc.setTextColor(0, 61, 91);
-    doc.text("Anne Seguy | hola@berlioz.mx | 55 8237 5469", 14, ny);
-    doc.text(`Válida hasta: ${format(validUntil, "dd/MM/yyyy")} | ID: ${quoteId}`, 14, ny + 5);
+      // Column 2
+      doc.setFont("helvetica", "bold"); doc.text("DETALLES LOGÍSTICOS", 110, y);
+      doc.setFont("helvetica", "normal");
+      doc.text(`ID Cotización: ${quoteId}`, 110, y + 6);
+      doc.text(`Fecha del Evento: ${date ? format(date, "d/MM/yyyy") : "—"}`, 110, y + 12);
+      doc.text(`Hora de Entrega: ${deliveryTime || "—"}`, 110, y + 18);
+      doc.text(`Personas: ${people}`, 110, y + 24);
+      doc.text(`Duración: ${duration || "—"}`, 110, y + 30);
 
-    doc.save(`Berlioz-Cotizacion-${format(new Date(), "yyyyMMdd")}.pdf`);
-    toast.success("PDF descargado");
+      // === ITEMS TABLE ===
+      const tableData = items.map(i => [
+        i.productName, 
+        formatMXN(i.unitPrice), 
+        `${i.qty}`, 
+        formatMXN(i.unitPrice * i.qty)
+      ]);
+
+      autoTable(doc, {
+        startY: y + 40,
+        head: [["Descripción", "Precio Unitario", "Cantidad", "Subtotal"]],
+        body: tableData,
+        theme: "striped",
+        headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 9, fontStyle: "bold" },
+        bodyStyles: { fontSize: 8, textColor: 50 },
+        columnStyles: {
+          0: { cellWidth: "auto" },
+          1: { halign: "right", cellWidth: 35 },
+          2: { halign: "center", cellWidth: 25 },
+          3: { halign: "right", cellWidth: 35 },
+        },
+      });
+
+      // === TOTALS ===
+      const lastY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      
+      const alignRight = 196;
+      doc.text(`Subtotal:`, 140, lastY);
+      doc.text(formatMXN(t.subtotal), alignRight, lastY, { align: "right" });
+      
+      doc.text(`Logística y Envío:`, 140, lastY + 6);
+      doc.text(formatMXN(t.shipping + t.early), alignRight, lastY + 6, { align: "right" });
+      
+      doc.text(`IVA (16%):`, 140, lastY + 12);
+      doc.text(formatMXN(t.iva), alignRight, lastY + 12, { align: "right" });
+      
+      doc.setFontSize(14); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setFont("helvetica", "bold");
+      doc.text(`TOTAL:`, 140, lastY + 22);
+      doc.text(formatMXN(t.total), alignRight, lastY + 22, { align: "right" });
+
+      // === FOOTER NOTES ===
+      doc.setFontSize(8); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+      let ny = Math.max(lastY + 40, 230);
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("NOTAS IMPORTANTES", 14, ny);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      
+      ny += 5;
+      QUOTE_FOOTER_NOTES.slice(0, 8).forEach(note => { 
+        doc.text(`• ${note}`, 14, ny); 
+        ny += 4; 
+      });
+
+      // === BRAND CONTACT ===
+      doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.setLineWidth(0.5);
+      doc.line(14, 275, 196, 275);
+      
+      doc.setFontSize(8); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setFont("helvetica", "bold");
+      doc.text("Anne Seguy | hola@berlioz.mx | 55 8237 5469", 14, 282);
+      doc.setFont("helvetica", "normal"); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+      doc.text(`Válida hasta: ${format(validUntil, "dd/MM/yyyy")} | ID: ${quoteId}`, 14, 287);
+
+      doc.save(`Berlioz-Cotizacion-${format(new Date(), "yyyyMMdd")}.pdf`);
+      toast.success("Tu cotización en PDF se ha generado correctamente");
+    } catch (error) {
+      console.error("PDF Export Error:", error);
+      toast.error("Ocurrió un error al generar el PDF. Verifica que la información esté completa.");
+    }
   };
 
   const handleWhatsApp = () => {
@@ -303,174 +380,201 @@ export default function ProposalStep(props: ProposalStepProps) {
 
   // ═══ RENDER ═══
   return (
-    <div className="relative">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="font-heading text-2xl text-foreground">Propuesta Berlioz</h1>
-            <p className="font-body text-xs text-muted-foreground">Ciudad de México, {format(new Date(), "d 'de' MMMM yyyy", { locale: es })}</p>
+    <div className="relative bg-white font-body selection:bg-primary/10">
+      {/* Header — Premium and Clean */}
+      <div className="bg-gradient-to-b from-primary/[0.03] to-white border-b border-border/60">
+        <div className="max-w-7xl mx-auto px-6 pt-12 pb-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-[0.2em] uppercase mb-4">
+                Propuesta de Catering Gourmet
+              </span>
+              <h1 className="font-heading text-4xl md:text-5xl text-foreground tracking-tight">
+                {empresa || "Tu Evento"} — <span className="text-primary">{eventLabel}</span>
+              </h1>
+              <p className="font-body text-sm text-muted-foreground mt-3 flex items-center gap-2">
+                 Ciudad de México · {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <button onClick={onRestart} className="group flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-white font-heading text-xs font-bold uppercase tracking-widest hover:border-primary hover:text-primary transition-all duration-300">
+                <span className="transition-transform group-hover:-translate-x-1">←</span> Nueva cotización
+              </button>
+              <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">ID: {quoteId}</p>
+            </div>
           </div>
-          <button onClick={onRestart} className="font-body text-xs text-primary hover:underline">← Nueva cotización</button>
-        </div>
 
-        {/* Info table */}
-        <div className="bg-card rounded-xl border border-border p-4 mb-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm font-body">
-            <div><span className="text-muted-foreground">Atención</span><p className="font-medium text-foreground">{clientName || "—"}</p></div>
-            <div><span className="text-muted-foreground">Empresa</span><p className="font-medium text-foreground">{empresa || "—"}</p></div>
-            <div><span className="text-muted-foreground">Evento</span><p className="font-medium text-foreground">{eventLabel}</p></div>
-            <div><span className="text-muted-foreground">Fecha</span><p className="font-medium text-foreground">{date ? format(date, "d/MM/yyyy") : "—"}</p></div>
-            <div><span className="text-muted-foreground">Personas</span><p className="font-medium text-foreground">{people}</p></div>
-            <div><span className="text-muted-foreground">CP</span><p className="font-medium text-foreground">{postalCode || "—"}</p></div>
-            <div><span className="text-muted-foreground">Hora entrega</span><p className="font-medium text-primary">{deliveryTime || "—"}</p></div>
-            <div><span className="text-muted-foreground">Duración</span><p className="font-medium text-foreground">{duration || "—"}</p></div>
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 border-t border-border/60 pt-8 mt-4">
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Atención</p>
+              <p className="font-heading text-sm font-bold truncate">{clientName || "—"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Fecha</p>
+              <p className="font-heading text-sm font-bold">{date ? format(date, "d MMM yyyy", { locale: es }) : "—"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Personas</p>
+              <p className="font-heading text-sm font-bold">{people}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Entrega</p>
+              <p className="font-heading text-sm font-bold text-primary italic">{deliveryTime || "—"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Duración</p>
+              <p className="font-heading text-sm font-bold">{duration || "—"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Zona (CP)</p>
+              <p className="font-heading text-sm font-bold">{postalCode || "—"}</p>
+            </div>
           </div>
-          <p className="font-body text-xs text-muted-foreground mt-3 italic">
-            Estimado/a {clientName || "cliente"}, en Berlioz nos da mucho gusto preparar esta propuesta de {eventLabel.toLowerCase()} para {empresa || "su empresa"}. A continuación encontrará tres opciones diseñadas a la medida de su evento.
-          </p>
-        </div>
-
-        {/* Small order note */}
-        {people <= 4 && (
-          <div className="bg-secondary/5 border border-secondary/20 rounded-lg p-3 mb-4 font-body text-sm text-foreground">
-            ¿Solo necesitas unas cuantas cajas? <a href="https://berlioz.mx" className="text-primary font-semibold hover:underline">Ve directo → berlioz.mx</a>
-          </div>
-        )}
-
-        {/* IVA notice */}
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 font-body text-xs text-amber-800">
-          ℹ️ Precios por persona del producto únicamente. Se agregan al total: IVA 16% · Envío ${BASE_SHIPPING_COST}/entrega{isEarlyDelivery ? ` · Recargo entrega temprana $${EARLY_DELIVERY_SURCHARGE}` : ""}.
         </div>
       </div>
 
-      {/* ═══ THREE PROPOSAL CARDS ═══ */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-          {TIERS.map(tier => {
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        {/* Intro Message */}
+        <div className="max-w-3xl mb-16">
+          <p className="font-body text-lg text-muted-foreground leading-relaxed">
+            Estimado/a <span className="text-foreground font-bold">{clientName || "cliente"}</span>, en Berlioz nos entusiasma preparar esta propuesta gastronómica para <span className="text-foreground font-bold">{empresa || "su empresa"}</span>. 
+            Hemos diseñado tres niveles de experiencia que combinan sabor, sofisticación y la puntualidad que nos caracteriza.
+          </p>
+        </div>
+
+        {/* ═══ THREE PROPOSAL CARDS ═══ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
+          {TIERS.map((tier, idx) => {
             const pkg = packages[tier.id];
             const t = tierTotals[tier.id];
             const isOpen = openSections[tier.id];
             const isSelected = selectedTier === tier.id;
 
-            return (
-              <div key={tier.id} className={cn(
-                "relative bg-card rounded-xl border-2 transition-all flex flex-col",
-                tier.isPopular && "lg:scale-[1.02] lg:z-10 shadow-lg",
-                tier.isPopular && !isSelected && "border-primary",
-                isSelected && "border-primary ring-2 ring-primary/20",
-                !tier.isPopular && !isSelected && "border-border",
-              )}>
+              return (
+                <div key={tier.id} className={cn(
+                  "group relative flex flex-col rounded-[48px] border-2 transition-all duration-500 h-full",
+                  tier.isPopular ? "border-primary shadow-2xl shadow-primary/10 ring-8 ring-primary/[0.02] lg:-translate-y-4" : "border-border/60 hover:border-primary/30 bg-card/50",
+                  isSelected && "border-primary ring-8 ring-primary/5",
+                )}>
                 {/* Popular badge */}
                 {tier.isPopular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-b-lg bg-primary text-primary-foreground font-body text-xs font-semibold z-10">
-                    ⭐ Más popular
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-1.5 rounded-full bg-primary text-primary-foreground font-heading text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/30 z-10 whitespace-nowrap">
+                    ⭐ Nuestra Recomendación
                   </div>
                 )}
 
-                <div className="p-5 flex-1 flex flex-col">
-                  {/* Title */}
-                  <h3 className="font-heading text-lg font-bold text-foreground">{tier.title}</h3>
-                  <p className="font-body text-xs text-muted-foreground italic mb-3">{tier.subtitle}</p>
+                <div className="p-10 flex-1 flex flex-col">
+                  {/* Tier Header */}
+                  <div className="mb-8">
+                    <h3 className="font-heading text-3xl font-bold text-foreground mb-2">{tier.title}</h3>
+                    <p className="font-body text-sm text-muted-foreground italic leading-snug">{tier.subtitle}</p>
+                  </div>
 
-                  {/* Tip */}
-                  {tier.tip && (
-                    <div className="bg-primary/5 rounded-lg p-2 mb-3">
-                      <p className="font-body text-xs text-primary">{tier.tip}</p>
+                  {/* Pricing */}
+                  <div className="mb-10 p-6 rounded-[32px] bg-white border border-border shadow-sm group-hover:shadow-md transition-shadow">
+                    <div className="flex items-baseline gap-1">
+                      <span className="font-heading text-4xl font-black tracking-tighter text-primary">{formatMXN(t.total)}</span>
+                      <span className="font-body text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Total</span>
                     </div>
-                  )}
+                    <p className="font-body text-xs text-muted-foreground mt-2 border-t border-border pt-2">
+                       {formatMXN(t.total / Math.max(1, people))} <span className="font-bold">por persona</span>
+                    </p>
+                    <p className="font-body text-[10px] text-primary font-bold uppercase tracking-widest mt-1">
+                      IVA y envío incluidos
+                    </p>
+                  </div>
 
-                  {/* Bullets */}
-                  <ul className="space-y-1 mb-4">
+                  {/* Features */}
+                  <ul className="space-y-4 mb-10 flex-1">
                     {tier.bullets.map(b => (
-                      <li key={b} className="font-body text-xs text-muted-foreground flex items-start gap-1.5">
-                        <span className="text-primary mt-0.5">•</span>{b}
+                      <li key={b} className="font-body text-sm text-foreground flex items-start gap-3">
+                        <div className="mt-1 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Check className="w-3 h-3 text-primary stroke-[3]" />
+                        </div>
+                        {b}
                       </li>
                     ))}
+                    {tier.tip && (
+                      <li className="p-4 rounded-2xl bg-primary/5 border border-primary/10 font-body text-xs text-primary leading-relaxed italic">
+                        {tier.tip}
+                      </li>
+                    )}
                   </ul>
 
-                  {/* Price */}
-                  <div className="border-t border-border pt-3 mb-3">
-                    <p className="font-mono text-2xl text-primary font-bold">{formatMXN(t.total)}</p>
-                    <p className="font-body text-[11px] text-muted-foreground">
-                      Total para {people} personas · {formatMXN(t.total / Math.max(1, people))}/persona
-                    </p>
-                    <p className="font-body text-[10px] text-muted-foreground italic mt-0.5">Incluye I.V.A. y envío</p>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex gap-2 mb-3">
+                  {/* Item Customization Header */}
+                  <div className="flex items-center justify-between gap-2 mb-6 pt-6 border-t border-border/60">
                     <button onClick={() => toggleSection(tier.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-xs font-body font-medium text-foreground hover:bg-muted transition-colors">
-                      ✏️ {isOpen ? "Ocultar" : "Modificar"} {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      className="flex items-center gap-2 font-heading text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
+                      {isOpen ? "Ocultar detalles" : "Modificar menú"} 
+                      {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                     </button>
                     <button onClick={() => openSidebar(tier.id)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border text-xs font-body font-medium text-foreground hover:bg-muted transition-colors">
-                      <Search className="w-3 h-3" /> Agregar
+                      className="flex items-center gap-2 font-heading text-[10px] font-bold uppercase tracking-widest text-primary hover:opacity-80 transition-all">
+                      <Plus className="w-3 h-3" /> Agregar
                     </button>
                   </div>
 
-                  {/* Mini-cards */}
+                  {/* Expandable Menu List */}
                   {isOpen && (
-                    <div className="grid grid-cols-1 gap-2 mb-3 animate-slide-up">
+                    <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
                       {pkg.items.map(item => (
-                        <div key={item.instanceId} className="bg-muted/50 rounded-lg p-3 border border-border">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-body text-[13px] font-bold text-foreground truncate">
-                                {item.isBestseller && <Star className="w-3 h-3 inline text-amber-500 mr-1" />}
+                        <div key={item.instanceId} className="bg-white rounded-2xl p-4 border border-border/80 shadow-sm relative group/item">
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="min-w-0 pr-6">
+                              <p className="font-heading text-sm font-bold text-foreground">
+                                {item.isBestseller && <Star className="w-3.5 h-3.5 inline text-amber-500 fill-current mr-1 mb-0.5" />}
                                 {item.productName}
                               </p>
-                              <p className="font-mono text-[11px] text-muted-foreground">{formatMXN(item.unitPrice)}/u</p>
+                              <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{formatMXN(item.unitPrice)}/u</p>
                             </div>
                             <button onClick={() => removeItem(tier.id, item.instanceId)}
-                              className="text-muted-foreground hover:text-destructive transition-colors p-1">
-                              <Trash2 className="w-3.5 h-3.5" />
+                              className="absolute top-4 right-4 text-muted-foreground/40 hover:text-destructive transition-colors">
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="flex items-center gap-2">
+                          
+                          <div className="flex items-center justify-between mt-4">
+                            <div className="flex items-center bg-muted/50 rounded-xl p-1">
                               <button onClick={() => updateItemQty(tier.id, item.instanceId, -1)}
-                                className="w-6 h-6 rounded border border-border bg-card flex items-center justify-center text-xs hover:bg-muted">
-                                <Minus className="w-3 h-3" />
+                                className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
+                                <Minus className="w-3 h-3 stroke-[3]" />
                               </button>
-                              <span className="font-mono text-sm w-8 text-center">{item.qty}</span>
+                              <span className="font-mono text-sm font-black w-10 text-center">{item.qty}</span>
                               <button onClick={() => updateItemQty(tier.id, item.instanceId, 1)}
-                                className="w-6 h-6 rounded border border-border bg-card flex items-center justify-center text-xs hover:bg-muted">
-                                <Plus className="w-3 h-3" />
+                                className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
+                                <Plus className="w-3 h-3 stroke-[3]" />
                               </button>
                             </div>
-                            <span className="font-mono text-xs font-semibold text-foreground">{formatMXN(item.unitPrice * item.qty)}</span>
-                          </div>
-                          <div className="flex gap-3 mt-2">
-                            <button onClick={() => openSwapSidebar(tier.id, item.instanceId)}
-                              className="font-body text-[10px] text-primary hover:underline flex items-center gap-0.5">
-                              <ArrowUpDown className="w-3 h-3" /> Cambiar
-                            </button>
+                            <div className="text-right">
+                              <span className="block font-heading text-sm font-bold text-primary">{formatMXN(item.unitPrice * item.qty)}</span>
+                              <button onClick={() => openSwapSidebar(tier.id, item.instanceId)}
+                                className="font-heading text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mt-1">
+                                <ArrowUpDown className="w-3 h-3 inline mr-1" /> Cambiar
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Price breakdown */}
-                  <div className="mt-auto border-t border-border pt-2 space-y-0.5 text-xs font-body">
-                    <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span className="font-mono">{formatMXN(t.subtotal)}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>Envío</span><span className="font-mono">{formatMXN(t.shipping)}</span></div>
-                    {t.early > 0 && <div className="flex justify-between text-amber-600"><span>Recargo temprano</span><span className="font-mono">{formatMXN(t.early)}</span></div>}
-                    <div className="flex justify-between text-muted-foreground"><span>IVA (16%)</span><span className="font-mono">{formatMXN(t.iva)}</span></div>
-                    <div className="flex justify-between font-semibold text-foreground pt-1"><span>Total</span><span className="font-mono">{formatMXN(t.total)}</span></div>
+                  {/* Total Breakdown — Clean Style */}
+                  <div className="space-y-2 mb-10 pt-6 border-t border-border/60">
+                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Subtotal</span><span>{formatMXN(t.subtotal)}</span></div>
+                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Logística</span><span>{formatMXN(t.shipping + t.early)}</span></div>
+                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Impuestos</span><span>{formatMXN(t.iva)}</span></div>
                   </div>
 
-                  {/* CTA */}
+                  {/* SELECT CTA */}
                   <button onClick={() => handleSelectTier(tier.id)}
                     className={cn(
-                      "mt-4 w-full py-3 rounded-lg font-body text-sm font-semibold transition-all",
-                      isSelected ? "bg-primary text-primary-foreground" :
-                        tier.ctaStyle === "primary" ? "bg-primary text-primary-foreground hover:bg-primary/90" :
-                          "border-2 border-border text-foreground hover:bg-muted"
+                      "w-full py-5 rounded-[24px] font-heading text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 shadow-xl",
+                      isSelected ? "bg-secondary text-white shadow-secondary/30 scale-[1.02]" :
+                        tier.isPopular ? "bg-primary text-white shadow-primary/30 hover:scale-[1.02]" :
+                          "bg-white border-2 border-primary text-primary hover:bg-primary/5 shadow-primary/5 hover:scale-[1.02]"
                     )}>
-                    {isSelected ? "✓ Seleccionado" : "Seleccionar este paquete"}
+                    {isSelected ? "✓ Opción Seleccionada" : "Seleccionar opción"}
                   </button>
                 </div>
               </div>
@@ -478,86 +582,132 @@ export default function ProposalStep(props: ProposalStepProps) {
           })}
         </div>
 
-        {/* Comparison bar */}
-        <div className="bg-muted/50 rounded-lg p-3 mb-6 text-center font-body text-sm text-muted-foreground flex flex-wrap justify-center gap-4">
-          <span>Esencial vs Equilibrado: <strong className="text-foreground">+{formatMXN(diffEQ)} (+{pctEQ}%)</strong></span>
-          <span>|</span>
-          <span>Equilibrado vs Experiencia: <strong className="text-foreground">+{formatMXN(diffEX)} (+{pctEX}%)</strong></span>
+        {/* COMPARISON BAR — High Impact */}
+        <div className="bg-primary/[0.03] backdrop-blur-sm rounded-[40px] border border-primary/10 p-10 mb-20">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-20">
+            <div className="text-center md:text-left">
+              <h4 className="font-heading text-[10px] font-bold uppercase tracking-[0.3em] text-primary mb-2">Inversión Adicional</h4>
+              <p className="font-body text-sm text-muted-foreground italic">Mejora la experiencia por muy poco</p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-10">
+              <div className="text-center group">
+                <span className="block font-heading text-2xl font-black text-primary group-hover:scale-110 transition-transform">+{formatMXN(diffEQ)}</span>
+                <span className="font-body text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Esencial → Equilibrado</span>
+              </div>
+              <div className="text-center group">
+                <span className="block font-heading text-2xl font-black text-primary group-hover:scale-110 transition-transform">+{formatMXN(diffEX)}</span>
+                <span className="font-body text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Equilibrado → Experiencia</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Social proof */}
-        <div className="text-center font-body text-sm text-muted-foreground mb-8">
-          💡 8 de cada 10 clientes eligen el paquete Equilibrado. Incluye bebidas y la mejor relación calidad-precio.
-        </div>
+        {/* PERSONALIZATION SECTION */}
+        <div className="mb-24">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <div>
+              <h3 className="font-heading text-3xl font-bold text-foreground mb-2">Personaliza la Experiencia</h3>
+              <p className="font-body text-sm text-muted-foreground italic">Detalles que marcan la diferencia en tu evento</p>
+            </div>
+          </div>
 
-        {/* Add-ons */}
-        <div className="mb-8">
-          <h3 className="font-heading text-lg text-foreground mb-4">Personaliza tu pedido</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
             {QUOTE_ADDONS.map(addon => {
               const isActive = selectedAddons.includes(addon.id);
               return (
                 <button key={addon.id} onClick={() => setSelectedAddons(prev => prev.includes(addon.id) ? prev.filter(a => a !== addon.id) : [...prev, addon.id])}
                   className={cn(
-                    "p-4 rounded-xl border-2 text-left transition-all",
-                    isActive ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40"
+                    "relative p-8 rounded-[40px] border-2 text-left transition-all duration-300 group overflow-hidden",
+                    isActive ? "border-primary bg-primary/[0.02] shadow-xl shadow-primary/5 ring-8 ring-primary/[0.01]" : "border-border/60 bg-white hover:border-primary/30"
                   )}>
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">{addon.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-body text-sm font-semibold text-foreground">{addon.name}</p>
-                      <p className="font-body text-xs text-muted-foreground mt-0.5">{addon.description}</p>
-                      <p className="font-body text-xs text-primary font-semibold mt-1">{formatMXN(addon.price)}{addon.priceUnit}</p>
-                    </div>
-                    <div className={cn("w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 mt-0.5",
-                      isActive ? "border-primary bg-primary text-primary-foreground" : "border-border"
-                    )}>
-                      {isActive && <span className="text-xs">✓</span>}
+                  {/* Selection dot */}
+                  <div className={cn("absolute top-8 right-8 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all",
+                    isActive ? "bg-primary border-primary text-white scale-110 shadow-lg shadow-primary/20" : "border-border group-hover:border-primary/30"
+                  )}>
+                    {isActive && <Check className="w-5 h-5 stroke-[3]" />}
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <span className="text-4xl filter group-hover:scale-110 transition-transform self-start">{addon.icon}</span>
+                    <div>
+                      <p className="font-heading text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors">{addon.name}</p>
+                      <p className="font-body text-xs text-muted-foreground leading-relaxed mb-4">{addon.description}</p>
+                      <p className="font-heading text-sm font-bold text-primary/80 bg-primary/5 px-3 py-1.5 rounded-full inline-block">{formatMXN(addon.price)}{addon.priceUnit}</p>
                     </div>
                   </div>
                 </button>
               );
             })}
           </div>
-          {/* Upsell tip */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 font-body text-xs text-primary">
-            💡 ¿Quieres agregar bebidas y snacks para antes o después de la comida? Complementa con Café/Té Berlioz ($540/caja), aguas frescas ($45/pza) o snack bags ($140/pza).
+          
+          <div className="bg-secondary/[0.03] border-l-4 border-secondary rounded-r-[32px] p-8">
+            <p className="font-body text-sm text-secondary leading-relaxed">
+              <strong className="font-heading uppercase tracking-widest text-[11px] block mb-2">Berlioz Pro Tip:</strong>
+              ¿Buscas algo aún más personalizado? <span className="font-bold underline decoration-secondary/30">Agrega estaciones de café</span>, surtidos de repostería temática o kits de bienvenida. Contáctanos para armar un paquete a tu medida.
+            </p>
           </div>
         </div>
 
-        {/* General Conditions */}
-        <div className="mb-8">
-          <h3 className="font-heading text-base text-foreground mb-3">Condiciones generales</h3>
-          <ul className="space-y-1">
-            {QUOTE_FOOTER_NOTES.map((note, i) => (
-              <li key={i} className="font-body text-xs text-muted-foreground">• {note}</li>
-            ))}
-          </ul>
-          <p className="font-body text-xs text-muted-foreground mt-3 border-t border-border pt-2">
-            Válida hasta: {format(validUntil, "dd/MM/yyyy")} | ID: {quoteId}
-          </p>
+        {/* BOTTOM BRANDING & NOTES */}
+        <div className="border-t border-border pt-20 pb-10 grid grid-cols-1 md:grid-cols-2 gap-20">
+          <div>
+            <h4 className="font-heading text-xl font-bold text-foreground mb-6 uppercase tracking-wider">Condiciones del Servicio</h4>
+            <ul className="space-y-3">
+              {QUOTE_FOOTER_NOTES.map((note, i) => (
+                <li key={i} className="font-body text-xs text-muted-foreground flex items-start gap-3 leading-relaxed transition-colors hover:text-foreground">
+                  <span className="text-primary font-bold mt-0.5">•</span> {note}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-10 p-5 rounded-2xl bg-muted/30 border border-border/50">
+              <p className="font-heading text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Validez de Propuesta</p>
+              <p className="font-body text-xs font-bold mt-1 text-foreground">Hasta el {format(validUntil, "dd 'de' MMMM, yyyy", { locale: es })}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center md:items-end justify-center text-center md:text-right">
+             <div className="mb-8">
+               <h2 className="font-heading text-4xl text-primary font-black tracking-tight mb-2 italic">BERLIOZ</h2>
+               <p className="font-body text-xs text-muted-foreground tracking-[0.4em] uppercase font-bold">L'art de recevoir</p>
+             </div>
+             <p className="font-heading text-base font-bold text-foreground mb-2">Anne Seguy</p>
+             <p className="font-body text-sm text-muted-foreground mb-1">Cofundadora & Directora</p>
+             <a href="mailto:hola@berlioz.mx" className="font-mono text-xs text-primary hover:underline">hola@berlioz.mx</a>
+             <p className="font-mono text-xs text-muted-foreground mt-1">+52 55 8237 5469</p>
+          </div>
         </div>
       </div>
 
-      {/* ═══ STICKY BOTTOM BAR ═══ */}
-      <div className="sticky bottom-0 z-40 bg-card border-t border-border shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex-1 font-body text-xs text-muted-foreground hidden sm:block">
-            ✏️ Propuesta personalizada · Esencial {formatMXN(tierTotals.esencial.total)} · Equilibrado {formatMXN(tierTotals.equilibrado.total)} · Experiencia {formatMXN(tierTotals.experiencia.total)}
-          </div>
-          <div className="flex gap-2 flex-wrap justify-center">
-            <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
-              <Download className="w-3.5 h-3.5" /> PDF
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleSaveQuote} className="gap-1.5">
-              <Mail className="w-3.5 h-3.5" /> Guardar
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleWhatsApp} className="gap-1.5">
-              <Share2 className="w-3.5 h-3.5" /> WhatsApp
-            </Button>
-            <Button size="sm" onClick={handleConfirmOrder} disabled={!selectedTier} className="gap-1.5">
-              <ShoppingBag className="w-3.5 h-3.5" /> Confirmar pedido →
-            </Button>
+      {/* ═══ PREMIUM STICKY ACTION BAR ═══ */}
+      <div className="sticky bottom-0 z-50 px-6 pb-6 pt-0 pointer-events-none">
+        <div className="max-w-6xl mx-auto pointer-events-auto">
+          <div className="bg-white/80 backdrop-blur-2xl border border-primary/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-[32px] overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center gap-4 px-8 py-6">
+              <div className="flex-1 hidden md:block">
+                <p className="font-heading text-[10px] font-bold uppercase tracking-[0.3em] text-primary/60 mb-1">Propuesta Seleccionada</p>
+                <div className="flex items-center gap-3">
+                  <span className="font-heading text-lg font-bold text-foreground">{selectedTier ? TIERS.find(t => t.id === selectedTier)?.title : "Selecciona una opción"}</span>
+                  {selectedTier && <span className="font-mono text-lg font-black text-primary">{formatMXN(tierTotals[selectedTier].total)}</span>}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 flex-wrap justify-center">
+                <Button variant="outline" onClick={handleExportPDF} className="h-14 px-6 rounded-2xl border-2 font-bold flex items-center gap-3 hover:bg-muted transition-all">
+                  <Download className="w-5 h-5 text-primary" />
+                  <span className="hidden sm:inline">Descargar PDF</span>
+                </Button>
+                <button onClick={handleWhatsApp} className="h-14 w-14 sm:w-auto sm:px-6 rounded-2xl border-2 border-green-500/20 bg-green-500/5 text-green-700 font-bold flex items-center justify-center gap-3 hover:bg-green-500/10 transition-all">
+                  <Share2 className="w-5 h-5" />
+                  <span className="hidden sm:inline">Compartir WhatsApp</span>
+                </button>
+                <Button size="lg" onClick={handleConfirmOrder} disabled={!selectedTier} className={cn(
+                  "h-14 px-10 rounded-2xl font-bold flex items-center gap-3 shadow-2xl transition-all",
+                  selectedTier ? "shadow-primary/30" : "opacity-50"
+                )}>
+                  <ShoppingBag className="w-5 h-5" />
+                  Continuar al Pedido
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

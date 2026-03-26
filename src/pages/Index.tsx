@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { Clock, CreditCard, MapPin } from "lucide-react";
 import MinimalHeader from "@/components/landing/MinimalHeader";
 import LeadCaptureSection from "@/components/landing/LeadCaptureSection";
 import HeroCards from "@/components/landing/HeroCards";
@@ -8,6 +9,40 @@ import EventTypePills from "@/components/landing/EventTypePills";
 import CotizaForm from "@/components/landing/CotizaForm";
 import MenuBrowse from "@/components/landing/MenuBrowse";
 import { useLandingPresenter } from "@/presentation/hooks/useLandingPresenter";
+
+const TRUST_ITEMS = [
+  { icon: Clock, label: 'Pide antes de las 3PM', sub: 'para el día siguiente' },
+  { icon: CreditCard, label: 'Paga en línea', sub: 'compra mínima $1,000 MXN' },
+  { icon: MapPin, label: 'Entrega a domicilio', sub: 'CDMX y Área Metropolitana' },
+];
+
+const TrustStrip = () => (
+  <div className="max-w-3xl mx-auto px-6 animate-fade-in-up" style={{ paddingTop: 24, paddingBottom: 32 }}>
+    <div
+      className="grid grid-cols-3 divide-x"
+      style={{
+        border: '1px solid rgba(0,0,0,0.07)',
+        borderRadius: 14,
+        background: 'rgba(255,255,255,0.70)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        overflow: 'hidden',
+      }}
+    >
+      {TRUST_ITEMS.map(({ icon: Icon, label, sub }) => (
+        <div key={label} className="flex flex-col items-center text-center py-4 px-3 gap-1.5">
+          <Icon style={{ width: 16, height: 16, color: 'hsl(var(--gold))' }} />
+          <span className="font-body font-semibold text-foreground leading-tight" style={{ fontSize: 12 }}>
+            {label}
+          </span>
+          <span className="font-body text-muted-foreground hidden sm:block" style={{ fontSize: 11 }}>
+            {sub}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 const Index = () => {
   const p = useLandingPresenter();
@@ -55,6 +90,9 @@ const Index = () => {
             onUpdate={p.updateLead}
             isComplete={isLeadComplete}
           />
+
+          {/* Trust strip */}
+          <TrustStrip />
 
           {/* Entry points */}
           <HeroCards

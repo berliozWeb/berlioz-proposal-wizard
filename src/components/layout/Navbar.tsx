@@ -57,7 +57,9 @@ const Navbar = () => {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        transparent ? "bg-transparent" : "bg-card/95 backdrop-blur-md shadow-sm"
+        transparent
+          ? "bg-transparent"
+          : "bg-card/96 backdrop-blur-md shadow-sm border-b border-border"
       )}
     >
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 h-[72px]">
@@ -77,13 +79,19 @@ const Navbar = () => {
               key={link.to}
               to={link.to}
               className={cn(
-                "font-body text-sm font-medium transition-colors hover:text-primary",
+                "relative font-body text-sm font-medium transition-colors hover:text-primary group",
                 location.pathname === link.to
                   ? "text-primary"
                   : transparent ? "text-card" : "text-foreground"
               )}
             >
               {link.label}
+              <span
+                className={cn(
+                  "absolute -bottom-1 left-0 h-0.5 rounded-full bg-primary transition-all duration-200",
+                  location.pathname === link.to ? "w-full" : "w-0 group-hover:w-full"
+                )}
+              />
             </Link>
           ))}
         </div>
@@ -94,8 +102,10 @@ const Navbar = () => {
           <a
             href="tel:5582375469"
             className={cn(
-              "hidden lg:flex items-center gap-1.5 font-mono text-xs transition-colors hover:opacity-80",
-              transparent ? "text-card" : "text-secondary"
+              "hidden lg:flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded-full transition-all",
+              transparent
+                ? "text-card hover:bg-card/15"
+                : "text-secondary hover:bg-muted"
             )}
           >
             <Phone className="w-3.5 h-3.5" />
@@ -196,7 +206,7 @@ const Navbar = () => {
               </Link>
               <Link
                 to="/cotizar"
-                className="hidden md:inline-flex items-center h-9 px-5 rounded-lg bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-colors"
+                className="hidden md:inline-flex items-center h-9 px-5 rounded-full bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 hover:shadow-md hover:shadow-primary/30 transition-all duration-200"
               >
                 Cotizar
               </Link>

@@ -13,6 +13,8 @@ import HomePage from "./pages/HomePage";
 import CatalogPage from "./pages/CatalogPage";
 import QuotePage from "./pages/QuotePage";
 import LoginPage from "./pages/LoginPage";
+import PasswordRecoveryPage from "./pages/PasswordRecoveryPage";
+import NewPasswordPage from "./pages/NewPasswordPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/DashboardPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
@@ -43,6 +45,8 @@ const App = () => (
                 <Route path="/menu" element={<CatalogPage />} />
                 <Route path="/cotizar" element={<QuotePage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/recuperar-contrasena" element={<PasswordRecoveryPage />} />
+                <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
                 <Route path="/propuesta" element={<Propuesta />} />
 
                 {/* Auth required */}

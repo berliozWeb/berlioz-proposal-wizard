@@ -14,7 +14,79 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      delivery_addresses: {
+        Row: {
+          address_text: string
+          created_at: string
+          id: string
+          is_default: boolean
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          address_text: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          address_text?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          company_name: string | null
+          created_at: string
+          email: string | null
+          email_domain: string | null
+          full_name: string | null
+          id: string
+          onboarding_complete: boolean
+          order_frequency: Database["public"]["Enums"]["order_frequency"] | null
+          profile_type: Database["public"]["Enums"]["profile_type"] | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          email_domain?: string | null
+          full_name?: string | null
+          id: string
+          onboarding_complete?: boolean
+          order_frequency?:
+            | Database["public"]["Enums"]["order_frequency"]
+            | null
+          profile_type?: Database["public"]["Enums"]["profile_type"] | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          email?: string | null
+          email_domain?: string | null
+          full_name?: string | null
+          id?: string
+          onboarding_complete?: boolean
+          order_frequency?:
+            | Database["public"]["Enums"]["order_frequency"]
+            | null
+          profile_type?: Database["public"]["Enums"]["profile_type"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +95,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      order_frequency: "daily" | "weekly" | "monthly" | "occasional"
+      profile_type: "company" | "agency" | "personal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +223,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      order_frequency: ["daily", "weekly", "monthly", "occasional"],
+      profile_type: ["company", "agency", "personal"],
+    },
   },
 } as const

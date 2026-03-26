@@ -41,6 +41,90 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          discount_amount: number
+          discount_type: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          min_order: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          discount_amount?: number
+          discount_type?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_order?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          discount_amount?: number
+          discount_type?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          min_order?: number | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          dietary_tags: string[] | null
+          id: string
+          image_url: string | null
+          included_items: string[] | null
+          is_active: boolean | null
+          is_bestseller: boolean | null
+          name: string
+          occasion: string[] | null
+          price_per_person: number
+          short_description: string | null
+          slug: string
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          dietary_tags?: string[] | null
+          id?: string
+          image_url?: string | null
+          included_items?: string[] | null
+          is_active?: boolean | null
+          is_bestseller?: boolean | null
+          name: string
+          occasion?: string[] | null
+          price_per_person?: number
+          short_description?: string | null
+          slug: string
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          dietary_tags?: string[] | null
+          id?: string
+          image_url?: string | null
+          included_items?: string[] | null
+          is_active?: boolean | null
+          is_bestseller?: boolean | null
+          name?: string
+          occasion?: string[] | null
+          price_per_person?: number
+          short_description?: string | null
+          slug?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -84,6 +168,60 @@ export type Database = {
             | null
           profile_type?: Database["public"]["Enums"]["profile_type"] | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          ai_options: Json | null
+          budget_per_person: number | null
+          client_name: string | null
+          created_at: string | null
+          dietary_restrictions: string[] | null
+          event_date: string | null
+          event_type: string
+          id: string
+          people_count: number
+          selected_option_index: number | null
+          status: string
+          time_slot: string | null
+          total_estimated: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_options?: Json | null
+          budget_per_person?: number | null
+          client_name?: string | null
+          created_at?: string | null
+          dietary_restrictions?: string[] | null
+          event_date?: string | null
+          event_type: string
+          id?: string
+          people_count: number
+          selected_option_index?: number | null
+          status?: string
+          time_slot?: string | null
+          total_estimated?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_options?: Json | null
+          budget_per_person?: number | null
+          client_name?: string | null
+          created_at?: string | null
+          dietary_restrictions?: string[] | null
+          event_date?: string | null
+          event_type?: string
+          id?: string
+          people_count?: number
+          selected_option_index?: number | null
+          status?: string
+          time_slot?: string | null
+          total_estimated?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

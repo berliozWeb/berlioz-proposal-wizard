@@ -9,14 +9,12 @@ interface CartSidebarProps {
 }
 
 const CartSidebar = ({ open, onClose }: CartSidebarProps) => {
-  const { items, subtotal, itemCount, updateQuantity, removeItem } = useCart();
+  const { items, totals, itemCount, updateQuantity, removeItem } = useCart();
   const isMobile = useIsMobile();
 
   if (!open) return null;
 
-  const iva = Math.round(subtotal * 0.16);
-  const envio = items.length > 0 ? 360 : 0;
-  const total = subtotal + iva + envio;
+  const { subtotal, iva, shipping: envio, total } = totals;
 
   const Panel = (
     <div

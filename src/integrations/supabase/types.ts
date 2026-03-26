@@ -428,7 +428,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_email_domain: { Args: never; Returns: string }
     }
     Enums: {
       order_frequency: "daily" | "weekly" | "monthly" | "occasional"

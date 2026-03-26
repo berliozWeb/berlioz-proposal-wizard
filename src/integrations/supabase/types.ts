@@ -74,6 +74,130 @@ export type Database = {
         }
         Relationships: []
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          order_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id?: string
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          delivery_address_id: string | null
+          delivery_address_text: string | null
+          delivery_date: string
+          delivery_slot: string
+          discount: number
+          discount_code: string | null
+          id: string
+          invoice_razon_social: string | null
+          invoice_rfc: string | null
+          invoice_uso_cfdi: string | null
+          iva: number
+          notes: string | null
+          order_number: string
+          payment_method: string
+          points_earned: number
+          rating: number | null
+          shipping: number
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_address_id?: string | null
+          delivery_address_text?: string | null
+          delivery_date: string
+          delivery_slot: string
+          discount?: number
+          discount_code?: string | null
+          id?: string
+          invoice_razon_social?: string | null
+          invoice_rfc?: string | null
+          invoice_uso_cfdi?: string | null
+          iva?: number
+          notes?: string | null
+          order_number?: string
+          payment_method?: string
+          points_earned?: number
+          rating?: number | null
+          shipping?: number
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_address_id?: string | null
+          delivery_address_text?: string | null
+          delivery_date?: string
+          delivery_slot?: string
+          discount?: number
+          discount_code?: string | null
+          id?: string
+          invoice_razon_social?: string | null
+          invoice_rfc?: string | null
+          invoice_uso_cfdi?: string | null
+          iva?: number
+          notes?: string | null
+          order_number?: string
+          payment_method?: string
+          points_earned?: number
+          rating?: number | null
+          shipping?: number
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_delivery_address_id_fkey"
+            columns: ["delivery_address_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_addresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string | null
@@ -134,6 +258,7 @@ export type Database = {
           email_domain: string | null
           full_name: string | null
           id: string
+          loyalty_points: number
           onboarding_complete: boolean
           order_frequency: Database["public"]["Enums"]["order_frequency"] | null
           profile_type: Database["public"]["Enums"]["profile_type"] | null
@@ -147,6 +272,7 @@ export type Database = {
           email_domain?: string | null
           full_name?: string | null
           id: string
+          loyalty_points?: number
           onboarding_complete?: boolean
           order_frequency?:
             | Database["public"]["Enums"]["order_frequency"]
@@ -162,6 +288,7 @@ export type Database = {
           email_domain?: string | null
           full_name?: string | null
           id?: string
+          loyalty_points?: number
           onboarding_complete?: boolean
           order_frequency?:
             | Database["public"]["Enums"]["order_frequency"]

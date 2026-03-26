@@ -4,58 +4,63 @@
 
 @layer base {
   :root {
-    /* Berlioz Brand: Pantone 3025C (Azul) + Pantone 705C (Rosa) */
-    --background: 40 20% 97%;
-    --foreground: 195 100% 12%;
+    /* Berlioz Brand — 2025 redesign */
+    --background: 50 20% 97%;        /* #FAFAF8 */
+    --foreground: 60 5% 10%;          /* #1a1a18 */
 
-    --card: 40 20% 95%;
-    --card-foreground: 195 100% 12%;
+    --card: 0 0% 100%;                /* #ffffff */
+    --card-foreground: 60 5% 10%;
 
-    --popover: 40 20% 97%;
-    --popover-foreground: 195 100% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 60 5% 10%;
 
-    --primary: 192 100% 22%;
-    --primary-foreground: 40 20% 97%;
+    --primary: 200 100% 18%;          /* #003D5B */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 24 50% 92%;
-    --secondary-foreground: 192 100% 22%;
+    --secondary: 210 55% 37%;         /* #185FA5 */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 10% 91%;
-    --muted-foreground: 195 15% 45%;
+    --muted: 50 8% 91%;
+    --muted-foreground: 55 3% 41%;    /* #6b6b67 */
 
-    --accent: 24 50% 88%;
-    --accent-foreground: 192 100% 22%;
+    --accent: 345 55% 60%;            /* #D4617A */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 40 20% 97%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 160 60% 30%;
-    --success-foreground: 40 20% 97%;
+    --success: 95 75% 18%;            /* #27500A */
+    --success-foreground: 0 0% 100%;
 
-    /* New: landing-specific tokens */
+    /* Extended palette */
+    --blue-light: 209 82% 94%;        /* #E6F1FB */
+    --pink-light: 340 75% 95%;        /* #FBEAF0 */
+
+    /* Legacy tokens kept for existing quoter */
     --forest: 155 38% 18%;
-    --forest-foreground: 40 20% 97%;
+    --forest-foreground: 0 0% 100%;
     --gold: 38 55% 50%;
     --gold-foreground: 155 38% 10%;
     --warm-white: 48 30% 98%;
 
-    --border: 40 15% 88%;
-    --input: 40 15% 88%;
-    --ring: 192 100% 22%;
+    --border: 0 0% 0% / 0.10;
+    --input: 0 0% 0% / 0.10;
+    --ring: 200 100% 18%;
 
     --radius: 0.75rem;
+    --radius-sm: 0.5rem;
 
-    --sidebar-background: 40 20% 95%;
-    --sidebar-foreground: 195 100% 12%;
-    --sidebar-primary: 192 100% 22%;
-    --sidebar-primary-foreground: 40 20% 97%;
-    --sidebar-accent: 24 50% 88%;
-    --sidebar-accent-foreground: 192 100% 22%;
-    --sidebar-border: 40 15% 88%;
-    --sidebar-ring: 192 100% 22%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 60 5% 10%;
+    --sidebar-primary: 200 100% 18%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 345 55% 60%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 0% / 0.10;
+    --sidebar-ring: 200 100% 18%;
 
-    --font-heading: 'Montserrat', sans-serif;
-    --font-body: 'Montserrat', sans-serif;
+    --font-heading: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
     --font-mono: 'DM Mono', monospace;
   }
 }
@@ -65,12 +70,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-weight: 400;
   }
 }
 

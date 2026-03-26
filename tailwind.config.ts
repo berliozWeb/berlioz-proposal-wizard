@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['Montserrat', 'sans-serif'],
-        body: ['Montserrat', 'sans-serif'],
-        mono: ['DM Mono', 'monospace'],
+        heading: ["'DM Serif Display'", "serif"],
+        body: ["'DM Sans'", "sans-serif"],
+        mono: ["'DM Mono'", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -48,6 +48,9 @@ export default {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
         },
+        "blue-light": "hsl(var(--blue-light))",
+        "pink-light": "hsl(var(--pink-light))",
+        // Legacy tokens for existing quoter
         forest: {
           DEFAULT: "hsl(var(--forest))",
           foreground: "hsl(var(--forest-foreground))",
@@ -79,7 +82,7 @@ export default {
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "var(--radius-sm)",
       },
       keyframes: {
         "accordion-down": {
@@ -98,12 +101,17 @@ export default {
           from: { opacity: "0", transform: "translateX(20px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(16px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
         "slide-in": "slide-in 0.4s ease-out",
+        "slide-up": "slide-up 0.3s ease-out",
       },
     },
   },

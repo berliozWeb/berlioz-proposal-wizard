@@ -162,11 +162,10 @@ const QuotePage = () => {
     const opt = options[selectedIdx];
     opt.items.forEach((itemName, i) => {
       addItem({
-        productId: `quote-${eventType}-${i}`,
-        productName: itemName,
+        id: `quote-${eventType}-${i}`,
+        name: itemName,
+        price: opt.pricePerPerson / opt.items.length,
         quantity: people,
-        unitPrice: opt.pricePerPerson / opt.items.length,
-        imageUrl: "",
       });
     });
     navigate("/checkout");

@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
 import type { MenuItem } from "@/domain/entities/MenuItem";
 import { getTopSellers, getDisplayPrice } from "@/domain/entities/MenuCatalog";
+import { getProductImage } from "@/domain/entities/ProductImages";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { MENU_CATEGORY_LABELS } from "@/domain/entities/MenuItem";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, Expand } from "lucide-react";
 
 interface TopSellersProps {
   onAdd: (item: MenuItem) => void;
@@ -92,18 +94,22 @@ const TopSellers = ({ onAdd, onViewMenu, isLeadComplete, onIncompleteClick }: To
               }}
             >
               {/* Image */}
-              <div className="relative overflow-hidden" style={{ height: 200 }}>
-                {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-muted text-4xl">
-                    🍽
+              <Link
+                to={`/producto/${item.id}`}
+                className="relative overflow-hidden block"
+                style={{ height: 180 }}
+              >
+                <img 
+                  src={getProductImage(item.id)} 
+                  alt={item.name} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-400" 
+                />
+                {/* Visual affordance */}
+                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg">
+                     <Expand className="w-3.5 h-3.5 text-primary" />
                   </div>
-                )}
+                </div>
                 {/* Category badge */}
                 {badgeLabel && (
                   <span
@@ -121,14 +127,16 @@ const TopSellers = ({ onAdd, onViewMenu, isLeadComplete, onIncompleteClick }: To
                     {badgeLabel}
                   </span>
                 )}
-              </div>
+              </Link>
 
               {/* Info */}
               <div className="p-3.5 flex flex-col flex-1">
-                <p className="font-body font-bold truncate" style={{ fontSize: 14, color: 'hsl(var(--foreground))' }}>
-                  {item.name}
-                </p>
-                <p className="font-mono mt-0.5 mb-3" style={{ fontSize: 14, color: 'hsl(var(--gold))' }}>
+                <Link to={`/producto/${item.id}`} className="block group/link">
+                  <p className="font-body font-bold truncate group-hover/link:text-primary transition-colors" style={{ fontSize: 13, color: 'hsl(var(--foreground))' }}>
+                    {item.name}
+                  </p>
+                </Link>
+                <p className="font-mono mt-0.5 mb-3" style={{ fontSize: 13, color: 'hsl(var(--gold))' }}>
                   {priceLabel}
                 </p>
                 <button
@@ -140,7 +148,7 @@ const TopSellers = ({ onAdd, onViewMenu, isLeadComplete, onIncompleteClick }: To
                     borderRadius: 10,
                     background: 'hsl(var(--primary))',
                     color: '#fff',
-                    fontSize: 13,
+                    fontSize: 12,
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'hsl(var(--secondary))')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'hsl(var(--primary))')}

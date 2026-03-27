@@ -24,7 +24,7 @@ export const MENU_CATALOG: MenuItem[] = [
       { people: 10, price: 3250 },
       { people: 15, price: 4390 },
     ],
-    image: `${WP}/2025/08/coffeebreak_AM_cafe.jpg`,
+    image: "",
     isTopSeller: true,
     agentNote: 'NO incluye café caliente. El café frío ya está incluido. Ofrecer Café/Té Berlioz como upgrade +$540.',
   },
@@ -42,7 +42,7 @@ export const MENU_CATALOG: MenuItem[] = [
       { people: 10, price: 3250 },
       { people: 15, price: 4390 },
     ],
-    image: `${WP}/2025/08/coffeebreak_AM_cafe2.jpg`,
+    image: "",
   },
   {
     id: 'cb_pm',
@@ -58,7 +58,7 @@ export const MENU_CATALOG: MenuItem[] = [
       { people: 10, price: 2800 },
       { people: 15, price: 3650 },
     ],
-    image: `${WP}/2025/08/coffeebreak_PM.jpg`,
+    image: "",
     isTopSeller: true,
   },
   {
@@ -68,7 +68,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 540,
     category: 'coffee_break',
     pricingModel: 'fixed',
-    image: `${WP}/2015/01/17.jpg`,
+    image: "",
     agentNote: 'Precio FIJO $540 por unidad. NO escala por persona. Ofrecer como upgrade: "¿Quieres agregar café caliente? +$540"',
   },
 
@@ -81,7 +81,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
     servesUpTo: 7,
-    image: `${WP}/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg`,
+    image: "",
     isTopSeller: true,
   },
   {
@@ -92,7 +92,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
     servesUpTo: 7,
-    image: `${WP}/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg`,
+    image: "",
   },
   {
     id: 'surtido_hugo',
@@ -102,7 +102,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
     servesUpTo: 8,
-    image: `${WP}/2025/06/WhatsApp-Image-2025-07-08-at-4.47.27-PM.jpg`,
+    image: "",
   },
   {
     id: 'surtido_colette',
@@ -112,7 +112,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
     servesUpTo: 7,
-    image: `${WP}/2018/03/berlioz_fabian-46-1-scaled.jpg`,
+    image: "",
   },
   {
     id: 'surtido_balzac',
@@ -122,7 +122,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
     servesUpTo: 7,
-    image: `${WP}/2024/02/pastelitos.jpg`,
+    image: "",
   },
   {
     id: 'surtido_zadig',
@@ -132,7 +132,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
     servesUpTo: 7,
-    image: `${WP}/2024/02/pastelitos.jpg`,
+    image: "",
   },
   {
     id: 'surtido_snacks',
@@ -142,7 +142,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
     servesUpTo: 8,
-    image: `${WP}/2018/03/Snacks-saludables-Berlioz-scaled.jpg`,
+    image: "",
   },
   {
     id: 'surtido_dulces_mexicanos',
@@ -151,7 +151,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 390,
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
-    image: `${WP}/2026/03/Surtido-Dulces.jpg`,
+    image: "",
   },
   // Mini surtidos
   {
@@ -161,7 +161,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 290,
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
-    image: `${WP}/2025/06/Mini-danes.jpeg`,
+    image: "",
   },
   {
     id: 'mini_surtido_colette',
@@ -170,7 +170,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 290,
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
-    image: `${WP}/2024/02/Coffee-break.jpg`,
+    image: "",
   },
   {
     id: 'mini_surtido_camille',
@@ -179,7 +179,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 350,
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
-    image: `${WP}/2025/06/MG_1600-scaled.jpg`,
+    image: "",
   },
   {
     id: 'mini_surtido_voltaire',
@@ -188,7 +188,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 350,
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
-    image: `${WP}/2025/06/MG_1600-scaled.jpg`,
+    image: "",
   },
   {
     id: 'mini_surtido_zadig',
@@ -197,7 +197,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 240,
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
-    image: `${WP}/2024/03/mini-balzac.jpg`,
+    image: "",
   },
   {
     id: 'mini_surtido_balzac',
@@ -206,7 +206,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 220,
     category: 'coffee_break_surtido',
     pricingModel: 'fixed',
-    image: `${WP}/2024/03/mini-balzac.jpg`,
+    image: "",
   },
 
   // ── INDIVIDUALES COFFEE BREAK ──
@@ -217,7 +217,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/Desayuno-Berlioz-Coffee-break-ensalada-Frutas.jpg`,
+    image: "",
   },
   {
     id: 'crudites',
@@ -226,7 +226,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2024/04/crudite.jpg`,
+    image: "",
   },
   {
     id: 'yogurt_organico',
@@ -235,7 +235,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2020/03/berlioz_fabian-31.jpg`,
+    image: "",
   },
   {
     id: 'pan_dulce_individual',
@@ -244,7 +244,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/breakfast-ROMA-e1686675516812.jpg`,
+    image: "",
   },
   {
     id: 'panque_naranja',
@@ -253,7 +253,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/Panque-de-naranja-Berlioz-zoom.jpg`,
+    image: "",
   },
   {
     id: 'panque_pera',
@@ -262,7 +262,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2020/03/berlioz_fabian-21-scaled.jpg`,
+    image: "",
   },
   {
     id: 'cookies',
@@ -271,7 +271,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2023/02/Cookies-de-mantequilla-de-mani.jpg`,
+    image: "",
   },
   {
     id: 'paleta_hielo',
@@ -280,7 +280,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2026/03/WhatsApp-Image-2026-03-12-at-10.21.40-AM.jpg`,
+    image: "",
   },
   {
     id: 'mix_semillas',
@@ -289,7 +289,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 60,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2020/03/berlioz_fabian-35-scaled-e1596130274963.jpg`,
+    image: "",
   },
   {
     id: 'ensalada_pepino',
@@ -298,7 +298,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2021/04/Ensalada-de-pepino-con-queso-de-cabra.jpg`,
+    image: "",
   },
   {
     id: 'ensalada_jicama',
@@ -307,7 +307,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2021/04/Ensalada-de-jicama-con-toronja.jpg`,
+    image: "",
   },
   {
     id: 'snack_bag',
@@ -316,7 +316,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 140,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2023/12/bag-snack.jpg`,
+    image: "",
   },
   {
     id: 'snack_individual',
@@ -325,7 +325,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'coffee_break_individual',
     pricingModel: 'per_person',
-    image: `${WP}/2018/03/Snacks-saludables-Berlioz-scaled.jpg`,
+    image: "",
   },
 
   // ── DESAYUNO (precio por persona) ──
@@ -338,7 +338,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricingModel: 'per_person',
     minQty: 20,
     agentNote: 'Mínimo 20 piezas iguales. Solo UNA opción de plato por día.',
-    image: `${WP}/2024/11/comedorBERLIOZ.jpg`,
+    image: "",
   },
   {
     id: 'box_chilaquiles_verdes_huevo',
@@ -347,7 +347,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 310,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/04/Box-Chilaquiles-verdes-Berlioz-.jpg`,
+    image: "",
     isTopSeller: true,
   },
   {
@@ -357,7 +357,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 330,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/04/Box-Chilaquiles-verdes-Berlioz-.jpg`,
+    image: "",
   },
   {
     id: 'box_chilaquiles_rojos_huevo',
@@ -366,7 +366,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 310,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/04/Box-Chilaquiles-verdes-Berlioz-.jpg`,
+    image: "",
   },
   {
     id: 'box_chilaquiles_rojos_pollo',
@@ -375,7 +375,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 330,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/04/Box-Chilaquiles-verdes-Berlioz-.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_roma',
@@ -385,7 +385,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'desayuno',
     pricingModel: 'per_person',
     variants: ['con yogurt', 'con pan dulce', 'con frittata sin croissant'],
-    image: `${WP}/2023/03/berlioz_fabian-18-scaled-e1596123929266.jpg`,
+    image: "",
     isTopSeller: true,
   },
   {
@@ -396,7 +396,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'desayuno',
     pricingModel: 'per_person',
     variants: ['pierna y yogurt', 'pavo y yogurt', 'pierna y pan', 'pavo y pan'],
-    image: `${WP}/2018/03/berlioz_fabian-46-1-scaled.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_montreal',
@@ -406,7 +406,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'desayuno',
     pricingModel: 'per_person',
     variants: ['con yogurt', 'con pan recién horneado'],
-    image: `${WP}/2023/03/Breakfast-in-Montreal-Berlioz1.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_madrid',
@@ -416,7 +416,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'desayuno',
     pricingModel: 'per_person',
     variants: ['jugo del día', 'yogurt', 'pan'],
-    image: `${WP}/2023/03/berlioz_fabian-18-scaled-e1596123929266.jpg`,
+    image: "",
   },
   {
     id: 'healthy_breakfast',
@@ -425,7 +425,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 335,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/04/Healthy-breakfast-1.jpg`,
+    image: "",
     isTopSeller: true,
   },
   {
@@ -436,7 +436,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'desayuno',
     pricingModel: 'per_person',
     variants: ['pavo y pan', 'pavo y yogurt', 'tocino y yogurt', 'tocino y pan'],
-    image: `${WP}/2025/06/95A0102-1-scaled.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_bag_pavo',
@@ -445,7 +445,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 250,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/breakfast-bag.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_bag_especial',
@@ -454,7 +454,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/Desayuno-Berlioz-Coffee-break-ensalada-Frutas.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_roma_vegetariano',
@@ -463,7 +463,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 310,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/berlioz_fabian-18-scaled-e1596123929266.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_london_vegetariano',
@@ -472,7 +472,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 340,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2018/03/berlioz_fabian-46-1-scaled.jpg`,
+    image: "",
   },
   {
     id: 'breakfast_vegano',
@@ -481,7 +481,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 270,
     category: 'desayuno',
     pricingModel: 'per_person',
-    image: `${WP}/2024/01/bag-2.jpg`,
+    image: "",
   },
 
   // ── WORKING LUNCH — BOXES PREMIUM ──
@@ -492,7 +492,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 410,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/5.jpg`,
+    image: "",
   },
   {
     id: 'pink_box',
@@ -502,7 +502,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'working_lunch',
     pricingModel: 'per_person',
     variants: ['con papitas', 'con ensalada de jícama'],
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
     isTopSeller: true,
   },
   {
@@ -512,7 +512,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 330,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2018/03/berlioz_fabian-05-scaled.jpg`,
+    image: "",
   },
   {
     id: 'golden_box',
@@ -521,7 +521,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 330,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2018/03/berlioz_fabian-05-scaled.jpg`,
+    image: "",
   },
   {
     id: 'blt_box',
@@ -531,7 +531,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'working_lunch',
     pricingModel: 'per_person',
     variants: ['con chips', 'con ensalada'],
-    image: `${WP}/2023/03/95A0182-1-scaled.jpg`,
+    image: "",
   },
   {
     id: 'aqua_box',
@@ -541,7 +541,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'working_lunch',
     pricingModel: 'per_person',
     variants: ['con chips', 'con ensalada'],
-    image: `${WP}/2025/08/aqua-box2.jpg`,
+    image: "",
   },
   {
     id: 'st_tropez_box_pollo',
@@ -550,7 +550,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 330,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
   },
   {
     id: 'st_tropez_box_veg',
@@ -559,7 +559,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 350,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
   },
   {
     id: 'box_mediterranea_pollo',
@@ -568,7 +568,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 320,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
   },
   {
     id: 'box_mediterranea_veg',
@@ -577,7 +577,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
   },
   {
     id: 'box_tex_mex_pollo',
@@ -586,7 +586,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 310,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
   },
   {
     id: 'box_tex_mex_vegana',
@@ -595,7 +595,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 330,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
   },
   {
     id: 'box_tex_mex_gf',
@@ -604,7 +604,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 330,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/cateringCorporativo12.jpg`,
+    image: "",
   },
   {
     id: 'box_oriental',
@@ -613,7 +613,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 290,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2025/02/IMG_8233-copia-1.jpg`,
+    image: "",
   },
   {
     id: 'white_box',
@@ -622,7 +622,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 300,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/white-box.jpg`,
+    image: "",
   },
   {
     id: 'green_box',
@@ -631,7 +631,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 340,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2025/08/green-box3.jpg`,
+    image: "",
   },
   {
     id: 'orzo_pasta_salad_box',
@@ -640,7 +640,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 390,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2024/07/Orzo-Pollo.jpg`,
+    image: "",
   },
   // Vegano/vegetariano WL
   {
@@ -651,7 +651,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'working_lunch',
     pricingModel: 'per_person',
     variants: ['con agua del día', 'con postre en lugar de agua'],
-    image: `${WP}/2019/04/Salad-box-pollo.jpg`,
+    image: "",
   },
   {
     id: 'salad_box_vegetariana',
@@ -660,7 +660,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2019/04/Salad-box-pollo.jpg`,
+    image: "",
   },
   {
     id: 'salad_box_vegana',
@@ -669,7 +669,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 300,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2019/04/Salad-box-pollo.jpg`,
+    image: "",
   },
   {
     id: 'salad_box_pollo_gf',
@@ -678,7 +678,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2019/04/Salad-box-pollo.jpg`,
+    image: "",
   },
   {
     id: 'pink_box_vegana',
@@ -687,7 +687,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 370,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/10/web-03.jpg`,
+    image: "",
   },
   {
     id: 'pink_box_keto',
@@ -696,7 +696,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 370,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2023/10/web-06.jpg`,
+    image: "",
   },
   {
     id: 'pink_box_vegetariana',
@@ -705,7 +705,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 370,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2024/10/web-_Mesa-de-trabajo-1.jpg`,
+    image: "",
   },
   {
     id: 'orzo_vegetariana',
@@ -714,7 +714,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 390,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2024/07/Orzo-Pollo.jpg`,
+    image: "",
   },
   {
     id: 'box_oriental_vegetariana',
@@ -723,7 +723,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 290,
     category: 'working_lunch',
     pricingModel: 'per_person',
-    image: `${WP}/2025/02/IMG_8233-copia-1.jpg`,
+    image: "",
   },
 
   // ── WORKING LUNCH — ECONÓMICO ──
@@ -734,7 +734,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 170,
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/mini-BOX.webp`,
+    image: "",
   },
   {
     id: 'box_economica_1',
@@ -744,7 +744,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
     minQty: 20,
-    image: `${WP}/2020/04/Torta-berlioz.jpg`,
+    image: "",
   },
   {
     id: 'box_economica_2',
@@ -754,7 +754,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
     minQty: 20,
-    image: `${WP}/2025/04/berlioz-product.jpg`,
+    image: "",
   },
   {
     id: 'box_economica_3',
@@ -764,7 +764,7 @@ export const MENU_CATALOG: MenuItem[] = [
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
     minQty: 20,
-    image: `${WP}/2025/04/berlioz-product.jpg`,
+    image: "",
   },
   {
     id: 'comedor_berlioz',
@@ -775,7 +775,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricingModel: 'per_person',
     minQty: 20,
     agentNote: 'Mínimo 20 piezas iguales. Solo UNA opción por día.',
-    image: `${WP}/2024/11/comedorBERLIOZ.jpg`,
+    image: "",
   },
   {
     id: 'lunch_bag_pasta_pollo',
@@ -784,7 +784,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 250,
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/lunch-pasta.jpg`,
+    image: "",
   },
   {
     id: 'lunch_bag_pasta_veg',
@@ -793,7 +793,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 270,
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/lunch-pasta.jpg`,
+    image: "",
   },
   {
     id: 'lunch_bag_ciabatta_pavo',
@@ -802,7 +802,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 250,
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/lunch-ciabatta.jpg`,
+    image: "",
   },
   {
     id: 'lunch_bag_ciabatta_veg',
@@ -811,7 +811,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 270,
     category: 'working_lunch_economico',
     pricingModel: 'per_person',
-    image: `${WP}/2018/03/berlioz_fabian-47-scaled.jpg`,
+    image: "",
   },
 
   // ── TORTAS PIROPO ──
@@ -822,7 +822,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'tortas',
     pricingModel: 'per_person',
-    image: `${WP}/2021/03/tortas_gourmet2.jpg`,
+    image: "",
     isTopSeller: true,
   },
   {
@@ -832,7 +832,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'tortas',
     pricingModel: 'per_person',
-    image: `${WP}/2021/03/tortas_gourmet2.jpg`,
+    image: "",
   },
   {
     id: 'piropo_jamon',
@@ -841,7 +841,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'tortas',
     pricingModel: 'per_person',
-    image: `${WP}/2021/03/tortas_gourmet2.jpg`,
+    image: "",
   },
   {
     id: 'piropo_tinga',
@@ -850,7 +850,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'tortas',
     pricingModel: 'per_person',
-    image: `${WP}/2021/03/tortas_gourmet2.jpg`,
+    image: "",
   },
   {
     id: 'piropo_camaron',
@@ -859,7 +859,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 320,
     category: 'tortas',
     pricingModel: 'per_person',
-    image: `${WP}/2021/03/tortas_gourmet2.jpg`,
+    image: "",
   },
   {
     id: 'piropo_veggie',
@@ -868,7 +868,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 280,
     category: 'tortas',
     pricingModel: 'per_person',
-    image: `${WP}/2021/03/tortas_gourmet2.jpg`,
+    image: "",
   },
   {
     id: 'piropo_surtida',
@@ -877,7 +877,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 450,
     category: 'tortas',
     pricingModel: 'fixed',
-    image: `${WP}/2021/03/piropo-surtida.jpg`,
+    image: "",
   },
 
   // ── BEBIDAS ──
@@ -888,7 +888,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/bui-natural.jpg`,
+    image: "",
   },
   {
     id: 'agua_bui_mineral',
@@ -897,7 +897,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/bui-mineral.jpg`,
+    image: "",
   },
   {
     id: 'agua_bui_infusionada',
@@ -906,7 +906,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/bui-infusion.jpg`,
+    image: "",
   },
   {
     id: 'agua_jamaica',
@@ -915,7 +915,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2023/03/Aguas-de-sabor-Berlioz.jpg`,
+    image: "",
   },
   {
     id: 'agua_limon_menta',
@@ -924,7 +924,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2023/12/agua-melon.jpg`,
+    image: "",
   },
   {
     id: 'agua_coco',
@@ -933,7 +933,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2025/05/WhatsApp-Image-2025-08-18-at-3.38.43-PM.jpg`,
+    image: "",
   },
   {
     id: 'agua_temporada',
@@ -942,7 +942,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2015/10/Jugos-Berlioz1.jpg`,
+    image: "",
   },
   {
     id: 'coca_cola',
@@ -951,7 +951,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/coca.jpg`,
+    image: "",
   },
   {
     id: 'coca_cola_light',
@@ -960,7 +960,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/6.jpg`,
+    image: "",
   },
   {
     id: 'refresco_lata',
@@ -969,7 +969,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 45,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/02/sprite.jpg`,
+    image: "",
   },
   {
     id: 'sanpellegrino_aranciata',
@@ -978,7 +978,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/11/sanpellegrino-aranciata-rossa.jpg`,
+    image: "",
   },
   {
     id: 'sanpellegrino_melograno',
@@ -987,7 +987,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 50,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2024/11/arancia.webp`,
+    image: "",
   },
   {
     id: 'jugo_naranja',
@@ -996,7 +996,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 60,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2025/05/JUS.png`,
+    image: "",
   },
   {
     id: 'cafe_frio',
@@ -1005,7 +1005,7 @@ export const MENU_CATALOG: MenuItem[] = [
     pricePerPerson: 60,
     category: 'bebidas',
     pricingModel: 'per_person',
-    image: `${WP}/2025/08/WhatsApp-Image-2025-07-08-at-4.45.22-PM.jpg`,
+    image: "",
   },
 ];
 
@@ -1048,4 +1048,12 @@ export function getDisplayPrice(item: MenuItem, people: number): number {
     return Math.round(getGroupPrice(item, people) / people);
   }
   return item.pricePerPerson;
+}
+export function getMenuItemById(id: string): MenuItem | undefined {
+  return MENU_CATALOG.find((item) => item.id === id);
+}
+
+export function getMenuItemBySlug(slug: string): MenuItem | undefined {
+  // For now, we use ID as slug for the local catalog
+  return MENU_CATALOG.find((item) => item.id === slug);
 }

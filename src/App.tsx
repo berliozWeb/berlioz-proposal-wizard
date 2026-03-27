@@ -26,6 +26,7 @@ import ConfirmationPage from "./pages/ConfirmationPage";
 import AccountPage from "./pages/AccountPage";
 import Propuesta from "./pages/Propuesta";
 import AdminLeads from "./pages/AdminLeads";
+import ProductDetailPage from "./pages/ProductDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/recuperar-contrasena" element={<PasswordRecoveryPage />} />
                 <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
                 <Route path="/propuesta" element={<Propuesta />} />
+                <Route path="/producto/:slug" element={<ProductDetailPage />} />
 
                 {/* Auth required */}
                 <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />

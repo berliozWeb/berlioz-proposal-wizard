@@ -15,11 +15,12 @@ import ProposalStep from "@/components/quoter/ProposalStep";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 // Images
-import breakfastImg from "@/assets/food-breakfast.jpg";
-import boxlunchImg from "@/assets/food-boxlunch.jpg";
-import coffeeImg from "@/assets/platos/coffee-break-pm/coffee-break-BERLIOZ.webp";
-import juntaImg from "@/assets/platos/coffee-break-pm/berlioz_fabian-11-1-scaled.webp";
-import veganoImg from "@/assets/platos/coffee-break-pm/Crudites-juliana-de-verduras-Berlioz-zoom.webp";
+// Premium Images from src/assets/imagenes_menu
+import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
+import boxlunchImg from "@/assets/imagenes_menu/wl_pink-box.jpg";
+import coffeeImg from "@/assets/imagenes_menu/cb_coffee-break-pm.jpg";
+import juntaImg from "@/assets/imagenes_menu/wl_comedor-berlioz.jpg";
+import veganoImg from "@/assets/imagenes_menu/veg_pink-box-vegana.jpg";
 import heroImg from "@/assets/heroCoti.JPG";
 
 /* ── constants ── */

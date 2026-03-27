@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
 import type { MenuItem, MenuCategory } from "@/domain/entities/MenuItem";
 import { MENU_CATEGORY_LABELS } from "@/domain/entities/MenuItem";
 import { MENU_CATALOG, getByCategory, getDisplayPrice } from "@/domain/entities/MenuCatalog";
+import { getProductImage } from "@/domain/entities/ProductImages";
 import { formatMXN } from "@/domain/value-objects/Money";
-import { Plus, ArrowLeft, ShoppingCart } from "lucide-react";
+import { Plus, ArrowLeft, ShoppingCart, Expand } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MenuBrowseProps {
@@ -76,26 +78,34 @@ const MenuBrowse = ({
               : `${formatMXN(item.pricePerPerson)}/pza`;
 
           return (
-            <div key={item.id} className="rounded-xl overflow-hidden border border-border bg-card group">
-              <div className="aspect-square overflow-hidden bg-muted">
-                {item.image ? (
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-3xl">🍽</div>
-                )}
-              </div>
-              <div className="p-3">
-                <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+            <div key={item.id} className="rounded-xl overflow-hidden border border-border bg-card group flex flex-col">
+              <Link to={`/producto/${item.id}`} className="block relative aspect-square overflow-hidden bg-muted">
+                <img 
+                  src={getProductImage(item.id)} 
+                  alt={item.name} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                />
+                {/* Visual affordance for detail link */}
+                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <div className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-lg scale-90 group-hover:scale-100 transition-transform">
+                     <Expand className="w-4 h-4 text-primary" />
+                  </div>
+                </div>
+              </Link>
+              <div className="p-3 flex flex-col flex-1">
+                <Link to={`/producto/${item.id}`} className="block group/link">
+                  <p className="text-sm font-semibold text-foreground truncate group-hover/link:text-primary transition-colors">{item.name}</p>
+                </Link>
                 <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
                 {item.minQty && (
                   <p className="text-[10px] text-accent mt-0.5">Mín. {item.minQty} pzas</p>
                 )}
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mt-auto pt-3">
                   <span className="text-xs font-mono font-medium text-foreground">{priceLabel}</span>
                   <button
                     type="button"
                     onClick={() => onAdd(item)}
-                    className="flex items-center gap-1 h-7 px-2.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                    className="flex items-center gap-1 h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-secondary transition-colors"
                   >
                     <Plus className="w-3 h-3" />
                   </button>

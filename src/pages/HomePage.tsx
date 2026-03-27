@@ -8,12 +8,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import heroImg from "@/assets/hero-catering.jpg";
-import breakfastImg from "@/assets/food-breakfast.jpg";
+// Premium Images from src/assets/imagenes_menu
+import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";
-import coffeeAmImg from "@/assets/platos/coffee-break-pm/Surtido-Camille-Berlioz-bocadillos2.webp";
-import coffeePmImg from "@/assets/platos/coffee-break-pm/coffee-break-BERLIOZ.webp";
-import juntaImg from "@/assets/platos/coffee-break-pm/berlioz_fabian-11-1-scaled.webp";
-import veganoImg from "@/assets/platos/coffee-break-pm/Crudites-juliana-de-verduras-Berlioz-zoom.webp";
+import coffeeAmImg from "@/assets/imagenes_menu/cb_coffee-break-am-cafe.jpg";
+import coffeePmImg from "@/assets/imagenes_menu/cb_coffee-break-pm.jpg";
+import juntaImg from "@/assets/imagenes_menu/wl_comedor-berlioz.jpg";
+import veganoImg from "@/assets/imagenes_menu/veg_pink-box-vegana.jpg";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import WordRotator from "@/components/ui/WordRotator";

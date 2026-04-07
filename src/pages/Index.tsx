@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { Clock, CreditCard, MapPin } from "lucide-react";
 import MinimalHeader from "@/components/landing/MinimalHeader";
+import HeroCarousel from "@/components/landing/HeroCarousel";
 import LeadCaptureSection from "@/components/landing/LeadCaptureSection";
 import HeroCards from "@/components/landing/HeroCards";
 import TopSellers from "@/components/landing/TopSellers";
@@ -67,15 +68,7 @@ const Index = () => {
 
       {p.state.path === 'landing' && (
         <>
-          {/* Hero headline */}
-          <section className="max-w-6xl mx-auto px-6 text-center" style={{ paddingTop: 64, paddingBottom: 8 }}>
-            <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 'clamp(2.4rem, 5.5vw, 4rem)', color: '#014D6F' }}>
-              ¿Qué se te antoja hoy?
-            </h1>
-            <p className="mt-3" style={{ fontSize: 14, letterSpacing: '0.08em', color: '#014D6F', fontFamily: "'Montserrat', sans-serif" }}>
-              Desayuno · Coffee Break · Working Lunch · Ciudad de México
-            </p>
-          </section>
+          <HeroCarousel />
 
           <LeadCaptureSection
             nombre={p.state.nombre}

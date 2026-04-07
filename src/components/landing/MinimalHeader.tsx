@@ -4,7 +4,9 @@ const MinimalHeader = () => (
   <header
     className="sticky top-0 z-50"
     style={{
-      background: '#F7E8DF',
+      background: 'rgba(247, 232, 223, 0.92)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
       borderBottom: '1px solid #E2D3CA',
       height: 68,
     }}

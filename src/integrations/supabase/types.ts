@@ -198,6 +198,72 @@ export type Database = {
           },
         ]
       }
+      productos: {
+        Row: {
+          activo: boolean | null
+          categoria: string | null
+          created_at: string | null
+          descripcion: string | null
+          destacado: boolean | null
+          id: string
+          imagen: string | null
+          imagen_url: string | null
+          nombre: string
+          orden: number | null
+          parent_id: string | null
+          precio: number | null
+          precio_max: number | null
+          precio_min: number | null
+          precio_rebajado: number | null
+          sku: string | null
+          tipo: string | null
+          variante_nombre: string | null
+          variantes: string | null
+        }
+        Insert: {
+          activo?: boolean | null
+          categoria?: string | null
+          created_at?: string | null
+          descripcion?: string | null
+          destacado?: boolean | null
+          id: string
+          imagen?: string | null
+          imagen_url?: string | null
+          nombre: string
+          orden?: number | null
+          parent_id?: string | null
+          precio?: number | null
+          precio_max?: number | null
+          precio_min?: number | null
+          precio_rebajado?: number | null
+          sku?: string | null
+          tipo?: string | null
+          variante_nombre?: string | null
+          variantes?: string | null
+        }
+        Update: {
+          activo?: boolean | null
+          categoria?: string | null
+          created_at?: string | null
+          descripcion?: string | null
+          destacado?: boolean | null
+          id?: string
+          imagen?: string | null
+          imagen_url?: string | null
+          nombre?: string
+          orden?: number | null
+          parent_id?: string | null
+          precio?: number | null
+          precio_max?: number | null
+          precio_min?: number | null
+          precio_rebajado?: number | null
+          sku?: string | null
+          tipo?: string | null
+          variante_nombre?: string | null
+          variantes?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           created_at: string | null

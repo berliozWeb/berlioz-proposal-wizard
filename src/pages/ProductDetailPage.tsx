@@ -116,7 +116,7 @@ const ProductDetailPage = () => {
             image_url: imgUrl,
             occasion: data.categoria ? [data.categoria] : [],
             dietary_tags: [],
-            included_items: stripHtml(data.descripcion ?? '').split("\n").filter((l: string) => l.trim()),
+            included_items: stripHtml(data.descripcion ?? '').split(/\n+/).filter((l: string) => l.trim().length > 3),
             is_bestseller: data.destacado ?? false,
           });
         }
@@ -343,9 +343,10 @@ const ProductDetailPage = () => {
                     <h1 className="font-heading text-4xl md:text-6xl text-foreground mb-4 leading-[1.1] tracking-tight">
                       {product.name}
                     </h1>
-                    <p className="font-body text-lg text-muted-foreground max-w-xl leading-relaxed">
-                      {stripHtml(product.description || product.short_description || '')}
-                    </p>
+                    <div
+                      className="font-body text-lg text-muted-foreground max-w-xl leading-relaxed prose prose-sm prose-neutral [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:text-foreground"
+                      dangerouslySetInnerHTML={{ __html: product.description || product.short_description || '' }}
+                    />
                   </div>
 
                   <div className="flex items-baseline gap-2 py-6 border-y border-border/30">

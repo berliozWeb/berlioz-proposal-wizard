@@ -313,9 +313,9 @@ function CatalogProductCard({ product, onAdd }: { product: Producto; onAdd: () =
             </span>
           )}
           {product.descripcion && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {product.descripcion}
-            </p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2"
+              dangerouslySetInnerHTML={{ __html: product.descripcion }}
+            />
           )}
         </div>
 

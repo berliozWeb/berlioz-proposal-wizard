@@ -1,54 +1,41 @@
 import { Phone } from "lucide-react";
-import berliozLogo from "@/assets/berlioz-logo.png";
 
 const MinimalHeader = () => (
   <header
-    className="sticky top-0 z-50 backdrop-blur-md"
+    className="sticky top-0 z-50"
     style={{
-      background: 'rgba(255,255,255,0.88)',
-      borderBottom: '1px solid rgba(0,0,0,0.07)',
-      boxShadow: '0 1px 24px 0 rgba(0,61,91,0.06)',
+      background: '#F7E8DF',
+      borderBottom: '1px solid #E2D3CA',
+      height: 68,
     }}
   >
-    <div className="max-w-6xl mx-auto flex items-center justify-between px-6" style={{ height: 72 }}>
+    <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-full">
       {/* Logo */}
-      <img src={berliozLogo} alt="Berlioz" style={{ height: 26 }} />
+      <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 20, color: '#014D6F', letterSpacing: '0.18em', textTransform: 'uppercase' as const }}>
+        BERLIOZ
+      </span>
 
-      {/* Right side: catering label + phone */}
-      <div className="flex items-center gap-5">
+      {/* Right side */}
+      <div className="flex items-center" style={{ gap: 20 }}>
         <span
-          className="hidden md:inline font-body uppercase tracking-widest"
-          style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))', letterSpacing: '0.22em' }}
+          className="hidden md:inline"
+          style={{ fontSize: 11, color: '#888888', letterSpacing: '0.22em', textTransform: 'uppercase' as const, fontFamily: "'Montserrat', sans-serif", fontWeight: 600 }}
         >
           Catering Corporativo · CDMX
         </span>
 
-        {/* Gold divider */}
-        <span
-          className="hidden md:inline"
-          style={{ width: 1, height: 28, background: 'hsl(var(--gold) / 0.4)', display: 'inline-block' }}
-        />
+        {/* Divider */}
+        <span className="hidden md:inline" style={{ width: 1, height: 28, background: '#E2D3CA', display: 'inline-block' }} />
 
-        <a
-          href="tel:5582375469"
-          className="flex items-center gap-2 transition-opacity hover:opacity-75"
-          style={{ textDecoration: 'none' }}
-        >
-          <span
-            className="inline-flex items-center justify-center rounded-full"
-            style={{
-              width: 28,
-              height: 28,
-              background: 'hsl(var(--gold) / 0.12)',
-            }}
-          >
-            <Phone style={{ width: 12, height: 12, color: 'hsl(var(--gold))' }} />
+        <a href="tel:5582375469" className="flex items-center transition-opacity hover:opacity-75" style={{ gap: 8, textDecoration: 'none' }}>
+          <span className="inline-flex items-center justify-center rounded-full" style={{ width: 28, height: 28, background: 'rgba(1,77,111,0.1)' }}>
+            <Phone style={{ width: 12, height: 12, color: '#014D6F' }} />
           </span>
           <div className="hidden sm:flex flex-col">
-            <span className="font-mono font-semibold" style={{ fontSize: 13, color: 'hsl(var(--primary))' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#014D6F', fontFamily: "'Montserrat', sans-serif" }}>
               55 8237 5469
             </span>
-            <span className="font-body" style={{ fontSize: 10, color: 'hsl(var(--muted-foreground))' }}>
+            <span style={{ fontSize: 10, color: '#888888', fontFamily: "'Montserrat', sans-serif" }}>
               ¿Necesitas ayuda?
             </span>
           </div>

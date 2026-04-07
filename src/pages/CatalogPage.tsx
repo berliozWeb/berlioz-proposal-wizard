@@ -10,7 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { getProductImage } from "@/domain/entities/ProductImages";
-import menuHero from "@/assets/menuHero.JPG";
+const menuHero = new URL("@/assets/menuHero.JPG", import.meta.url).href;
 
 /* ── types ── */
 interface Product {

@@ -21,7 +21,7 @@ import boxlunchImg from "@/assets/imagenes_menu/wl_pink-box.jpg";
 import coffeeImg from "@/assets/imagenes_menu/cb_coffee-break-pm.jpg";
 import juntaImg from "@/assets/imagenes_menu/wl_comedor-berlioz.jpg";
 import veganoImg from "@/assets/imagenes_menu/veg_pink-box-vegana.jpg";
-import heroImg from "@/assets/heroCoti.JPG";
+const heroImg = new URL("@/assets/heroCoti.JPG", import.meta.url).href;
 
 /* ── constants ── */
 const WIZARD_STEPS = [

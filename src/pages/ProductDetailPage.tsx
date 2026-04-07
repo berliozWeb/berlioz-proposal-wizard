@@ -91,15 +91,28 @@ const ProductDetailPage = () => {
           is_bestseller: !!local.isTopSeller,
         });
       } else {
-        // 2. Fallback to Supabase
+        // 2. Fallback to productos table
         const { data, error } = await supabase
-          .from("products")
+          .from("productos")
           .select("*")
-          .eq("slug", slug)
+          .eq("id", slug)
           .maybeSingle();
         
         if (!error && data) {
-          setProduct(data as Product);
+          const imgUrl = data.imagen_url || (data.imagen ? `https://ktyupdpzgmzzfkskkvpn.supabase.co/storage/v1/object/public/Berlioz-images/${data.imagen}` : null);
+          setProduct({
+            id: data.id,
+            name: data.nombre,
+            slug: data.id,
+            description: data.descripcion,
+            short_description: data.descripcion,
+            price_per_person: data.precio ?? data.precio_min ?? 0,
+            image_url: imgUrl,
+            occasion: data.categoria ? [data.categoria] : [],
+            dietary_tags: [],
+            included_items: data.descripcion?.split("\n").filter((l: string) => l.trim()) ?? [],
+            is_bestseller: data.destacado ?? false,
+          });
         }
       }
       

@@ -423,7 +423,6 @@ function CatalogProductCard({ product, onAdd }: { product: Producto; onAdd: () =
 }
 
 export default CatalogPage;
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const days = useMemo(getNext7Days, []);

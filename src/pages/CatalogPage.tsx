@@ -264,7 +264,7 @@ function CatalogProductCard({ product, onAdd }: { product: Producto; onAdd: () =
   const [added, setAdded] = useState(false);
   const days = useMemo(getNext7Days, []);
   const price = getDisplayPrice(product);
-  const imgSrc = product.imagen_url || `https://tmeqfvyolasxznyxyvmr.supabase.co/storage/v1/object/public/imagenes-berlioz/${product.imagen}`;
+  const imgSrc = product.imagen_url || `https://ktyupdpzgmzzfkskkvpn.supabase.co/storage/v1/object/public/Berlioz-images/${product.imagen}`;
 
   const handleAdd = () => {
     onAdd();

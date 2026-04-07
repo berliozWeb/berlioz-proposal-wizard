@@ -1,48 +1,34 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, ShoppingBag, ChevronRight, Clock, Star, Filter, Heart, ArrowRight, Utensils, CalendarIcon } from "lucide-react";
+import { Search, ShoppingBag, ChevronRight, Clock, Star, Filter, ArrowRight, CalendarIcon } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import BaseLayout from "@/components/layout/BaseLayout";
 import CartSidebar from "@/components/ui/CartSidebar";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useCart } from "@/contexts/CartContext";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { getProductImage } from "@/domain/entities/ProductImages";
-const menuHero = new URL("@/assets/menuHero.JPG", import.meta.url).href;
-
-/* ── types ── */
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  short_description: string | null;
-  price_per_person: number;
-  image_url: string | null;
-  occasion: string[];
-  dietary_tags: string[];
-  included_items: string[];
-  is_bestseller: boolean;
-}
+import { useProductos, type Producto } from "@/hooks/useProductos";
 
 /* ── constants ── */
-const FILTERS = [
+const CATEGORY_FILTERS = [
   { value: "todos", label: "Todos", emoji: "🍽️" },
-  { value: "desayuno", label: "Desayuno", emoji: "🍳" },
-  { value: "coffee_am", label: "Coffee AM", emoji: "☕" },
-  { value: "coffee_pm", label: "Coffee PM", emoji: "🍪" },
-  { value: "working_lunch", label: "Lunch", emoji: "🍱" },
-  { value: "junta", label: "Juntas", emoji: "💼" },
-  { value: "vegano", label: "Vegano", emoji: "🌱" },
-  { value: "bestseller", label: "Favoritos", emoji: "⭐" },
+  { value: "Desayunos", label: "Desayunos", emoji: "🍳" },
+  { value: "Coffee Break", label: "Coffee Break", emoji: "☕" },
+  { value: "Working Lunch", label: "Working Lunch", emoji: "🍱" },
+  { value: "Tortas Gourmet", label: "Tortas", emoji: "🥖" },
+  { value: "Lunch Box", label: "Lunch Box", emoji: "📦" },
+  { value: "Ensaladas", label: "Ensaladas", emoji: "🥗" },
+  { value: "Bebidas", label: "Bebidas", emoji: "🥤" },
+  { value: "Extras", label: "Extras", emoji: "✨" },
+  { value: "destacado", label: "Favoritos", emoji: "⭐" },
 ];
 
 const SORT_OPTIONS = [
-  { value: "popular", label: "Más pedidos" },
+  { value: "orden", label: "Recomendados" },
   { value: "price_asc", label: "Precio: Menor a Mayor" },
   { value: "price_desc", label: "Precio: Mayor a Menor" },
+  { value: "name_asc", label: "A → Z" },
 ];
 
 const TIME_SLOTS = ["7:30", "10:00", "12:00", "15:00"];
@@ -53,42 +39,34 @@ function getNext7Days() {
   return days;
 }
 
+function getDisplayPrice(p: Producto): number {
+  return p.precio ?? p.precio_min ?? p.precio_rebajado ?? 0;
+}
+
 /* ── page ── */
 const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const { addItem, itemCount } = useCart();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState(searchParams.get("occasion") || "todos");
-  const [sort, setSort] = useState("popular");
+  const { productos, loading } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
+  const [filter, setFilter] = useState(searchParams.get("categoria") || "todos");
+  const [sort, setSort] = useState("orden");
   const [search, setSearch] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("*")
-        .order("sort_order", { ascending: true });
-      setProducts((data as Product[]) || []);
-      setLoading(false);
-    })();
-  }, []);
-
   const filtered = useMemo(() => {
-    let list = [...products];
+    let list = [...productos];
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
     }
-    if (filter === "bestseller") list = list.filter((p) => p.is_bestseller);
-    else if (filter === "vegano") list = list.filter((p) => p.dietary_tags.some((t) => ["vegano", "sin_gluten"].includes(t)) || p.occasion.includes("vegano"));
-    else if (filter !== "todos") list = list.filter((p) => p.occasion.includes(filter));
+    if (filter === "destacado") list = list.filter((p) => p.destacado);
+    else if (filter !== "todos") list = list.filter((p) => p.categoria === filter);
     
-    if (sort === "price_asc") list.sort((a, b) => a.price_per_person - b.price_per_person);
-    else if (sort === "price_desc") list.sort((a, b) => b.price_per_person - a.price_per_person);
+    if (sort === "price_asc") list.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
+    else if (sort === "price_desc") list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
+    else if (sort === "name_asc") list.sort((a, b) => a.nombre.localeCompare(b.nombre));
     return list;
-  }, [products, filter, sort, search]);
+  }, [productos, filter, sort, search]);
 
   return (
     <BaseLayout>

@@ -45,6 +45,12 @@ interface Product {
 
 const TIME_SLOTS = ["7:30", "10:00", "12:00", "15:00"];
 
+/** Strip HTML tags and decode entities for plain text display */
+function stripHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || '';
+}
+
 function getNext7Days() {
   const days: Date[] = [];
   for (let i = 1; i <= 7; i++) days.push(addDays(new Date(), i));
@@ -124,7 +130,11 @@ const ProductDetailPage = () => {
 
   const gallery = useMemo(() => {
     if (!product) return [];
-    return getProductGallery(slug || "");
+    const localGallery = getProductGallery(slug || "");
+    // If local gallery only returns the fallback, use the DB image instead
+    const isFallback = localGallery.length === 1 && localGallery[0] === FALLBACK_IMAGE;
+    if (isFallback && product.image_url) return [product.image_url];
+    return localGallery;
   }, [product, slug]);
 
   const handleAdd = () => {
@@ -334,7 +344,7 @@ const ProductDetailPage = () => {
                       {product.name}
                     </h1>
                     <p className="font-body text-lg text-muted-foreground max-w-xl leading-relaxed">
-                      {product.description || product.short_description}
+                      {stripHtml(product.description || product.short_description || '')}
                     </p>
                   </div>
 

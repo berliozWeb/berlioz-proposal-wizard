@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Star, CalendarIcon, Users, Utensils, ChevronRight, Clock, MapPin, Truck } from "lucide-react";
+import { Star, CalendarIcon, Users, Utensils, ChevronRight, Clock, MapPin, Truck, CreditCard } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

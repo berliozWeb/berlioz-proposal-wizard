@@ -354,6 +354,7 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
                             </div>
                           )}
                         </div>
+                        </div>
                       </div>
                     </div>
                   );

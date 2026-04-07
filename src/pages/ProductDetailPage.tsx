@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import CartSidebar from "@/components/ui/CartSidebar";
 import { getMenuItemBySlug, getDisplayPrice } from "@/domain/entities/MenuCatalog";
-import { getProductGallery } from "@/domain/entities/ProductImages";
+import { getProductGallery, FALLBACK_IMAGE } from "@/domain/entities/ProductImages";
 import type { MenuItem } from "@/domain/entities/MenuItem";
 
 /* ── types ── */

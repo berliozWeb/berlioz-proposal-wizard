@@ -47,8 +47,13 @@ const TIME_SLOTS = ["7:30", "10:00", "12:00", "15:00"];
 
 /** Strip HTML tags and decode entities for plain text display */
 function stripHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const doc = new DOMParser().parseFromString(html.replace(/\\n/g, '\n'), 'text/html');
   return doc.body.textContent || '';
+}
+
+/** Clean escaped newlines for rich HTML rendering */
+function cleanHtml(html: string): string {
+  return html.replace(/\\n/g, '<br/>').replace(/\n/g, '<br/>');
 }
 
 function getNext7Days() {
@@ -345,7 +350,7 @@ const ProductDetailPage = () => {
                     </h1>
                     <div
                       className="font-body text-lg text-muted-foreground max-w-xl leading-relaxed prose prose-sm prose-neutral [&_ul]:list-disc [&_ul]:pl-5 [&_li]:mb-1 [&_strong]:text-foreground"
-                      dangerouslySetInnerHTML={{ __html: product.description || product.short_description || '' }}
+                      dangerouslySetInnerHTML={{ __html: cleanHtml(product.description || product.short_description || '') }}
                     />
                   </div>
 

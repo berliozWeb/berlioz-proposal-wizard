@@ -299,7 +299,6 @@ const TODOS_LOS_PRODUCTOS_RAW =
   {id:"26261", sku:"", nombre:"BOX ECONÓMICA 3 - Pasta con Pollo y queso", tipo:"variation", categoria:"", precio:190.0, precio_min:190.0, precio_max:190.0, descripcion:"", imagen:"BOX_ECONOMICA_3_-_PASTA_CON_POLLO_Y_QUESO__main.jpg", parent_id:"21152-1-1-1", activo:true},
   {id:"28641", sku:"", nombre:"Piropo - veggie", tipo:"variation", categoria:"", precio:280.0, precio_min:280.0, precio_max:280.0, descripcion:"", imagen:"", parent_id:"5644", activo:true},
 ];
-];
 
 const TODOS_LOS_PRODUCTOS = TODOS_LOS_PRODUCTOS_RAW.map(p => ({
   ...p,

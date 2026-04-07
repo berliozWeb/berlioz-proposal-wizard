@@ -21,8 +21,8 @@ const TrustStrip = () => (
     <div
       className="grid grid-cols-3 divide-x"
       style={{
-        border: '1px solid rgba(0,0,0,0.07)',
-        borderRadius: 14,
+        border: '1px solid #E2D3CA',
+        borderRadius: 12,
         background: 'rgba(255,255,255,0.70)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
@@ -31,11 +31,11 @@ const TrustStrip = () => (
     >
       {TRUST_ITEMS.map(({ icon: Icon, label, sub }) => (
         <div key={label} className="flex flex-col items-center text-center py-4 px-3 gap-1.5">
-          <Icon style={{ width: 16, height: 16, color: 'hsl(var(--gold))' }} />
-          <span className="font-body font-semibold text-foreground leading-tight" style={{ fontSize: 12 }}>
+          <Icon style={{ width: 16, height: 16, color: '#014D6F' }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#014D6F', fontFamily: "'Montserrat', sans-serif", lineHeight: 1.3 }}>
             {label}
           </span>
-          <span className="font-body text-muted-foreground hidden sm:block" style={{ fontSize: 11 }}>
+          <span className="hidden sm:block" style={{ fontSize: 11, color: '#888888', fontFamily: "'Montserrat', sans-serif" }}>
             {sub}
           </span>
         </div>
@@ -54,35 +54,29 @@ const Index = () => {
 
   const handleIncompleteClick = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Small delay to let scroll start, then focus + trigger shake
     setTimeout(() => {
       const nombreInput = document.getElementById('lead-nombre-input') as HTMLInputElement | null;
       nombreInput?.focus();
-      // Dispatch a custom event the LeadCaptureSection listens to
       window.dispatchEvent(new CustomEvent('berlioz:shake-lead'));
     }, 300);
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#FDFAF7' }}>
       <MinimalHeader />
 
       {p.state.path === 'landing' && (
         <>
           {/* Hero headline */}
           <section className="max-w-6xl mx-auto px-6 text-center" style={{ paddingTop: 64, paddingBottom: 8 }}>
-            <h1
-              className="font-heading font-bold text-foreground"
-              style={{ fontSize: 'clamp(2.4rem, 5.5vw, 4rem)' }}
-            >
+            <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 'clamp(2.4rem, 5.5vw, 4rem)', color: '#014D6F' }}>
               ¿Qué se te antoja hoy?
             </h1>
-            <p className="font-body mt-3 text-primary" style={{ fontSize: 14, letterSpacing: '0.08em' }}>
+            <p className="mt-3" style={{ fontSize: 14, letterSpacing: '0.08em', color: '#014D6F', fontFamily: "'Montserrat', sans-serif" }}>
               Desayuno · Coffee Break · Working Lunch · Ciudad de México
             </p>
           </section>
 
-          {/* Lead capture */}
           <LeadCaptureSection
             nombre={p.state.nombre}
             empresa={p.state.empresa}
@@ -91,10 +85,8 @@ const Index = () => {
             isComplete={isLeadComplete}
           />
 
-          {/* Trust strip */}
           <TrustStrip />
 
-          {/* Entry points */}
           <HeroCards
             onCotiza={p.goToCotiza}
             onMenu={p.goToMenu}
@@ -132,12 +124,12 @@ const Index = () => {
           )}
           {!p.state.eventType && (
             <div className="text-center py-12">
-              <p className="text-muted-foreground font-body">Selecciona un tipo de evento para continuar</p>
+              <p style={{ color: '#888888', fontFamily: "'Montserrat', sans-serif" }}>Selecciona un tipo de evento para continuar</p>
               <button
                 type="button"
                 onClick={p.goToLanding}
-                className="mt-4 font-body font-medium hover:underline"
-                style={{ fontSize: 14, color: '#C9973A' }}
+                className="mt-4 hover:underline"
+                style={{ fontSize: 14, color: '#014D6F', fontFamily: "'Montserrat', sans-serif", fontWeight: 500 }}
               >
                 ← Volver al inicio
               </button>

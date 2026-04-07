@@ -110,7 +110,7 @@ const ProductDetailPage = () => {
             image_url: imgUrl,
             occasion: data.categoria ? [data.categoria] : [],
             dietary_tags: [],
-            included_items: data.descripcion?.split("\n").filter((l: string) => l.trim()) ?? [],
+            included_items: stripHtml(data.descripcion ?? '').split("\n").filter((l: string) => l.trim()),
             is_bestseller: data.destacado ?? false,
           });
         }

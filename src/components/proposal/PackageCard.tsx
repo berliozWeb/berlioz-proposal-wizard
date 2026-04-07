@@ -190,9 +190,6 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
           tier={pkg.id === 'basico' ? 'Esencial' : pkg.id === 'recomendado' ? 'Equilibrado' : 'Experiencia Completa'}
         />
 
-        {/* Hero product image */}
-        <div className="relative w-full overflow-hidden" style={{ height: 0 }}>
-        </div>
 
         <div className="p-5 flex flex-col flex-1">
           {/* Total price — GRAND total including IVA */}

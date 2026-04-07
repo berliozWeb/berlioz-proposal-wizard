@@ -314,7 +314,7 @@ function CatalogProductCard({ product, onAdd }: { product: Producto; onAdd: () =
           )}
           {product.descripcion && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2"
-              dangerouslySetInnerHTML={{ __html: product.descripcion }}
+              dangerouslySetInnerHTML={{ __html: product.descripcion.replace(/\\n/g, ' ').replace(/\n/g, ' ') }}
             />
           )}
         </div>

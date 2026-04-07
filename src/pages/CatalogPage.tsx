@@ -71,8 +71,8 @@ const CatalogPage = () => {
   return (
     <BaseLayout>
       {/* ═══ HERO SECTION ═══ */}
-      <section className="relative h-[60vh] min-h-[450px] flex items-center justify-center overflow-hidden -mt-[72px]">
-        <img src={menuHero} alt="Catalogo Berlioz" className="absolute inset-0 w-full h-full object-cover" />
+      <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20">
           <RevealOnScroll>
@@ -98,7 +98,7 @@ const CatalogPage = () => {
             {/* Main Category Filters */}
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-1">
               <div className="flex bg-muted/30 p-1 rounded-2xl border border-border/50">
-                {FILTERS.map((f) => (
+                {CATEGORY_FILTERS.map((f) => (
                   <button
                     key={f.value}
                     onClick={() => setFilter(f.value)}
@@ -187,9 +187,9 @@ const CatalogPage = () => {
                       onAdd={() => {
                         addItem({ 
                           id: product.id, 
-                          name: product.name, 
-                          price: product.price_per_person, 
-                          image: product.image_url || undefined, 
+                          name: product.nombre, 
+                          price: getDisplayPrice(product), 
+                          image: product.imagen_url || undefined, 
                           isPerPerson: true, 
                           quantity: 10 
                         });
@@ -260,7 +260,169 @@ const CatalogPage = () => {
 };
 
 /* ── Product Card with inline date/slot ── */
-function CatalogProductCard({ product, onAdd }: { product: Product; onAdd: () => void }) {
+function CatalogProductCard({ product, onAdd }: { product: Producto; onAdd: () => void }) {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const days = useMemo(getNext7Days, []);
+  const price = getDisplayPrice(product);
+  const imgSrc = product.imagen_url || `https://tmeqfvyolasxznyxyvmr.supabase.co/storage/v1/object/public/imagenes-berlioz/${product.imagen}`;
+
+  const handleAdd = () => {
+    onAdd();
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  return (
+    <div className="group relative flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      {/* Image Area */}
+      <Link to={`/producto/${product.id}`} className="relative aspect-square overflow-hidden bg-muted block">
+        <img 
+          src={imgSrc} 
+          alt={product.nombre} 
+          loading="lazy" 
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+        
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {product.destacado && (
+            <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-lg">
+              Destacado
+            </span>
+          )}
+          {product.precio_rebajado && product.precio && product.precio_rebajado < product.precio && (
+            <span className="px-3 py-1 rounded-full bg-destructive text-white text-[10px] font-bold uppercase tracking-wider">
+              Oferta
+            </span>
+          )}
+        </div>
+      </Link>
+
+      {/* Content Area */}
+      <div className="p-4 flex flex-col flex-1">
+        <div className="mb-3">
+          <Link to={`/producto/${product.id}`}>
+            <h3 className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+              {product.nombre}
+            </h3>
+          </Link>
+          {product.categoria && (
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+              {product.categoria}
+            </span>
+          )}
+          {product.descripcion && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              {product.descripcion}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-auto flex items-baseline gap-1.5 mb-4">
+          {product.precio_rebajado && product.precio && product.precio_rebajado < product.precio ? (
+            <>
+              <span className="text-lg font-bold text-foreground">${product.precio_rebajado}</span>
+              <span className="text-sm text-muted-foreground line-through">${product.precio}</span>
+            </>
+          ) : price > 0 ? (
+            <>
+              <span className="text-lg font-bold text-foreground">${price}</span>
+              {product.precio_min && product.precio_max && product.precio_min !== product.precio_max && (
+                <span className="text-[10px] text-muted-foreground">
+                  ${product.precio_min} – ${product.precio_max}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground italic">Precio variable</span>
+          )}
+        </div>
+
+        {/* Date/Slot selection */}
+        <div className="space-y-3 mb-4 pt-3 border-t border-border/40">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <CalendarIcon className="w-3 h-3 text-primary" />
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Fecha</p>
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+              {days.map((d) => {
+                const iso = format(d, "yyyy-MM-dd");
+                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                return (
+                  <button 
+                    key={iso} 
+                    disabled={isWeekend} 
+                    onClick={() => setSelectedDate(iso)}
+                    className={cn(
+                      "flex flex-col items-center min-w-[40px] px-1.5 py-1.5 rounded-lg text-[10px] transition-all border",
+                      selectedDate === iso 
+                        ? "bg-primary border-primary text-primary-foreground" 
+                        : isWeekend 
+                          ? "bg-muted/30 border-transparent text-muted-foreground/30 cursor-not-allowed" 
+                          : "bg-muted/50 border-border/40 text-foreground hover:bg-card hover:border-border"
+                    )}
+                  >
+                    <span className="font-bold opacity-60">{format(d, "EEE", { locale: es })}</span>
+                    <span className="text-xs font-semibold">{format(d, "d")}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Clock className="w-3 h-3 text-primary" />
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Horario</p>
+            </div>
+            <div className="flex gap-1.5">
+              {TIME_SLOTS.map((t) => (
+                <button 
+                  key={t} 
+                  onClick={() => setSelectedSlot(t)}
+                  className={cn(
+                    "flex-1 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all border",
+                    selectedSlot === t 
+                      ? "bg-primary border-primary text-primary-foreground" 
+                      : "bg-muted/50 border-border/40 text-muted-foreground hover:bg-card hover:text-foreground hover:border-border"
+                  )}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Add Button */}
+        <button 
+          onClick={handleAdd} 
+          disabled={!selectedDate || !selectedSlot}
+          className={cn(
+            "w-full py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all",
+            added 
+              ? "bg-green-500 text-white" 
+              : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed"
+          )}
+        >
+          {added ? "✓ ¡En el carrito!" : "Agregar al pedido →"}
+        </button>
+        
+        {!selectedDate && !selectedSlot && (
+          <p className="text-[9px] text-center text-muted-foreground mt-2 opacity-60">
+            Selecciona fecha y hora para agregar
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default CatalogPage;
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [added, setAdded] = useState(false);

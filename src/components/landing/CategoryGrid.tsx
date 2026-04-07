@@ -28,18 +28,15 @@ const CategoryGrid = ({ onSelect, isLeadComplete, onIncompleteClick }: CategoryG
   };
 
   return (
-    <section
-      className="max-w-6xl mx-auto px-6"
-      style={{ paddingTop: 64, paddingBottom: 80, borderTop: '1px solid #E8E6DF' }}
-    >
+    <section className="max-w-6xl mx-auto px-6" style={{ paddingTop: 64, paddingBottom: 80, borderTop: '1px solid #E2D3CA' }}>
       {/* Section heading */}
-      <div style={{ width: 40, height: 2, background: 'hsl(var(--gold))', marginBottom: 10 }} />
+      <div style={{ width: 40, height: 2, background: '#014D6F', marginBottom: 10 }} />
       <div className="flex items-end justify-between mb-7">
         <div>
-          <h2 className="font-heading text-foreground" style={{ fontSize: 26 }}>
+          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 26, color: '#014D6F' }}>
             Explora por categoría
           </h2>
-          <p className="font-body text-muted-foreground mt-1" style={{ fontSize: 13 }}>
+          <p className="mt-1" style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: '#888888' }}>
             Desayuno · Coffee Break · Working Lunch · Tortas Gourmet
           </p>
         </div>
@@ -53,62 +50,45 @@ const CategoryGrid = ({ onSelect, isLeadComplete, onIncompleteClick }: CategoryG
             onClick={() => handleSelect(key)}
             className="group relative overflow-hidden text-left"
             style={{
-              borderRadius: 18,
+              borderRadius: 12,
               height: 220,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+              boxShadow: '0 2px 10px rgba(1,77,111,0.07)',
               transition: 'box-shadow 0.3s, transform 0.3s',
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.18)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(1,77,111,0.18)';
               (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 10px rgba(1,77,111,0.07)';
               (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
             }}
           >
-            {/* Background image */}
             <img
               src={(CL_CATEGORY_IMAGES as Record<string, string>)[key] || CL_CATEGORY_IMAGES.working_lunch}
               alt={label}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.06]"
             />
 
-            {/* Gradient overlay */}
-            <div
-              className="absolute inset-0 transition-opacity duration-300"
-              style={{
-                background: 'linear-gradient(to top, rgba(5,15,10,0.88) 0%, rgba(5,15,10,0.25) 55%, transparent 100%)',
-              }}
-            />
+            <div className="absolute inset-0 transition-opacity duration-300" style={{ background: 'linear-gradient(to top, rgba(1,77,111,0.85) 0%, rgba(1,77,111,0.25) 55%, transparent 100%)' }} />
 
-            {/* Content */}
             <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
               <div>
-                <span className="font-heading text-white block" style={{ fontSize: 19, lineHeight: 1.2 }}>
+                <span className="block" style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 19, lineHeight: 1.2, color: 'white' }}>
                   {label}
                 </span>
                 {CATEGORY_DESCRIPTORS[key] && (
-                  <span
-                    className="font-body block mt-1"
-                    style={{ fontSize: 11, color: 'rgba(255,255,255,0.70)', letterSpacing: '0.02em' }}
-                  >
+                  <span className="block mt-1" style={{ fontSize: 11, color: 'rgba(255,255,255,0.70)', letterSpacing: '0.02em', fontFamily: "'Montserrat', sans-serif" }}>
                     {CATEGORY_DESCRIPTORS[key]}
                   </span>
                 )}
               </div>
 
-              {/* Arrow that slides in on hover */}
               <span
                 className="inline-flex items-center justify-center rounded-full transition-all duration-300 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
-                style={{
-                  width: 30,
-                  height: 30,
-                  background: 'hsl(var(--gold))',
-                  flexShrink: 0,
-                }}
+                style={{ width: 30, height: 30, background: '#EDD9C8', flexShrink: 0 }}
               >
-                <ArrowRight style={{ width: 14, height: 14, color: '#fff' }} />
+                <ArrowRight style={{ width: 14, height: 14, color: '#014D6F' }} />
               </span>
             </div>
           </button>

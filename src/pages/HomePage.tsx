@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Star, CalendarIcon, Users, Utensils, ChevronRight, Clock, MapPin, Truck } from "lucide-react";
+import { Star, CalendarIcon, Users, Utensils, ChevronRight, Clock, MapPin, Truck, CreditCard } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -91,83 +91,74 @@ const HomePage = () => {
   return (
     <BaseLayout>
       {/* ═══ SECTION 1 — HERO ═══ */}
-      <section className="relative min-h-screen flex items-center justify-center -mt-[72px]">
+      <section className="relative min-h-screen flex items-center justify-center" style={{ marginTop: -68 }}>
         <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10" />
-        <div className="relative z-10 max-w-[720px] mx-auto px-6 text-center">
-          <h1 className="font-heading text-4xl md:text-[60px] md:leading-[1.08] tracking-tight text-card mb-6">
-            Catering gourmet entregado en tu sala de juntas
-          </h1>
-          <p className="font-body text-lg text-card/80 mb-10 max-w-xl mx-auto leading-relaxed">
-            Desayunos · Coffee breaks · Working lunches para equipos de 10 a 500 personas
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/menu"
-              className="inline-flex items-center justify-center h-13 px-9 py-3.5 rounded-full bg-card text-primary font-body font-semibold text-sm hover:bg-card/95 hover:shadow-lg hover:shadow-black/30 transition-all duration-200"
-            >
-              Ver menú completo
-            </a>
-            <a
-              href="/cotizar"
-              className="inline-flex items-center justify-center h-13 px-9 py-3.5 rounded-full border-2 border-card/70 text-card font-body font-semibold text-sm backdrop-blur-sm bg-white/10 hover:bg-white/20 hover:border-card transition-all duration-200"
-            >
-              Cotizar ahora
-            </a>
-          </div>
-          <div className="mt-10 flex items-center justify-center gap-1.5 text-card/80">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-4.5 h-4.5 fill-yellow-400 text-yellow-400" />
-            ))}
-            <span className="font-body text-sm ml-2.5">4.9/5 — Más de 5,000 pedidos entregados</span>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(242,228,216,0.92) 0%, rgba(242,228,216,0.70) 40%, rgba(242,228,216,0.15) 100%)' }} />
+        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full">
+          <div className="max-w-xl">
+            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 600, color: '#014D6F', letterSpacing: '0.25em', textTransform: 'uppercase' as const, marginBottom: 16 }}>
+              Catering Corporativo · CDMX
+            </p>
+            <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 'clamp(2rem, 5vw, 52px)', color: '#014D6F', lineHeight: 1.15, marginBottom: 16 }}>
+              Catering gourmet entregado en tu sala de juntas
+            </h1>
+            <p style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 400, fontSize: 18, color: '#555555', marginBottom: 32 }}>
+              Desayunos · Coffee breaks · Working lunches para equipos de 10 a 500 personas
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <a href="/menu" className="inline-flex items-center justify-center transition-all hover:opacity-90" style={{ height: 48, padding: '0 28px', borderRadius: 6, background: '#014D6F', color: 'white', fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                Ver menú completo
+              </a>
+              <a href="/cotizar" className="inline-flex items-center justify-center transition-all hover:opacity-90" style={{ height: 48, padding: '0 28px', borderRadius: 6, background: 'transparent', color: '#014D6F', border: '2px solid #014D6F', fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
+                Cotizar ahora
+              </a>
+            </div>
+            <div className="mt-8 flex items-center gap-1.5">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="fill-current" style={{ width: 16, height: 16, color: '#E8A87C' }} />
+              ))}
+              <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: '#014D6F', marginLeft: 8 }}>4.9/5 — Más de 5,000 pedidos entregados</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ═══ SECTION 2 — TRUST BAR ═══ */}
-      <section className="bg-card py-10 border-b border-border overflow-hidden">
-        <p className="font-body text-[11px] text-muted-foreground text-center mb-6 uppercase tracking-[0.15em]">
-          Empresas que confían en Berlioz
-        </p>
-        {/* marquee track */}
-        <div
-          className="relative"
-          style={{
-            maskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
-          }}
-        >
-          <div className="flex w-max animate-marquee gap-4">
-            {[...TRUST_COMPANIES, ...TRUST_COMPANIES, ...TRUST_COMPANIES, ...TRUST_COMPANIES].map((name, i) => (
-              <div
-                key={i}
-                className="px-5 py-2.5 rounded-full bg-muted font-mono text-xs text-muted-foreground tracking-wide border border-transparent whitespace-nowrap select-none"
-              >
-                {name}
-              </div>
-            ))}
-          </div>
+      <section style={{ background: '#014D6F', padding: '24px 0' }}>
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { icon: Clock, title: "Pide antes de las 3pm", desc: "Para entrega al día siguiente" },
+            { icon: CreditCard, title: "Paga en línea", desc: "Compra mínima $1,000 MXN" },
+            { icon: MapPin, title: "Entrega en CDMX", desc: "Y Área Metropolitana" },
+          ].map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex flex-col items-center text-center" style={{ gap: 8 }}>
+              <Icon style={{ width: 28, height: 28, color: 'white' }} />
+              <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 14, color: 'white', textTransform: 'uppercase' as const }}>{title}</span>
+              <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 400, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>{desc}</span>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ═══ SECTION 3 — QUICK QUOTER ═══ */}
-      <section className="py-20" style={{background: "linear-gradient(135deg, hsl(209 82% 94%) 0%, hsl(220 60% 97%) 100%)"}}>
+      <section className="py-20" style={{ background: '#E8F2F6' }}>
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="font-heading text-[32px] text-foreground text-center mb-2">
+          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 32, color: '#014D6F', textAlign: 'center', marginBottom: 8 }}>
             ¿Cuánto cuesta tu evento?
           </h2>
-          <p className="font-body text-muted-foreground text-center text-sm mb-10">
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 400, fontSize: 14, color: '#888888', textAlign: 'center', marginBottom: 40 }}>
             Obtén una estimación instantánea sin compromiso
           </p>
-          <div className="bg-card rounded-2xl border border-border p-6 md:p-8 shadow-sm">
+          <div style={{ background: 'white', borderRadius: 16, border: '1px solid #E2D3CA', padding: '24px 32px', boxShadow: '0 2px 12px rgba(1,77,111,0.06)' }}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-              {/* Event type */}
               <div>
-                <label className="block font-body text-xs font-semibold text-foreground mb-2">¿Qué tipo de evento?</label>
+                <label style={{ display: 'block', fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 600, color: '#014D6F', letterSpacing: '0.08em', marginBottom: 8 }}>¿Qué tipo de evento?</label>
                 <select
                   value={eventType}
                   onChange={(e) => setEventType(e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-input bg-background text-foreground font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow"
+                  style={{ width: '100%', height: 48, padding: '0 16px', borderRadius: 8, border: '1px solid #CEC1B9', color: '#014D6F', fontFamily: "'Montserrat', sans-serif", fontSize: 14, background: 'white', outline: 'none' }}
+                  onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#014D6F'; }}
+                  onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#CEC1B9'; }}
                 >
                   <option value="">Selecciona...</option>
                   {EVENT_OPTIONS.map((o) => (
@@ -175,52 +166,45 @@ const HomePage = () => {
                   ))}
                 </select>
               </div>
-              {/* People */}
               <div>
-                <label className="block font-body text-xs font-semibold text-foreground mb-2">¿Cuántas personas?</label>
+                <label style={{ display: 'block', fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 600, color: '#014D6F', letterSpacing: '0.08em', marginBottom: 8 }}>¿Cuántas personas?</label>
                 <input
                   type="number"
                   min={10}
                   value={people}
                   onChange={(e) => setPeople(e.target.value ? Number(e.target.value) : "")}
                   placeholder="ej. 25"
-                  className="w-full h-12 px-4 rounded-xl border border-input bg-background text-foreground font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ width: '100%', height: 48, padding: '0 16px', borderRadius: 8, border: '1px solid #CEC1B9', color: '#014D6F', fontFamily: "'Montserrat', sans-serif", fontSize: 14, background: 'white', outline: 'none' }}
+                  onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#014D6F'; }}
+                  onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#CEC1B9'; }}
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
-              {/* Date */}
               <div>
-                <label className="block font-body text-xs font-semibold text-foreground mb-2">¿Cuándo?</label>
+                <label style={{ display: 'block', fontFamily: "'Montserrat', sans-serif", fontSize: 12, fontWeight: 600, color: '#014D6F', letterSpacing: '0.08em', marginBottom: 8 }}>¿Cuándo?</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className={cn(
-                        "w-full h-12 px-4 rounded-xl border border-input bg-background font-body text-sm text-left flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-shadow",
-                        !date && "text-muted-foreground"
-                      )}
+                      className={cn("w-full flex items-center gap-2 text-left", !date && "text-muted-foreground")}
+                      style={{ height: 48, padding: '0 16px', borderRadius: 8, border: '1px solid #CEC1B9', fontFamily: "'Montserrat', sans-serif", fontSize: 14, background: 'white' }}
                     >
-                      <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                      <CalendarIcon style={{ width: 16, height: 16, color: '#888888' }} />
                       {date ? format(date, "d MMM yyyy", { locale: es }) : "Selecciona fecha"}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      disabled={(d) => d < tomorrow}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
+                    <Calendar mode="single" selected={date} onSelect={setDate} disabled={(d) => d < tomorrow} initialFocus className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
             <button
               onClick={handleQuickQuote}
-              className="w-full h-12 rounded-full bg-primary text-primary-foreground font-body font-semibold text-sm hover:bg-primary/90 hover:shadow-md hover:shadow-primary/30 transition-all duration-200 inline-flex items-center justify-center gap-2"
+              className="w-full inline-flex items-center justify-center gap-2 transition-all hover:opacity-90"
+              style={{ height: 52, borderRadius: 8, background: '#014D6F', color: 'white', fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 15, border: 'none', cursor: 'pointer' }}
             >
               Ver opciones y precios
-              <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+              <ChevronRight style={{ width: 16, height: 16 }} />
             </button>
           </div>
         </div>

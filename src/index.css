@@ -4,64 +4,68 @@
 
 @layer base {
   :root {
-    /* Berlioz Brand — 2025 redesign */
-    --background: 50 20% 97%;        /* #FAFAF8 */
-    --foreground: 60 5% 10%;          /* #1a1a18 */
+    /* Berlioz Brand — real berlioz.mx identity */
+    --background: 34 33% 98%;          /* #FDFAF7 */
+    --foreground: 197 98% 22%;         /* #014D6F */
 
     --card: 0 0% 100%;                /* #ffffff */
-    --card-foreground: 60 5% 10%;
+    --card-foreground: 197 98% 22%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 60 5% 10%;
+    --popover-foreground: 197 98% 22%;
 
-    --primary: 200 100% 18%;          /* #003D5B */
+    --primary: 197 98% 22%;           /* #014D6F */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 55% 37%;         /* #185FA5 */
+    --secondary: 197 64% 31%;         /* #1A6485 */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 50 8% 91%;
-    --muted-foreground: 55 3% 41%;    /* #6b6b67 */
+    --muted: 25 22% 92%;              /* #F2E4D8 area */
+    --muted-foreground: 0 0% 53%;     /* #888888 */
 
-    --accent: 345 55% 60%;            /* #D4617A */
-    --accent-foreground: 0 0% 100%;
+    --accent: 25 55% 85%;             /* #EDD9C8 cream */
+    --accent-foreground: 197 98% 22%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 100% 35%;        /* #B20000 */
     --destructive-foreground: 0 0% 100%;
 
-    --success: 95 75% 18%;            /* #27500A */
+    --success: 92 28% 48%;            /* #7A9C59 */
     --success-foreground: 0 0% 100%;
 
     /* Extended palette */
-    --blue-light: 209 82% 94%;        /* #E6F1FB */
-    --pink-light: 340 75% 95%;        /* #FBEAF0 */
+    --cream: 25 55% 85%;              /* #EDD9C8 */
+    --cream-light: 22 50% 92%;        /* #F7E8DF */
+    --beige: 25 38% 89%;              /* #F2E4D8 */
+    --teal-light: 195 50% 93%;        /* #E8F2F6 */
 
-    /* Legacy tokens kept for existing quoter */
-    --forest: 155 38% 18%;
+    /* Legacy tokens kept for compatibility */
+    --blue-light: 195 50% 93%;
+    --pink-light: 25 50% 92%;
+    --forest: 197 98% 22%;
     --forest-foreground: 0 0% 100%;
-    --gold: 38 55% 50%;
-    --gold-foreground: 155 38% 10%;
-    --warm-white: 48 30% 98%;
+    --gold: 197 98% 22%;
+    --gold-foreground: 0 0% 100%;
+    --warm-white: 34 33% 98%;
 
-    --border: 0 0% 0% / 0.10;
-    --input: 0 0% 0% / 0.10;
-    --ring: 200 100% 18%;
+    --border: 24 22% 85%;             /* #E2D3CA */
+    --input: 24 16% 78%;              /* #CEC1B9 */
+    --ring: 197 98% 22%;
 
     --radius: 0.75rem;
     --radius-sm: 0.5rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 60 5% 10%;
-    --sidebar-primary: 200 100% 18%;
+    --sidebar-background: 22 50% 92%;
+    --sidebar-foreground: 197 98% 22%;
+    --sidebar-primary: 197 98% 22%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 345 55% 60%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 0% / 0.10;
-    --sidebar-ring: 200 100% 18%;
+    --sidebar-accent: 25 55% 85%;
+    --sidebar-accent-foreground: 197 98% 22%;
+    --sidebar-border: 24 22% 85%;
+    --sidebar-ring: 197 98% 22%;
 
-    --font-heading: 'DM Serif Display', serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'DM Mono', monospace;
+    --font-heading: 'Montserrat', sans-serif;
+    --font-body: 'Montserrat', sans-serif;
+    --font-mono: 'Montserrat', sans-serif;
   }
 }
 
@@ -71,23 +75,24 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-body);
+    font-family: 'Montserrat', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    font-weight: 400;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: hsl(197 98% 22%);
   }
 }
 
 @layer utilities {
   .font-heading {
-    font-family: var(--font-heading);
+    font-family: 'Montserrat', sans-serif;
   }
   .font-body {
-    font-family: var(--font-body);
+    font-family: 'Montserrat', sans-serif;
   }
   .font-mono {
-    font-family: var(--font-mono);
+    font-family: 'Montserrat', sans-serif;
   }
   .animate-bob {
     animation: bob 1.8s ease-in-out infinite;
@@ -106,14 +111,14 @@
     padding: 0 16px;
     font-size: 18px;
     border: 1px solid hsl(var(--border));
-    border-radius: 12px;
+    border-radius: 8px;
   }
   .lead-input::placeholder {
     font-weight: 500;
     color: hsl(var(--muted-foreground));
   }
   .lead-input:focus {
-    border: 1.5px solid hsl(var(--gold));
+    border: 1.5px solid hsl(var(--primary));
     box-shadow: none;
   }
 }
@@ -159,7 +164,7 @@
     break-inside: avoid;
     page-break-inside: avoid;
     box-shadow: none !important;
-    border: 1px solid hsl(24, 20%, 87%) !important;
+    border: 1px solid hsl(24, 22%, 85%) !important;
   }
   .print-footer {
     position: fixed;
@@ -168,8 +173,8 @@
     right: 0;
     text-align: center;
     font-size: 9pt;
-    color: hsl(195, 20%, 40%);
-    border-top: 1px solid hsl(24, 20%, 87%);
+    color: hsl(197, 98%, 22%);
+    border-top: 1px solid hsl(24, 22%, 85%);
     padding-top: 8px;
   }
 }

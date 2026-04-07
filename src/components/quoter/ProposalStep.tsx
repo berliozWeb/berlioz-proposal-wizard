@@ -239,7 +239,7 @@ export default function ProposalStep(props: ProposalStepProps) {
       const items = packages[tier].items;
       const doc = new jsPDF();
       
-      const primaryColor = [0, 61, 91];
+      const primaryColor: [number, number, number] = [1, 77, 111];
       const secondaryColor = [100, 100, 100];
       const accentColor = [190, 155, 123]; // gold/amber tone
 

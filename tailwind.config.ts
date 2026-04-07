@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ["'DM Serif Display'", "serif"],
-        body: ["'DM Sans'", "sans-serif"],
-        mono: ["'DM Mono'", "monospace"],
+        heading: ["'Montserrat'", "sans-serif"],
+        body: ["'Montserrat'", "sans-serif"],
+        mono: ["'Montserrat'", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -48,6 +48,10 @@ export default {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
         },
+        cream: "hsl(var(--cream))",
+        "cream-light": "hsl(var(--cream-light))",
+        beige: "hsl(var(--beige))",
+        "teal-light": "hsl(var(--teal-light))",
         "blue-light": "hsl(var(--blue-light))",
         "pink-light": "hsl(var(--pink-light))",
         // Legacy tokens for existing quoter

@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingBag, User, Menu, X, Phone, ChevronDown, LogOut, Package, UserCircle } from "lucide-react";
+import { ShoppingCart, User, Menu, X, Phone, ChevronDown, LogOut, Package, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import berliozLogo from "@/assets/berlioz-logo.png";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -13,22 +12,13 @@ const NAV_LINKS = [
 ];
 
 const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, signOut } = useAuth();
   const { itemCount } = useCart();
   const location = useLocation();
-  const isHome = location.pathname === "/";
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Close dropdown on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -39,10 +29,7 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => { setMobileOpen(false); setDropdownOpen(false); }, [location.pathname]);
-
-  const transparent = isHome && !scrolled && !mobileOpen;
 
   const initials = profile?.full_name
     ? profile.full_name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
@@ -55,76 +42,67 @@ const Navbar = () => {
 
   return (
     <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        transparent
-          ? "bg-transparent"
-          : "bg-card/96 backdrop-blur-md shadow-sm border-b border-border"
-      )}
+      className="fixed top-0 left-0 right-0 z-50"
+      style={{
+        background: '#F7E8DF',
+        borderBottom: '1px solid #E2D3CA',
+        height: 68,
+      }}
     >
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 h-[72px]">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 h-full">
         {/* Logo */}
-        <Link to="/" className="shrink-0">
-          <img
-            src={berliozLogo}
-            alt="Berlioz"
-            className={cn("h-7 transition-all", transparent && "brightness-0 invert")}
-          />
+        <Link to="/" className="shrink-0" style={{ letterSpacing: '0.18em', fontSize: 20, fontWeight: 700, color: '#014D6F', textTransform: 'uppercase' as const, textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+          BERLIOZ
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center" style={{ gap: 36 }}>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={cn(
-                "relative font-body text-sm font-medium transition-colors hover:text-primary group",
-                location.pathname === link.to
-                  ? "text-primary"
-                  : transparent ? "text-card" : "text-foreground"
-              )}
+              className="relative transition-colors"
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                fontWeight: location.pathname === link.to ? 700 : 500,
+                fontSize: 14,
+                color: '#014D6F',
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#1A6485'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#014D6F'; }}
             >
               {link.label}
-              <span
-                className={cn(
-                  "absolute -bottom-1 left-0 h-0.5 rounded-full bg-primary transition-all duration-200",
-                  location.pathname === link.to ? "w-full" : "w-0 group-hover:w-full"
-                )}
-              />
             </Link>
           ))}
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-3">
-          {/* Phone - desktop only */}
+        <div className="flex items-center" style={{ gap: 20 }}>
+          {/* Phone */}
           <a
             href="tel:5582375469"
-            className={cn(
-              "hidden lg:flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded-full transition-all",
-              transparent
-                ? "text-card hover:bg-card/15"
-                : "text-secondary hover:bg-muted"
-            )}
+            className="hidden lg:flex items-center transition-opacity hover:opacity-80"
+            style={{ gap: 6, textDecoration: 'none', color: '#014D6F', fontSize: 13, fontFamily: "'Montserrat', sans-serif" }}
           >
-            <Phone className="w-3.5 h-3.5" />
+            <Phone style={{ width: 14, height: 14, color: '#014D6F' }} />
             55 8237 5469
           </a>
 
           {user ? (
             <>
               {/* Cart */}
-              <Link
-                to="/checkout"
-                className={cn(
-                  "relative p-2 rounded-full transition-colors",
-                  transparent ? "text-card hover:bg-card/10" : "text-foreground hover:bg-muted"
-                )}
-              >
-                <ShoppingBag className="w-5 h-5" />
+              <Link to="/checkout" className="relative p-1.5" style={{ color: '#014D6F' }}>
+                <ShoppingCart style={{ width: 20, height: 20 }} />
                 {itemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center">
+                  <span
+                    className="absolute flex items-center justify-center"
+                    style={{
+                      top: -2, right: -2, width: 18, height: 18, borderRadius: '50%',
+                      background: '#014D6F', color: 'white', fontSize: 10, fontWeight: 700,
+                      fontFamily: "'Montserrat', sans-serif",
+                    }}
+                  >
                     {itemCount}
                   </span>
                 )}
@@ -132,57 +110,36 @@ const Navbar = () => {
 
               {/* Avatar dropdown */}
               <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2"
-                >
+                <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center" style={{ gap: 8 }}>
                   {profile?.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt=""
-                      className="w-9 h-9 rounded-full object-cover border-2 border-card"
-                    />
+                    <img src={profile.avatar_url} alt="" className="object-cover" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid white' }} />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-body font-semibold text-sm">
+                    <div className="flex items-center justify-center" style={{ width: 32, height: 32, borderRadius: '50%', background: '#014D6F', color: 'white', fontSize: 13, fontWeight: 600, fontFamily: "'Montserrat', sans-serif" }}>
                       {initials}
                     </div>
                   )}
-                  <ChevronDown className={cn("w-3.5 h-3.5 hidden md:block", transparent ? "text-card" : "text-foreground")} />
+                  <ChevronDown className="hidden md:block" style={{ width: 14, height: 14, color: '#014D6F' }} />
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-card rounded-xl border border-border shadow-lg py-2 animate-slide-up">
-                    {/* User info */}
-                    <div className="px-4 py-2 border-b border-border mb-1">
-                      <p className="font-body text-sm font-semibold text-foreground truncate">
+                  <div className="absolute right-0 top-full mt-2 animate-slide-up" style={{ width: 224, background: 'white', borderRadius: 12, border: '1px solid #E2D3CA', boxShadow: '0 8px 24px rgba(1,77,111,0.12)', padding: '8px 0' }}>
+                    <div style={{ padding: '8px 16px', borderBottom: '1px solid #E2D3CA', marginBottom: 4 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#014D6F', fontFamily: "'Montserrat', sans-serif" }} className="truncate">
                         {profile?.full_name ?? "Usuario"}
                       </p>
                       {profile?.company_name && (
-                        <p className="font-body text-xs text-muted-foreground truncate">{profile.company_name}</p>
+                        <p style={{ fontSize: 12, color: '#888888', fontFamily: "'Montserrat', sans-serif" }} className="truncate">{profile.company_name}</p>
                       )}
                     </div>
-
-                    <Link
-                      to="/cuenta"
-                      className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <UserCircle className="w-4 h-4 text-muted-foreground" />
-                      Mi cuenta
+                    <Link to="/cuenta" className="flex items-center transition-colors hover:bg-muted" style={{ gap: 12, padding: '10px 16px', fontSize: 14, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+                      <UserCircle style={{ width: 16, height: 16, color: '#888888' }} /> Mi cuenta
                     </Link>
-                    <Link
-                      to="/dashboard/pedidos"
-                      className="flex items-center gap-3 px-4 py-2.5 font-body text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Package className="w-4 h-4 text-muted-foreground" />
-                      Mis pedidos
+                    <Link to="/dashboard/pedidos" className="flex items-center transition-colors hover:bg-muted" style={{ gap: 12, padding: '10px 16px', fontSize: 14, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+                      <Package style={{ width: 16, height: 16, color: '#888888' }} /> Mis pedidos
                     </Link>
-                    <div className="border-t border-border mt-1 pt-1">
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 font-body text-sm text-destructive hover:bg-muted transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Cerrar sesión
+                    <div style={{ borderTop: '1px solid #E2D3CA', marginTop: 4, paddingTop: 4 }}>
+                      <button onClick={handleSignOut} className="flex items-center w-full transition-colors hover:bg-muted" style={{ gap: 12, padding: '10px 16px', fontSize: 14, color: '#B20000', fontFamily: "'Montserrat', sans-serif" }}>
+                        <LogOut style={{ width: 16, height: 16 }} /> Cerrar sesión
                       </button>
                     </div>
                   </div>
@@ -191,71 +148,43 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              {/* Not logged in */}
-              <Link
-                to="/login"
-                className={cn(
-                  "hidden md:inline-flex items-center gap-1.5 h-9 px-4 rounded-lg font-body text-sm font-medium transition-colors",
-                  transparent
-                    ? "text-card hover:bg-card/10"
-                    : "text-foreground hover:bg-muted"
-                )}
-              >
-                <User className="w-4 h-4" />
-                Iniciar sesión
+              <Link to="/login" className="hidden md:inline-flex items-center transition-colors hover:opacity-80" style={{ gap: 6, height: 36, padding: '0 16px', fontSize: 14, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+                <User style={{ width: 16, height: 16 }} /> Iniciar sesión
               </Link>
-              <Link
-                to="/cotizar"
-                className="hidden md:inline-flex items-center h-9 px-5 rounded-full bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 hover:shadow-md hover:shadow-primary/30 transition-all duration-200"
-              >
+              <Link to="/cotizar" className="hidden md:inline-flex items-center justify-center transition-all hover:opacity-90" style={{ height: 36, padding: '0 20px', borderRadius: 6, background: '#014D6F', color: 'white', fontSize: 14, fontWeight: 600, letterSpacing: '0.04em', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
                 Cotizar
               </Link>
             </>
           )}
 
           {/* Mobile hamburger */}
-          <button
-            className={cn("md:hidden p-2", transparent ? "text-card" : "text-foreground")}
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu" style={{ color: '#014D6F' }}>
+            {mobileOpen ? <X style={{ width: 24, height: 24 }} /> : <Menu style={{ width: 24, height: 24 }} />}
           </button>
         </div>
       </nav>
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="md:hidden bg-card border-t border-border animate-slide-up">
-          <div className="px-6 py-4 space-y-3">
+        <div className="md:hidden animate-slide-up" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA' }}>
+          <div style={{ padding: '16px 24px' }} className="space-y-3">
             {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="block font-body text-base font-medium text-foreground py-2 hover:text-primary transition-colors"
-              >
+              <Link key={link.to} to={link.to} className="block py-2 transition-colors hover:opacity-80" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
                 {link.label}
               </Link>
             ))}
             {!user && (
-              <Link
-                to="/login"
-                className="block font-body text-base font-medium text-secondary py-2"
-              >
+              <Link to="/login" className="block py-2" style={{ fontSize: 16, fontWeight: 500, color: '#1A6485', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
                 Iniciar sesión
               </Link>
             )}
             {user && (
-              <button
-                onClick={handleSignOut}
-                className="block font-body text-base font-medium text-destructive py-2"
-              >
+              <button onClick={handleSignOut} className="block py-2" style={{ fontSize: 16, fontWeight: 500, color: '#B20000', fontFamily: "'Montserrat', sans-serif" }}>
                 Cerrar sesión
               </button>
             )}
-            <a href="tel:5582375469" className="flex items-center gap-2 font-mono text-sm text-secondary py-2">
-              <Phone className="w-4 h-4" />
-              55 8237 5469
+            <a href="tel:5582375469" className="flex items-center py-2" style={{ gap: 8, fontSize: 14, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+              <Phone style={{ width: 16, height: 16 }} /> 55 8237 5469
             </a>
           </div>
         </div>

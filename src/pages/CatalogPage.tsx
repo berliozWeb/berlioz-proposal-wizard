@@ -72,7 +72,6 @@ const CatalogPage = () => {
       {/* ═══ HERO SECTION ═══ */}
       <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20">
           <RevealOnScroll>
             <div className="max-w-2xl">

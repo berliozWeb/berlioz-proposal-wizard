@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { ProductCollage } from "@/components/ProductCollage";
 import type { Package, PackageItem } from "@/domain/entities/Proposal";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { EARLY_DELIVERY_SURCHARGE } from "@/domain/shared/BusinessRules";
@@ -183,14 +184,14 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
           </span>
         )}
 
+        {/* Product collage */}
+        <ProductCollage
+          imageUrls={localItems.slice(0, 3).map(item => getProductImage(item.code))}
+          tier={pkg.id === 'basico' ? 'Esencial' : pkg.id === 'recomendado' ? 'Equilibrado' : 'Experiencia Completa'}
+        />
+
         {/* Hero product image */}
-        <div className="relative w-full overflow-hidden" style={{ height: 180 }}>
-          <img src={heroImage} alt={pkg.displayName} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          <div className="absolute bottom-3 left-4 right-4">
-            <h3 className="font-heading text-xl font-semibold text-white drop-shadow-lg">{pkg.displayName}</h3>
-            <p className="text-xs text-white/80">{pkg.tagline}</p>
-          </div>
+        <div className="relative w-full overflow-hidden" style={{ height: 0 }}>
         </div>
 
         <div className="p-5 flex flex-col flex-1">
@@ -263,15 +264,17 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
                   const crossSells = getCrossSells(item, existingCodes);
 
                   return (
-                    <div key={`${item.code}-${idx}`} className="rounded-xl border border-border bg-muted/20 overflow-hidden">
-                      {/* Photo */}
-                      <img
-                        src={getProductImage(item.code)}
-                        alt={item.name}
-                        className="w-full h-[120px] object-cover"
-                      />
-                      {/* Name */}
-                      <div className="p-3">
+                    <div key={`${item.code}-${idx}`} className="rounded-xl border border-border bg-muted/20 overflow-hidden p-3">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                        {/* 48px thumbnail */}
+                        <img
+                          src={getProductImage(item.code)}
+                          alt={item.name}
+                          style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0, marginTop: 2 }}
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                        <div style={{ flex: 1 }}>
+                        {/* Name */}
                         <p className="text-sm font-medium text-foreground leading-tight mb-2">{item.name}</p>
 
                         {/* Qty + price + delete */}
@@ -350,6 +353,8 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
                               )}
                             </div>
                           )}
+                        </div>
+                        </div>
                         </div>
                       </div>
                     </div>

@@ -1,48 +1,33 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Search, ShoppingBag, ChevronRight, Clock, Star, Filter, Heart, ArrowRight, Utensils, CalendarIcon } from "lucide-react";
+import { Search, ShoppingBag, ChevronRight, Clock, Star, Filter, ArrowRight, CalendarIcon } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 import BaseLayout from "@/components/layout/BaseLayout";
 import CartSidebar from "@/components/ui/CartSidebar";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useCart } from "@/contexts/CartContext";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { getProductImage } from "@/domain/entities/ProductImages";
-const menuHero = new URL("@/assets/menuHero.JPG", import.meta.url).href;
-
-/* ── types ── */
-interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  short_description: string | null;
-  price_per_person: number;
-  image_url: string | null;
-  occasion: string[];
-  dietary_tags: string[];
-  included_items: string[];
-  is_bestseller: boolean;
-}
+import { useProductos, type Producto } from "@/hooks/useProductos";
 
 /* ── constants ── */
-const FILTERS = [
+const CATEGORY_FILTERS = [
   { value: "todos", label: "Todos", emoji: "🍽️" },
-  { value: "desayuno", label: "Desayuno", emoji: "🍳" },
-  { value: "coffee_am", label: "Coffee AM", emoji: "☕" },
-  { value: "coffee_pm", label: "Coffee PM", emoji: "🍪" },
-  { value: "working_lunch", label: "Lunch", emoji: "🍱" },
-  { value: "junta", label: "Juntas", emoji: "💼" },
-  { value: "vegano", label: "Vegano", emoji: "🌱" },
-  { value: "bestseller", label: "Favoritos", emoji: "⭐" },
+  { value: "Coffee Break", label: "Coffee Break", emoji: "☕" },
+  { value: "Working Lunch", label: "Working Lunch", emoji: "🍱" },
+  { value: "Desayuno", label: "Desayuno", emoji: "🍳" },
+  { value: "Bebidas", label: "Bebidas", emoji: "🥤" },
+  { value: "Vegano / Vegetariano", label: "Vegano", emoji: "🌱" },
+  { value: "Tortas Piropo", label: "Tortas", emoji: "🥖" },
+  { value: "Entrega Especial", label: "Entrega Especial", emoji: "🎁" },
+  { value: "destacado", label: "Favoritos", emoji: "⭐" },
 ];
 
 const SORT_OPTIONS = [
-  { value: "popular", label: "Más pedidos" },
+  { value: "orden", label: "Recomendados" },
   { value: "price_asc", label: "Precio: Menor a Mayor" },
   { value: "price_desc", label: "Precio: Mayor a Menor" },
+  { value: "name_asc", label: "A → Z" },
 ];
 
 const TIME_SLOTS = ["7:30", "10:00", "12:00", "15:00"];
@@ -53,48 +38,39 @@ function getNext7Days() {
   return days;
 }
 
+function getDisplayPrice(p: Producto): number {
+  return p.precio ?? p.precio_min ?? p.precio_rebajado ?? 0;
+}
+
 /* ── page ── */
 const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const { addItem, itemCount } = useCart();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState(searchParams.get("occasion") || "todos");
-  const [sort, setSort] = useState("popular");
+  const { productos, loading } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
+  const [filter, setFilter] = useState(searchParams.get("categoria") || "todos");
+  const [sort, setSort] = useState("orden");
   const [search, setSearch] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("*")
-        .order("sort_order", { ascending: true });
-      setProducts((data as Product[]) || []);
-      setLoading(false);
-    })();
-  }, []);
-
   const filtered = useMemo(() => {
-    let list = [...products];
+    let list = [...productos];
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q));
+      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
     }
-    if (filter === "bestseller") list = list.filter((p) => p.is_bestseller);
-    else if (filter === "vegano") list = list.filter((p) => p.dietary_tags.some((t) => ["vegano", "sin_gluten"].includes(t)) || p.occasion.includes("vegano"));
-    else if (filter !== "todos") list = list.filter((p) => p.occasion.includes(filter));
+    if (filter === "destacado") list = list.filter((p) => p.destacado);
+    else if (filter !== "todos") list = list.filter((p) => p.categoria === filter);
     
-    if (sort === "price_asc") list.sort((a, b) => a.price_per_person - b.price_per_person);
-    else if (sort === "price_desc") list.sort((a, b) => b.price_per_person - a.price_per_person);
+    if (sort === "price_asc") list.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
+    else if (sort === "price_desc") list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
+    else if (sort === "name_asc") list.sort((a, b) => a.nombre.localeCompare(b.nombre));
     return list;
-  }, [products, filter, sort, search]);
+  }, [productos, filter, sort, search]);
 
   return (
     <BaseLayout>
       {/* ═══ HERO SECTION ═══ */}
-      <section className="relative h-[60vh] min-h-[450px] flex items-center justify-center overflow-hidden -mt-[72px]">
-        <img src={menuHero} alt="Catalogo Berlioz" className="absolute inset-0 w-full h-full object-cover" />
+      <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20">
           <RevealOnScroll>
@@ -120,7 +96,7 @@ const CatalogPage = () => {
             {/* Main Category Filters */}
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-1">
               <div className="flex bg-muted/30 p-1 rounded-2xl border border-border/50">
-                {FILTERS.map((f) => (
+                {CATEGORY_FILTERS.map((f) => (
                   <button
                     key={f.value}
                     onClick={() => setFilter(f.value)}
@@ -209,9 +185,9 @@ const CatalogPage = () => {
                       onAdd={() => {
                         addItem({ 
                           id: product.id, 
-                          name: product.name, 
-                          price: product.price_per_person, 
-                          image: product.image_url || undefined, 
+                          name: product.nombre, 
+                          price: getDisplayPrice(product), 
+                          image: product.imagen_url || undefined, 
                           isPerPerson: true, 
                           quantity: 10 
                         });
@@ -282,11 +258,13 @@ const CatalogPage = () => {
 };
 
 /* ── Product Card with inline date/slot ── */
-function CatalogProductCard({ product, onAdd }: { product: Product; onAdd: () => void }) {
+function CatalogProductCard({ product, onAdd }: { product: Producto; onAdd: () => void }) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const days = useMemo(getNext7Days, []);
+  const price = getDisplayPrice(product);
+  const imgSrc = product.imagen_url || `https://tmeqfvyolasxznyxyvmr.supabase.co/storage/v1/object/public/imagenes-berlioz/${product.imagen}`;
 
   const handleAdd = () => {
     onAdd();
@@ -295,65 +273,80 @@ function CatalogProductCard({ product, onAdd }: { product: Product; onAdd: () =>
   };
 
   return (
-    <div className="group relative flex flex-col h-full bg-card rounded-[32px] border border-border/80 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1">
+    <div className="group relative flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       {/* Image Area */}
-      <Link to={`/producto/${product.slug}`} className="relative aspect-[1/1] overflow-hidden bg-muted block">
+      <Link to={`/producto/${product.id}`} className="relative aspect-square overflow-hidden bg-muted block">
         <img 
-          src={getProductImage(product.slug)} 
-          alt={product.name} 
+          src={imgSrc} 
+          alt={product.nombre} 
           loading="lazy" 
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
         
         {/* Badges */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
-          {product.is_bestseller && (
-            <span className="px-3 py-1.5 rounded-full bg-accent text-accent-foreground font-body text-[10px] font-bold uppercase tracking-widest backdrop-blur-md shadow-lg border border-white/20">
-              Más pedido
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {product.destacado && (
+            <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-lg">
+              Destacado
             </span>
           )}
-          {product.dietary_tags.includes("vegano") && (
-            <span className="px-3 py-1.5 rounded-full bg-green-500 text-white font-body text-[10px] font-bold uppercase tracking-widest backdrop-blur-md shadow-lg border border-white/20">
-              Plant based
+          {product.precio_rebajado && product.precio && product.precio_rebajado < product.precio && (
+            <span className="px-3 py-1 rounded-full bg-destructive text-white text-[10px] font-bold uppercase tracking-wider">
+              Oferta
             </span>
           )}
         </div>
       </Link>
 
       {/* Content Area */}
-      <div className="p-6 flex flex-col flex-1">
-        <div className="mb-4">
-          <Link to={`/producto/${product.slug}`}>
-            <h3 className="font-heading text-lg text-foreground leading-tight group-hover:text-primary transition-colors duration-300">
-              {product.name}
+      <div className="p-4 flex flex-col flex-1">
+        <div className="mb-3">
+          <Link to={`/producto/${product.id}`}>
+            <h3 className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">
+              {product.nombre}
             </h3>
           </Link>
-          {product.short_description && (
-            <p className="font-body text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-              {product.short_description}
+          {product.categoria && (
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+              {product.categoria}
+            </span>
+          )}
+          {product.descripcion && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              {product.descripcion}
             </p>
           )}
         </div>
 
-        <div className="mt-auto flex items-baseline gap-1.5 mb-6">
-          <span className="font-heading text-2xl font-bold text-foreground">
-            ${product.price_per_person}
-          </span>
-          <span className="font-body text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-            / persona
-          </span>
+        <div className="mt-auto flex items-baseline gap-1.5 mb-4">
+          {product.precio_rebajado && product.precio && product.precio_rebajado < product.precio ? (
+            <>
+              <span className="text-lg font-bold text-foreground">${product.precio_rebajado}</span>
+              <span className="text-sm text-muted-foreground line-through">${product.precio}</span>
+            </>
+          ) : price > 0 ? (
+            <>
+              <span className="text-lg font-bold text-foreground">${price}</span>
+              {product.precio_min && product.precio_max && product.precio_min !== product.precio_max && (
+                <span className="text-[10px] text-muted-foreground">
+                  ${product.precio_min} – ${product.precio_max}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground italic">Precio variable</span>
+          )}
         </div>
 
-        {/* Customization Options */}
-        <div className="space-y-4 mb-8 pt-4 border-t border-border/40">
+        {/* Date/Slot selection */}
+        <div className="space-y-3 mb-4 pt-3 border-t border-border/40">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <CalendarIcon className="w-3.5 h-3.5 text-primary" />
-              <p className="font-body text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                Programar entrega
-              </p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <CalendarIcon className="w-3 h-3 text-primary" />
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Fecha</p>
             </div>
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-2 px-2">
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
               {days.map((d) => {
                 const iso = format(d, "yyyy-MM-dd");
                 const isWeekend = d.getDay() === 0 || d.getDay() === 6;
@@ -363,18 +356,16 @@ function CatalogProductCard({ product, onAdd }: { product: Product; onAdd: () =>
                     disabled={isWeekend} 
                     onClick={() => setSelectedDate(iso)}
                     className={cn(
-                      "flex flex-col items-center min-w-[48px] px-2 py-2 rounded-xl text-[10px] font-body transition-all duration-300 border",
+                      "flex flex-col items-center min-w-[40px] px-1.5 py-1.5 rounded-lg text-[10px] transition-all border",
                       selectedDate === iso 
-                        ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105" 
+                        ? "bg-primary border-primary text-primary-foreground" 
                         : isWeekend 
                           ? "bg-muted/30 border-transparent text-muted-foreground/30 cursor-not-allowed" 
                           : "bg-muted/50 border-border/40 text-foreground hover:bg-card hover:border-border"
                     )}
                   >
                     <span className="font-bold opacity-60">{format(d, "EEE", { locale: es })}</span>
-                    <span className={cn("text-sm", selectedDate === iso ? "font-black" : "font-semibold")}>
-                      {format(d, "d")}
-                    </span>
+                    <span className="text-xs font-semibold">{format(d, "d")}</span>
                   </button>
                 );
               })}
@@ -382,21 +373,19 @@ function CatalogProductCard({ product, onAdd }: { product: Product; onAdd: () =>
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-3.5 h-3.5 text-primary" />
-              <p className="font-body text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                Horario
-              </p>
+            <div className="flex items-center gap-2 mb-1.5">
+              <Clock className="w-3 h-3 text-primary" />
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Horario</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {TIME_SLOTS.map((t) => (
                 <button 
                   key={t} 
                   onClick={() => setSelectedSlot(t)}
                   className={cn(
-                    "flex-1 py-2 rounded-xl font-mono text-[10px] font-bold transition-all duration-300 border",
+                    "flex-1 py-1.5 rounded-lg font-mono text-[10px] font-bold transition-all border",
                     selectedSlot === t 
-                      ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                      ? "bg-primary border-primary text-primary-foreground" 
                       : "bg-muted/50 border-border/40 text-muted-foreground hover:bg-card hover:text-foreground hover:border-border"
                   )}
                 >
@@ -412,26 +401,17 @@ function CatalogProductCard({ product, onAdd }: { product: Product; onAdd: () =>
           onClick={handleAdd} 
           disabled={!selectedDate || !selectedSlot}
           className={cn(
-            "group w-full py-4 rounded-2xl font-body text-xs font-bold uppercase tracking-widest transition-all duration-500",
+            "w-full py-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all",
             added 
-              ? "bg-green-500 text-white shadow-lg shadow-green-500/30" 
-              : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-xl hover:shadow-primary/20 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
+              ? "bg-green-500 text-white" 
+              : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed"
           )}
         >
-          {added ? (
-            <span className="flex items-center justify-center gap-2 animate-in fade-in zoom-in duration-300">
-              ✓ ¡En el carrito!
-            </span>
-          ) : (
-            <span className="flex items-center justify-center gap-2">
-              Agregar al pedido
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </span>
-          )}
+          {added ? "✓ ¡En el carrito!" : "Agregar al pedido →"}
         </button>
         
         {!selectedDate && !selectedSlot && (
-          <p className="font-body text-[9px] text-center text-muted-foreground mt-3 opacity-60">
+          <p className="text-[9px] text-center text-muted-foreground mt-2 opacity-60">
             Selecciona fecha y hora para agregar
           </p>
         )}

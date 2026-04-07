@@ -7,7 +7,7 @@ import BaseLayout from "@/components/layout/BaseLayout";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import heroImg from "@/assets/hero-catering.jpg";
+import HeroCarousel from "@/components/landing/HeroCarousel";
 // Premium Images from src/assets/imagenes_menu
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";
@@ -90,38 +90,10 @@ const HomePage = () => {
 
   return (
     <BaseLayout>
-      {/* ═══ SECTION 1 — HERO ═══ */}
-      <section className="relative min-h-screen flex items-center justify-center" style={{ marginTop: -68 }}>
-        <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(242,228,216,0.92) 0%, rgba(242,228,216,0.70) 40%, rgba(242,228,216,0.15) 100%)' }} />
-        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full">
-          <div className="max-w-xl">
-            <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 11, fontWeight: 600, color: '#014D6F', letterSpacing: '0.25em', textTransform: 'uppercase' as const, marginBottom: 16 }}>
-              Catering Corporativo · CDMX
-            </p>
-            <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 'clamp(2rem, 5vw, 52px)', color: '#014D6F', lineHeight: 1.15, marginBottom: 16 }}>
-              Catering gourmet entregado en tu sala de juntas
-            </h1>
-            <p style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 400, fontSize: 18, color: '#555555', marginBottom: 32 }}>
-              Desayunos · Coffee breaks · Working lunches para equipos de 10 a 500 personas
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a href="/menu" className="inline-flex items-center justify-center transition-all hover:opacity-90" style={{ height: 48, padding: '0 28px', borderRadius: 6, background: '#014D6F', color: 'white', fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
-                Ver menú completo
-              </a>
-              <a href="/cotizar" className="inline-flex items-center justify-center transition-all hover:opacity-90" style={{ height: 48, padding: '0 28px', borderRadius: 6, background: 'transparent', color: '#014D6F', border: '2px solid #014D6F', fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: 'none' }}>
-                Cotizar ahora
-              </a>
-            </div>
-            <div className="mt-8 flex items-center gap-1.5">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="fill-current" style={{ width: 16, height: 16, color: '#E8A87C' }} />
-              ))}
-              <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: '#014D6F', marginLeft: 8 }}>4.9/5 — Más de 5,000 pedidos entregados</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ═══ SECTION 1 — HERO CAROUSEL ═══ */}
+      <div style={{ marginTop: -68 }}>
+        <HeroCarousel />
+      </div>
 
       {/* ═══ SECTION 2 — TRUST BAR ═══ */}
       <section style={{ background: '#014D6F', padding: '24px 0' }}>

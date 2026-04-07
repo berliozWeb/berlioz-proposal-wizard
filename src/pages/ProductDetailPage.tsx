@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import CartSidebar from "@/components/ui/CartSidebar";
 import { getMenuItemBySlug, getDisplayPrice } from "@/domain/entities/MenuCatalog";
-import { getProductGallery } from "@/domain/entities/ProductImages";
+import { getProductGallery, FALLBACK_IMAGE } from "@/domain/entities/ProductImages";
 import type { MenuItem } from "@/domain/entities/MenuItem";
 
 /* ── types ── */
@@ -44,6 +44,12 @@ interface Product {
 }
 
 const TIME_SLOTS = ["7:30", "10:00", "12:00", "15:00"];
+
+/** Strip HTML tags and decode entities for plain text display */
+function stripHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || '';
+}
 
 function getNext7Days() {
   const days: Date[] = [];
@@ -110,7 +116,7 @@ const ProductDetailPage = () => {
             image_url: imgUrl,
             occasion: data.categoria ? [data.categoria] : [],
             dietary_tags: [],
-            included_items: data.descripcion?.split("\n").filter((l: string) => l.trim()) ?? [],
+            included_items: stripHtml(data.descripcion ?? '').split("\n").filter((l: string) => l.trim()),
             is_bestseller: data.destacado ?? false,
           });
         }
@@ -124,7 +130,11 @@ const ProductDetailPage = () => {
 
   const gallery = useMemo(() => {
     if (!product) return [];
-    return getProductGallery(slug || "");
+    const localGallery = getProductGallery(slug || "");
+    // If local gallery only returns the fallback, use the DB image instead
+    const isFallback = localGallery.length === 1 && localGallery[0] === FALLBACK_IMAGE;
+    if (isFallback && product.image_url) return [product.image_url];
+    return localGallery;
   }, [product, slug]);
 
   const handleAdd = () => {
@@ -334,7 +344,7 @@ const ProductDetailPage = () => {
                       {product.name}
                     </h1>
                     <p className="font-body text-lg text-muted-foreground max-w-xl leading-relaxed">
-                      {product.description || product.short_description}
+                      {stripHtml(product.description || product.short_description || '')}
                     </p>
                   </div>
 

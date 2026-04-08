@@ -158,7 +158,7 @@ function calcTotals(items: ProposalItem[], isEarly: boolean) {
 
 /* ═══ COMPONENT ═══ */
 export default function ProposalStep(props: ProposalStepProps) {
-  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading } = props;
+  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback } = props;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem, clearCart } = useCart();
@@ -268,10 +268,22 @@ export default function ProposalStep(props: ProposalStepProps) {
   );
 
   // Actions
-  const handleSelectTier = (tier: PackageTier) => setSelectedTier(tier);
+  const handleSelectTier = (tier: PackageTier) => {
+    setSelectedTier(tier);
+    // Send feedback: user selected this tier
+    const proposalId = smartQuoteData?.proposalId;
+    if (proposalId && onSubmitFeedback) {
+      onSubmitFeedback({ proposalId, selectedTier: tier });
+    }
+  };
 
   const handleConfirmOrder = () => {
     if (!selectedTier) return;
+    // Send feedback: user accepted this proposal
+    const proposalId = smartQuoteData?.proposalId;
+    if (proposalId && onSubmitFeedback) {
+      onSubmitFeedback({ proposalId, selectedTier, accepted: true });
+    }
     clearCart();
     packages[selectedTier].items.forEach((item, i) => {
       addItem({ id: `quote-${selectedTier}-${i}`, name: item.productName, price: item.unitPrice, quantity: item.qty });

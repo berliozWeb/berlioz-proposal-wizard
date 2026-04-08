@@ -577,6 +577,7 @@ const QuotePage = () => {
             onRestart={() => { setStep(0); setSmartData(null); }}
             smartQuoteData={smartData}
             smartQuoteLoading={smartLoading}
+            onSubmitFeedback={submitFeedback}
           />
         </div>
       )}

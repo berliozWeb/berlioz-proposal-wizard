@@ -59,6 +59,13 @@ interface ProposalStepProps {
   onRestart: () => void;
   smartQuoteData?: SmartQuoteResponse | null;
   smartQuoteLoading?: boolean;
+  onSubmitFeedback?: (feedback: {
+    proposalId: string;
+    selectedTier?: string;
+    accepted?: boolean;
+    productsAdded?: string[];
+    productsRemoved?: string[];
+  }) => void;
 }
 
 type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string; bullets: string[]; isPopular: boolean; ctaStyle: 'outline' | 'primary' };

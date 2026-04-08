@@ -574,7 +574,9 @@ const QuotePage = () => {
             empresa={empresa}
             duration={duration}
             onBack={goBack}
-            onRestart={() => { setStep(0); }}
+            onRestart={() => { setStep(0); setSmartData(null); }}
+            smartQuoteData={smartData}
+            smartQuoteLoading={smartLoading}
           />
         </div>
       )}

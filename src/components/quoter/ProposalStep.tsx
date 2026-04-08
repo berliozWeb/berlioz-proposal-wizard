@@ -14,6 +14,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/berlioz-logo.png";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
+import { ProductCollage } from "@/components/ProductCollage";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -517,6 +518,22 @@ export default function ProposalStep(props: ProposalStepProps) {
                   </div>
                 )}
 
+                {/* Product Collage */}
+                {(() => {
+                  const imgs = pkg.items
+                    .map(i => i.imageUrl)
+                    .filter(Boolean) as string[];
+                  if (imgs.length > 0) {
+                    return (
+                      <ProductCollage
+                        imageUrls={imgs}
+                        tier={tier.title as 'Esencial' | 'Equilibrado' | 'Experiencia Completa'}
+                      />
+                    );
+                  }
+                  return null;
+                })()}
+
                 <div className="p-10 flex-1 flex flex-col">
                   {/* Tier Header */}
                   <div className="mb-8">
@@ -581,8 +598,16 @@ export default function ProposalStep(props: ProposalStepProps) {
                     <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
                       {pkg.items.map(item => (
                         <div key={item.instanceId} className="bg-white rounded-2xl p-4 border border-border/80 shadow-sm relative group/item">
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="min-w-0 pr-6">
+                          <div className="flex items-start gap-3 mb-2">
+                            {/* Product thumbnail */}
+                            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-muted/30 border border-border/50">
+                              {item.imageUrl ? (
+                                <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-2xl">🍱</div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1 pr-6">
                               <p className="font-heading text-sm font-bold text-foreground">
                                 {item.isBestseller && <Star className="w-3.5 h-3.5 inline text-amber-500 fill-current mr-1 mb-0.5" />}
                                 {item.productName}

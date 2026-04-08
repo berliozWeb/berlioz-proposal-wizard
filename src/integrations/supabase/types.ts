@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      catalog_import_runs: {
+        Row: {
+          id: string
+          imported_at: string | null
+          normalization_summary: Json | null
+          published_rows: number | null
+          rows_with_missing_images: number | null
+          source_file: string | null
+          status: string | null
+          total_rows: number | null
+          warnings: string[] | null
+        }
+        Insert: {
+          id?: string
+          imported_at?: string | null
+          normalization_summary?: Json | null
+          published_rows?: number | null
+          rows_with_missing_images?: number | null
+          source_file?: string | null
+          status?: string | null
+          total_rows?: number | null
+          warnings?: string[] | null
+        }
+        Update: {
+          id?: string
+          imported_at?: string | null
+          normalization_summary?: Json | null
+          published_rows?: number | null
+          rows_with_missing_images?: number | null
+          source_file?: string | null
+          status?: string | null
+          total_rows?: number | null
+          warnings?: string[] | null
+        }
+        Relationships: []
+      }
       delivery_addresses: {
         Row: {
           address_text: string
@@ -198,16 +234,49 @@ export type Database = {
           },
         ]
       }
+      product_relations: {
+        Row: {
+          created_at: string | null
+          id: string
+          reason: string | null
+          related_product_id: string
+          relation_type: string
+          source_product_id: string
+          strength_score: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          related_product_id: string
+          relation_type: string
+          source_product_id: string
+          strength_score?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          related_product_id?: string
+          relation_type?: string
+          source_product_id?: string
+          strength_score?: number | null
+        }
+        Relationships: []
+      }
       productos: {
         Row: {
           activo: boolean | null
           categoria: string | null
+          cotizable: boolean | null
           created_at: string | null
           descripcion: string | null
           destacado: boolean | null
+          dietary_tags: string[] | null
           id: string
           imagen: string | null
           imagen_url: string | null
+          min_qty: number | null
           nombre: string
           orden: number | null
           parent_id: string | null
@@ -215,7 +284,12 @@ export type Database = {
           precio_max: number | null
           precio_min: number | null
           precio_rebajado: number | null
+          pricing_model: string | null
+          score_comercial: number | null
+          score_visual: number | null
+          serves_up_to: number | null
           sku: string | null
+          texto_busqueda: string | null
           tipo: string | null
           variante_nombre: string | null
           variantes: string | null
@@ -223,12 +297,15 @@ export type Database = {
         Insert: {
           activo?: boolean | null
           categoria?: string | null
+          cotizable?: boolean | null
           created_at?: string | null
           descripcion?: string | null
           destacado?: boolean | null
+          dietary_tags?: string[] | null
           id: string
           imagen?: string | null
           imagen_url?: string | null
+          min_qty?: number | null
           nombre: string
           orden?: number | null
           parent_id?: string | null
@@ -236,7 +313,12 @@ export type Database = {
           precio_max?: number | null
           precio_min?: number | null
           precio_rebajado?: number | null
+          pricing_model?: string | null
+          score_comercial?: number | null
+          score_visual?: number | null
+          serves_up_to?: number | null
           sku?: string | null
+          texto_busqueda?: string | null
           tipo?: string | null
           variante_nombre?: string | null
           variantes?: string | null
@@ -244,12 +326,15 @@ export type Database = {
         Update: {
           activo?: boolean | null
           categoria?: string | null
+          cotizable?: boolean | null
           created_at?: string | null
           descripcion?: string | null
           destacado?: boolean | null
+          dietary_tags?: string[] | null
           id?: string
           imagen?: string | null
           imagen_url?: string | null
+          min_qty?: number | null
           nombre?: string
           orden?: number | null
           parent_id?: string | null
@@ -257,7 +342,12 @@ export type Database = {
           precio_max?: number | null
           precio_min?: number | null
           precio_rebajado?: number | null
+          pricing_model?: string | null
+          score_comercial?: number | null
+          score_visual?: number | null
+          serves_up_to?: number | null
           sku?: string | null
+          texto_busqueda?: string | null
           tipo?: string | null
           variante_nombre?: string | null
           variantes?: string | null
@@ -385,6 +475,296 @@ export type Database = {
         }
         Relationships: []
       }
+      quote_feedback: {
+        Row: {
+          accepted: boolean | null
+          comments: string | null
+          created_at: string | null
+          id: string
+          manual_changes: Json | null
+          products_added: string[] | null
+          products_removed: string[] | null
+          proposal_id: string
+          rating: number | null
+          selected_tier: string | null
+        }
+        Insert: {
+          accepted?: boolean | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          manual_changes?: Json | null
+          products_added?: string[] | null
+          products_removed?: string[] | null
+          proposal_id: string
+          rating?: number | null
+          selected_tier?: string | null
+        }
+        Update: {
+          accepted?: boolean | null
+          comments?: string | null
+          created_at?: string | null
+          id?: string
+          manual_changes?: Json | null
+          products_added?: string[] | null
+          products_removed?: string[] | null
+          proposal_id?: string
+          rating?: number | null
+          selected_tier?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_feedback_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "quote_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_package_items: {
+        Row: {
+          computed_price: number
+          created_at: string | null
+          id: string
+          image_prompt: string | null
+          image_source: string | null
+          image_url: string | null
+          metadata_json: Json | null
+          package_id: string
+          parent_product_id: string | null
+          product_id: string | null
+          product_name: string
+          quantity: number
+          recommendation_reason: string | null
+          score: number | null
+          source_type: string | null
+          swap_group: string | null
+          unit_price: number
+        }
+        Insert: {
+          computed_price?: number
+          created_at?: string | null
+          id?: string
+          image_prompt?: string | null
+          image_source?: string | null
+          image_url?: string | null
+          metadata_json?: Json | null
+          package_id: string
+          parent_product_id?: string | null
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          recommendation_reason?: string | null
+          score?: number | null
+          source_type?: string | null
+          swap_group?: string | null
+          unit_price?: number
+        }
+        Update: {
+          computed_price?: number
+          created_at?: string | null
+          id?: string
+          image_prompt?: string | null
+          image_source?: string | null
+          image_url?: string | null
+          metadata_json?: Json | null
+          package_id?: string
+          parent_product_id?: string | null
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          recommendation_reason?: string | null
+          score?: number | null
+          source_type?: string | null
+          swap_group?: string | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_package_items_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "quote_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_packages: {
+        Row: {
+          created_at: string | null
+          highlights: string[] | null
+          id: string
+          is_recommended: boolean | null
+          iva: number | null
+          price_per_person: number | null
+          proposal_id: string
+          ranking_score: number | null
+          recommendation_reason: string | null
+          shipping: number | null
+          subtotal: number | null
+          tagline: string | null
+          tier: string
+          title: string
+          total: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          highlights?: string[] | null
+          id?: string
+          is_recommended?: boolean | null
+          iva?: number | null
+          price_per_person?: number | null
+          proposal_id: string
+          ranking_score?: number | null
+          recommendation_reason?: string | null
+          shipping?: number | null
+          subtotal?: number | null
+          tagline?: string | null
+          tier: string
+          title: string
+          total?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          highlights?: string[] | null
+          id?: string
+          is_recommended?: boolean | null
+          iva?: number | null
+          price_per_person?: number | null
+          proposal_id?: string
+          ranking_score?: number | null
+          recommendation_reason?: string | null
+          shipping?: number | null
+          subtotal?: number | null
+          tagline?: string | null
+          tier?: string
+          title?: string
+          total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_packages_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "quote_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_proposals: {
+        Row: {
+          engine_version: string | null
+          fallback_used: boolean | null
+          generated_at: string | null
+          id: string
+          quote_request_id: string
+          reasoning_json: Json | null
+          recommendation_summary: string | null
+          shipping_amount: number | null
+          strategy_used: string | null
+          tax_amount: number | null
+          total_estimated: number | null
+        }
+        Insert: {
+          engine_version?: string | null
+          fallback_used?: boolean | null
+          generated_at?: string | null
+          id?: string
+          quote_request_id: string
+          reasoning_json?: Json | null
+          recommendation_summary?: string | null
+          shipping_amount?: number | null
+          strategy_used?: string | null
+          tax_amount?: number | null
+          total_estimated?: number | null
+        }
+        Update: {
+          engine_version?: string | null
+          fallback_used?: boolean | null
+          generated_at?: string | null
+          id?: string
+          quote_request_id?: string
+          reasoning_json?: Json | null
+          recommendation_summary?: string | null
+          shipping_amount?: number | null
+          strategy_used?: string | null
+          tax_amount?: number | null
+          total_estimated?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_proposals_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_requests: {
+        Row: {
+          budget_enabled: boolean | null
+          budget_per_person: number | null
+          company_name: string | null
+          contact_name: string | null
+          created_at: string | null
+          delivery_time: string | null
+          dietary_restrictions: string[] | null
+          duration_hours: number | null
+          event_date: string | null
+          event_time: string | null
+          event_type: string
+          id: string
+          people_count: number
+          raw_payload: Json | null
+          source_flow: string | null
+          status: string | null
+          user_id: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          budget_enabled?: boolean | null
+          budget_per_person?: number | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          delivery_time?: string | null
+          dietary_restrictions?: string[] | null
+          duration_hours?: number | null
+          event_date?: string | null
+          event_time?: string | null
+          event_type: string
+          id?: string
+          people_count: number
+          raw_payload?: Json | null
+          source_flow?: string | null
+          status?: string | null
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          budget_enabled?: boolean | null
+          budget_per_person?: number | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          delivery_time?: string | null
+          dietary_restrictions?: string[] | null
+          duration_hours?: number | null
+          event_date?: string | null
+          event_time?: string | null
+          event_type?: string
+          id?: string
+          people_count?: number
+          raw_payload?: Json | null
+          source_flow?: string | null
+          status?: string | null
+          user_id?: string | null
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
       quotes: {
         Row: {
           ai_options: Json | null
@@ -495,6 +875,33 @@ export type Database = {
     }
     Functions: {
       get_my_email_domain: { Args: never; Returns: string }
+      search_products_for_quote: {
+        Args: {
+          p_budget_max?: number
+          p_categoria?: string
+          p_dietary_tags?: string[]
+          p_limit?: number
+        }
+        Returns: {
+          categoria: string
+          descripcion: string
+          destacado: boolean
+          dietary_tags: string[]
+          id: string
+          imagen_url: string
+          nombre: string
+          parent_id: string
+          precio: number
+          precio_max: number
+          precio_min: number
+          pricing_model: string
+          score_comercial: number
+          score_visual: number
+          serves_up_to: number
+          tipo: string
+          variantes: string
+        }[]
+      }
     }
     Enums: {
       order_frequency: "daily" | "weekly" | "monthly" | "occasional"

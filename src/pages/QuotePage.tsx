@@ -124,14 +124,9 @@ function isCutoff(selectedDate: Date | undefined): boolean {
 
 /* ── component ── */
 const QuotePage = () => {
-  // Step
   const [step, setStep] = useState(0);
-
-  // Step 1 state
   const [eventType, setEventType] = useState("");
   const [eventFilter, setEventFilter] = useState("todos");
-
-  // Step 2 state
   const [duration, setDuration] = useState("");
   const [people, setPeople] = useState<number | "">(10);
   const [postalCode, setPostalCode] = useState("");
@@ -144,6 +139,10 @@ const QuotePage = () => {
   const [clientName, setClientName] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [receiveConfirm, setReceiveConfirm] = useState(false);
+
+  // Smart Quote
+  const { loading: smartLoading, generateQuote } = useSmartQuote();
+  const [smartData, setSmartData] = useState<SmartQuoteResponse | null>(null);
 
   const tomorrow = addDays(new Date(), 1);
   const deliveryTime = eventTime ? calcDeliveryTime(eventTime) : "";
@@ -165,10 +164,36 @@ const QuotePage = () => {
     setDietary(prev => prev.includes(val) ? prev.filter(d => d !== val) : [...prev, val]);
   };
 
+  const durationHours = useMemo(() => {
+    if (duration === '1h') return 1;
+    if (duration === '2-3h') return 2.5;
+    if (duration === '3-5h') return 4;
+    if (duration === '5h+') return 6;
+    return 3;
+  }, [duration]);
+
   const goNext = useCallback(() => {
     if (step === 0 && canNextStep1) setStep(1);
-    else if (step === 1 && canNextStep2) setStep(2);
-  }, [step, canNextStep1, canNextStep2]);
+    else if (step === 1 && canNextStep2) {
+      setStep(2);
+      generateQuote({
+        eventType,
+        peopleCount: numPeople,
+        eventDate: date ? format(date, 'yyyy-MM-dd') : undefined,
+        eventTime,
+        deliveryTime,
+        zipCode: postalCode,
+        durationHours,
+        budgetEnabled: hasBudget === true,
+        budgetPerPerson: hasBudget === true ? budget : undefined,
+        dietaryRestrictions: dietary,
+        contactName: clientName,
+        companyName: empresa,
+      }).then(data => {
+        if (data) setSmartData(data);
+      });
+    }
+  }, [step, canNextStep1, canNextStep2, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, hasBudget, budget, dietary, clientName, empresa, generateQuote]);
 
   const goBack = () => setStep(s => Math.max(0, s - 1));
 

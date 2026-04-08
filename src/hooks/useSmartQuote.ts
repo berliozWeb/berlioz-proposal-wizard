@@ -126,5 +126,22 @@ export function useSmartQuote() {
     }
   }, []);
 
-  return { loading, response, error, generateQuote };
+  const submitFeedback = useCallback(async (feedback: {
+    proposalId: string;
+    selectedTier?: string;
+    accepted?: boolean;
+    productsAdded?: string[];
+    productsRemoved?: string[];
+    manualChanges?: Record<string, unknown>;
+    rating?: number;
+    comments?: string;
+  }) => {
+    try {
+      await supabase.functions.invoke('quote-feedback', { body: feedback });
+    } catch (err) {
+      console.warn('Feedback submission failed:', err);
+    }
+  }, []);
+
+  return { loading, response, error, generateQuote, submitFeedback };
 }

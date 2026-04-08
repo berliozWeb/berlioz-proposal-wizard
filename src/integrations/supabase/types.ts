@@ -871,7 +871,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      popular_products_by_event: {
+        Row: {
+          avg_people: number | null
+          avg_price: number | null
+          avg_score: number | null
+          event_type: string | null
+          product_id: string | null
+          product_name: string | null
+          tier: string | null
+          times_accepted: number | null
+          times_included: number | null
+          times_selected: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_my_email_domain: { Args: never; Returns: string }

@@ -588,6 +588,11 @@ export default function ProposalStep(props: ProposalStepProps) {
                                 {item.productName}
                               </p>
                               <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{formatMXN(item.unitPrice)}/u</p>
+                              {item.recommendationReason && (
+                                <p className="font-body text-[10px] text-secondary/80 mt-1 flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3" /> {item.recommendationReason}
+                                </p>
+                              )}
                             </div>
                             <button onClick={() => removeItem(tier.id, item.instanceId)}
                               className="absolute top-4 right-4 text-muted-foreground/40 hover:text-destructive transition-colors">

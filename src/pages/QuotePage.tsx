@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, X } from "lucide-react";
@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { TOP_DELIVERY_ZONES, DURATION_OPTIONS } from "@/domain/entities/BerliozCatalog";
 import ProposalStep from "@/components/quoter/ProposalStep";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
+import { useSmartQuote } from "@/hooks/useSmartQuote";
+import type { SmartQuoteResponse } from "@/domain/entities/SmartQuote";
 
 // Images
 // Premium Images from src/assets/imagenes_menu

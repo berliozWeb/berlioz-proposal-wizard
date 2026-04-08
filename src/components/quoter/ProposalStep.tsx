@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check, Sparkles, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ import { formatMXN } from "@/domain/value-objects/Money";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/berlioz-logo.png";
+import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -28,10 +29,17 @@ interface ProposalItem {
   qty: number;
   isBestseller?: boolean;
   category: string;
+  recommendationReason?: string;
+  imageUrl?: string | null;
+  imageSource?: string;
+  sourceType?: 'supabase' | 'deterministic-fallback';
 }
 
 interface PackageState {
   items: ProposalItem[];
+  recommendationReason?: string;
+  isRecommended?: boolean;
+  highlights?: string[];
 }
 
 interface ProposalStepProps {
@@ -48,6 +56,8 @@ interface ProposalStepProps {
   duration: string;
   onBack: () => void;
   onRestart: () => void;
+  smartQuoteData?: SmartQuoteResponse | null;
+  smartQuoteLoading?: boolean;
 }
 
 type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string; bullets: string[]; isPopular: boolean; ctaStyle: 'outline' | 'primary' };
@@ -74,6 +84,41 @@ const TIERS: TierInfo[] = [
 let _iid = 0;
 function nextId() { return `pi-${++_iid}-${Date.now()}`; }
 
+/** Build packages from smart quote backend data */
+function buildFromSmartQuote(smartData: SmartQuoteResponse): Record<PackageTier, PackageState> {
+  const result: Record<PackageTier, PackageState> = {
+    esencial: { items: [] },
+    equilibrado: { items: [] },
+    experiencia: { items: [] },
+  };
+
+  for (const pkg of smartData.packages) {
+    const tier = pkg.tier as PackageTier;
+    if (!result[tier]) continue;
+
+    result[tier] = {
+      items: pkg.items.map(item => ({
+        instanceId: nextId(),
+        productName: item.productName,
+        unitPrice: item.unitPrice,
+        qty: item.quantity,
+        isBestseller: (item.score || 0) >= 80,
+        category: item.swapGroup || item.categoria || '',
+        recommendationReason: item.recommendationReason,
+        imageUrl: item.imageUrl,
+        imageSource: item.imageSource,
+        sourceType: item.sourceType,
+      })),
+      recommendationReason: pkg.recommendationReason,
+      isRecommended: pkg.isRecommended,
+      highlights: pkg.highlights,
+    };
+  }
+
+  return result;
+}
+
+/** Fallback: build from hardcoded catalog */
 function buildDefaultPackage(tier: PackageTier, eventType: string, people: number): PackageState {
   const defaults = getDefaultItems(eventType)[tier];
   const items: ProposalItem[] = [];
@@ -87,6 +132,7 @@ function buildDefaultPackage(tier: PackageTier, eventType: string, people: numbe
       qty: d.qtyMultiplier === 'N' ? people : d.qtyMultiplier,
       isBestseller: product.isBestseller,
       category: product.sidebarCategory,
+      sourceType: 'deterministic-fallback',
     });
   }
   return { items };
@@ -104,7 +150,7 @@ function calcTotals(items: ProposalItem[], isEarly: boolean) {
 
 /* ═══ COMPONENT ═══ */
 export default function ProposalStep(props: ProposalStepProps) {
-  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart } = props;
+  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading } = props;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem, clearCart } = useCart();
@@ -112,12 +158,19 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [quoteId] = useState(() => generateQuoteId());
   const validUntil = useMemo(() => addDays(new Date(), QUOTE_VALIDITY_DAYS), []);
 
-  // Package states
-  const [packages, setPackages] = useState<Record<PackageTier, PackageState>>(() => ({
-    esencial: buildDefaultPackage("esencial", eventType, people),
-    equilibrado: buildDefaultPackage("equilibrado", eventType, people),
-    experiencia: buildDefaultPackage("experiencia", eventType, people),
-  }));
+  const isSmartQuote = !!smartQuoteData && !smartQuoteData.fallbackUsed;
+
+  // Package states — initialized from smart quote or fallback
+  const [packages, setPackages] = useState<Record<PackageTier, PackageState>>(() => {
+    if (smartQuoteData) {
+      return buildFromSmartQuote(smartQuoteData);
+    }
+    return {
+      esencial: buildDefaultPackage("esencial", eventType, people),
+      equilibrado: buildDefaultPackage("equilibrado", eventType, people),
+      experiencia: buildDefaultPackage("experiencia", eventType, people),
+    };
+  });
 
   // UI state
   const [openSections, setOpenSections] = useState<Record<PackageTier, boolean>>({ esencial: false, equilibrado: true, experiencia: false });
@@ -485,9 +538,17 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </p>
                   </div>
 
-                  {/* Features */}
-                  <ul className="space-y-4 mb-10 flex-1">
-                    {tier.bullets.map(b => (
+                {/* Smart Quote indicator */}
+                {isSmartQuote && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 mb-6">
+                    <Sparkles className="w-3.5 h-3.5 text-secondary" />
+                    <span className="font-body text-[10px] font-bold text-secondary uppercase tracking-widest">Propuesta inteligente · Catálogo real</span>
+                  </div>
+                )}
+
+                {/* Features */}
+                <ul className="space-y-4 mb-10 flex-1">
+                  {(packages[tier.id].highlights || tier.bullets).map(b => (
                       <li key={b} className="font-body text-sm text-foreground flex items-start gap-3">
                         <div className="mt-1 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <Check className="w-3 h-3 text-primary stroke-[3]" />
@@ -527,6 +588,11 @@ export default function ProposalStep(props: ProposalStepProps) {
                                 {item.productName}
                               </p>
                               <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{formatMXN(item.unitPrice)}/u</p>
+                              {item.recommendationReason && (
+                                <p className="font-body text-[10px] text-secondary/80 mt-1 flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3" /> {item.recommendationReason}
+                                </p>
+                              )}
                             </div>
                             <button onClick={() => removeItem(tier.id, item.instanceId)}
                               className="absolute top-4 right-4 text-muted-foreground/40 hover:text-destructive transition-colors">

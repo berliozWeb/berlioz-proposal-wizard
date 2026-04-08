@@ -538,9 +538,17 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </p>
                   </div>
 
-                  {/* Features */}
-                  <ul className="space-y-4 mb-10 flex-1">
-                    {tier.bullets.map(b => (
+                {/* Smart Quote indicator */}
+                {isSmartQuote && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 mb-6">
+                    <Sparkles className="w-3.5 h-3.5 text-secondary" />
+                    <span className="font-body text-[10px] font-bold text-secondary uppercase tracking-widest">Propuesta inteligente · Catálogo real</span>
+                  </div>
+                )}
+
+                {/* Features */}
+                <ul className="space-y-4 mb-10 flex-1">
+                  {(packages[tier.id].highlights || tier.bullets).map(b => (
                       <li key={b} className="font-body text-sm text-foreground flex items-start gap-3">
                         <div className="mt-1 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <Check className="w-3 h-3 text-primary stroke-[3]" />

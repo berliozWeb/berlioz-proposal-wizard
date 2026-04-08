@@ -141,7 +141,7 @@ const QuotePage = () => {
   const [receiveConfirm, setReceiveConfirm] = useState(false);
 
   // Smart Quote
-  const { loading: smartLoading, generateQuote } = useSmartQuote();
+  const { loading: smartLoading, generateQuote, submitFeedback } = useSmartQuote();
   const [smartData, setSmartData] = useState<SmartQuoteResponse | null>(null);
 
   const tomorrow = addDays(new Date(), 1);

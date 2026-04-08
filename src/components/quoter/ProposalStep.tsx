@@ -150,7 +150,7 @@ function calcTotals(items: ProposalItem[], isEarly: boolean) {
 
 /* ═══ COMPONENT ═══ */
 export default function ProposalStep(props: ProposalStepProps) {
-  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart } = props;
+  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading } = props;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem, clearCart } = useCart();
@@ -158,12 +158,19 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [quoteId] = useState(() => generateQuoteId());
   const validUntil = useMemo(() => addDays(new Date(), QUOTE_VALIDITY_DAYS), []);
 
-  // Package states
-  const [packages, setPackages] = useState<Record<PackageTier, PackageState>>(() => ({
-    esencial: buildDefaultPackage("esencial", eventType, people),
-    equilibrado: buildDefaultPackage("equilibrado", eventType, people),
-    experiencia: buildDefaultPackage("experiencia", eventType, people),
-  }));
+  const isSmartQuote = !!smartQuoteData && !smartQuoteData.fallbackUsed;
+
+  // Package states — initialized from smart quote or fallback
+  const [packages, setPackages] = useState<Record<PackageTier, PackageState>>(() => {
+    if (smartQuoteData) {
+      return buildFromSmartQuote(smartQuoteData);
+    }
+    return {
+      esencial: buildDefaultPackage("esencial", eventType, people),
+      equilibrado: buildDefaultPackage("equilibrado", eventType, people),
+      experiencia: buildDefaultPackage("experiencia", eventType, people),
+    };
+  });
 
   // UI state
   const [openSections, setOpenSections] = useState<Record<PackageTier, boolean>>({ esencial: false, equilibrado: true, experiencia: false });

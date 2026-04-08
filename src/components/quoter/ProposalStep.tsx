@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check, Sparkles, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ import { formatMXN } from "@/domain/value-objects/Money";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/berlioz-logo.png";
+import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -28,10 +29,17 @@ interface ProposalItem {
   qty: number;
   isBestseller?: boolean;
   category: string;
+  recommendationReason?: string;
+  imageUrl?: string | null;
+  imageSource?: string;
+  sourceType?: 'supabase' | 'deterministic-fallback';
 }
 
 interface PackageState {
   items: ProposalItem[];
+  recommendationReason?: string;
+  isRecommended?: boolean;
+  highlights?: string[];
 }
 
 interface ProposalStepProps {
@@ -48,6 +56,8 @@ interface ProposalStepProps {
   duration: string;
   onBack: () => void;
   onRestart: () => void;
+  smartQuoteData?: SmartQuoteResponse | null;
+  smartQuoteLoading?: boolean;
 }
 
 type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string; bullets: string[]; isPopular: boolean; ctaStyle: 'outline' | 'primary' };
@@ -74,6 +84,41 @@ const TIERS: TierInfo[] = [
 let _iid = 0;
 function nextId() { return `pi-${++_iid}-${Date.now()}`; }
 
+/** Build packages from smart quote backend data */
+function buildFromSmartQuote(smartData: SmartQuoteResponse): Record<PackageTier, PackageState> {
+  const result: Record<PackageTier, PackageState> = {
+    esencial: { items: [] },
+    equilibrado: { items: [] },
+    experiencia: { items: [] },
+  };
+
+  for (const pkg of smartData.packages) {
+    const tier = pkg.tier as PackageTier;
+    if (!result[tier]) continue;
+
+    result[tier] = {
+      items: pkg.items.map(item => ({
+        instanceId: nextId(),
+        productName: item.productName,
+        unitPrice: item.unitPrice,
+        qty: item.quantity,
+        isBestseller: (item.score || 0) >= 80,
+        category: item.swapGroup || item.categoria || '',
+        recommendationReason: item.recommendationReason,
+        imageUrl: item.imageUrl,
+        imageSource: item.imageSource,
+        sourceType: item.sourceType,
+      })),
+      recommendationReason: pkg.recommendationReason,
+      isRecommended: pkg.isRecommended,
+      highlights: pkg.highlights,
+    };
+  }
+
+  return result;
+}
+
+/** Fallback: build from hardcoded catalog */
 function buildDefaultPackage(tier: PackageTier, eventType: string, people: number): PackageState {
   const defaults = getDefaultItems(eventType)[tier];
   const items: ProposalItem[] = [];
@@ -87,6 +132,7 @@ function buildDefaultPackage(tier: PackageTier, eventType: string, people: numbe
       qty: d.qtyMultiplier === 'N' ? people : d.qtyMultiplier,
       isBestseller: product.isBestseller,
       category: product.sidebarCategory,
+      sourceType: 'deterministic-fallback',
     });
   }
   return { items };

@@ -62,7 +62,7 @@ const CatalogPage = () => {
     let list = [...productos];
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
+      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion_corta?.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
     }
     if (filter === "favoritos") {
       list = list.filter((p) => p.popularity_rank != null);

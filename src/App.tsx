@@ -27,6 +27,8 @@ import AccountPage from "./pages/AccountPage";
 import Propuesta from "./pages/Propuesta";
 import AdminLeads from "./pages/AdminLeads";
 import ProductDetailPage from "./pages/ProductDetailPage";
+import ContactoPage from "./pages/ContactoPage";
+import RecompensasPublicPage from "./pages/RecompensasPublicPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ const App = () => (
                 <Route path="/nueva-contrasena" element={<NewPasswordPage />} />
                 <Route path="/propuesta" element={<Propuesta />} />
                 <Route path="/producto/:slug" element={<ProductDetailPage />} />
+                <Route path="/contacto" element={<ContactoPage />} />
+                <Route path="/recompensas" element={<RecompensasPublicPage />} />
 
                 {/* Auth required */}
                 <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />

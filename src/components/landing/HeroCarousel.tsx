@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import heroCateringImg from "@/assets/hero-catering-corporativo.png";
 
 const SLIDES = [
   {
-    image: "https://berlioz.mx/wp-content/uploads/2023/03/cateringCorporativo12.jpg",
+    image: heroCateringImg,
     line1: "DESAYUNO · COFFEE BREAK · WORKING LUNCH",
     line2: "EN TU SALA DE JUNTAS",
     overlay: "rgba(1, 77, 111, 0.45)",

@@ -7,8 +7,8 @@ import { useCart } from "@/contexts/CartContext";
 const NAV_LINKS = [
   { to: "/menu", label: "Realizar Pedido" },
   { to: "/cotizar", label: "Cotizar" },
-  { to: "/#recompensas", label: "Recompensas", isAnchor: true },
-  { to: "/#contacto", label: "Contacto", isAnchor: true },
+  { to: "/recompensas", label: "Recompensas" },
+  { to: "/contacto", label: "Contacto" },
 ];
 
 const Navbar = () => {

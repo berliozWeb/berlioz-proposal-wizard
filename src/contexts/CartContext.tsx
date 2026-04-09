@@ -8,59 +8,61 @@ export interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  category?: string;
   isPerPerson?: boolean;
 }
 
+type ShippingType = "delivery" | "pickup";
+
 interface CartState {
   items: CartItem[];
-  deliveryDate: string | null;
-  deliverySlot: string | null;
-  deliveryAddressId: string | null;
+  shippingType: ShippingType;
   notes: string;
   discountCode: string | null;
   discountAmount: number;
+  discountType: "fixed" | "percentage";
+  earlySurcharge: number;
 }
 
 interface CartTotals {
   subtotal: number;
   iva: number;
   shipping: number;
+  earlySurcharge: number;
   discount: number;
   total: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  deliveryDate: string | null;
-  deliverySlot: string | null;
-  deliveryAddressId: string | null;
+  shippingType: ShippingType;
   notes: string;
   discountCode: string | null;
   discountAmount: number;
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
-  setDeliveryDate: (date: string | null) => void;
-  setDeliverySlot: (slot: string | null) => void;
-  setDeliveryAddressId: (id: string | null) => void;
+  setShippingType: (type: ShippingType) => void;
   setNotes: (text: string) => void;
   applyDiscount: (code: string) => Promise<boolean>;
   clearCart: () => void;
+  setEarlySurcharge: (amount: number) => void;
   itemCount: number;
+  totalUnits: number;
   subtotal: number;
   totals: CartTotals;
-  isValid: boolean;
+  isInCart: (productId: string) => boolean;
 }
 
 const CART_KEY = "berlioz_cart";
 const EMPTY_STATE: CartState = {
   items: [],
-  deliveryDate: null,
-  deliverySlot: null,
-  deliveryAddressId: null,
+  shippingType: "delivery",
   notes: "",
   discountCode: null,
   discountAmount: 0,
+  discountType: "fixed",
+  earlySurcharge: 0,
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -69,20 +71,7 @@ function loadCart(): CartState {
   try {
     const raw = localStorage.getItem(CART_KEY);
     if (!raw) return EMPTY_STATE;
-    const parsed = JSON.parse(raw) as CartState;
-
-    // Check for past delivery date
-    if (parsed.deliveryDate) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const delivery = new Date(parsed.deliveryDate + "T00:00:00");
-      if (delivery < today) {
-        parsed.deliveryDate = null;
-        parsed.deliverySlot = null;
-        setTimeout(() => toast.warning("Tu fecha de entrega anterior ya pasó — elige una nueva."), 500);
-      }
-    }
-    return { ...EMPTY_STATE, ...parsed };
+    return { ...EMPTY_STATE, ...JSON.parse(raw) };
   } catch {
     return EMPTY_STATE;
   }
@@ -96,10 +85,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity"> & { quantity?: number }) => {
-    const qty = Math.max(10, item.quantity ?? 10);
+    const qty = Math.max(1, item.quantity ?? 1);
     setState((prev) => {
       const existing = prev.items.find((i) => i.id === item.id);
       if (existing) {
+        toast.success(`${item.name} actualizado en el carrito`);
         return {
           ...prev,
           items: prev.items.map((i) =>
@@ -107,43 +97,62 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ),
         };
       }
+      toast.success(`${item.name} añadido al carrito`);
       return { ...prev, items: [...prev.items, { ...item, quantity: qty }] };
     });
   }, []);
 
   const removeItem = useCallback((id: string) => {
     setState((prev) => ({ ...prev, items: prev.items.filter((i) => i.id !== id) }));
+    toast("Producto eliminado del carrito");
   }, []);
 
   const updateQuantity = useCallback((id: string, quantity: number) => {
-    if (quantity < 10) {
-      toast.error("Mínimo 10 unidades por producto");
-      return;
-    }
+    if (quantity < 1) return;
     setState((prev) => ({
       ...prev,
       items: prev.items.map((i) => (i.id === id ? { ...i, quantity } : i)),
     }));
   }, []);
 
-  const setDeliveryDate = useCallback((date: string | null) => {
-    setState((prev) => ({ ...prev, deliveryDate: date }));
-  }, []);
-
-  const setDeliverySlot = useCallback((slot: string | null) => {
-    setState((prev) => ({ ...prev, deliverySlot: slot }));
-  }, []);
-
-  const setDeliveryAddressId = useCallback((id: string | null) => {
-    setState((prev) => ({ ...prev, deliveryAddressId: id }));
+  const setShippingType = useCallback((type: ShippingType) => {
+    setState((prev) => ({ ...prev, shippingType: type }));
   }, []);
 
   const setNotes = useCallback((text: string) => {
     setState((prev) => ({ ...prev, notes: text.slice(0, 300) }));
   }, []);
 
+  const setEarlySurcharge = useCallback((amount: number) => {
+    setState((prev) => ({ ...prev, earlySurcharge: amount }));
+  }, []);
+
   const applyDiscount = useCallback(async (code: string): Promise<boolean> => {
     try {
+      // Try coupons table first, then discount_codes as fallback
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", code.trim().toUpperCase())
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (coupon) {
+        if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+          toast.error("Este cupón ha alcanzado su límite de usos");
+          return false;
+        }
+        setState((prev) => ({
+          ...prev,
+          discountCode: coupon.code,
+          discountAmount: Number(coupon.discount_value) || 0,
+          discountType: coupon.discount_type as "fixed" | "percentage",
+        }));
+        toast.success(`Cupón "${coupon.code}" aplicado`);
+        return true;
+      }
+
+      // Fallback to discount_codes table
       const { data, error } = await supabase
         .from("discount_codes")
         .select("*")
@@ -159,8 +168,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ...prev,
         discountCode: data.code,
         discountAmount: Number(data.discount_amount) || 0,
+        discountType: (data.discount_type as "fixed" | "percentage") || "fixed",
       }));
-      toast.success(`Código "${data.code}" aplicado: -$${Number(data.discount_amount).toLocaleString()}`);
+      toast.success(`Código "${data.code}" aplicado`);
       return true;
     } catch {
       toast.error("Error al validar código");
@@ -170,44 +180,54 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setState(EMPTY_STATE);
+    localStorage.removeItem(CART_KEY);
   }, []);
 
-  const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);
+  const isInCart = useCallback((productId: string) => {
+    return state.items.some((i) => i.id === productId);
+  }, [state.items]);
+
+  const itemCount = state.items.length;
+  const totalUnits = state.items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const totals = useMemo((): CartTotals => {
+    const shipping = state.shippingType === "pickup" ? 0 : 360;
+    const earlySurcharge = state.earlySurcharge;
     const iva = Math.round(subtotal * 0.16);
-    const shipping = subtotal > 2000 ? 0 : 150;
-    const discount = state.discountAmount;
-    const total = Math.max(0, subtotal + iva + shipping - discount);
-    return { subtotal, iva, shipping, discount, total };
-  }, [subtotal, state.discountAmount]);
-
-  const isValid = state.items.length > 0 && !!state.deliveryDate && !!state.deliverySlot;
+    let discount = 0;
+    if (state.discountAmount > 0) {
+      if (state.discountType === "percentage") {
+        discount = Math.round(subtotal * (state.discountAmount / 100));
+      } else {
+        discount = state.discountAmount;
+      }
+    }
+    const total = Math.max(0, subtotal + iva + shipping + earlySurcharge - discount);
+    return { subtotal, iva, shipping, earlySurcharge, discount, total };
+  }, [subtotal, state.shippingType, state.discountAmount, state.discountType, state.earlySurcharge]);
 
   return (
     <CartContext.Provider
       value={{
         items: state.items,
-        deliveryDate: state.deliveryDate,
-        deliverySlot: state.deliverySlot,
-        deliveryAddressId: state.deliveryAddressId,
+        shippingType: state.shippingType,
         notes: state.notes,
         discountCode: state.discountCode,
         discountAmount: state.discountAmount,
         addItem,
         removeItem,
         updateQuantity,
-        setDeliveryDate,
-        setDeliverySlot,
-        setDeliveryAddressId,
+        setShippingType,
         setNotes,
         applyDiscount,
         clearCart,
+        setEarlySurcharge,
         itemCount,
+        totalUnits,
         subtotal,
         totals,
-        isValid,
+        isInCart,
       }}
     >
       {children}

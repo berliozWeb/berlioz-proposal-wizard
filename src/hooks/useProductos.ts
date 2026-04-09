@@ -21,6 +21,8 @@ export interface Producto {
   destacado: boolean;
   orden: number;
   created_at: string | null;
+  popularity_rank: number | null;
+  dietary_tags: string[] | null;
 }
 
 interface Filters {

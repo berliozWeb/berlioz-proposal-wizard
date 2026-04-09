@@ -301,6 +301,7 @@ export type Database = {
           nombre: string
           orden: number | null
           parent_id: string | null
+          popularity_rank: number | null
           precio: number | null
           precio_max: number | null
           precio_min: number | null
@@ -330,6 +331,7 @@ export type Database = {
           nombre: string
           orden?: number | null
           parent_id?: string | null
+          popularity_rank?: number | null
           precio?: number | null
           precio_max?: number | null
           precio_min?: number | null
@@ -359,6 +361,7 @@ export type Database = {
           nombre?: string
           orden?: number | null
           parent_id?: string | null
+          popularity_rank?: number | null
           precio?: number | null
           precio_max?: number | null
           precio_min?: number | null

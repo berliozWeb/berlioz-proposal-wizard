@@ -12,15 +12,16 @@ import { useProductos, type Producto } from "@/hooks/useProductos";
 
 /* ── constants ── */
 const CATEGORY_FILTERS = [
+  { value: "favoritos", label: "Favoritos", emoji: "⭐" },
   { value: "todos", label: "Todos", emoji: "🍽️" },
   { value: "Coffee Break", label: "Coffee Break", emoji: "☕" },
   { value: "Working Lunch", label: "Working Lunch", emoji: "🍱" },
   { value: "Desayuno", label: "Desayuno", emoji: "🍳" },
   { value: "Bebidas", label: "Bebidas", emoji: "🥤" },
-  { value: "Vegano / Vegetariano", label: "Vegano", emoji: "🌱" },
-  { value: "Tortas Piropo", label: "Tortas", emoji: "🥖" },
+  { value: "vegano", label: "Vegano/Vegetariano", emoji: "🌱" },
+  { value: "keto", label: "Keto", emoji: "🥑" },
+  { value: "Tortas Piropo", label: "Tortas Piropo", emoji: "🥖" },
   { value: "Entrega Especial", label: "Entrega Especial", emoji: "🎁" },
-  { value: "destacado", label: "Favoritos", emoji: "⭐" },
 ];
 
 const SORT_OPTIONS = [
@@ -47,7 +48,7 @@ const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const { addItem, itemCount } = useCart();
   const { productos, loading } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
-  const [filter, setFilter] = useState(searchParams.get("categoria") || "todos");
+  const [filter, setFilter] = useState(searchParams.get("categoria") || "favoritos");
   const [sort, setSort] = useState("orden");
   const [search, setSearch] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
@@ -58,12 +59,22 @@ const CatalogPage = () => {
       const q = search.toLowerCase();
       list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
     }
-    if (filter === "destacado") list = list.filter((p) => p.destacado);
-    else if (filter !== "todos") list = list.filter((p) => p.categoria === filter);
+    if (filter === "favoritos") {
+      list = list.filter((p) => p.popularity_rank != null);
+      list.sort((a, b) => (a.popularity_rank ?? 999) - (b.popularity_rank ?? 999));
+    } else if (filter === "vegano") {
+      list = list.filter((p) => p.dietary_tags?.some(t => ['vegano', 'vegetariano'].includes(t.toLowerCase())));
+    } else if (filter === "keto") {
+      list = list.filter((p) => p.dietary_tags?.some(t => t.toLowerCase() === 'keto'));
+    } else if (filter !== "todos") {
+      list = list.filter((p) => p.categoria === filter);
+    }
     
-    if (sort === "price_asc") list.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
-    else if (sort === "price_desc") list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
-    else if (sort === "name_asc") list.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    if (filter !== "favoritos") {
+      if (sort === "price_asc") list.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
+      else if (sort === "price_desc") list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
+      else if (sort === "name_asc") list.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }
     return list;
   }, [productos, filter, sort, search]);
 

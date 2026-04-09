@@ -44,7 +44,7 @@ const CheckoutPage = () => {
   const [colonia, setColonia] = useState("");
   const [city, setCity] = useState("Ciudad de México");
   const [cp, setCp] = useState("");
-  const [cpValid, setCpValid] = useState<boolean | null>(null);
+  // cpValid is derived below from cpShippingInfo
   const [deliveryDate, setDeliveryDate] = useState<string | null>(null);
   const [eventTime, setEventTime] = useState("");
   const [deliverySlot, setDeliverySlot] = useState<string | null>(null);

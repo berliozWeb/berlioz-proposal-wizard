@@ -4,6 +4,7 @@ import heroCateringImg from "@/assets/hero-catering-corporativo.png";
 import heroGreenBoxImg from "@/assets/hero-green-box.png";
 import heroLunchBoxImg from "@/assets/hero-lunch-box.png";
 import heroPiropoImg from "@/assets/hero-piropo.jpg";
+import heroEmpaquesImg from "@/assets/hero-empaques.jpg";
 
 const SLIDES = [
   {

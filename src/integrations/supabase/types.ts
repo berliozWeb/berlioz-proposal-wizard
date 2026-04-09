@@ -840,6 +840,57 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_history: {
+        Row: {
+          avg_order_size: number | null
+          categoria: string | null
+          common_time_slots: string[] | null
+          created_at: string | null
+          id: string
+          peak_months: string[] | null
+          product_id: string | null
+          product_name: string
+          product_sku: string | null
+          top_companies: string[] | null
+          top_zip_codes: string[] | null
+          total_qty_sold: number | null
+          total_revenue: number | null
+          unique_companies: number | null
+        }
+        Insert: {
+          avg_order_size?: number | null
+          categoria?: string | null
+          common_time_slots?: string[] | null
+          created_at?: string | null
+          id?: string
+          peak_months?: string[] | null
+          product_id?: string | null
+          product_name: string
+          product_sku?: string | null
+          top_companies?: string[] | null
+          top_zip_codes?: string[] | null
+          total_qty_sold?: number | null
+          total_revenue?: number | null
+          unique_companies?: number | null
+        }
+        Update: {
+          avg_order_size?: number | null
+          categoria?: string | null
+          common_time_slots?: string[] | null
+          created_at?: string | null
+          id?: string
+          peak_months?: string[] | null
+          product_id?: string | null
+          product_name?: string
+          product_sku?: string | null
+          top_companies?: string[] | null
+          top_zip_codes?: string[] | null
+          total_qty_sold?: number | null
+          total_revenue?: number | null
+          unique_companies?: number | null
+        }
+        Relationships: []
+      }
       scheduled_orders: {
         Row: {
           created_at: string

@@ -1,5 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
+
+/** Strip HTML tags and decode entities for plain text display */
+function stripHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || '';
+}
+
+/** Normalize product name to Title Case */
+function toTitleCase(str: string): string {
+  const MINOR = new Set(['de', 'del', 'con', 'y', 'a', 'la', 'el', 'en', 'al', 'por', 'para', 'e', 'o', 'u']);
+  return str
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w, i) => (i === 0 || !MINOR.has(w) || w.length <= 1) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
+    .join(' ');
+}
 import { Search, ShoppingBag, ChevronRight, Filter, ArrowRight, Check } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import CartSidebar from "@/components/ui/CartSidebar";
@@ -206,11 +222,11 @@ const CatalogPage = () => {
                         <div className="p-4 flex flex-col flex-1">
                           <Link to={`/producto/${product.id}`}>
                             <h3 className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors mb-1">
-                              {product.nombre}
+                              {toTitleCase(product.nombre)}
                             </h3>
                           </Link>
                           {product.descripcion && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{product.descripcion.replace(/\\n/g, ' ').replace(/\n/g, ' ')}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{stripHtml(product.descripcion).replace(/\s+/g, ' ').trim()}</p>
                           )}
 
                           <div className="mt-auto flex items-center justify-between">

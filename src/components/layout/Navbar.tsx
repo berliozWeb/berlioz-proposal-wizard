@@ -90,7 +90,7 @@ const Navbar = () => {
           </a>
 
           {/* Cart — always visible */}
-          <Link to="/checkout" className="relative p-1.5" style={{ color: '#014D6F' }}>
+          <Link to="/menu" className="relative p-1.5" style={{ color: '#014D6F' }}>
             <ShoppingCart style={{ width: 20, height: 20 }} />
             {itemCount > 0 && (
               <span

@@ -31,6 +31,7 @@ import AdminLeads from "./pages/AdminLeads";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import ContactoPage from "./pages/ContactoPage";
 import RecompensasPublicPage from "./pages/RecompensasPublicPage";
+import AdminCustomersPage from "./pages/AdminCustomersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

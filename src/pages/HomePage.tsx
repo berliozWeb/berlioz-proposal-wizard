@@ -8,7 +8,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import HeroCarousel from "@/components/landing/HeroCarousel";
-import NosotrosSection from "@/components/landing/NosotrosSection";
 // Premium Images from src/assets/imagenes_menu
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";
@@ -375,8 +374,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* ═══ SECTION — NOSOTROS ═══ */}
-      <NosotrosSection />
 
       {/* ═══ SECTION 6 — HOW IT WORKS ═══ */}
       <section className="py-20 bg-background">

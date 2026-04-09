@@ -530,91 +530,105 @@ export default function ProposalStep(props: ProposalStepProps) {
           </p>
         </div>
 
-        {/* ═══ THREE PROPOSAL CARDS ═══ */}
+        {/* ═══ THREE PROPOSAL CARDS — IMAGE-FIRST DESIGN ═══ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
           {TIERS.map((tier, idx) => {
             const pkg = packages[tier.id];
             const t = tierTotals[tier.id];
             const isOpen = openSections[tier.id];
             const isSelected = selectedTier === tier.id;
+            const engineIsAI = isSmartQuote && smartQuoteData?.engineVersion === 'v3-claude-sonnet';
 
               return (
                 <div key={tier.id} className={cn(
-                  "group relative flex flex-col rounded-[48px] border-2 transition-all duration-500 h-full",
-                  tier.isPopular ? "border-primary shadow-2xl shadow-primary/10 ring-8 ring-primary/[0.02] lg:-translate-y-4" : "border-border/60 hover:border-primary/30 bg-card/50",
-                  isSelected && "border-primary ring-8 ring-primary/5",
+                  "group relative flex flex-col rounded-2xl border-2 transition-all duration-500 h-full overflow-hidden",
+                  tier.isPopular ? "border-primary shadow-2xl shadow-primary/10 lg:-translate-y-4" : "border-border/60 hover:border-primary/30",
+                  isSelected && "border-primary ring-4 ring-primary/10",
                 )}>
                 {/* Popular badge */}
                 {tier.isPopular && (
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-1.5 rounded-full bg-primary text-primary-foreground font-heading text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/30 z-10 whitespace-nowrap">
+                  <div className="absolute -top-0 left-1/2 -translate-x-1/2 px-6 py-1.5 rounded-b-xl bg-primary text-primary-foreground font-heading text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/30 z-20 whitespace-nowrap">
                     ⭐ Nuestra Recomendación
                   </div>
                 )}
 
-                {/* Product Collage */}
-                {(() => {
-                  const imgs = pkg.items
-                    .map(i => i.imageUrl)
-                    .filter(Boolean) as string[];
-                  if (imgs.length > 0) {
-                    return (
-                      <ProductCollage
-                        imageUrls={imgs}
-                        tier={tier.title as 'Esencial' | 'Equilibrado' | 'Experiencia Completa'}
-                      />
+                {/* 1. PHOTO MOSAIC — Image-first hero */}
+                <div className="relative w-full h-[200px] overflow-hidden" style={{ background: '#E8F2F6' }}>
+                  {(() => {
+                    const imgs = pkg.items
+                      .map(i => i.imageUrl)
+                      .filter(Boolean) as string[];
+
+                    if (imgs.length === 0) return (
+                      <div className="w-full h-full flex items-center justify-center text-6xl">🍱</div>
                     );
-                  }
-                  return null;
-                })()}
-
-                <div className="p-10 flex-1 flex flex-col">
-                  {/* Tier Header */}
-                  <div className="mb-8">
-                    <h3 className="font-heading text-3xl font-bold text-foreground mb-2">{tier.title}</h3>
-                    <p className="font-body text-sm text-muted-foreground italic leading-snug">{tier.subtitle}</p>
+                    if (imgs.length === 1) return (
+                      <img src={imgs[0]} alt={tier.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                    );
+                    if (imgs.length === 2) return (
+                      <div className="grid grid-cols-2 h-full" style={{ gap: 2 }}>
+                        {imgs.map((url, i) => (
+                          <img key={i} src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                        ))}
+                      </div>
+                    );
+                    return (
+                      <div className="grid h-full" style={{ gridTemplateColumns: '60% 40%', gap: 2 }}>
+                        <img src={imgs[0]} alt="" className="w-full h-full object-cover" style={{ gridRow: '1/3' }} onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                        <div className="flex flex-col" style={{ gap: 2 }}>
+                          {imgs.slice(1, 3).map((url, i) => (
+                            <img key={i} src={url} alt="" className="w-full flex-1 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.65) 100%)' }} />
+                  {/* Tier badge */}
+                  <div className="absolute bottom-3 left-3 px-4 py-1.5 rounded-full text-white font-heading text-[11px] font-bold tracking-[0.12em] uppercase" style={{
+                    background: tier.id === 'esencial' ? '#446084' : tier.id === 'equilibrado' ? '#014D6F' : '#0a2540',
+                  }}>
+                    {tier.id === 'equilibrado' ? '⭐ ' : tier.id === 'experiencia' ? '✦ ' : ''}{tier.title}
                   </div>
+                </div>
 
-                  {/* Pricing */}
-                  <div className="mb-10 p-6 rounded-[32px] bg-white border border-border shadow-sm group-hover:shadow-md transition-shadow">
-                    <div className="flex items-baseline gap-1">
-                      <span className="font-heading text-4xl font-black tracking-tighter text-primary">{formatMXN(t.total)}</span>
-                      <span className="font-body text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Total</span>
-                    </div>
-                    <p className="font-body text-xs text-muted-foreground mt-2 border-t border-border pt-2">
-                       {formatMXN(t.total / Math.max(1, people))} <span className="font-bold">por persona</span>
-                    </p>
-                    <p className="font-body text-[10px] text-primary font-bold uppercase tracking-widest mt-1">
-                      IVA y envío incluidos
-                    </p>
-                  </div>
+                {/* 2. HEADER */}
+                <div className="px-6 pt-6 pb-2">
+                  <h3 className="font-heading text-2xl font-bold text-foreground mb-1">{tier.title}</h3>
+                  <p className="font-body text-sm text-muted-foreground italic leading-snug">
+                    {pkg.tagline || tier.subtitle}
+                  </p>
+                </div>
 
-                {/* Smart Quote indicator */}
-                {isSmartQuote && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 border border-secondary/20 mb-6">
-                    <Sparkles className="w-3.5 h-3.5 text-secondary" />
-                    <span className="font-body text-[10px] font-bold text-secondary uppercase tracking-widest">Propuesta inteligente · Catálogo real</span>
+                {/* 3. NARRATIVA from Claude */}
+                {pkg.narrativa && (
+                  <div className="mx-6 my-3 pl-4 py-3 pr-3 rounded-r-xl" style={{ borderLeft: '3px solid #EDD9C8', background: 'rgba(237,217,200,0.08)' }}>
+                    <p className="font-body text-[13px] italic text-muted-foreground leading-relaxed">
+                      "{pkg.narrativa}"
+                    </p>
                   </div>
                 )}
 
-                {/* Features */}
-                <ul className="space-y-4 mb-10 flex-1">
-                  {(packages[tier.id].highlights || tier.bullets).map(b => (
-                      <li key={b} className="font-body text-sm text-foreground flex items-start gap-3">
-                        <div className="mt-1 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <Check className="w-3 h-3 text-primary stroke-[3]" />
-                        </div>
+                <div className="px-6 flex-1 flex flex-col">
+                  {/* 4. FEATURES — compact chips */}
+                  <div className="flex flex-wrap gap-2 mb-4 mt-2">
+                    {(pkg.highlights || tier.bullets).map(b => (
+                      <span key={b} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold" style={{ background: '#E8F2F6', color: '#014D6F' }}>
+                        <Check className="w-3 h-3 stroke-[3]" />
                         {b}
-                      </li>
+                      </span>
                     ))}
-                    {tier.tip && (
-                      <li className="p-4 rounded-2xl bg-primary/5 border border-primary/10 font-body text-xs text-primary leading-relaxed italic">
-                        {tier.tip}
-                      </li>
-                    )}
-                  </ul>
+                  </div>
+
+                  {tier.tip && (
+                    <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 font-body text-xs text-primary leading-relaxed italic mb-4">
+                      {tier.tip}
+                    </div>
+                  )}
 
                   {/* Item Customization Header */}
-                  <div className="flex items-center justify-between gap-2 mb-6 pt-6 border-t border-border/60">
+                  <div className="flex items-center justify-between gap-2 mb-4 pt-4 border-t border-border/60">
                     <button onClick={() => toggleSection(tier.id)}
                       className="flex items-center gap-2 font-heading text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
                       {isOpen ? "Ocultar detalles" : "Modificar menú"} 
@@ -626,56 +640,63 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </button>
                   </div>
 
-                  {/* Expandable Menu List */}
+                  {/* Expandable Menu List — 72px item photos */}
                   {isOpen && (
-                    <div className="space-y-3 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="space-y-2 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
                       {pkg.items.map(item => (
-                        <div key={item.instanceId} className="bg-white rounded-2xl p-4 border border-border/80 shadow-sm relative group/item">
-                          <div className="flex items-start gap-3 mb-2">
-                            {/* Product thumbnail */}
-                            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-muted/30 border border-border/50">
-                              {item.imageUrl ? (
-                                <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" loading="lazy" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-2xl">🍱</div>
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1 pr-6">
-                              <p className="font-heading text-sm font-bold text-foreground">
-                                {item.isBestseller && <Star className="w-3.5 h-3.5 inline text-amber-500 fill-current mr-1 mb-0.5" />}
-                                {item.productName}
-                              </p>
-                              <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{formatMXN(item.unitPrice)}/u</p>
-                              {item.recommendationReason && (
-                                <p className="font-body text-[10px] text-secondary/80 mt-1 flex items-center gap-1">
-                                  <Sparkles className="w-3 h-3" /> {item.recommendationReason}
-                                </p>
-                              )}
-                            </div>
-                            <button onClick={() => removeItem(tier.id, item.instanceId)}
-                              className="absolute top-4 right-4 text-muted-foreground/40 hover:text-destructive transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                        <div key={item.instanceId} className="flex gap-3 p-3 bg-white rounded-xl border border-border/80 shadow-sm relative" style={{ alignItems: 'flex-start' }}>
+                          {/* 72px product photo */}
+                          <div className="w-[72px] h-[72px] rounded-[10px] overflow-hidden shrink-0 flex items-center justify-center" style={{ background: '#E8F2F6' }}>
+                            {item.imageUrl ? (
+                              <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" loading="lazy"
+                                onError={(e) => {
+                                  const el = e.target as HTMLImageElement;
+                                  el.style.display = 'none';
+                                  el.parentElement!.innerHTML = '<span style="font-size:28px">🍽️</span>';
+                                }} />
+                            ) : (
+                              <span style={{ fontSize: 28 }}>🍽️</span>
+                            )}
                           </div>
-                          
-                          <div className="flex items-center justify-between mt-4">
-                            <div className="flex items-center bg-muted/50 rounded-xl p-1">
-                              <button onClick={() => updateItemQty(tier.id, item.instanceId, -1)}
-                                className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
-                                <Minus className="w-3 h-3 stroke-[3]" />
-                              </button>
-                              <span className="font-mono text-sm font-black w-10 text-center">{item.qty}</span>
-                              <button onClick={() => updateItemQty(tier.id, item.instanceId, 1)}
-                                className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
-                                <Plus className="w-3 h-3 stroke-[3]" />
+                          {/* Content — DO NOT CHANGE logic */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-1">
+                              <div className="min-w-0 flex-1 pr-6">
+                                <p className="font-heading text-sm font-bold text-foreground">
+                                  {item.isBestseller && <Star className="w-3.5 h-3.5 inline text-amber-500 fill-current mr-1 mb-0.5" />}
+                                  {item.productName}
+                                </p>
+                                <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{formatMXN(item.unitPrice)}/u</p>
+                                {item.recommendationReason && (
+                                  <p className="font-body text-[10px] text-secondary/80 mt-1 flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3" /> {item.recommendationReason}
+                                  </p>
+                                )}
+                              </div>
+                              <button onClick={() => removeItem(tier.id, item.instanceId)}
+                                className="text-muted-foreground/40 hover:text-destructive transition-colors shrink-0">
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <div className="text-right">
-                              <span className="block font-heading text-sm font-bold text-primary">{formatMXN(item.unitPrice * item.qty)}</span>
-                              <button onClick={() => openSwapSidebar(tier.id, item.instanceId)}
-                                className="font-heading text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mt-1">
-                                <ArrowUpDown className="w-3 h-3 inline mr-1" /> Cambiar
-                              </button>
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center bg-muted/50 rounded-xl p-1">
+                                <button onClick={() => updateItemQty(tier.id, item.instanceId, -1)}
+                                  className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
+                                  <Minus className="w-3 h-3 stroke-[3]" />
+                                </button>
+                                <span className="font-mono text-sm font-black w-8 text-center">{item.qty}</span>
+                                <button onClick={() => updateItemQty(tier.id, item.instanceId, 1)}
+                                  className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
+                                  <Plus className="w-3 h-3 stroke-[3]" />
+                                </button>
+                              </div>
+                              <div className="text-right">
+                                <span className="block font-heading text-sm font-bold text-primary">{formatMXN(item.unitPrice * item.qty)}</span>
+                                <button onClick={() => openSwapSidebar(tier.id, item.instanceId)}
+                                  className="font-heading text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mt-0.5">
+                                  <ArrowUpDown className="w-3 h-3 inline mr-1" /> Cambiar
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -683,24 +704,47 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </div>
                   )}
 
-                  {/* Total Breakdown — Clean Style */}
-                  <div className="space-y-2 mb-10 pt-6 border-t border-border/60">
+                  {/* Spacer for flex */}
+                  <div className="flex-1" />
+
+                  {/* Total Breakdown */}
+                  <div className="space-y-1.5 mb-4 pt-4 border-t border-border/60">
                     <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Subtotal</span><span>{formatMXN(t.subtotal)}</span></div>
                     <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Logística</span><span>{formatMXN(t.shipping + t.early)}</span></div>
                     <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Impuestos</span><span>{formatMXN(t.iva)}</span></div>
                   </div>
+                </div>
 
-                  {/* SELECT CTA */}
+                {/* 5. PRICE BAR — minimal, price left, CTA right */}
+                <div className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: '1px solid #E2D3CA' }}>
+                  <div>
+                    <p className="font-heading text-xl font-bold" style={{ color: '#014D6F', margin: '0 0 2px' }}>
+                      {formatMXN(t.total)}
+                    </p>
+                    <p className="font-heading text-[11px] text-muted-foreground" style={{ margin: 0 }}>
+                      {formatMXN(t.total / Math.max(1, people))}/persona · IVA y envío incluidos
+                    </p>
+                  </div>
                   <button onClick={() => handleSelectTier(tier.id)}
                     className={cn(
-                      "w-full py-5 rounded-[24px] font-heading text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 shadow-xl",
-                      isSelected ? "bg-secondary text-white shadow-secondary/30 scale-[1.02]" :
-                        tier.isPopular ? "bg-primary text-white shadow-primary/30 hover:scale-[1.02]" :
-                          "bg-white border-2 border-primary text-primary hover:bg-primary/5 shadow-primary/5 hover:scale-[1.02]"
-                    )}>
-                    {isSelected ? "✓ Opción Seleccionada" : "Seleccionar opción"}
+                      "px-5 py-2.5 rounded-lg font-heading text-[13px] font-semibold transition-all border-none cursor-pointer",
+                      isSelected ? "text-white" : "text-white hover:opacity-90"
+                    )}
+                    style={{ background: isSelected ? '#2d8a6e' : '#014D6F' }}>
+                    {isSelected ? "✓ Seleccionado" : "Elegir este →"}
                   </button>
                 </div>
+
+                {/* 6. AI BADGE — footer */}
+                {engineIsAI && (
+                  <div className="text-center py-2 px-4" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA' }}>
+                    <p className="font-heading text-[10px] text-muted-foreground" style={{ margin: 0, letterSpacing: '0.08em' }}>
+                      ✦ Propuesta generada con{' '}
+                      <span className="font-bold" style={{ color: '#014D6F' }}>Claude AI</span>
+                      {' '}· Berlioz {new Date().getFullYear()}
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}

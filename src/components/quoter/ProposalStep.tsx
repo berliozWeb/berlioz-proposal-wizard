@@ -737,11 +737,13 @@ export default function ProposalStep(props: ProposalStepProps) {
 
                 {/* 6. AI BADGE — footer */}
                 {engineIsAI && (
-                  <div className="text-center py-2 px-4" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA' }}>
+                  <div className="text-center py-2 px-4" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA', borderRadius: '0 0 16px 16px' }}>
                     <p className="font-heading text-[10px] text-muted-foreground" style={{ margin: 0, letterSpacing: '0.08em' }}>
-                      ✦ Propuesta generada con{' '}
+                      ✦ Propuesta compuesta con{' '}
                       <span className="font-bold" style={{ color: '#014D6F' }}>Claude AI</span>
-                      {' '}· Berlioz {new Date().getFullYear()}
+                      {' · '}
+                      <span style={{ color: '#888' }}>imágenes por DALL-E</span>
+                      {' · '}Berlioz {new Date().getFullYear()}
                     </p>
                   </div>
                 )}

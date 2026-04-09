@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDependencies } from '@/presentation/providers/AppDependenciesProvider';
+import { supabase } from '@/integrations/supabase/client';
 import type { IntakeForm } from '@/domain/entities/IntakeForm';
 import type { Proposal } from '@/domain/entities/Proposal';
 import type { AgentState } from '@/domain/entities/AgentState';
@@ -105,6 +106,30 @@ export function useProposalPresenter() {
       window.open(`mailto:${email}?subject=${subject}&body=${body}`);
     } else if (pendingAction === 'select') {
       toast.success(`Paquete "${selectedPkg}" seleccionado. Nos pondremos en contacto.`);
+
+      // Sync to GoHighLevel after confirmation
+      const nameParts = (form.nombre || '').split(' ');
+      supabase.functions.invoke('ghl-sync', {
+        body: {
+          contact: {
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            email,
+            phone: form.celular || '',
+            company: empresa,
+          },
+          quote: {
+            eventType: form.eventType || '',
+            eventDate: form.fechaInicio || '',
+            people: form.personas || 0,
+            total: proposal?.packages.find(p => p.displayName === selectedPkg)?.total ?? 0,
+            tier: selectedPkg,
+          },
+        },
+      }).then(res => {
+        if (res.error) console.error('GHL sync error:', res.error);
+        else console.log('GHL sync ok');
+      });
     }
   }, [form, pendingAction, selectedPkg, guardarLead]);
 

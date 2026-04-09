@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Minus, Plus, X, Trash2, ArrowLeft, ShoppingBag, Sparkles, MapPin } from "lucide-react";
+import { Minus, Plus, X, Trash2, ArrowLeft, ShoppingBag, Sparkles, MapPin, Info } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getShippingInfo } from "@/utils/shippingCalculator";
 
 function formatMXN(n: number) {
   return "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -24,6 +25,7 @@ const CartPage = () => {
   const {
     items, removeItem, updateQuantity, totals, shippingType, setShippingType,
     discountCode, applyDiscount, itemCount, totalUnits, subtotal,
+    postalCode, setPostalCode, shippingZone, shippingPrice,
   } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -32,6 +34,15 @@ const CartPage = () => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [cpInput, setCpInput] = useState(postalCode);
+
+  const shippingInfo = cpInput.length === 5 ? getShippingInfo(cpInput) : null;
+
+  useEffect(() => {
+    if (cpInput.length === 5) {
+      setPostalCode(cpInput);
+    }
+  }, [cpInput, setPostalCode]);
 
   // Fetch AI recommendations
   useEffect(() => {

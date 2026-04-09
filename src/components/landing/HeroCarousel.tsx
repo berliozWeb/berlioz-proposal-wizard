@@ -4,6 +4,7 @@ import heroCateringImg from "@/assets/hero-catering-corporativo.png";
 import heroGreenBoxImg from "@/assets/hero-green-box.png";
 import heroLunchBoxImg from "@/assets/hero-lunch-box.png";
 import heroPiropoImg from "@/assets/hero-piropo.jpg";
+import heroEmpaquesImg from "@/assets/hero-empaques.jpg";
 
 const SLIDES = [
   {
@@ -19,7 +20,7 @@ const SLIDES = [
     overlay: "rgba(80, 60, 100, 0.35)",
   },
   {
-    image: "https://berlioz.mx/wp-content/uploads/2023/03/Surtido-Camille-Berlioz-bocadillos2-scaled.jpg",
+    image: heroEmpaquesImg,
     line1: "EMPAQUES",
     line2: "BIODEGRADABLES",
     overlay: "rgba(1, 77, 111, 0.40)",

@@ -20,7 +20,7 @@ const SLIDES = [
     overlay: "rgba(80, 60, 100, 0.35)",
   },
   {
-    image: "https://berlioz.mx/wp-content/uploads/2023/03/Surtido-Camille-Berlioz-bocadillos2-scaled.jpg",
+    image: heroEmpaquesImg,
     line1: "EMPAQUES",
     line2: "BIODEGRADABLES",
     overlay: "rgba(1, 77, 111, 0.40)",

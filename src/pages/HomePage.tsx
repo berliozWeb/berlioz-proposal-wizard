@@ -8,6 +8,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import HeroCarousel from "@/components/landing/HeroCarousel";
+import ContactSection from "@/components/landing/ContactSection";
+import NosotrosSection from "@/components/landing/NosotrosSection";
+import RecompensasSection from "@/components/landing/RecompensasSection";
 // Premium Images from src/assets/imagenes_menu
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";

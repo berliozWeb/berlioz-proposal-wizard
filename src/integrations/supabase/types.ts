@@ -110,6 +110,27 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_images_cache: {
+        Row: {
+          generated_at: string | null
+          image_url: string
+          product_id: string
+          prompt_used: string | null
+        }
+        Insert: {
+          generated_at?: string | null
+          image_url: string
+          product_id: string
+          prompt_used?: string | null
+        }
+        Update: {
+          generated_at?: string | null
+          image_url?: string
+          product_id?: string
+          prompt_used?: string | null
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string

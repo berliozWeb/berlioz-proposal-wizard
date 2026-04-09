@@ -74,6 +74,7 @@ interface Package {
   tier: 'esencial' | 'equilibrado' | 'experiencia';
   title: string;
   tagline: string;
+  narrativa?: string;
   items: PackageItem[];
   subtotal: number;
   iva: number;
@@ -286,140 +287,131 @@ function recalc(pkg: Package, people: number) {
   pkg.pricePerPerson = Math.round((pkg.total / people) * 100) / 100;
 }
 
-// ═══ AI COMPOSITION — Lovable AI Gateway ═══
-interface AIPackageSpec {
+// ═══ CLAUDE AI COMPOSITION ═══
+interface ClaudePackageSpec {
   tier: string;
-  product_ids: string[];
-  quantities: number[];
-  reasons: string[];
   tagline: string;
-  highlights: string[];
+  narrativa: string;
+  selectedProductIds: string[];
+  productReasons: Record<string, string>;
 }
 
-async function composeWithAI(
+async function composeWithClaude(
   products: ScoredProduct[],
   req: QuoteRequest,
   feedbackSummary: string,
-): Promise<AIPackageSpec[] | null> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+): Promise<ClaudePackageSpec[] | null> {
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) {
-    console.warn("LOVABLE_API_KEY not set, skipping AI composition");
+    console.warn("ANTHROPIC_API_KEY not set, skipping Claude composition");
     return null;
   }
 
-  // Build compact product catalog for prompt
-  const catalog = products.slice(0, 60).map(p => ({
+  const catalog = products.slice(0, 80).map(p => ({
     id: p.id,
-    name: p.nombre,
-    price: p.effectivePrice,
-    cat: p.categoria,
+    nombre: p.nombre,
+    precio: p.effectivePrice,
+    categoria: p.categoria,
+    descripcion: (p.descripcion || '').slice(0, 80),
+    pricing_model: p.pricing_model,
     score: p.finalScore,
-    pricing: p.pricing_model,
-    tags: p.dietary_tags?.join(',') || '',
-    featured: p.destacado,
+    destacado: p.destacado,
+    dietary_tags: (p.dietary_tags || []).join(','),
   }));
 
-  const systemPrompt = `Eres el motor de composición de Berlioz, un servicio de catering corporativo premium en Ciudad de México.
+  const systemPrompt = `Eres ANA, el motor de cotización inteligente de Berlioz Catering Corporativo en CDMX.
+Tu tarea es seleccionar productos del catálogo para componer 3 paquetes de catering (Esencial, Equilibrado, Experiencia).
 
-Tu tarea: Dada una lista de productos del catálogo y el contexto del evento, componer 3 paquetes de catering (esencial, equilibrado, experiencia) que sean coherentes, bien diferenciados en precio y calidad, y atractivos para el cliente.
-
-REGLAS:
-- Cada paquete debe tener entre 2 y 6 productos
-- esencial: 2-3 items, sin bebidas premium, precio más bajo
+REGLAS ABSOLUTAS — NUNCA violar:
+- SOLO usa productos del array candidatos que recibes
+- NUNCA inventes productos que no estén en candidatos
+- NUNCA inventes precios — usa el campo precio exacto de cada producto
+- Los precios finales (IVA, envío, totales) los calcula el sistema, no tú
+- Solo selecciona productos activos y publicados
+- esencial: 2-3 items, precio más bajo
 - equilibrado: 3-5 items, incluye bebidas, mejor relación calidad-precio
 - experiencia: 4-6 items, todo premium, máxima variedad
-- Los productos con pricing_model="per_person" se multiplican por el número de personas
-- Los productos con pricing_model="per_unit" o "fixed" se piden 1 unidad (o ceil(personas/12) para bebidas en charolas)
-- No repetir el mismo producto en el mismo paquete
+- Prioriza productos con score alto y destacado=true
 - Cada tier debe usar productos DIFERENTES entre sí cuando sea posible
-- Prioriza productos con score alto y featured=true
-- Incluye una razón breve y específica para cada producto seleccionado
-- El tagline debe ser creativo y diferente para cada tier
-- Genera 3 highlights por paquete
 
-RESPONDE EXCLUSIVAMENTE con el JSON usando el tool provisto.`;
+Responde SOLO con JSON válido, sin texto adicional ni markdown.
 
-  const userPrompt = `EVENTO: ${req.eventType}
-PERSONAS: ${req.peopleCount}
-FECHA: ${req.eventDate || 'sin definir'}
-HORA: ${req.eventTime || 'sin definir'}
-DURACIÓN: ${req.durationHours || 'sin definir'} horas
-PRESUPUESTO: ${req.budgetEnabled ? `$${req.budgetPerPerson}/persona` : 'sin límite'}
-RESTRICCIONES DIETÉTICAS: ${req.dietaryRestrictions?.join(', ') || 'ninguna'}
+OUTPUT FORMAT:
+{
+  "packages": [
+    {
+      "tier": "esencial",
+      "tagline": "frase corta memorable",
+      "narrativa": "2 oraciones sobre por qué este paquete encaja con el evento",
+      "selectedProductIds": ["id1", "id2"],
+      "productReasons": { "id1": "razón corta max 8 palabras", "id2": "razón" }
+    },
+    { "tier": "equilibrado", ... },
+    { "tier": "experiencia", ... }
+  ]
+}`;
+
+  const userPrompt = `EVENTO:
+- Tipo: ${req.eventType}
+- Personas: ${req.peopleCount}
+- Fecha: ${req.eventDate || 'sin definir'}
+- Hora: ${req.eventTime || 'sin definir'}
+- Duración: ${req.durationHours || 'sin definir'} horas
+- Presupuesto: ${req.budgetEnabled ? '$' + req.budgetPerPerson + '/persona' : 'sin restricción'}
+- Dieta: ${req.dietaryRestrictions?.join(', ') || 'ninguna'}
 
 ${feedbackSummary ? `HISTORIAL DE PREFERENCIAS:\n${feedbackSummary}\n` : ''}
-CATÁLOGO DISPONIBLE (${catalog.length} productos):
-${JSON.stringify(catalog)}`;
+CANDIDATOS DEL CATÁLOGO (${catalog.length} productos):
+${JSON.stringify(catalog)}
+
+Compón 3 paquetes: Esencial (económico), Equilibrado (balance), Experiencia (premium).`;
 
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "compose_packages",
-            description: "Compose 3 catering packages from the catalog",
-            parameters: {
-              type: "object",
-              properties: {
-                packages: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      tier: { type: "string", enum: ["esencial", "equilibrado", "experiencia"] },
-                      product_ids: { type: "array", items: { type: "string" } },
-                      quantities: { type: "array", items: { type: "number" } },
-                      reasons: { type: "array", items: { type: "string" } },
-                      tagline: { type: "string" },
-                      highlights: { type: "array", items: { type: "string" } },
-                    },
-                    required: ["tier", "product_ids", "quantities", "reasons", "tagline", "highlights"],
-                  },
-                },
-              },
-              required: ["packages"],
-            },
-          },
-        }],
-        tool_choice: { type: "function", function: { name: "compose_packages" } },
+        model: "claude-sonnet-4-5-20250514",
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
       }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error("AI gateway error:", response.status, errText);
+      console.error("Claude API error:", response.status, errText);
       return null;
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      console.warn("No tool call in AI response");
+    const text = data.content?.[0]?.text;
+    if (!text) {
+      console.warn("No text in Claude response");
       return null;
     }
 
-    const args = JSON.parse(toolCall.function.arguments);
-    return args.packages as AIPackageSpec[];
+    // Parse JSON — handle potential markdown wrapping
+    let jsonStr = text.trim();
+    if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
+
+    const parsed = JSON.parse(jsonStr);
+    return parsed.packages as ClaudePackageSpec[];
   } catch (err) {
-    console.error("AI composition error:", err);
+    console.error("Claude composition error:", err);
     return null;
   }
 }
 
-// ═══ BUILD PACKAGE FROM AI SPEC ═══
-function buildPackageFromAI(
-  spec: AIPackageSpec,
+// ═══ BUILD PACKAGE FROM CLAUDE SPEC ═══
+function buildPackageFromClaude(
+  spec: ClaudePackageSpec,
   productMap: Map<string, ScoredProduct>,
   people: number,
 ): Package {
@@ -431,11 +423,12 @@ function buildPackageFromAI(
   };
 
   const items: PackageItem[] = [];
-  for (let i = 0; i < spec.product_ids.length; i++) {
-    const product = productMap.get(spec.product_ids[i]);
+  for (const productId of spec.selectedProductIds) {
+    const product = productMap.get(productId);
     if (!product) continue;
 
-    const qty = spec.quantities[i] || (product.pricing_model === 'per_person' ? people : 1);
+    const qty = product.pricing_model === 'per_person' ? people : 1;
+    const reason = spec.productReasons?.[productId] || product.recommendationReason;
     items.push({
       productId: product.id,
       parentProductId: product.parent_id,
@@ -444,7 +437,7 @@ function buildPackageFromAI(
       unitPrice: product.effectivePrice,
       computedPrice: product.effectivePrice * qty,
       score: product.finalScore,
-      recommendationReason: spec.reasons[i] || product.recommendationReason,
+      recommendationReason: reason,
       imageUrl: product.resolvedImageUrl,
       imageSource: product.imageSource,
       imagePrompt: product.imagePrompt,
@@ -463,6 +456,7 @@ function buildPackageFromAI(
     tier,
     title: titles[tier],
     tagline: spec.tagline,
+    narrativa: spec.narrativa,
     items,
     subtotal,
     iva,
@@ -476,7 +470,7 @@ function buildPackageFromAI(
         : 'Experiencia gastronómica completa.',
     rankingScore: tier === 'equilibrado' ? 90 : tier === 'experiencia' ? 80 : 70,
     isRecommended: tier === 'equilibrado',
-    highlights: spec.highlights?.slice(0, 3) || [],
+    highlights: [],
   };
 }
 
@@ -584,58 +578,28 @@ serve(async (req) => {
       console.warn('Could not fetch feedback data:', e);
     }
 
-    // ── 5. AI Composition (with heuristic fallback) ──
+    // ── 5. AI Composition with Claude (heuristic fallback) ──
     let packages: Package[];
     let engineVersion = 'v1-heuristic';
     let fallbackUsed = false;
 
-    const aiSpecs = await composeWithAI(allScored, body, feedbackSummary);
+    const claudeSpecs = await composeWithClaude(allScored, body, feedbackSummary);
 
-    if (aiSpecs && aiSpecs.length === 3) {
-      // Build packages from AI output
-      packages = aiSpecs.map(spec => buildPackageFromAI(spec, productMap, peopleCount));
+    if (claudeSpecs && claudeSpecs.length === 3) {
+      packages = claudeSpecs.map(spec => buildPackageFromClaude(spec, productMap, peopleCount));
 
-      // Validate: each package must have at least 1 item
       const valid = packages.every(p => p.items.length >= 1);
       if (valid) {
-        engineVersion = 'v2-ai-composed';
+        engineVersion = 'v3-claude-sonnet';
         ensureDifferentiation(packages, peopleCount);
       } else {
-        console.warn('AI packages invalid (empty items), falling back to heuristic');
+        console.warn('Claude packages invalid (empty items), falling back to heuristic');
         fallbackUsed = true;
-        // Fall through to heuristic
-        const scoredByTier: Record<string, ScoredProduct[]> = {};
-        for (const tier of ['esencial', 'equilibrado', 'experiencia'] as const) {
-          scoredByTier[tier] = allProducts.map(p => {
-            const { score, reason } = scoreProduct(p, body, tier);
-            const img = resolveImage(p, parentMap);
-            return { ...p, finalScore: score, recommendationReason: reason, resolvedImageUrl: img.url, imageSource: img.source, imagePrompt: img.prompt, effectivePrice: p.precio ?? p.precio_min ?? 0 };
-          }).filter(p => p.effectivePrice > 0);
-        }
-        packages = [
-          composePackageHeuristic('esencial', scoredByTier['esencial'], body),
-          composePackageHeuristic('equilibrado', scoredByTier['equilibrado'], body),
-          composePackageHeuristic('experiencia', scoredByTier['experiencia'], body),
-        ];
-        ensureDifferentiation(packages, peopleCount);
+        packages = buildHeuristicFallback(allProducts, body, parentMap, peopleCount);
       }
     } else {
-      // Heuristic fallback
       fallbackUsed = true;
-      const scoredByTier: Record<string, ScoredProduct[]> = {};
-      for (const tier of ['esencial', 'equilibrado', 'experiencia'] as const) {
-        scoredByTier[tier] = allProducts.map(p => {
-          const { score, reason } = scoreProduct(p, body, tier);
-          const img = resolveImage(p, parentMap);
-          return { ...p, finalScore: score, recommendationReason: reason, resolvedImageUrl: img.url, imageSource: img.source, imagePrompt: img.prompt, effectivePrice: p.precio ?? p.precio_min ?? 0 };
-        }).filter(p => p.effectivePrice > 0);
-      }
-      packages = [
-        composePackageHeuristic('esencial', scoredByTier['esencial'], body),
-        composePackageHeuristic('equilibrado', scoredByTier['equilibrado'], body),
-        composePackageHeuristic('experiencia', scoredByTier['experiencia'], body),
-      ];
-      ensureDifferentiation(packages, peopleCount);
+      packages = buildHeuristicFallback(allProducts, body, parentMap, peopleCount);
     }
 
     // ── 6. Persist proposal ──
@@ -646,13 +610,13 @@ serve(async (req) => {
         .insert({
           quote_request_id: quoteRequest.id,
           engine_version: engineVersion,
-          strategy_used: engineVersion === 'v2-ai-composed' ? 'ai-composition' : 'scoring-contextual',
+          strategy_used: engineVersion === 'v3-claude-sonnet' ? 'claude-composition' : 'scoring-contextual',
           fallback_used: fallbackUsed,
           total_estimated: packages.find(p => p.isRecommended)?.total || packages[1]?.total,
           shipping_amount: BASE_SHIPPING,
           tax_amount: packages.find(p => p.isRecommended)?.iva || 0,
-          recommendation_summary: engineVersion === 'v2-ai-composed'
-            ? 'Propuesta compuesta por IA usando catálogo real y preferencias históricas.'
+          recommendation_summary: engineVersion === 'v3-claude-sonnet'
+            ? 'Propuesta compuesta por Claude AI usando catálogo real y preferencias históricas.'
             : 'Propuesta generada con scoring heurístico basado en catálogo real Berlioz.',
           reasoning_json: {
             productsRetrieved: allProducts.length,
@@ -701,8 +665,8 @@ serve(async (req) => {
       engineVersion,
       fallbackUsed,
       packages,
-      recommendationSummary: engineVersion === 'v2-ai-composed'
-        ? 'Propuesta inteligente generada con IA, basada en el catálogo Berlioz y las preferencias de clientes anteriores.'
+      recommendationSummary: engineVersion === 'v3-claude-sonnet'
+        ? 'Propuesta inteligente generada con Claude AI, basada en el catálogo Berlioz y las preferencias de clientes anteriores.'
         : 'Propuesta generada con el catálogo real de Berlioz.',
       debug: {
         retrievalStrategy: 'rpc-search_products_for_quote',
@@ -722,3 +686,27 @@ serve(async (req) => {
     });
   }
 });
+
+// ═══ HEURISTIC FALLBACK HELPER ═══
+function buildHeuristicFallback(
+  allProducts: DbProduct[],
+  body: QuoteRequest,
+  parentMap: Map<string, DbProduct>,
+  peopleCount: number,
+): Package[] {
+  const scoredByTier: Record<string, ScoredProduct[]> = {};
+  for (const tier of ['esencial', 'equilibrado', 'experiencia'] as const) {
+    scoredByTier[tier] = allProducts.map(p => {
+      const { score, reason } = scoreProduct(p, body, tier);
+      const img = resolveImage(p, parentMap);
+      return { ...p, finalScore: score, recommendationReason: reason, resolvedImageUrl: img.url, imageSource: img.source, imagePrompt: img.prompt, effectivePrice: p.precio ?? p.precio_min ?? 0 };
+    }).filter(p => p.effectivePrice > 0);
+  }
+  const pkgs = [
+    composePackageHeuristic('esencial', scoredByTier['esencial'], body),
+    composePackageHeuristic('equilibrado', scoredByTier['equilibrado'], body),
+    composePackageHeuristic('experiencia', scoredByTier['experiencia'], body),
+  ];
+  ensureDifferentiation(pkgs, peopleCount);
+  return pkgs;
+}

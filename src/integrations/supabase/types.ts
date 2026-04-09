@@ -512,7 +512,11 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_role: string
           avatar_url: string | null
+          bank_transfer_enabled: boolean
+          bank_transfer_enabled_at: string | null
+          bank_transfer_enabled_by: string | null
           company_name: string | null
           created_at: string
           email: string | null
@@ -533,7 +537,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_role?: string
           avatar_url?: string | null
+          bank_transfer_enabled?: boolean
+          bank_transfer_enabled_at?: string | null
+          bank_transfer_enabled_by?: string | null
           company_name?: string | null
           created_at?: string
           email?: string | null
@@ -556,7 +564,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_role?: string
           avatar_url?: string | null
+          bank_transfer_enabled?: boolean
+          bank_transfer_enabled_at?: string | null
+          bank_transfer_enabled_by?: string | null
           company_name?: string | null
           created_at?: string
           email?: string | null

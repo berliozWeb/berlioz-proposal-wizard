@@ -28,7 +28,7 @@ const TIME_SLOTS = [
 ];
 
 const CheckoutPage = () => {
-  const { items, totals, shippingType, notes, clearCart, setEarlySurcharge } = useCart();
+  const { items, totals, shippingType, notes, clearCart, setEarlySurcharge, setPostalCode, shippingZone, shippingPrice } = useCart();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
@@ -60,14 +60,15 @@ const CheckoutPage = () => {
     if (items.length === 0) navigate("/menu");
   }, [items.length, navigate]);
 
-  // CP validation
+  // CP validation via zone calculator
+  const cpShippingInfo = cp.length === 5 ? getShippingInfo(cp) : null;
+  const cpValid = cpShippingInfo ? cpShippingInfo.isValid : null;
+
   useEffect(() => {
     if (cp.length === 5) {
-      setCpValid(VALID_CPS.includes(cp));
-    } else {
-      setCpValid(null);
+      setPostalCode(cp);
     }
-  }, [cp]);
+  }, [cp, setPostalCode]);
 
   // Company autocomplete
   useEffect(() => {

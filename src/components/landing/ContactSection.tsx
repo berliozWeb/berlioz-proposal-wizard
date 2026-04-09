@@ -1,6 +1,6 @@
 import { Phone, Mail, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import contactBg from "@/assets/contacto-bg.png";
+import contactBg from "@/assets/contacto-bg.jpg";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 
 const ContactSection = () => (

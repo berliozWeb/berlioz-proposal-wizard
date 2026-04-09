@@ -62,7 +62,7 @@ const CatalogPage = () => {
     let list = [...productos];
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
+      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion_corta?.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
     }
     if (filter === "favoritos") {
       list = list.filter((p) => p.popularity_rank != null);
@@ -225,8 +225,8 @@ const CatalogPage = () => {
                               {toTitleCase(product.nombre)}
                             </h3>
                           </Link>
-                          {product.descripcion && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{stripHtml(product.descripcion).replace(/\s+/g, ' ').trim()}</p>
+                          {(product.descripcion_corta || product.descripcion) && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{(product.descripcion_corta || stripHtml(product.descripcion || '')).replace(/\s+/g, ' ').trim()}</p>
                           )}
 
                           <div className="mt-auto flex items-center justify-between">

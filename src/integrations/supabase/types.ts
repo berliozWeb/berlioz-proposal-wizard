@@ -373,6 +373,7 @@ export type Database = {
           cotizable: boolean | null
           created_at: string | null
           descripcion: string | null
+          descripcion_corta: string | null
           destacado: boolean | null
           dietary_tags: string[] | null
           id: string
@@ -403,6 +404,7 @@ export type Database = {
           cotizable?: boolean | null
           created_at?: string | null
           descripcion?: string | null
+          descripcion_corta?: string | null
           destacado?: boolean | null
           dietary_tags?: string[] | null
           id: string
@@ -433,6 +435,7 @@ export type Database = {
           cotizable?: boolean | null
           created_at?: string | null
           descripcion?: string | null
+          descripcion_corta?: string | null
           destacado?: boolean | null
           dietary_tags?: string[] | null
           id?: string

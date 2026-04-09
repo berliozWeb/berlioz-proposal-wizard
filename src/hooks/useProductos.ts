@@ -12,6 +12,7 @@ export interface Producto {
   precio_max: number | null;
   precio_rebajado: number | null;
   descripcion: string | null;
+  descripcion_corta: string | null;
   variante_nombre: string | null;
   variantes: string | null;
   imagen: string | null;

@@ -112,7 +112,7 @@ const ProductDetailPage = () => {
             name: data.nombre,
             slug: data.id,
             description: data.descripcion,
-            short_description: data.descripcion,
+            short_description: (data as any).descripcion_corta || data.descripcion,
             price_per_person: data.precio ?? data.precio_min ?? 0,
             image_url: imgUrl,
             occasion: data.categoria ? [data.categoria] : [],
@@ -202,6 +202,7 @@ const ProductDetailPage = () => {
 
   const finalPrice = localItem ? getDisplayPrice(localItem, quantity) : product.price_per_person;
   const cleanDescription = stripHtml(product.description || product.short_description || '');
+  const shortDescription = product.short_description ? stripHtml(product.short_description) : (cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription);
 
   return (
     <BaseLayout>
@@ -304,7 +305,7 @@ const ProductDetailPage = () => {
                       {toTitleCase(product.name)}
                     </h1>
                     <p className="font-body text-lg text-muted-foreground max-w-xl leading-relaxed">
-                      {cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription}
+                      {shortDescription}
                     </p>
                   </div>
 

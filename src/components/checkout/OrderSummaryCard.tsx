@@ -1,8 +1,9 @@
 import { useCart } from "@/contexts/CartContext";
 import { formatMXN } from "@/domain/value-objects/Money";
+import { MapPin } from "lucide-react";
 
 const OrderSummaryCard = ({ children }: { children?: React.ReactNode }) => {
-  const { totals } = useCart();
+  const { totals, shippingZone } = useCart();
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 sticky top-28">
@@ -13,7 +14,9 @@ const OrderSummaryCard = ({ children }: { children?: React.ReactNode }) => {
           <span>{formatMXN(totals.subtotal)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Envío</span>
+          <span className="text-muted-foreground">
+            Envío {shippingZone !== null && shippingZone !== 0 ? `(Zona ${shippingZone})` : ""}
+          </span>
           <span className={totals.shipping === 0 ? "text-success" : ""}>
             {totals.shipping === 0 ? "Gratis" : formatMXN(totals.shipping)}
           </span>

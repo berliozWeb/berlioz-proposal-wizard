@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import heroCateringImg from "@/assets/hero-catering-corporativo.png";
+import heroIngredientesImg from "@/assets/hero-ingredientes.png";
 import heroGreenBoxImg from "@/assets/hero-green-box.png";
 import heroLunchBoxImg from "@/assets/hero-lunch-box.png";
 import heroPiropoImg from "@/assets/hero-piropo.jpg";
@@ -11,37 +12,37 @@ const SLIDES = [
     image: heroCateringImg,
     line1: "DESAYUNO · COFFEE BREAK · WORKING LUNCH",
     line2: "EN TU SALA DE JUNTAS",
-    overlay: "rgba(1, 77, 111, 0.22)",
+    overlay: "rgba(0, 120, 180, 0.18)",
   },
   {
-    image: "https://berlioz.mx/wp-content/uploads/2023/03/Breakfast-in-Montreal-Berlioz1-scaled.jpg",
+    image: heroIngredientesImg,
     line1: "INGREDIENTES",
     line2: "CUIDADOSAMENTE SELECCIONADOS",
-    overlay: "rgba(80, 60, 100, 0.18)",
+    overlay: "rgba(80, 140, 60, 0.15)",
   },
   {
     image: heroEmpaquesImg,
     line1: "EMPAQUES",
     line2: "BIODEGRADABLES",
-    overlay: "rgba(1, 77, 111, 0.20)",
+    overlay: "rgba(0, 140, 160, 0.16)",
   },
   {
     image: heroGreenBoxImg,
     line1: "GREEN BOX",
     line2: "LIGERA, VERDE, DELICIOSA",
-    overlay: "rgba(20, 40, 30, 0.15)",
+    overlay: "rgba(40, 130, 60, 0.12)",
   },
   {
     image: heroLunchBoxImg,
     line1: "LUNCH BOX",
     line2: "GOURMET",
-    overlay: "rgba(30, 20, 10, 0.18)",
+    overlay: "rgba(180, 100, 20, 0.14)",
   },
   {
     image: heroPiropoImg,
     line1: "PIROPO",
     line2: "TORTAS CON ONDA",
-    overlay: "rgba(5, 15, 20, 0.25)",
+    overlay: "rgba(200, 80, 40, 0.18)",
   },
 ];
 
@@ -107,7 +108,7 @@ const HeroCarousel = () => {
                 textTransform: "uppercase",
                 lineHeight: 1.2,
                 margin: "0 0 16px",
-                textShadow: "0 2px 24px rgba(0,0,0,0.6), 0 1px 6px rgba(0,0,0,0.4)",
+                textShadow: "0 2px 16px rgba(0,0,0,0.45), 0 1px 4px rgba(0,0,0,0.3)",
               }}
             >
               {slide.line1}
@@ -121,7 +122,7 @@ const HeroCarousel = () => {
                 letterSpacing: "0.25em",
                 textTransform: "uppercase",
                 margin: 0,
-                textShadow: "0 2px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)",
+                textShadow: "0 2px 12px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2)",
               }}
             >
               {slide.line2}

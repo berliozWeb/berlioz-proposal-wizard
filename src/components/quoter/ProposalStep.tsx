@@ -125,10 +125,15 @@ function buildFromSmartQuote(smartData: SmartQuoteResponse): Record<PackageTier,
         imageUrl: item.imageUrl,
         imageSource: item.imageSource,
         sourceType: item.sourceType,
+        productId: item.productId,
+        imagen_url: item.imageUrl,
+        categoria: item.categoria,
       })),
       recommendationReason: pkg.recommendationReason,
       isRecommended: pkg.isRecommended,
       highlights: pkg.highlights,
+      narrativa: pkg.narrativa,
+      tagline: pkg.tagline,
     };
   }
 

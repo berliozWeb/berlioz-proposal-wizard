@@ -50,6 +50,81 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          created_at: string | null
+          first_order_at: string | null
+          id: string
+          last_order_at: string | null
+          metadata: Json | null
+          name: string
+          total_orders: number | null
+          total_revenue: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          first_order_at?: string | null
+          id?: string
+          last_order_at?: string | null
+          metadata?: Json | null
+          name: string
+          total_orders?: number | null
+          total_revenue?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          first_order_at?: string | null
+          id?: string
+          last_order_at?: string | null
+          metadata?: Json | null
+          name?: string
+          total_orders?: number | null
+          total_revenue?: number | null
+        }
+        Relationships: []
+      }
+      coupons: {
+        Row: {
+          code: string
+          created_at: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          min_order_amount: number | null
+          used_count: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_order_amount?: number | null
+          used_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          min_order_amount?: number | null
+          used_count?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       delivery_addresses: {
         Row: {
           address_text: string

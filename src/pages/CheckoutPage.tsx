@@ -142,6 +142,13 @@ const CheckoutPage = () => {
         discount_code: null,
         payment_method: paymentMethod,
         points_earned: Math.floor(totals.total / 50),
+        shipping_zone: shippingZone,
+        shipping_cost_breakdown: {
+          zone: shippingZone,
+          base_cost: shippingPrice ?? 360,
+          surcharge_early: totals.earlySurcharge,
+          total: totals.shipping + totals.earlySurcharge,
+        },
       };
 
       // Only insert order if user is authenticated

@@ -225,8 +225,8 @@ const CatalogPage = () => {
                               {toTitleCase(product.nombre)}
                             </h3>
                           </Link>
-                          {product.descripcion && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{stripHtml(product.descripcion).replace(/\s+/g, ' ').trim()}</p>
+                          {(product.descripcion_corta || product.descripcion) && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{(product.descripcion_corta || stripHtml(product.descripcion || '')).replace(/\s+/g, ' ').trim()}</p>
                           )}
 
                           <div className="mt-auto flex items-center justify-between">

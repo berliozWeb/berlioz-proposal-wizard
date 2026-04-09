@@ -15,6 +15,8 @@ import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/berlioz-logo.png";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import { ProductCollage } from "@/components/ProductCollage";
+import { buildProductImageUrl } from "@/lib/imageUtils";
+import { useProductImage } from "@/hooks/useProductImage";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -34,6 +36,11 @@ interface ProposalItem {
   imageUrl?: string | null;
   imageSource?: string;
   sourceType?: 'supabase' | 'deterministic-fallback';
+  productId?: string;
+  imagen?: string | null;
+  imagen_url?: string | null;
+  descripcion?: string | null;
+  categoria?: string | null;
 }
 
 interface PackageState {

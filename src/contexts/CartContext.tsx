@@ -22,6 +22,9 @@ interface CartState {
   discountAmount: number;
   discountType: "fixed" | "percentage";
   earlySurcharge: number;
+  shippingZone: number | null;
+  shippingPrice: number | null;
+  postalCode: string;
 }
 
 interface CartTotals {
@@ -39,6 +42,9 @@ interface CartContextType {
   notes: string;
   discountCode: string | null;
   discountAmount: number;
+  shippingZone: number | null;
+  shippingPrice: number | null;
+  postalCode: string;
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -47,6 +53,7 @@ interface CartContextType {
   applyDiscount: (code: string) => Promise<boolean>;
   clearCart: () => void;
   setEarlySurcharge: (amount: number) => void;
+  setPostalCode: (cp: string) => void;
   itemCount: number;
   totalUnits: number;
   subtotal: number;
@@ -63,6 +70,9 @@ const EMPTY_STATE: CartState = {
   discountAmount: 0,
   discountType: "fixed",
   earlySurcharge: 0,
+  shippingZone: null,
+  shippingPrice: null,
+  postalCode: "",
 };
 
 const CartContext = createContext<CartContextType | null>(null);

@@ -112,7 +112,7 @@ const ProductDetailPage = () => {
             name: data.nombre,
             slug: data.id,
             description: data.descripcion,
-            short_description: data.descripcion,
+            short_description: (data as any).descripcion_corta || data.descripcion,
             price_per_person: data.precio ?? data.precio_min ?? 0,
             image_url: imgUrl,
             occasion: data.categoria ? [data.categoria] : [],
@@ -305,7 +305,7 @@ const ProductDetailPage = () => {
                       {toTitleCase(product.name)}
                     </h1>
                     <p className="font-body text-lg text-muted-foreground max-w-xl leading-relaxed">
-                      {cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription}
+                      {shortDescription}
                     </p>
                   </div>
 

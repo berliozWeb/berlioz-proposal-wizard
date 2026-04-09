@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check, Sparkles, Info } from "lucide-react";
@@ -202,6 +202,15 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [sidebarCategory, setSidebarCategory] = useState(SIDEBAR_CATEGORIES[0]);
   const [swapTarget, setSwapTarget] = useState<{ tier: PackageTier; instanceId: string } | null>(null);
   const [selectedTier, setSelectedTier] = useState<PackageTier | null>(null);
+  const [hasReceivedSmartData, setHasReceivedSmartData] = useState(!!smartQuoteData);
+
+  // When smartQuoteData arrives after initial render, rebuild packages
+  useEffect(() => {
+    if (smartQuoteData && !hasReceivedSmartData) {
+      setPackages(buildFromSmartQuote(smartQuoteData));
+      setHasReceivedSmartData(true);
+    }
+  }, [smartQuoteData, hasReceivedSmartData]);
 
   // Helpers
   const toggleSection = (tier: PackageTier) => setOpenSections(p => ({ ...p, [tier]: !p[tier] }));
@@ -530,8 +539,20 @@ export default function ProposalStep(props: ProposalStepProps) {
           </p>
         </div>
 
+        {/* Loading overlay while Claude AI composes */}
+        {smartQuoteLoading && !hasReceivedSmartData && (
+          <div className="mb-12 flex flex-col items-center justify-center gap-4 py-16">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
+            </div>
+            <p className="font-heading text-lg font-bold text-foreground">Componiendo tu propuesta con IA...</p>
+            <p className="font-body text-sm text-muted-foreground italic">Claude AI está seleccionando los mejores productos del catálogo para tu evento</p>
+          </div>
+        )}
+
         {/* ═══ THREE PROPOSAL CARDS — IMAGE-FIRST DESIGN ═══ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
+        <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20 transition-opacity duration-500", smartQuoteLoading && !hasReceivedSmartData ? "opacity-40 pointer-events-none" : "opacity-100")}>
           {TIERS.map((tier, idx) => {
             const pkg = packages[tier.id];
             const t = tierTotals[tier.id];

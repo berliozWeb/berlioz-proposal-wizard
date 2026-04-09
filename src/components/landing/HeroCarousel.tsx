@@ -30,7 +30,7 @@ const SLIDES = [
     overlay: "rgba(20, 40, 30, 0.30)",
   },
   {
-    image: "https://berlioz.mx/wp-content/uploads/2025/08/aqua-box2-scaled.jpg",
+    image: heroLunchBoxImg,
     line1: "LUNCH BOX",
     line2: "GOURMET",
     overlay: "rgba(30, 20, 10, 0.35)",

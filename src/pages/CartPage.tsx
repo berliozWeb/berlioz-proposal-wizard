@@ -363,9 +363,20 @@ const CartPage = () => {
                 )}
               </div>
 
-              <Button onClick={() => navigate("/checkout")} className="w-full" size="lg">
-                FINALIZAR COMPRA →
-              </Button>
+              {shippingInfo && shippingInfo.zone === 0 ? (
+                <Button
+                  onClick={() => window.open("https://wa.me/5215582375469?text=Hola%2C+necesito+cotización+de+envío+para+CP+" + cpInput, "_blank")}
+                  className="w-full"
+                  size="lg"
+                  variant="outline"
+                >
+                  Solicitar cotización de envío →
+                </Button>
+              ) : (
+                <Button onClick={() => navigate("/checkout")} className="w-full" size="lg">
+                  FINALIZAR COMPRA →
+                </Button>
+              )}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDependencies } from '@/presentation/providers/AppDependenciesProvider';
+import { supabase } from '@/integrations/supabase/client';
 import type { IntakeForm } from '@/domain/entities/IntakeForm';
 import type { Proposal } from '@/domain/entities/Proposal';
 import type { AgentState } from '@/domain/entities/AgentState';

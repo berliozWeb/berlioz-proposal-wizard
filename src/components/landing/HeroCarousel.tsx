@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import heroCateringImg from "@/assets/hero-catering-corporativo.png";
 import heroGreenBoxImg from "@/assets/hero-green-box.png";
+import heroLunchBoxImg from "@/assets/hero-lunch-box.png";
 
 const SLIDES = [
   {

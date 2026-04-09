@@ -12,15 +12,16 @@ import { useProductos, type Producto } from "@/hooks/useProductos";
 
 /* ── constants ── */
 const CATEGORY_FILTERS = [
+  { value: "favoritos", label: "Favoritos", emoji: "⭐" },
   { value: "todos", label: "Todos", emoji: "🍽️" },
   { value: "Coffee Break", label: "Coffee Break", emoji: "☕" },
   { value: "Working Lunch", label: "Working Lunch", emoji: "🍱" },
   { value: "Desayuno", label: "Desayuno", emoji: "🍳" },
   { value: "Bebidas", label: "Bebidas", emoji: "🥤" },
-  { value: "Vegano / Vegetariano", label: "Vegano", emoji: "🌱" },
-  { value: "Tortas Piropo", label: "Tortas", emoji: "🥖" },
+  { value: "vegano", label: "Vegano/Vegetariano", emoji: "🌱" },
+  { value: "keto", label: "Keto", emoji: "🥑" },
+  { value: "Tortas Piropo", label: "Tortas Piropo", emoji: "🥖" },
   { value: "Entrega Especial", label: "Entrega Especial", emoji: "🎁" },
-  { value: "destacado", label: "Favoritos", emoji: "⭐" },
 ];
 
 const SORT_OPTIONS = [

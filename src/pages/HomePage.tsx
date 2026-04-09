@@ -39,7 +39,7 @@ import logoGrupoMex from "@/assets/logos/grupomex-1.jpeg";
 import testimoniosPepsico from "@/assets/logos/testimonios_pepsico.jpg";
 import testimoniosPalmolive from "@/assets/logos/testimonios_palmolive.jpg";
 import testimoniosIos from "@/assets/logos/testimonios_iosOffices.jpg";
-import logoDhl from "@/assets/logos/dhl.webp";
+import logoDhl from "@/assets/logos/dhl.svg";
 
 /* ── data ── */
 const CLIENT_LOGOS = [

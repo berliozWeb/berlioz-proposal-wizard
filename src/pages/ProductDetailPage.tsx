@@ -65,7 +65,9 @@ function getNext7Days() {
 const ProductDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { addItem, itemCount, deliveryDate, deliverySlot, setDeliveryDate, setDeliverySlot } = useCart();
+  const { addItem, itemCount } = useCart();
+  const [deliveryDate, setDeliveryDate] = useState<string | null>(null);
+  const [deliverySlot, setDeliverySlot] = useState<string | null>(null);
   
   const [product, setProduct] = useState<Product | null>(null);
   const [localItem, setLocalItem] = useState<MenuItem | null>(null);

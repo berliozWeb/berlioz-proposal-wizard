@@ -560,7 +560,7 @@ serve(async (req) => {
     const productMap = new Map<string, ScoredProduct>();
     allScored.forEach(p => productMap.set(p.id, p));
 
-    // ── 4. Fetch learning data (feedback history) ──
+    // ── 4. Fetch learning data (feedback + sales history) ──
     let feedbackSummary = '';
     try {
       const { data: popular } = await supabase
@@ -578,12 +578,41 @@ serve(async (req) => {
       console.warn('Could not fetch feedback data:', e);
     }
 
+    // ── 4b. Fetch real sales history from 2025 ──
+    let salesContext = '';
+    try {
+      const relevantCategories = categories;
+      let salesQuery = supabase
+        .from('sales_history')
+        .select('product_name, product_id, categoria, total_qty_sold, total_revenue, unique_companies, avg_order_size, peak_months, common_time_slots')
+        .order('total_revenue', { ascending: false })
+        .limit(25);
+
+      if (relevantCategories.length > 0) {
+        salesQuery = salesQuery.in('categoria', relevantCategories);
+      }
+
+      const { data: salesData } = await salesQuery;
+
+      if (salesData && salesData.length > 0) {
+        const totalRevenue = salesData.reduce((s: number, r: any) => s + (r.total_revenue || 0), 0);
+        const totalUnits = salesData.reduce((s: number, r: any) => s + (r.total_qty_sold || 0), 0);
+        salesContext = `\nDATOS DE VENTAS REALES 2025 (${totalUnits.toLocaleString()} unidades, $${Math.round(totalRevenue).toLocaleString()} MXN en revenue):\n` +
+          salesData.slice(0, 15).map((r: any) =>
+            `- ${r.product_name}: ${r.total_qty_sold} uds vendidas, $${Math.round(r.total_revenue).toLocaleString()} revenue, ${r.unique_companies} empresas, horarios populares: ${(r.common_time_slots || []).slice(0, 2).join(', ')}`
+          ).join('\n') +
+          `\nPrioriza estos productos probados por el mercado. Los clientes los prefieren por experiencia comprobada.`;
+      }
+    } catch (e) {
+      console.warn('Could not fetch sales history:', e);
+    }
+
     // ── 5. AI Composition with Claude (heuristic fallback) ──
     let packages: Package[];
     let engineVersion = 'v1-heuristic';
     let fallbackUsed = false;
 
-    const claudeSpecs = await composeWithClaude(allScored, body, feedbackSummary);
+    const claudeSpecs = await composeWithClaude(allScored, body, feedbackSummary + salesContext);
 
     if (claudeSpecs && claudeSpecs.length === 3) {
       packages = claudeSpecs.map(spec => buildPackageFromClaude(spec, productMap, peopleCount));

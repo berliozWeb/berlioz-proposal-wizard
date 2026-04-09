@@ -41,9 +41,9 @@ const Footer = () => (
           </h4>
           <ul className="space-y-2.5">
             {[
-              { to: "/menu", label: "Menú" },
+              { to: "/menu", label: "Realizar Pedido" },
               { to: "/cotizar", label: "Cotizar evento" },
-              { to: "/dashboard/recompensas", label: "Recompensas" },
+              { to: "/#recompensas", label: "Recompensas" },
             ].map((link) => (
               <li key={link.to}>
                 <Link to={link.to} className="transition-colors" style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}

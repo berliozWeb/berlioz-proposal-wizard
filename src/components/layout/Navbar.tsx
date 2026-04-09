@@ -40,17 +40,6 @@ const Navbar = () => {
     setDropdownOpen(false);
   };
 
-  const handleAnchorClick = (hash: string) => {
-    const id = hash.replace("/#", "");
-    if (location.pathname === "/") {
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: "smooth" });
-    } else {
-      window.location.href = hash;
-    }
-    setMobileOpen(false);
-  };
-
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50"
@@ -69,40 +58,22 @@ const Navbar = () => {
         {/* Desktop nav */}
         <div className="hidden md:flex items-center" style={{ gap: 36 }}>
           {NAV_LINKS.map((link) => (
-            link.isAnchor ? (
-              <button
-                key={link.to}
-                onClick={() => handleAnchorClick(link.to)}
-                className="relative transition-colors bg-transparent border-none cursor-pointer"
-                style={{
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontWeight: 500,
-                  fontSize: 14,
-                  color: '#014D6F',
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#1A6485'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#014D6F'; }}
-              >
-                {link.label}
-              </button>
-            ) : (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="relative transition-colors"
-                style={{
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontWeight: location.pathname === link.to ? 700 : 500,
-                  fontSize: 14,
-                  color: '#014D6F',
-                  textDecoration: 'none',
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#1A6485'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#014D6F'; }}
-              >
-                {link.label}
-              </Link>
-            )
+            <Link
+              key={link.to}
+              to={link.to}
+              className="relative transition-colors"
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                fontWeight: location.pathname === link.to ? 700 : 500,
+                fontSize: 14,
+                color: '#014D6F',
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#1A6485'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#014D6F'; }}
+            >
+              {link.label}
+            </Link>
           ))}
         </div>
 
@@ -208,15 +179,9 @@ const Navbar = () => {
         <div className="md:hidden animate-slide-up" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA' }}>
           <div style={{ padding: '16px 24px' }} className="space-y-3">
             {NAV_LINKS.map((link) => (
-              link.isAnchor ? (
-                <button key={link.to} onClick={() => handleAnchorClick(link.to)} className="block py-2 bg-transparent border-none text-left w-full" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', fontFamily: "'Montserrat', sans-serif" }}>
-                  {link.label}
-                </button>
-              ) : (
-                <Link key={link.to} to={link.to} className="block py-2 transition-colors hover:opacity-80" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
-                  {link.label}
-                </Link>
-              )
+              <Link key={link.to} to={link.to} className="block py-2 transition-colors hover:opacity-80" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+                {link.label}
+              </Link>
             ))}
             {!user && (
               <Link to="/login" className="block py-2" style={{ fontSize: 16, fontWeight: 500, color: '#1A6485', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>

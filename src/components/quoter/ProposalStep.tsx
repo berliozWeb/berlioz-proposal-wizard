@@ -328,123 +328,213 @@ export default function ProposalStep(props: ProposalStepProps) {
     toast.success("Cotización guardada");
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     try {
       const tier = selectedTier || "equilibrado";
       const t = tierTotals[tier];
       const items = packages[tier].items;
+      const tierInfo = TIERS.find(ti => ti.id === tier);
       const doc = new jsPDF();
-      
-      const primaryColor: [number, number, number] = [1, 77, 111];
-      const secondaryColor = [100, 100, 100];
-      const accentColor = [190, 155, 123]; // gold/amber tone
 
-      // === HEADER ===
-      // Add logo
+      const primary: [number, number, number] = [1, 77, 111];
+      const gold: [number, number, number] = [190, 155, 123];
+      const gray: [number, number, number] = [100, 100, 100];
+      const lightBg: [number, number, number] = [248, 246, 243];
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 14;
+      const contentW = pageW - margin * 2;
+
+      // Helper to load image as base64
+      const loadImageBase64 = (url: string): Promise<string | null> => {
+        return new Promise(resolve => {
+          if (!url) return resolve(null);
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = 120;
+              canvas.height = 120;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) return resolve(null);
+              // Cover-fit
+              const s = Math.min(img.width, img.height);
+              const sx = (img.width - s) / 2;
+              const sy = (img.height - s) / 2;
+              ctx.drawImage(img, sx, sy, s, s, 0, 0, 120, 120);
+              resolve(canvas.toDataURL('image/jpeg', 0.75));
+            } catch { resolve(null); }
+          };
+          img.onerror = () => resolve(null);
+          img.src = url;
+        });
+      };
+
+      // Pre-load all product images
+      const imagePromises = items.map(item => {
+        const url = buildProductImageUrl(item.imagen_url, item.imagen) || '';
+        return loadImageBase64(url);
+      });
+      const loadedImages = await Promise.all(imagePromises);
+
+      // ══════ HEADER ══════
       try {
-        doc.addImage(logoImg, "PNG", 14, 15, 30, 8);
-      } catch (e) {
-        // Log skip if image fails
-        doc.setFontSize(22); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]); 
-        doc.text("BERLIOZ", 14, 20);
+        doc.addImage(logoImg, "PNG", margin, 12, 30, 8);
+      } catch {
+        doc.setFontSize(20); doc.setTextColor(...primary);
+        doc.text("BERLIOZ", margin, 18);
       }
 
-      doc.setFontSize(10); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]); 
-      doc.text("L'art de recevoir — Cotización Gourmet", 14, 30);
-      
-      doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setLineWidth(0.5);
-      doc.line(14, 35, 196, 35);
+      doc.setFontSize(9); doc.setTextColor(...gray);
+      doc.text("L'art de recevoir — Cotización Gourmet", margin, 27);
 
-      // === CLIENT INFO ===
-      doc.setFontSize(9); doc.setTextColor(0, 0, 0);
-      let y = 45;
-      
-      // Column 1
-      doc.setFont("helvetica", "bold"); doc.text("RECEPTOR", 14, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Atención: ${clientName || "—"}`, 14, y + 6);
-      doc.text(`Empresa: ${empresa || "—"}`, 14, y + 12);
-      doc.text(`Evento: ${eventLabel}`, 14, y + 18);
-      doc.text(`Zona (CP): ${postalCode || "—"}`, 14, y + 24);
+      // Gold accent line
+      doc.setDrawColor(...gold); doc.setLineWidth(0.8);
+      doc.line(margin, 31, pageW - margin, 31);
 
-      // Column 2
-      doc.setFont("helvetica", "bold"); doc.text("DETALLES LOGÍSTICOS", 110, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(`ID Cotización: ${quoteId}`, 110, y + 6);
-      doc.text(`Fecha del Evento: ${date ? format(date, "d/MM/yyyy") : "—"}`, 110, y + 12);
-      doc.text(`Hora de Entrega: ${deliveryTime || "—"}`, 110, y + 18);
-      doc.text(`Personas: ${people}`, 110, y + 24);
-      doc.text(`Duración: ${duration || "—"}`, 110, y + 30);
+      // ══════ CLIENT INFO (2-col) ══════
+      let y = 40;
+      doc.setFontSize(8); doc.setTextColor(...primary); doc.setFont("helvetica", "bold");
+      doc.text("RECEPTOR", margin, y);
+      doc.text("DETALLES LOGÍSTICOS", 110, y);
+      doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
+      y += 5;
+      doc.text(`Atención: ${clientName || "—"}`, margin, y);
+      doc.text(`ID: ${quoteId}`, 110, y);
+      y += 4.5;
+      doc.text(`Empresa: ${empresa || "—"}`, margin, y);
+      doc.text(`Fecha: ${date ? format(date, "d/MM/yyyy") : "—"}`, 110, y);
+      y += 4.5;
+      doc.text(`Evento: ${eventLabel}`, margin, y);
+      doc.text(`Entrega: ${deliveryTime || "—"}`, 110, y);
+      y += 4.5;
+      doc.text(`CP: ${postalCode || "—"}`, margin, y);
+      doc.text(`Personas: ${people} · Duración: ${duration || "—"}`, 110, y);
 
-      // === ITEMS TABLE ===
-      const tableData = items.map(i => [
-        i.productName, 
-        formatMXN(i.unitPrice), 
-        `${i.qty}`, 
-        formatMXN(i.unitPrice * i.qty)
-      ]);
+      // ══════ TIER BADGE ══════
+      y += 10;
+      doc.setFillColor(...primary);
+      doc.roundedRect(margin, y, contentW, 12, 2, 2, 'F');
+      doc.setFontSize(12); doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
+      doc.text(`Paquete ${tierInfo?.title || tier}`, margin + 6, y + 8);
+      doc.setFontSize(8); doc.setFont("helvetica", "normal");
+      doc.text(tierInfo?.subtitle || '', pageW - margin - 4, y + 8, { align: 'right' });
 
-      autoTable(doc, {
-        startY: y + 40,
-        head: [["Descripción", "Precio Unitario", "Cantidad", "Subtotal"]],
-        body: tableData,
-        theme: "striped",
-        headStyles: { fillColor: primaryColor, textColor: 255, fontSize: 9, fontStyle: "bold" },
-        bodyStyles: { fontSize: 8, textColor: 50 },
-        columnStyles: {
-          0: { cellWidth: "auto" },
-          1: { halign: "right", cellWidth: 35 },
-          2: { halign: "center", cellWidth: 25 },
-          3: { halign: "right", cellWidth: 35 },
-        },
+      // ══════ PRODUCT CARDS (with images) ══════
+      y += 18;
+      const cardH = 22;
+      const imgSize = 16;
+      const cardPad = 3;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const lineTotal = item.unitPrice * item.qty;
+
+        // Check page break
+        if (y + cardH + 4 > 270) {
+          doc.addPage();
+          y = 20;
+        }
+
+        // Alternating row background
+        if (i % 2 === 0) {
+          doc.setFillColor(...lightBg);
+          doc.roundedRect(margin, y - 1, contentW, cardH, 1.5, 1.5, 'F');
+        }
+
+        // Product thumbnail
+        const imgData = loadedImages[i];
+        const imgX = margin + cardPad;
+        const imgY = y + (cardH - imgSize) / 2;
+        if (imgData) {
+          try {
+            doc.addImage(imgData, 'JPEG', imgX, imgY, imgSize, imgSize);
+          } catch {
+            // Draw placeholder
+            doc.setFillColor(230, 230, 230);
+            doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, 'F');
+          }
+        } else {
+          doc.setFillColor(230, 230, 230);
+          doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, 'F');
+          doc.setFontSize(6); doc.setTextColor(180, 180, 180);
+          doc.text('📷', imgX + 5, imgY + 9);
+        }
+
+        // Product name
+        const textX = imgX + imgSize + 4;
+        doc.setFontSize(9); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold");
+        doc.text(item.productName, textX, y + 8);
+
+        // Recommendation reason (small)
+        if (item.recommendationReason) {
+          doc.setFontSize(6); doc.setTextColor(...gray); doc.setFont("helvetica", "italic");
+          const reason = item.recommendationReason.length > 60
+            ? item.recommendationReason.slice(0, 57) + '...'
+            : item.recommendationReason;
+          doc.text(`💡 ${reason}`, textX, y + 13);
+        }
+
+        // Qty + price (right-aligned)
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...gray);
+        doc.text(`${item.qty} × ${formatMXN(item.unitPrice)}`, pageW - margin - 40, y + 8);
+        doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
+        doc.text(formatMXN(lineTotal), pageW - margin - 2, y + 8, { align: 'right' });
+
+        y += cardH + 2;
+      }
+
+      // ══════ TOTALS BOX ══════
+      if (y + 50 > 270) { doc.addPage(); y = 20; }
+      y += 4;
+      doc.setDrawColor(...gold); doc.setLineWidth(0.5);
+      doc.line(margin, y, pageW - margin, y);
+      y += 6;
+
+      const totalsX = 140;
+      doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+      doc.text("Subtotal:", totalsX, y); doc.text(formatMXN(t.subtotal), pageW - margin, y, { align: 'right' });
+      y += 5;
+      doc.text("Logística y Envío:", totalsX, y); doc.text(formatMXN(t.shipping + t.early), pageW - margin, y, { align: 'right' });
+      y += 5;
+      doc.text("IVA (16%):", totalsX, y); doc.text(formatMXN(t.iva), pageW - margin, y, { align: 'right' });
+      y += 7;
+
+      // Grand total highlight
+      doc.setFillColor(...primary);
+      doc.roundedRect(totalsX - 4, y - 5, pageW - margin - totalsX + 8, 12, 2, 2, 'F');
+      doc.setFontSize(13); doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
+      doc.text("TOTAL:", totalsX, y + 3);
+      doc.text(formatMXN(t.total), pageW - margin, y + 3, { align: 'right' });
+
+      // Per person
+      y += 14;
+      doc.setFontSize(8); doc.setTextColor(...gray); doc.setFont("helvetica", "normal");
+      doc.text(`${formatMXN(Math.round(t.total / Math.max(1, people)))}/persona`, pageW - margin, y, { align: 'right' });
+
+      // ══════ FOOTER NOTES ══════
+      y += 8;
+      if (y + 40 > 270) { doc.addPage(); y = 20; }
+      doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
+      doc.line(margin, y, pageW - margin, y);
+      y += 5;
+      doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.setTextColor(...primary);
+      doc.text("NOTAS IMPORTANTES", margin, y);
+      doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+      y += 4;
+      QUOTE_FOOTER_NOTES.slice(0, 8).forEach(note => {
+        doc.text(`• ${note}`, margin, y);
+        y += 3.5;
       });
 
-      // === TOTALS ===
-      const lastY = (doc as any).lastAutoTable.finalY + 10;
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      
-      const alignRight = 196;
-      doc.text(`Subtotal:`, 140, lastY);
-      doc.text(formatMXN(t.subtotal), alignRight, lastY, { align: "right" });
-      
-      doc.text(`Logística y Envío:`, 140, lastY + 6);
-      doc.text(formatMXN(t.shipping + t.early), alignRight, lastY + 6, { align: "right" });
-      
-      doc.text(`IVA (16%):`, 140, lastY + 12);
-      doc.text(formatMXN(t.iva), alignRight, lastY + 12, { align: "right" });
-      
-      doc.setFontSize(14); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setFont("helvetica", "bold");
-      doc.text(`TOTAL:`, 140, lastY + 22);
-      doc.text(formatMXN(t.total), alignRight, lastY + 22, { align: "right" });
-
-      // === FOOTER NOTES ===
-      doc.setFontSize(8); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-      let ny = Math.max(lastY + 40, 230);
-      
-      doc.setFont("helvetica", "bold");
-      doc.text("NOTAS IMPORTANTES", 14, ny);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      
-      ny += 5;
-      QUOTE_FOOTER_NOTES.slice(0, 8).forEach(note => { 
-        doc.text(`• ${note}`, 14, ny); 
-        ny += 4; 
-      });
-
-      // === BRAND CONTACT ===
-      doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.setLineWidth(0.5);
-      doc.line(14, 275, 196, 275);
-      
-      doc.setFontSize(8); doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setFont("helvetica", "bold");
-      doc.text("Anne Seguy | hola@berlioz.mx | 55 8237 5469", 14, 282);
-      doc.setFont("helvetica", "normal"); doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-      doc.text(`Válida hasta: ${format(validUntil, "dd/MM/yyyy")} | ID: ${quoteId}`, 14, 287);
+      // ══════ BRAND FOOTER ══════
+      const footerY = doc.internal.pageSize.getHeight() - 12;
+      doc.setDrawColor(...gold); doc.setLineWidth(0.5);
+      doc.line(margin, footerY - 3, pageW - margin, footerY - 3);
+      doc.setFontSize(8); doc.setTextColor(...primary); doc.setFont("helvetica", "bold");
+      doc.text("Anne Seguy | hola@berlioz.mx | 55 8237 5469", margin, footerY);
+      doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+      doc.text(`Válida hasta: ${format(validUntil, "dd/MM/yyyy")} | ID: ${quoteId}`, margin, footerY + 4);
 
       doc.save(`Berlioz-Cotizacion-${format(new Date(), "yyyyMMdd")}.pdf`);
       toast.success("Tu cotización en PDF se ha generado correctamente");

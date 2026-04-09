@@ -58,7 +58,6 @@ const CLIENT_LOGOS = [
   { src: logoWalmart, alt: "Walmart" },
   { src: logoWework, alt: "WeWork" },
   { src: logoZebra, alt: "Zebra" },
-  { src: logoCoolhunter, alt: "Coolhunter" },
   { src: logoGrupoMex, alt: "Grupo México" },
 ];
 

@@ -24,6 +24,8 @@ import QuotesPage from "./pages/QuotesPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import ConfirmationPage from "./pages/ConfirmationPage";
 import AccountPage from "./pages/AccountPage";
+import CartPage from "./pages/CartPage";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage";
 import Propuesta from "./pages/Propuesta";
 import AdminLeads from "./pages/AdminLeads";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -54,6 +56,7 @@ const App = () => (
                 <Route path="/producto/:slug" element={<ProductDetailPage />} />
                 <Route path="/contacto" element={<ContactoPage />} />
                 <Route path="/recompensas" element={<RecompensasPublicPage />} />
+                <Route path="/carrito" element={<CartPage />} />
 
                 {/* Auth required */}
                 <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
@@ -62,8 +65,8 @@ const App = () => (
                 <Route path="/dashboard/equipo" element={<ProtectedRoute><TeamPage /></ProtectedRoute>} />
                 <Route path="/dashboard/recompensas" element={<ProtectedRoute><RewardsPage /></ProtectedRoute>} />
                 <Route path="/cotizaciones" element={<ProtectedRoute><QuotesPage /></ProtectedRoute>} />
-                <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-                <Route path="/checkout/confirmacion" element={<ProtectedRoute><ConfirmationPage /></ProtectedRoute>} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/checkout/confirmacion" element={<OrderConfirmationPage />} />
                 <Route path="/cuenta" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
 
                 {/* Legacy */}

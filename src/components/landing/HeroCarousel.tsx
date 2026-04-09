@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import heroCateringImg from "@/assets/hero-catering-corporativo.png";
 import heroGreenBoxImg from "@/assets/hero-green-box.png";
 import heroLunchBoxImg from "@/assets/hero-lunch-box.png";
+import heroPiropoImg from "@/assets/hero-piropo.jpg";
 
 const SLIDES = [
   {
@@ -36,7 +37,7 @@ const SLIDES = [
     overlay: "rgba(30, 20, 10, 0.35)",
   },
   {
-    image: "https://berlioz.mx/wp-content/uploads/2021/03/tortas_gourmet2-scaled.jpg",
+    image: heroPiropoImg,
     line1: "PIROPO",
     line2: "TORTAS CON ONDA",
     overlay: "rgba(5, 15, 20, 0.55)",

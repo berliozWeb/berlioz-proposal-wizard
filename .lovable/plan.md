@@ -1,28 +1,51 @@
 
 
-## Problema
+## Plan: Favoritos basados en datos reales de ventas + nueva estructura de categorías
 
-Los overlays del carrusel tienen opacidades muy altas (0.30–0.55) con colores oscuros, lo que apaga las imágenes y les quita vida. El slide de Piropo es el peor con `rgba(5, 15, 20, 0.55)`.
+### Problema
+La vista de "Realizar Pedido" no prioriza los productos más vendidos. El usuario quiere que la vista por defecto sea "Favoritos" (basado en datos reales de 121K+ órdenes), y reorganizar las categorías del filtro.
 
-## Solución
+### Enfoque
 
-Reducir la opacidad de cada overlay significativamente y usar tonos más claros/cálidos para mantener legibilidad del texto sin oscurecer tanto las fotos. Además, reforzar el `textShadow` del texto para que siga siendo legible sin depender tanto del overlay.
+**1. Importar datos del CSV a la tabla `sales_history` existente (o usarla directamente)**
 
-### Cambios en `src/components/landing/HeroCarousel.tsx`
+La tabla `sales_history` ya tiene 218 productos con `total_qty_sold` y `total_revenue`. Esto ya representa los favoritos. No necesitamos re-importar el CSV — los datos ya están ahí.
 
-**Overlays más ligeros:**
-| Slide | Antes | Después |
-|-------|-------|---------|
-| Catering | `rgba(1, 77, 111, 0.45)` | `rgba(1, 77, 111, 0.22)` |
-| Ingredientes | `rgba(80, 60, 100, 0.35)` | `rgba(80, 60, 100, 0.18)` |
-| Empaques | `rgba(1, 77, 111, 0.40)` | `rgba(1, 77, 111, 0.20)` |
-| Green Box | `rgba(20, 40, 30, 0.30)` | `rgba(20, 40, 30, 0.15)` |
-| Lunch Box | `rgba(30, 20, 10, 0.35)` | `rgba(30, 20, 10, 0.18)` |
-| Piropo | `rgba(5, 15, 20, 0.55)` | `rgba(5, 15, 20, 0.25)` |
+**2. Crear una columna `popularity_rank` en `productos`**
 
-**Texto más legible sin overlay pesado:**
-- Aumentar `textShadow` en line1 a `0 2px 24px rgba(0,0,0,0.6), 0 1px 6px rgba(0,0,0,0.4)`
-- Aumentar `textShadow` en line2 a `0 2px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)`
+Agregar un campo numérico `popularity_rank` a la tabla `productos` y llenarlo con un ranking basado en `sales_history.total_qty_sold`, haciendo match por nombre o SKU. Los productos sin ventas quedan con rank NULL (no son favoritos).
 
-Esto deja que las fotos brillen con mucha más luz y color, mientras el texto sigue siendo perfectamente legible gracias al shadow más fuerte.
+Migración SQL:
+- `ALTER TABLE productos ADD COLUMN popularity_rank smallint DEFAULT NULL`
+- `UPDATE productos SET popularity_rank = ...` usando JOIN con `sales_history` ordenado por `total_qty_sold DESC`
+
+**3. Reorganizar los filtros de categoría en `CatalogPage.tsx`**
+
+Nuevo orden de pills:
+| Filtro | Lógica |
+|--------|--------|
+| ⭐ Favoritos (default) | `popularity_rank IS NOT NULL`, ordenar por `popularity_rank ASC` |
+| 🍽️ Todos | Sin filtro |
+| ☕ Coffee Break | `categoria = 'Coffee Break'` |
+| 🍱 Working Lunch | `categoria = 'Working Lunch'` |
+| 🍳 Desayuno | `categoria = 'Desayuno'` |
+| 🥤 Bebidas | `categoria = 'Bebidas'` |
+| 🌱 Vegano/Vegetariano | `dietary_tags` contiene 'vegano' o 'vegetariano' |
+| 🥑 Keto | `dietary_tags` contiene 'keto' |
+| 🥖 Tortas Piropo | `categoria = 'Tortas Piropo'` |
+| 🎁 Entrega Especial | `categoria = 'Entrega Especial'` |
+
+**4. Modificar `useProductos` y `CatalogPage`**
+
+- El estado inicial del filtro será `"favoritos"` en vez de `"todos"`
+- Cuando el filtro es "favoritos", filtrar por `popularity_rank NOT NULL` y ordenar por rank
+- Actualizar el array `CATEGORY_FILTERS` con el nuevo orden
+
+### Archivos a modificar
+- **Migración SQL**: agregar `popularity_rank` y poblarla desde `sales_history`
+- **`src/pages/CatalogPage.tsx`**: reordenar filtros, default a favoritos, lógica de filtrado por rank
+- **`src/hooks/useProductos.ts`**: (posiblemente) agregar soporte para ordenar por popularity_rank
+
+### Resultado
+Al entrar a "/menu", el usuario ve primero los ~50 productos más vendidos según datos reales, con un badge de popularidad. Puede cambiar a cualquier otra categoría con un click.
 

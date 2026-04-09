@@ -48,6 +48,8 @@ interface PackageState {
   recommendationReason?: string;
   isRecommended?: boolean;
   highlights?: string[];
+  narrativa?: string;
+  tagline?: string;
 }
 
 interface ProposalStepProps {

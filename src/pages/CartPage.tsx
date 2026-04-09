@@ -235,32 +235,87 @@ const CartPage = () => {
                   <span className="font-medium">{formatMXN(totals.subtotal)}</span>
                 </div>
 
-                {/* Shipping type */}
+                {/* Shipping — zone-based */}
                 <div className="space-y-2">
-                  <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Envío</span>
-                  <label className={cn("flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all", shippingType === "delivery" ? "border-primary bg-primary/5" : "border-border")}>
-                    <input type="radio" name="shipping" checked={shippingType === "delivery"} onChange={() => setShippingType("delivery")} className="accent-primary" />
-                    <div className="flex-1">
-                      <span className="font-medium">Entrega a domicilio</span>
-                      <span className="ml-2 font-semibold">$360.00</span>
+                  <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Envío — ingresa tu CP</span>
+                  <Input
+                    value={cpInput}
+                    onChange={(e) => setCpInput(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                    placeholder="Ej. 06600"
+                    maxLength={5}
+                    className="text-sm"
+                  />
+                  {shippingInfo && shippingInfo.zone === 0 && (
+                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                      ⚠️ {shippingInfo.message}
                     </div>
-                  </label>
-                  <label className={cn("flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all", shippingType === "pickup" ? "border-primary bg-primary/5" : "border-border")}>
-                    <input type="radio" name="shipping" checked={shippingType === "pickup"} onChange={() => setShippingType("pickup")} className="accent-primary mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Recoger en sucursal</span>
-                        <span className="font-semibold text-green-600">Gratis</span>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> Lago Onega 265, Modelo Pensil
-                      </p>
+                  )}
+                  {shippingInfo && shippingInfo.zone !== null && shippingInfo.zone !== 0 && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      Zona {shippingInfo.zone} — Envío: <span className="font-semibold text-foreground">{formatMXN(shippingInfo.price!)}</span>
+                    </p>
+                  )}
+                  {shippingInfo && shippingInfo.message && shippingInfo.zone !== null && shippingInfo.zone >= 5 && (
+                    <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700 flex items-start gap-2">
+                      <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{shippingInfo.message}</span>
                     </div>
-                  </label>
-                  {totalUnits <= 10 && shippingType === "delivery" && (
-                    <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700">
-                      💡 Para grupos de hasta 10 personas recomendamos recoger tu pedido. Ahorra $360 en envío.
-                    </div>
+                  )}
+
+                  {/* Delivery vs Pickup */}
+                  {shippingInfo && shippingInfo.zone !== 0 && (
+                    <>
+                      <label className={cn("flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all", shippingType === "delivery" ? "border-primary bg-primary/5" : "border-border")}>
+                        <input type="radio" name="shipping" checked={shippingType === "delivery"} onChange={() => setShippingType("delivery")} className="accent-primary" />
+                        <div className="flex-1">
+                          <span className="font-medium">Entrega a domicilio</span>
+                          <span className="ml-2 font-semibold">{shippingInfo.price !== null ? formatMXN(shippingInfo.price) : ""}</span>
+                        </div>
+                      </label>
+                      {shippingInfo.hasPickup && (
+                        <label className={cn("flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all", shippingType === "pickup" ? "border-primary bg-primary/5" : "border-border")}>
+                          <input type="radio" name="shipping" checked={shippingType === "pickup"} onChange={() => setShippingType("pickup")} className="accent-primary mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Recoger en sucursal</span>
+                              <span className="font-semibold text-green-600">Gratis</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" /> Lago Onega 265, Modelo Pensil, 11450 CDMX
+                            </p>
+                          </div>
+                        </label>
+                      )}
+                      {totalUnits <= 10 && shippingType === "delivery" && (
+                        <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700">
+                          💡 Para grupos de hasta 10 personas recomendamos recoger tu pedido. Ahorra {shippingInfo.price !== null ? formatMXN(shippingInfo.price) : "$360"} en envío.
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {(!shippingInfo || cpInput.length < 5) && (
+                    <>
+                      <label className={cn("flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all", shippingType === "delivery" ? "border-primary bg-primary/5" : "border-border")}>
+                        <input type="radio" name="shipping" checked={shippingType === "delivery"} onChange={() => setShippingType("delivery")} className="accent-primary" />
+                        <div className="flex-1">
+                          <span className="font-medium">Entrega a domicilio</span>
+                          <span className="ml-2 text-xs text-muted-foreground">(ingresa CP para ver precio)</span>
+                        </div>
+                      </label>
+                      <label className={cn("flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all", shippingType === "pickup" ? "border-primary bg-primary/5" : "border-border")}>
+                        <input type="radio" name="shipping" checked={shippingType === "pickup"} onChange={() => setShippingType("pickup")} className="accent-primary mt-0.5" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Recoger en sucursal</span>
+                            <span className="font-semibold text-green-600">Gratis</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> Lago Onega 265, Modelo Pensil, 11450 CDMX
+                          </p>
+                        </div>
+                      </label>
+                    </>
                   )}
                 </div>
 

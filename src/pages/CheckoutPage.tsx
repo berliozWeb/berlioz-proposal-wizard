@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDays, format, isWeekend, isBefore, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, MapPin, CreditCard, Landmark, AlertTriangle } from "lucide-react";
+import { Check, MapPin, CreditCard, Landmark, AlertTriangle, Info } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,27 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { getShippingInfo } from "@/utils/shippingCalculator";
 
 function formatMXN(n: number) {
   return "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-const VALID_CPS = [
-  "11520","11000","06600","11560","06500","11510","01210","11700","06700","05348",
-  "06760","11590","11800","01000","01020","01030","01040","01050","01060","01070",
-  "03100","03200","03300","03400","03500","03600","03700","03800","03900","04000",
-  "06000","06010","06020","06030","06040","06050","06100","06140","06170","06200",
-  "06300","06350","06400","06470","06720","06780","06800","06820","06840","06860",
-  "06880","06900","10200","10700","10710","10720","11200","11210","11220","11230",
-  "11240","11250","11260","11300","11310","11320","11400","11410","11420","11430",
-  "11440","11450","11460","11470","11480","11490","11530","11540","11550","11570",
-  "11580","11600","11610","11620","11630","11640","11650","11660","11670","11680",
-  "11690","11710","11720","11730","11740","11750","11760","11810","11820","11830",
-  "11840","11850","11860","11870","11880","11890","11900","11910","11920","11930",
-  "11940","11950","52760","52780","52786","52787","52790","52930","53100","53110",
-  "53120","53126","53130","53140","53150","53160","53220","53300","53310","53390",
-  "53398","53900","53910","53920","53930","53950",
-];
+// removed — CP validation now uses getShippingInfo from shippingCalculator
 
 const TIME_SLOTS = [
   { value: "7:30", label: "7:30 AM" },

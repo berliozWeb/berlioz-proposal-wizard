@@ -3,12 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart, User, Menu, X, Phone, ChevronDown, LogOut, Package, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { to: "/menu", label: "Menú" },
+  { to: "/menu", label: "Realizar Pedido" },
   { to: "/cotizar", label: "Cotizar" },
-  { to: "/dashboard/recompensas", label: "Recompensas" },
+  { to: "/#recompensas", label: "Recompensas", isAnchor: true },
+  { to: "/#contacto", label: "Contacto", isAnchor: true },
 ];
 
 const Navbar = () => {
@@ -40,6 +40,17 @@ const Navbar = () => {
     setDropdownOpen(false);
   };
 
+  const handleAnchorClick = (hash: string) => {
+    const id = hash.replace("/#", "");
+    if (location.pathname === "/") {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = hash;
+    }
+    setMobileOpen(false);
+  };
+
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50"
@@ -58,22 +69,40 @@ const Navbar = () => {
         {/* Desktop nav */}
         <div className="hidden md:flex items-center" style={{ gap: 36 }}>
           {NAV_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="relative transition-colors"
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                fontWeight: location.pathname === link.to ? 700 : 500,
-                fontSize: 14,
-                color: '#014D6F',
-                textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#1A6485'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#014D6F'; }}
-            >
-              {link.label}
-            </Link>
+            link.isAnchor ? (
+              <button
+                key={link.to}
+                onClick={() => handleAnchorClick(link.to)}
+                className="relative transition-colors bg-transparent border-none cursor-pointer"
+                style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 14,
+                  color: '#014D6F',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#1A6485'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#014D6F'; }}
+              >
+                {link.label}
+              </button>
+            ) : (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="relative transition-colors"
+                style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: location.pathname === link.to ? 700 : 500,
+                  fontSize: 14,
+                  color: '#014D6F',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#1A6485'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#014D6F'; }}
+              >
+                {link.label}
+              </Link>
+            )
           ))}
         </div>
 
@@ -89,25 +118,25 @@ const Navbar = () => {
             55 8237 5469
           </a>
 
+          {/* Cart — always visible */}
+          <Link to="/checkout" className="relative p-1.5" style={{ color: '#014D6F' }}>
+            <ShoppingCart style={{ width: 20, height: 20 }} />
+            {itemCount > 0 && (
+              <span
+                className="absolute flex items-center justify-center"
+                style={{
+                  top: -2, right: -2, width: 18, height: 18, borderRadius: '50%',
+                  background: '#014D6F', color: 'white', fontSize: 10, fontWeight: 700,
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
+              >
+                {itemCount}
+              </span>
+            )}
+          </Link>
+
           {user ? (
             <>
-              {/* Cart */}
-              <Link to="/checkout" className="relative p-1.5" style={{ color: '#014D6F' }}>
-                <ShoppingCart style={{ width: 20, height: 20 }} />
-                {itemCount > 0 && (
-                  <span
-                    className="absolute flex items-center justify-center"
-                    style={{
-                      top: -2, right: -2, width: 18, height: 18, borderRadius: '50%',
-                      background: '#014D6F', color: 'white', fontSize: 10, fontWeight: 700,
-                      fontFamily: "'Montserrat', sans-serif",
-                    }}
-                  >
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-
               {/* Avatar dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center" style={{ gap: 8 }}>
@@ -147,14 +176,24 @@ const Navbar = () => {
               </div>
             </>
           ) : (
-            <>
-              <Link to="/login" className="hidden md:inline-flex items-center transition-colors hover:opacity-80" style={{ gap: 6, height: 36, padding: '0 16px', fontSize: 14, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
-                <User style={{ width: 16, height: 16 }} /> Iniciar sesión
-              </Link>
-              <Link to="/cotizar" className="hidden md:inline-flex items-center justify-center transition-all hover:opacity-90" style={{ height: 36, padding: '0 20px', borderRadius: 6, background: '#014D6F', color: 'white', fontSize: 14, fontWeight: 600, letterSpacing: '0.04em', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
-                Cotizar
-              </Link>
-            </>
+            <Link
+              to="/login"
+              className="hidden md:inline-flex items-center gap-2 transition-all hover:opacity-90"
+              style={{
+                height: 36,
+                padding: '0 20px',
+                borderRadius: 6,
+                background: '#014D6F',
+                color: 'white',
+                fontSize: 14,
+                fontWeight: 600,
+                textDecoration: 'none',
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              <User style={{ width: 16, height: 16 }} />
+              Iniciar sesión
+            </Link>
           )}
 
           {/* Mobile hamburger */}
@@ -169,9 +208,15 @@ const Navbar = () => {
         <div className="md:hidden animate-slide-up" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA' }}>
           <div style={{ padding: '16px 24px' }} className="space-y-3">
             {NAV_LINKS.map((link) => (
-              <Link key={link.to} to={link.to} className="block py-2 transition-colors hover:opacity-80" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
-                {link.label}
-              </Link>
+              link.isAnchor ? (
+                <button key={link.to} onClick={() => handleAnchorClick(link.to)} className="block py-2 bg-transparent border-none text-left w-full" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', fontFamily: "'Montserrat', sans-serif" }}>
+                  {link.label}
+                </button>
+              ) : (
+                <Link key={link.to} to={link.to} className="block py-2 transition-colors hover:opacity-80" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+                  {link.label}
+                </Link>
+              )
             ))}
             {!user && (
               <Link to="/login" className="block py-2" style={{ fontSize: 16, fontWeight: 500, color: '#1A6485', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>

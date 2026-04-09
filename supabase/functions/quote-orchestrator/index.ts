@@ -612,7 +612,7 @@ serve(async (req) => {
     let engineVersion = 'v1-heuristic';
     let fallbackUsed = false;
 
-    const claudeSpecs = await composeWithClaude(allScored, body, feedbackSummary);
+    const claudeSpecs = await composeWithClaude(allScored, body, feedbackSummary + salesContext);
 
     if (claudeSpecs && claudeSpecs.length === 3) {
       packages = claudeSpecs.map(spec => buildPackageFromClaude(spec, productMap, peopleCount));

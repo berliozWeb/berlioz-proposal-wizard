@@ -8,9 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import HeroCarousel from "@/components/landing/HeroCarousel";
-import ContactSection from "@/components/landing/ContactSection";
 import NosotrosSection from "@/components/landing/NosotrosSection";
-import RecompensasSection from "@/components/landing/RecompensasSection";
 // Premium Images from src/assets/imagenes_menu
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";
@@ -380,9 +378,6 @@ const HomePage = () => {
       {/* ═══ SECTION — NOSOTROS ═══ */}
       <NosotrosSection />
 
-      {/* ═══ SECTION — RECOMPENSAS ═══ */}
-      <RecompensasSection />
-
       {/* ═══ SECTION 6 — HOW IT WORKS ═══ */}
       <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-6 text-center">
@@ -410,9 +405,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
-      {/* ═══ SECTION — CONTACTO ═══ */}
-      <ContactSection />
     </BaseLayout>
   );
 };

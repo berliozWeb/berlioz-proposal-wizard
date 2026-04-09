@@ -180,7 +180,7 @@ const CheckoutPage = () => {
         // Award loyalty points
         if (profile) {
           await supabase.from("profiles").update({
-            loyalty_points: (profile.loyalty_points ?? 0) + orderData.points_earned,
+            loyalty_points: ((profile as any).loyalty_points ?? 0) + orderData.points_earned,
           }).eq("id", user.id);
         }
 

@@ -72,6 +72,7 @@ const App = () => (
 
                 {/* Legacy */}
                 <Route path="/admin-leads" element={<AdminLeads />} />
+                <Route path="/admin/customers" element={<ProtectedRoute><AdminCustomersPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

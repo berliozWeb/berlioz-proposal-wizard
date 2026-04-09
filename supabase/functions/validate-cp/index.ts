@@ -1,4 +1,7 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const VALID_CPS: Record<string, string> = {
   "11520": "Polanco","11000": "Polanco","06600": "Juárez","11560": "Polanco",

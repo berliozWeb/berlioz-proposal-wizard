@@ -149,21 +149,18 @@ const Navbar = () => {
           ) : (
             <Link
               to="/login"
-              className="hidden md:inline-flex items-center gap-2 transition-all hover:opacity-90"
+              className="hidden md:inline-flex items-center justify-center transition-all hover:opacity-80"
               style={{
+                width: 36,
                 height: 36,
-                padding: '0 20px',
-                borderRadius: 6,
+                borderRadius: '50%',
                 background: '#014D6F',
                 color: 'white',
-                fontSize: 14,
-                fontWeight: 600,
                 textDecoration: 'none',
-                fontFamily: "'Montserrat', sans-serif",
               }}
+              title="Iniciar sesión"
             >
-              <User style={{ width: 16, height: 16 }} />
-              Iniciar sesión
+              <User style={{ width: 18, height: 18 }} />
             </Link>
           )}
 

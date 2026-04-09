@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import heroCateringImg from "@/assets/hero-catering-corporativo.png";
 
 const SLIDES = [
   {

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getShippingInfo } from "@/utils/shippingCalculator";
 
 export interface CartItem {
   id: string;
@@ -137,6 +138,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, earlySurcharge: amount }));
   }, []);
 
+  const setPostalCode = useCallback((cp: string) => {
+    const info = getShippingInfo(cp);
+    setState((prev) => ({
+      ...prev,
+      postalCode: cp,
+      shippingZone: info.zone,
+      shippingPrice: info.price,
+    }));
+  }, []);
+
   const applyDiscount = useCallback(async (code: string): Promise<boolean> => {
     try {
       // Try coupons table first, then discount_codes as fallback
@@ -202,7 +213,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const subtotal = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const totals = useMemo((): CartTotals => {
-    const shipping = state.shippingType === "pickup" ? 0 : 360;
+    const shippingBase = state.shippingPrice ?? 360;
+    const shipping = state.shippingType === "pickup" ? 0 : shippingBase;
     const earlySurcharge = state.earlySurcharge;
     const iva = Math.round(subtotal * 0.16);
     let discount = 0;
@@ -215,7 +227,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     const total = Math.max(0, subtotal + iva + shipping + earlySurcharge - discount);
     return { subtotal, iva, shipping, earlySurcharge, discount, total };
-  }, [subtotal, state.shippingType, state.discountAmount, state.discountType, state.earlySurcharge]);
+  }, [subtotal, state.shippingType, state.shippingPrice, state.discountAmount, state.discountType, state.earlySurcharge]);
 
   return (
     <CartContext.Provider
@@ -225,6 +237,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         notes: state.notes,
         discountCode: state.discountCode,
         discountAmount: state.discountAmount,
+        shippingZone: state.shippingZone,
+        shippingPrice: state.shippingPrice,
+        postalCode: state.postalCode,
         addItem,
         removeItem,
         updateQuantity,
@@ -233,6 +248,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         applyDiscount,
         clearCart,
         setEarlySurcharge,
+        setPostalCode,
         itemCount,
         totalUnits,
         subtotal,

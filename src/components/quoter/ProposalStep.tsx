@@ -202,6 +202,15 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [sidebarCategory, setSidebarCategory] = useState(SIDEBAR_CATEGORIES[0]);
   const [swapTarget, setSwapTarget] = useState<{ tier: PackageTier; instanceId: string } | null>(null);
   const [selectedTier, setSelectedTier] = useState<PackageTier | null>(null);
+  const [hasReceivedSmartData, setHasReceivedSmartData] = useState(!!smartQuoteData);
+
+  // When smartQuoteData arrives after initial render, rebuild packages
+  useEffect(() => {
+    if (smartQuoteData && !hasReceivedSmartData) {
+      setPackages(buildFromSmartQuote(smartQuoteData));
+      setHasReceivedSmartData(true);
+    }
+  }, [smartQuoteData, hasReceivedSmartData]);
 
   // Helpers
   const toggleSection = (tier: PackageTier) => setOpenSections(p => ({ ...p, [tier]: !p[tier] }));

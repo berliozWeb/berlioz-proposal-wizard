@@ -49,11 +49,27 @@ const CheckoutPage = () => {
   const [eventTime, setEventTime] = useState("");
   const [deliverySlot, setDeliverySlot] = useState<string | null>(null);
   const [instructions, setInstructions] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [paymentMethod, setPaymentMethod] = useState("card");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [timeError, setTimeError] = useState<string | null>(null);
   const [companySuggestions, setCompanySuggestions] = useState<string[]>([]);
+  const [bankTransferEnabled, setBankTransferEnabled] = useState(false);
+
+  // Check if bank transfer is enabled for this user
+  useEffect(() => {
+    if (!user) { setBankTransferEnabled(false); return; }
+    supabase
+      .from("profiles")
+      .select("bank_transfer_enabled")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.bank_transfer_enabled) {
+          setBankTransferEnabled(true);
+        }
+      });
+  }, [user]);
 
   // Redirect if empty cart
   useEffect(() => {
@@ -423,20 +439,22 @@ const CheckoutPage = () => {
             <section>
               <h2 className="font-heading text-xl mb-4 text-foreground">Método de pago</h2>
               <div className="space-y-3">
-                <label className={cn("flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all", paymentMethod === "bank_transfer" ? "border-primary bg-primary/5" : "border-border bg-card")}>
-                  <input type="radio" name="payment" checked={paymentMethod === "bank_transfer"} onChange={() => setPaymentMethod("bank_transfer")} className="accent-primary mt-1" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Landmark className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-body text-sm font-medium">Transferencia bancaria directa</span>
+                {bankTransferEnabled && (
+                  <label className={cn("flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all", paymentMethod === "bank_transfer" ? "border-primary bg-primary/5" : "border-border bg-card")}>
+                    <input type="radio" name="payment" checked={paymentMethod === "bank_transfer"} onChange={() => setPaymentMethod("bank_transfer")} className="accent-primary mt-1" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Landmark className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-body text-sm font-medium">Transferencia bancaria directa</span>
+                      </div>
+                      {paymentMethod === "bank_transfer" && (
+                        <p className="font-body text-xs text-muted-foreground mt-2">
+                          Realiza tu pago directamente a nuestra cuenta bancaria. Usa el número de pedido como referencia. Tu pedido no será enviado hasta recibir confirmación de pago.
+                        </p>
+                      )}
                     </div>
-                    {paymentMethod === "bank_transfer" && (
-                      <p className="font-body text-xs text-muted-foreground mt-2">
-                        Realiza tu pago a nuestra cuenta bancaria. Usa el número de pedido como referencia. Tu pedido no será enviado hasta recibir el pago.
-                      </p>
-                    )}
-                  </div>
-                </label>
+                  </label>
+                )}
 
                 <label className={cn("flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all", paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border bg-card")}>
                   <input type="radio" name="payment" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} className="accent-primary mt-1" />
@@ -445,6 +463,15 @@ const CheckoutPage = () => {
                     <span className="font-body text-sm font-medium">Tarjeta de crédito / débito</span>
                   </div>
                 </label>
+
+                {!bankTransferEnabled && (
+                  <p className="font-body text-xs text-muted-foreground mt-1">
+                    ¿Prefieres pagar por transferencia?{" "}
+                    <a href="https://wa.me/5215582375469" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      Contáctanos al 55 8237 5469
+                    </a>
+                  </p>
+                )}
               </div>
             </section>
 

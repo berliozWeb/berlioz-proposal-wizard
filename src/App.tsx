@@ -31,6 +31,7 @@ import AdminLeads from "./pages/AdminLeads";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import ContactoPage from "./pages/ContactoPage";
 import RecompensasPublicPage from "./pages/RecompensasPublicPage";
+import AdminCustomersPage from "./pages/AdminCustomersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +72,7 @@ const App = () => (
 
                 {/* Legacy */}
                 <Route path="/admin-leads" element={<AdminLeads />} />
+                <Route path="/admin/customers" element={<ProtectedRoute><AdminCustomersPage /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

@@ -202,6 +202,7 @@ const ProductDetailPage = () => {
 
   const finalPrice = localItem ? getDisplayPrice(localItem, quantity) : product.price_per_person;
   const cleanDescription = stripHtml(product.description || product.short_description || '');
+  const shortDescription = product.short_description ? stripHtml(product.short_description) : (cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription);
 
   return (
     <BaseLayout>

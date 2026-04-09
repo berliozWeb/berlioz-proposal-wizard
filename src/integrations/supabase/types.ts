@@ -264,6 +264,8 @@ export type Database = {
           points_earned: number
           rating: number | null
           shipping: number
+          shipping_cost_breakdown: Json | null
+          shipping_zone: number | null
           status: string
           subtotal: number
           total: number
@@ -289,6 +291,8 @@ export type Database = {
           points_earned?: number
           rating?: number | null
           shipping?: number
+          shipping_cost_breakdown?: Json | null
+          shipping_zone?: number | null
           status?: string
           subtotal?: number
           total?: number
@@ -314,6 +318,8 @@ export type Database = {
           points_earned?: number
           rating?: number | null
           shipping?: number
+          shipping_cost_breakdown?: Json | null
+          shipping_zone?: number | null
           status?: string
           subtotal?: number
           total?: number

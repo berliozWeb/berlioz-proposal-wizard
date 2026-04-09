@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDays, format, isWeekend, isBefore, startOfDay } from "date-fns";
 import { es } from "date-fns/locale";
-import { Check, MapPin, CreditCard, Landmark, AlertTriangle } from "lucide-react";
+import { Check, MapPin, CreditCard, Landmark, AlertTriangle, Info } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,27 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { getShippingInfo } from "@/utils/shippingCalculator";
 
 function formatMXN(n: number) {
   return "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-const VALID_CPS = [
-  "11520","11000","06600","11560","06500","11510","01210","11700","06700","05348",
-  "06760","11590","11800","01000","01020","01030","01040","01050","01060","01070",
-  "03100","03200","03300","03400","03500","03600","03700","03800","03900","04000",
-  "06000","06010","06020","06030","06040","06050","06100","06140","06170","06200",
-  "06300","06350","06400","06470","06720","06780","06800","06820","06840","06860",
-  "06880","06900","10200","10700","10710","10720","11200","11210","11220","11230",
-  "11240","11250","11260","11300","11310","11320","11400","11410","11420","11430",
-  "11440","11450","11460","11470","11480","11490","11530","11540","11550","11570",
-  "11580","11600","11610","11620","11630","11640","11650","11660","11670","11680",
-  "11690","11710","11720","11730","11740","11750","11760","11810","11820","11830",
-  "11840","11850","11860","11870","11880","11890","11900","11910","11920","11930",
-  "11940","11950","52760","52780","52786","52787","52790","52930","53100","53110",
-  "53120","53126","53130","53140","53150","53160","53220","53300","53310","53390",
-  "53398","53900","53910","53920","53930","53950",
-];
+// removed — CP validation now uses getShippingInfo from shippingCalculator
 
 const TIME_SLOTS = [
   { value: "7:30", label: "7:30 AM" },
@@ -42,7 +28,7 @@ const TIME_SLOTS = [
 ];
 
 const CheckoutPage = () => {
-  const { items, totals, shippingType, notes, clearCart, setEarlySurcharge } = useCart();
+  const { items, totals, shippingType, notes, clearCart, setEarlySurcharge, setPostalCode, shippingZone, shippingPrice } = useCart();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
 
@@ -58,7 +44,7 @@ const CheckoutPage = () => {
   const [colonia, setColonia] = useState("");
   const [city, setCity] = useState("Ciudad de México");
   const [cp, setCp] = useState("");
-  const [cpValid, setCpValid] = useState<boolean | null>(null);
+  // cpValid is derived below from cpShippingInfo
   const [deliveryDate, setDeliveryDate] = useState<string | null>(null);
   const [eventTime, setEventTime] = useState("");
   const [deliverySlot, setDeliverySlot] = useState<string | null>(null);
@@ -74,14 +60,15 @@ const CheckoutPage = () => {
     if (items.length === 0) navigate("/menu");
   }, [items.length, navigate]);
 
-  // CP validation
+  // CP validation via zone calculator
+  const cpShippingInfo = cp.length === 5 ? getShippingInfo(cp) : null;
+  const cpValid = cpShippingInfo ? cpShippingInfo.isValid : null;
+
   useEffect(() => {
     if (cp.length === 5) {
-      setCpValid(VALID_CPS.includes(cp));
-    } else {
-      setCpValid(null);
+      setPostalCode(cp);
     }
-  }, [cp]);
+  }, [cp, setPostalCode]);
 
   // Company autocomplete
   useEffect(() => {
@@ -155,6 +142,13 @@ const CheckoutPage = () => {
         discount_code: null,
         payment_method: paymentMethod,
         points_earned: Math.floor(totals.total / 50),
+        shipping_zone: shippingZone,
+        shipping_cost_breakdown: {
+          zone: shippingZone,
+          base_cost: shippingPrice ?? 360,
+          surcharge_early: totals.earlySurcharge,
+          total: totals.shipping + totals.earlySurcharge,
+        },
       };
 
       // Only insert order if user is authenticated
@@ -334,16 +328,24 @@ const CheckoutPage = () => {
                       value={cp}
                       onChange={(e) => setCp(e.target.value.replace(/\D/g, "").slice(0, 5))}
                       maxLength={5}
-                      className={cn(cpValid === false && "border-destructive")}
+                      className={cn(cpShippingInfo && cpShippingInfo.zone === 0 && "border-amber-500")}
                     />
-                    {cpValid === false && (
-                      <p className="font-body text-[10px] text-destructive mt-1 flex items-center gap-1">
+                    {cpShippingInfo && cpShippingInfo.zone === 0 && (
+                      <div className="font-body text-[10px] text-amber-700 mt-1 p-2 rounded bg-amber-50 border border-amber-200">
+                        ⚠️ {cpShippingInfo.message}
+                      </div>
+                    )}
+                    {cpShippingInfo && cpShippingInfo.zone !== null && cpShippingInfo.zone !== 0 && (
+                      <p className="font-body text-[10px] text-green-600 mt-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        No tenemos cobertura en esta zona. Puedes recoger en Lago Onega 265, Modelo Pensil.
+                        Zona {cpShippingInfo.zone} — Envío: ${cpShippingInfo.price?.toLocaleString("es-MX")} MXN
                       </p>
                     )}
-                    {cpValid === true && (
-                      <p className="font-body text-[10px] text-green-600 mt-1">✓ Zona con cobertura</p>
+                    {cpShippingInfo && cpShippingInfo.message && cpShippingInfo.zone !== null && cpShippingInfo.zone >= 5 && (
+                      <div className="font-body text-[10px] mt-1 p-2 rounded bg-blue-50 border border-blue-200 text-blue-700 flex items-start gap-1">
+                        <Info className="w-3 h-3 shrink-0 mt-0.5" />
+                        <span>{cpShippingInfo.message}</span>
+                      </div>
                     )}
                   </div>
                 </div>

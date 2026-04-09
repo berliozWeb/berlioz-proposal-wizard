@@ -113,9 +113,9 @@ const LogoCarousel = () => {
   const doubled = [...CLIENT_LOGOS, ...CLIENT_LOGOS];
 
   return (
-    <div className="relative overflow-hidden" style={{ height: 120 }}>
+    <div className="relative overflow-hidden" style={{ height: 80 }}>
       <div
-        className="flex items-center gap-16 animate-scroll-logos"
+        className="flex items-center gap-20 animate-scroll-logos"
         style={{ width: 'max-content' }}
       >
         {doubled.map((logo, i) => (
@@ -123,8 +123,7 @@ const LogoCarousel = () => {
             key={`${logo.alt}-${i}`}
             src={logo.src}
             alt={logo.alt}
-            className="hover:scale-110 transition-transform duration-300"
-            style={{ height: 72, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+            style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
           />
         ))}
       </div>

@@ -321,16 +321,24 @@ const CheckoutPage = () => {
                       value={cp}
                       onChange={(e) => setCp(e.target.value.replace(/\D/g, "").slice(0, 5))}
                       maxLength={5}
-                      className={cn(cpValid === false && "border-destructive")}
+                      className={cn(cpShippingInfo && cpShippingInfo.zone === 0 && "border-amber-500")}
                     />
-                    {cpValid === false && (
-                      <p className="font-body text-[10px] text-destructive mt-1 flex items-center gap-1">
+                    {cpShippingInfo && cpShippingInfo.zone === 0 && (
+                      <div className="font-body text-[10px] text-amber-700 mt-1 p-2 rounded bg-amber-50 border border-amber-200">
+                        ⚠️ {cpShippingInfo.message}
+                      </div>
+                    )}
+                    {cpShippingInfo && cpShippingInfo.zone !== null && cpShippingInfo.zone !== 0 && (
+                      <p className="font-body text-[10px] text-green-600 mt-1 flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        No tenemos cobertura en esta zona. Puedes recoger en Lago Onega 265, Modelo Pensil.
+                        Zona {cpShippingInfo.zone} — Envío: ${cpShippingInfo.price?.toLocaleString("es-MX")} MXN
                       </p>
                     )}
-                    {cpValid === true && (
-                      <p className="font-body text-[10px] text-green-600 mt-1">✓ Zona con cobertura</p>
+                    {cpShippingInfo && cpShippingInfo.message && cpShippingInfo.zone !== null && cpShippingInfo.zone >= 5 && (
+                      <div className="font-body text-[10px] mt-1 p-2 rounded bg-blue-50 border border-blue-200 text-blue-700 flex items-start gap-1">
+                        <Info className="w-3 h-3 shrink-0 mt-0.5" />
+                        <span>{cpShippingInfo.message}</span>
+                      </div>
                     )}
                   </div>
                 </div>

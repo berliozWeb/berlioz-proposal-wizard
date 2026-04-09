@@ -39,6 +39,7 @@ import logoGrupoMex from "@/assets/logos/grupomex-1.jpeg";
 import testimoniosPepsico from "@/assets/logos/testimonios_pepsico.jpg";
 import testimoniosPalmolive from "@/assets/logos/testimonios_palmolive.jpg";
 import testimoniosIos from "@/assets/logos/testimonios_iosOffices.jpg";
+import logoDhl from "@/assets/logos/dhl.webp";
 
 /* ── data ── */
 const CLIENT_LOGOS = [
@@ -97,7 +98,7 @@ const TESTIMONIALS = [
     name: "Ana Lucía Torres",
     company: "DHL Logistics",
     role: "Project Manager",
-    logo: testimoniosPalmolive,
+    logo: logoDhl,
   },
 ];
 
@@ -112,9 +113,9 @@ const LogoCarousel = () => {
   const doubled = [...CLIENT_LOGOS, ...CLIENT_LOGOS];
 
   return (
-    <div className="relative overflow-hidden" style={{ height: 96 }}>
+    <div className="relative overflow-hidden" style={{ height: 120 }}>
       <div
-        className="flex items-center gap-12 animate-scroll-logos"
+        className="flex items-center gap-16 animate-scroll-logos"
         style={{ width: 'max-content' }}
       >
         {doubled.map((logo, i) => (
@@ -122,8 +123,8 @@ const LogoCarousel = () => {
             key={`${logo.alt}-${i}`}
             src={logo.src}
             alt={logo.alt}
-            className="grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100"
-            style={{ height: 56, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+            className="hover:scale-110 transition-transform duration-300"
+            style={{ height: 72, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
           />
         ))}
       </div>
@@ -261,12 +262,12 @@ const HomePage = () => {
                   </div>
                   <p className="font-body text-[17px] text-foreground leading-[1.6] mb-10 italic">&ldquo;{t.quote}&rdquo;</p>
                 </div>
-                <div className="mt-auto flex items-center gap-3">
+                <div className="mt-auto flex items-center gap-4">
                   <img
                     src={t.logo}
                     alt={t.company}
-                    className="rounded-full object-cover border border-border/40"
-                    style={{ width: 40, height: 40, flexShrink: 0 }}
+                    className="rounded-full object-cover border-2 border-border/40 shadow-sm"
+                    style={{ width: 52, height: 52, flexShrink: 0 }}
                   />
                   <div>
                     <h4 className="font-body text-base font-bold text-foreground">{t.name}</h4>

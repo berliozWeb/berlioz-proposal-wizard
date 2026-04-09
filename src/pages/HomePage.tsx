@@ -8,6 +8,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import HeroCarousel from "@/components/landing/HeroCarousel";
+import ContactSection from "@/components/landing/ContactSection";
+import NosotrosSection from "@/components/landing/NosotrosSection";
+import RecompensasSection from "@/components/landing/RecompensasSection";
 // Premium Images from src/assets/imagenes_menu
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";
@@ -374,13 +377,18 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* ═══ SECTION — NOSOTROS ═══ */}
+      <NosotrosSection />
+
+      {/* ═══ SECTION — RECOMPENSAS ═══ */}
+      <RecompensasSection />
+
       {/* ═══ SECTION 6 — HOW IT WORKS ═══ */}
       <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="font-heading text-[36px] text-foreground mb-3">Así de fácil</h2>
           <p className="font-body text-muted-foreground text-sm mb-14">Desde tu pantalla hasta tu sala de juntas, en minutos</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-            {/* dot connectors between steps — desktop only */}
             <div className="hidden md:flex absolute items-center gap-1.5" style={{ top: "1.75rem", left: "33.33%", transform: "translate(-50%, -50%)" }}>
               {[0, 1, 2].map((i) => <span key={i} className="w-1.5 h-1.5 rounded-full bg-primary/25" />)}
             </div>
@@ -389,11 +397,9 @@ const HomePage = () => {
             </div>
             {STEPS.map((s, i) => (
               <div key={i} className="flex flex-col items-center">
-                {/* icon circle */}
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4 shadow-[0_0_0_8px_hsl(var(--primary)/0.06)] transition-all duration-300 hover:bg-primary/15 hover:shadow-[0_0_0_10px_hsl(var(--primary)/0.08)]">
                   <s.icon className="w-6 h-6 text-primary" />
                 </div>
-                {/* step badge */}
                 <span className="inline-block font-mono text-[10px] font-semibold text-primary-foreground bg-primary px-2.5 py-0.5 rounded-full mb-3">
                   Paso {i + 1}
                 </span>
@@ -404,6 +410,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* ═══ SECTION — CONTACTO ═══ */}
+      <ContactSection />
     </BaseLayout>
   );
 };

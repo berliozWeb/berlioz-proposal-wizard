@@ -23,6 +23,7 @@ export interface ProposalPackage {
   tier: 'esencial' | 'equilibrado' | 'experiencia';
   title: string;
   tagline: string;
+  narrativa?: string;
   items: ProposedProduct[];
   subtotal: number;
   iva: number;

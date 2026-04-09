@@ -262,12 +262,17 @@ const HomePage = () => {
                   <p className="font-body text-[17px] text-foreground leading-[1.6] mb-10 italic">&ldquo;{t.quote}&rdquo;</p>
                 </div>
                 <div className="mt-auto flex items-center gap-4">
-                  <img
-                    src={t.logo}
-                    alt={t.company}
-                    className="rounded-full object-cover border-2 border-border/40 shadow-sm"
+                  <div
+                    className="rounded-full border-2 border-border/40 shadow-sm flex items-center justify-center bg-white"
                     style={{ width: 52, height: 52, flexShrink: 0 }}
-                  />
+                  >
+                    <img
+                      src={t.logo}
+                      alt={t.company}
+                      className="object-contain"
+                      style={{ width: 32, height: 32 }}
+                    />
+                  </div>
                   <div>
                     <h4 className="font-body text-base font-bold text-foreground">{t.name}</h4>
                     <div className="flex items-center gap-2 text-muted-foreground">

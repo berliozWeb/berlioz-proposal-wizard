@@ -23,7 +23,7 @@ const SLIDES = [
     overlay: "rgba(1, 77, 111, 0.40)",
   },
   {
-    image: "https://berlioz.mx/wp-content/uploads/2025/08/green-box3-scaled.jpg",
+    image: heroGreenBoxImg,
     line1: "GREEN BOX",
     line2: "LIGERA, VERDE, DELICIOSA",
     overlay: "rgba(20, 40, 30, 0.30)",

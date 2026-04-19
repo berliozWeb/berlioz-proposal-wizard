@@ -835,19 +835,22 @@ export default function ProposalStep(props: ProposalStepProps) {
               <div
                 key={tier.id}
                 className={cn(
-                  "relative bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-6",
-                  isRecommended && "border-[1.5px] border-[#014D6F]",
-                  isSelected && !isRecommended && "ring-2 ring-[#014D6F]/30",
+                  "relative bg-white rounded-2xl p-6 transition-all duration-200",
+                  isSelected
+                    ? "border-2 border-[#014D6F] shadow-[0_8px_30px_rgba(1,77,111,0.18)] bg-[#014D6F]/[0.02]"
+                    : isRecommended
+                      ? "border-[1.5px] border-[#014D6F] shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                      : "border border-transparent shadow-[0_2px_12px_rgba(0,0,0,0.06)]",
                 )}
               >
+                {isSelected && (
+                  <span className="absolute -top-3 right-6 z-10 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#014D6F] text-[#EDD9C8] font-heading text-[10px] font-bold uppercase tracking-[0.12em] shadow-md">
+                    ✓ Paquete seleccionado
+                  </span>
+                )}
                 {/* ═══ ZONA A — Identificación (top bar horizontal) ═══ */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 mb-5 border-b border-[#CEC1B9]/40">
                   <div className="flex flex-col gap-2 min-w-0">
-                    {isRecommended && (
-                      <span className="inline-flex items-center gap-1 self-start px-3 py-1 rounded-full bg-[#014D6F] text-[#EDD9C8] font-heading text-[9px] font-bold uppercase tracking-[0.15em] whitespace-nowrap">
-                        <Star className="w-3 h-3 fill-current" /> Nuestra Recomendación
-                      </span>
-                    )}
                     <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
                       <h3 className="font-heading text-xl font-bold uppercase text-[#014D6F] leading-tight">
                         {tier.title}

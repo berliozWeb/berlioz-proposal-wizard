@@ -1098,3 +1098,52 @@ export default function ProposalStep(props: ProposalStepProps) {
     </div>
   );
 }
+
+// ═══ Sidebar product row with image + description ═══
+function SidebarProductCard({
+  product,
+  isSwap,
+  onSelect,
+}: {
+  product: CatalogProduct;
+  isSwap: boolean;
+  onSelect: () => void;
+}) {
+  const { imageUrl } = useProductImage({
+    id: product.id,
+    nombre: product.name,
+    descripcion: product.description,
+    categoria: product.category,
+  });
+
+  return (
+    <div className="flex gap-3 p-3 rounded-lg border border-border hover:border-primary/40 hover:shadow-sm transition-all">
+      <div className="w-20 h-20 shrink-0 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+        {imageUrl ? (
+          <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
+        ) : (
+          <div className="w-full h-full bg-muted animate-pulse" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div className="min-w-0">
+          <p className="font-body text-sm font-semibold text-foreground leading-snug flex items-start gap-1">
+            {product.isBestseller && <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0 mt-0.5" />}
+            <span className="line-clamp-2">{product.name}</span>
+          </p>
+          {product.description && (
+            <p className="font-body text-xs text-muted-foreground leading-snug line-clamp-2 mt-1">
+              {product.description}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center justify-between mt-2 gap-2">
+          <p className="font-mono text-xs font-semibold text-[#014D6F]">{formatMXN(product.price)}</p>
+          <Button size="sm" variant={isSwap ? "outline" : "default"} className="shrink-0 text-xs h-7 px-3" onClick={onSelect}>
+            {isSwap ? "Cambiar" : "+ Agregar"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

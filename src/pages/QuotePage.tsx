@@ -1,7 +1,7 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, X } from "lucide-react";
+import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, X, Truck } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import StepperProgress from "@/components/ui/StepperProgress";
 import { Calendar } from "@/components/ui/calendar";
@@ -48,57 +48,41 @@ interface EventTypeCard {
 
 const EVENT_TYPES: EventTypeCard[] = [
   {
-    value: "desayuno", label: "Desayuno", badge: "🍳 Perfecto para morning meetings", badgeStyle: "gold", badgePosition: "top",
-    desc: "Desde 4 personas · 7am en adelante", price: "Desde $170/persona", icon: "🍳", image: breakfastImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Vegano", color: "bg-green-100 text-green-700" }, { label: "Sin gluten", color: "bg-amber-100 text-amber-700" }],
-    filters: ["vegano", "gluten", "budget", "small"],
+    value: "desayuno", label: "Desayuno", badge: "", badgeStyle: "none", badgePosition: "top",
+    desc: "Perfecto para morning meetings", price: "Desde $170/persona", icon: "🍳", image: breakfastImg,
+    tags: [], filters: [],
   },
   {
-    value: "coffee-break", label: "Coffee Break", badge: "☕ Ideal para juntas", badgeStyle: "gold", badgePosition: "top",
-    desc: "Desde 4 personas · mañana o tarde", price: "Desde $240/persona", icon: "☕", image: coffeeImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }],
-    filters: ["vegano"],
-  },
-  {
-    value: "working-lunch", label: "Working Lunch", badge: "⭐ El más pedido", badgeStyle: "dark", badgePosition: "top",
+    value: "working-lunch", label: "Comida", badge: "", badgeStyle: "none", badgePosition: "top",
     desc: "El producto estrella de Berlioz", price: "Desde $150/persona", icon: "🍱", image: boxlunchImg,
-    tags: [{ label: "Vegano", color: "bg-green-100 text-green-700" }, { label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Sin gluten", color: "bg-amber-100 text-amber-700" }, { label: "Keto", color: "bg-purple-100 text-purple-700" }],
-    filters: ["vegano", "gluten", "budget"],
+    tags: [], filters: [],
   },
   {
-    value: "capacitacion", label: "Capacitación", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "Servicio completo de día", price: "Paquete de día completo", icon: "📋", image: juntaImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Vegano", color: "bg-green-100 text-green-700" }],
-    filters: ["vegano"],
+    value: "coffee-break", label: "Coffee Break", badge: "", badgeStyle: "none", badgePosition: "top",
+    desc: "Ideal para juntas y pausas", price: "Desde $240/persona", icon: "☕", image: coffeeImg,
+    tags: [], filters: [],
   },
   {
-    value: "reunion-ejecutiva", label: "Reunión ejecutiva", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "Para grupos pequeños y VIP", price: "Experiencia premium", icon: "💼", image: heroImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Sin gluten", color: "bg-amber-100 text-amber-700" }, { label: "Keto", color: "bg-purple-100 text-purple-700" }],
-    filters: ["gluten", "small"],
-  },
-  {
-    value: "filmacion", label: "Filmación", badge: "💡 Económico y portable", badgeStyle: "gold", badgePosition: "bottom",
-    desc: "Bags y opciones portables", price: "Opciones económicas portables", icon: "🎬", image: veganoImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }],
-    filters: ["budget", "small", "vegano"],
+    value: "otro", label: "Otro", badge: "", badgeStyle: "none", badgePosition: "top",
+    desc: "Cuéntanos qué necesitas", price: "Cotización a la medida", icon: "✨", image: juntaImg,
+    tags: [], filters: [],
   },
 ];
 
-const FILTER_CHIPS = [
-  { value: "todos", label: "Todos" },
-  { value: "vegano", label: "Con opciones veganas" },
-  { value: "gluten", label: "Sin gluten" },
-  { value: "budget", label: "Menos de $200/persona" },
-  { value: "small", label: "Grupos pequeños (<10)" },
+const DIETARY_RESTRICTIONS = [
+  { value: "vegano", label: "Vegano", icon: "🌱" },
+  { value: "vegetariano", label: "Vegetariano", icon: "🥗" },
+  { value: "sin_gluten", label: "Sin gluten", icon: "🚫🌾" },
+  { value: "sin_lactosa", label: "Sin lactosa", icon: "🥛" },
+  { value: "keto", label: "Keto", icon: "🔥" },
 ];
 
-const DIETARY_OPTIONS = [
-  { value: "vegano", label: "🌱 Vegano" },
-  { value: "vegetariano", label: "🌿 Vegetariano" },
-  { value: "sin_gluten", label: "🚫🌾 Sin gluten" },
-  { value: "sin_lactosa", label: "🥛 Sin lactosa" },
-  { value: "keto", label: "🔥 Keto" },
+const DURATION_PILLS = [
+  { id: "1h", label: "1 hora" },
+  { id: "2-3h", label: "2-3 horas" },
+  { id: "3-5h", label: "3-5 horas" },
+  { id: "5h+", label: "Día completo" },
+  { id: "otro", label: "Otro" },
 ];
 
 const TIME_SLOTS = Array.from({ length: 31 }, (_, i) => {

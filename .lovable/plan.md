@@ -1,51 +1,29 @@
 
+User wants two changes to the tier rows in ProposalStep.tsx:
+1. The price breakdown (Zona C) feels visually disconnected — make it look like it belongs inside the main tier container.
+2. Add a visual affordance on the product carousel (Zona B) showing more cards exist horizontally — arrows and/or a scroll indicator.
 
-## Plan: Favoritos basados en datos reales de ventas + nueva estructura de categorías
+Both are pure UI tweaks within the existing tier row block (~lines 644+). No logic changes.
 
-### Problema
-La vista de "Realizar Pedido" no prioriza los productos más vendidos. El usuario quiere que la vista por defecto sea "Favoritos" (basado en datos reales de 121K+ órdenes), y reorganizar las categorías del filtro.
+## Plan
 
-### Enfoque
+### 1. Desglose dentro del contenedor (Zona C)
+Actualmente la Zona C tiene su propio `bg-[#FDFAF7] rounded-xl` que la hace ver como una "tarjeta dentro de la tarjeta". Cambios:
+- Quitar el fondo crema y border-radius propios de Zona C
+- Añadir un divisor vertical sutil entre Zona B y Zona C (`border-l border-border/40 pl-6`)
+- Mantener tipografía y jerarquía igual (Subtotal / Logística / IVA / TOTAL)
+- El TOTAL queda visualmente integrado como parte del mismo card blanco del tier
 
-**1. Importar datos del CSV a la tabla `sales_history` existente (o usarla directamente)**
+### 2. Indicador de scroll horizontal en el carrusel (Zona B)
+- **Flechas laterales** ‹ › : botones circulares blancos con sombra, posicionados absolute sobre los bordes izquierdo/derecho del scroll. Solo visibles en desktop (`hidden lg:flex`). Hacen `scrollBy({ left: ±200, behavior: 'smooth' })` sobre el ref del contenedor scrollable.
+- **Fade gradient en los bordes**: pseudo-elementos con `bg-gradient-to-r from-white` a la derecha y `from-white` invertido a la izquierda, indicando que hay contenido cortado.
+- **Scrollbar visible y estilizada**: cambiar `pb-2` a una scrollbar fina visible (track gris claro, thumb navy) usando utilidades tailwind o estilos inline.
+- Las flechas se ocultan automáticamente cuando no hay overflow (detectar con `scrollWidth > clientWidth` en un useEffect ligero por tier).
 
-La tabla `sales_history` ya tiene 218 productos con `total_qty_sold` y `total_revenue`. Esto ya representa los favoritos. No necesitamos re-importar el CSV — los datos ya están ahí.
+### Archivo afectado
+- `src/components/quoter/ProposalStep.tsx` — solo el bloque de cada tier row (Zona B y Zona C). Sin tocar handlers, cálculos ni el resto del archivo.
 
-**2. Crear una columna `popularity_rank` en `productos`**
-
-Agregar un campo numérico `popularity_rank` a la tabla `productos` y llenarlo con un ranking basado en `sales_history.total_qty_sold`, haciendo match por nombre o SKU. Los productos sin ventas quedan con rank NULL (no son favoritos).
-
-Migración SQL:
-- `ALTER TABLE productos ADD COLUMN popularity_rank smallint DEFAULT NULL`
-- `UPDATE productos SET popularity_rank = ...` usando JOIN con `sales_history` ordenado por `total_qty_sold DESC`
-
-**3. Reorganizar los filtros de categoría en `CatalogPage.tsx`**
-
-Nuevo orden de pills:
-| Filtro | Lógica |
-|--------|--------|
-| ⭐ Favoritos (default) | `popularity_rank IS NOT NULL`, ordenar por `popularity_rank ASC` |
-| 🍽️ Todos | Sin filtro |
-| ☕ Coffee Break | `categoria = 'Coffee Break'` |
-| 🍱 Working Lunch | `categoria = 'Working Lunch'` |
-| 🍳 Desayuno | `categoria = 'Desayuno'` |
-| 🥤 Bebidas | `categoria = 'Bebidas'` |
-| 🌱 Vegano/Vegetariano | `dietary_tags` contiene 'vegano' o 'vegetariano' |
-| 🥑 Keto | `dietary_tags` contiene 'keto' |
-| 🥖 Tortas Piropo | `categoria = 'Tortas Piropo'` |
-| 🎁 Entrega Especial | `categoria = 'Entrega Especial'` |
-
-**4. Modificar `useProductos` y `CatalogPage`**
-
-- El estado inicial del filtro será `"favoritos"` en vez de `"todos"`
-- Cuando el filtro es "favoritos", filtrar por `popularity_rank NOT NULL` y ordenar por rank
-- Actualizar el array `CATEGORY_FILTERS` con el nuevo orden
-
-### Archivos a modificar
-- **Migración SQL**: agregar `popularity_rank` y poblarla desde `sales_history`
-- **`src/pages/CatalogPage.tsx`**: reordenar filtros, default a favoritos, lógica de filtrado por rank
-- **`src/hooks/useProductos.ts`**: (posiblemente) agregar soporte para ordenar por popularity_rank
-
-### Resultado
-Al entrar a "/menu", el usuario ve primero los ~50 productos más vendidos según datos reales, con un badge de popularidad. Puede cambiar a cualquier otra categoría con un click.
-
+### Lo que NO se toca
+- Lógica de `tierTotals`, `updateItemQty`, `removeItem`, `openSwapSidebar`
+- Zona A (identificación del tier) ni el resto del Step 3
+- Steps 1 y 2, header, footer, Edge Functions

@@ -122,6 +122,8 @@ const QuotePage = () => {
   const [dietary, setDietary] = useState<string[]>([]);
   const [clientName, setClientName] = useState("");
   const [empresa, setEmpresa] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [cpTouched, setCpTouched] = useState(false);
   const [dietaryDistribution, setDietaryDistribution] = useState<Record<string, number>>({
     vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0,
   });
@@ -165,7 +167,22 @@ const QuotePage = () => {
   }, [dietaryDistribution]);
 
   const canNextStep1 = eventType !== "";
-  const canNextStep2 = numPeople >= 1 && !!date && eventTime !== "" && !cutoffBlocked;
+
+  // CP shipping lookup — only runs when 5 digits entered
+  const shippingResult: ShippingResult | null = useMemo(() => {
+    if (postalCode.length !== 5) return null;
+    return lookupCP(postalCode);
+  }, [postalCode]);
+  const cpInvalidFormat = cpTouched && postalCode.length > 0 && postalCode.length !== 5;
+  const isSpecialQuoteCP = shippingResult?.zone === 0;
+
+  const canNextStep2 =
+    numPeople >= 1 &&
+    !!date &&
+    eventTime !== "" &&
+    !cutoffBlocked &&
+    postalCode.length === 5 &&
+    !isSpecialQuoteCP;
 
   // Auto-advance al seleccionar tipo de evento + smooth scroll
   const handleSelectEventType = (value: string) => {

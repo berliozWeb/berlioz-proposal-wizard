@@ -1,79 +1,50 @@
 
-User wants 4 changes to Step 3 proposal:
-1. Reorder tiers: Equilibrado → Esencial → Experiencia Completa
-2. Remove "Nuestra recomendación" badge from Equilibrado
-3. Make selected package more visually prominent
-4. Swap/Add product modal should show images + descriptions (currently the swap list is text-only per screenshot 2)
 
-Let me check the relevant files to understand current structure.
-<lov-tool-use id="toolu_vrtx_0114DkjzBiRisYWtdkHyRmC4" name="code--search_files" integration-id="code" data="{\"query\": \"NUESTRA RECOMENDACIÓN|Nuestra recomendación\", \"include_patterns\": \"src/**/*.tsx\"}">
-</lov-tool-use>
+## Diagnóstico
 
-<lov-tool-use id="toolu_vrtx_01Y6xAR1YESj2Tbu5uRnJpZ7" name="code--search_files" integration-id="code" data="{\"query\": \"Cambiar producto\", \"include_patterns\": \"src/**/*.tsx\"}">
-</lov-tool-use>
+**Por qué se generan imágenes con DALL-E en el cotizador:**
+- El menú (`/menu`) lee de la tabla `productos` de la base de datos → ya tiene `imagen_url` real (261/270 productos activos con imagen lista en el bucket `Berlioz-images`).
+- El cotizador (`/cotizar`) lee de un **catálogo hardcodeado** en `src/domain/entities/BerliozCatalog.ts` y `MenuCatalog.ts` que **no tiene campos de imagen**.
+- Por eso `SidebarProductCard` llama a `useProductImage` con `imagen=undefined, imagen_url=undefined` → cae al fallback que invoca `generate-product-image` (DALL-E 3) y genera imágenes nuevas cada vez (gastando crédito y devolviendo cosas inconsistentes).
 
-<lov-tool-use id="toolu_vrtx_01CykkAGmHjCBuJf49cJVfu7" name="code--search_files" integration-id="code" data="{\"query\": \"NUESTRA RECOMENDACIÓN\", \"include_patterns\": \"src/**/*.tsx\"}">
-</lov-tool-use>
+**Otros problemas detectados:**
+- 9 filas activas son `Order – septiembre 2019…` (basura histórica) sin categoría — hay que desactivarlas.
+- Solo 94 productos `simple/variable` están activos (los 270 incluyen `variation`s). El cotizador necesita esos 94 con su descripción + imagen.
 
-<lov-tool-use id="toolu_vrtx_01TYE2txnJjGsuyhbSFPH9Ck" name="code--search_files" integration-id="code" data="{\"query\": \"Cambiar producto\", \"include_patterns\": \"src/**/*.tsx\"}">
-</lov-tool-use>
+## Plan de solución (3 fases)
 
-<lov-tool-use id="toolu_vrtx_01D6Rw2buKPtDZ4N6TucaSML" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/quoter/ProposalStep.tsx\", \"lines\": \"1-80\"}">
-</lov-tool-use>
+### Fase 1 — Limpiar y normalizar la base de datos
+Migración SQL:
+1. **Desactivar productos basura**: `UPDATE productos SET activo=false WHERE nombre ILIKE 'Order –%'` (9 filas viejas de WooCommerce).
+2. **Backfill desde el JSON subido** (`berlioz_catalog_updated.json`):
+   - Hacer match por `sku` o `nombre` normalizado.
+   - Rellenar `descripcion`, `descripcion_corta` y `imagen_url` (usando `img_main` del JSON) cuando la fila de DB esté vacía.
+   - Normalizar nombres a Title Case y limpiar HTML (ya hay regla en memoria).
+3. **Garantizar fallback de imagen**: agregar columna/regla para que `imagen_url` nunca sea NULL en activos. Si después del backfill quedan productos activos sin imagen, asignar una **imagen genérica por categoría** (placeholder editorial) subida al bucket: `_fallback_desayuno.jpg`, `_fallback_coffee.jpg`, `_fallback_lunch.jpg`, `_fallback_bebidas.jpg`, `_fallback_default.jpg`. Esto elimina por completo cualquier llamada a DALL-E.
 
-<lov-tool-use id="toolu_vrtx_01BZLahGku1tVfyFQkou7PPB" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/quoter/ProposalStep.tsx\", \"lines\": \"800-900\"}">
-</lov-tool-use>
+### Fase 2 — Unificar la fuente de verdad: cotizador lee de Supabase
+1. Crear hook `useCatalogoCotizador()` (sobre `useProductos`) que devuelve los productos activos `simple/variable` mapeados al shape `CatalogProduct` que espera el cotizador, incluyendo `imagen_url`, `descripcion` y `descripcion_corta`.
+2. En `src/components/quoter/ProposalStep.tsx`:
+   - Reemplazar el import de `CATALOG` hardcodeado por el hook.
+   - Pasar `imagen_url` y `imagen` reales a `SidebarProductCard`.
+3. En `SidebarProductCard`:
+   - **Eliminar `useProductImage`** (que dispara DALL-E). Usar directamente `buildProductImageUrl(imagen_url, imagen)` con un `<img onError>` que cae al fallback de categoría.
+4. Aplicar el mismo cambio en `ProductBrowsePanel.tsx` y `ProductSwapModal.tsx` (también usaban catálogos hardcodeados con imágenes inconsistentes).
+5. Mantener `BerliozCatalog.ts` solo para la lógica de tiers/templates (estructura de paquetes), pero los **datos de producto** (precio, imagen, descripción) vienen de Supabase haciendo lookup por nombre normalizado.
 
-<lov-tool-use id="toolu_vrtx_019zDndLMetNDZvegyf6TT9p" name="code--view" integration-id="code" data="{\"file_path\": \"src/components/quoter/ProposalStep.tsx\", \"lines\": \"1020-1104\"}">
-</lov-tool-use>
+### Fase 3 — Apagar la generación con DALL-E
+1. En `useProductImage.ts`: cambiar el comportamiento — si no hay imagen real, devolver el fallback de categoría en vez de invocar la edge function. La generación queda como opción manual desde admin (no automática en cada render).
+2. Dejar la edge function `generate-product-image` deployada por compatibilidad pero no se llama desde la UI.
 
-<lov-tool-use id="toolu_vrtx_01VWeSMEsBnUS9unvwt33wHG" name="code--search_files" integration-id="code" data="{\"include_patterns\": \"src/**/*.ts,src/**/*.tsx\", \"query\": \"TIERS\\\\s*=|isPopular\"}">
-</lov-tool-use>
-I have enough context. Let me check the sidebar product list shape (description, image fields available).
-<lov-tool-use id="toolu_vrtx_01BWuF6iH62G2DJnmF4BUTyC" name="code--search_files" integration-id="code" data="{\"include_patterns\": \"src/domain/entities/BerliozCatalog.ts\", \"query\": \"CatalogProduct|imagen|description|descripcion\"}">
-</lov-tool-use>
-I have everything I need. The sidebar product list lacks images & descriptions in the current modal — I need to enhance it using `buildProductImageUrl`/`useProductImage` (already imported) and `product.description`.
+## Lo que NO se toca
+- Lógica de tiers (Equilibrado/Esencial/Experiencia), totales, swap de productos, addons.
+- Pasos 1 y 2 del cotizador, hero, header, footer.
+- Página `/menu` (ya funciona bien con Supabase).
+- PDF export (ya usa `buildProductImageUrl` correctamente).
 
-<lov-plan>
-
-## Plan: Reordenar tiers, quitar tag, resaltar selección y mejorar el menú "Cambiar/Agregar"
-
-**Archivo único:** `src/components/quoter/ProposalStep.tsx`
-
-### 1. Reordenar tiers (línea 83-100)
-Cambiar el orden del array `TIERS` para que aparezca:
-1. **Equilibrado** (primero)
-2. **Esencial** (segundo)
-3. **Experiencia Completa** (tercero)
-
-Esto reordena automáticamente las filas en la propuesta y el mapeo en el sidebar/PDF (todos consumen `TIERS.map`).
-
-### 2. Quitar tag "Nuestra Recomendación" (líneas 846-850)
-Eliminar el `<span>` completo del badge. El tier Equilibrado seguirá marcado como `isPopular: true` solo para mantener el estilo visual del CTA primario y borde, pero sin el chip textual.
-
-### 3. Resaltar selección de paquete de forma más notoria (líneas 837-841)
-Reforzar el estado `isSelected`:
-- Borde más grueso `border-2 border-[#014D6F]` (en vez de ring sutil)
-- Sombra más marcada: `shadow-[0_8px_30px_rgba(1,77,111,0.18)]`
-- Fondo sutil teñido: `bg-[#014D6F]/[0.02]`
-- Pequeño check-pill flotante arriba a la derecha: "✓ Paquete seleccionado" con fondo teal sólido
-- El botón "✓ Seleccionado" ya cambia de estilo, se mantiene
-
-### 4. Menú "Cambiar/Agregar" con imágenes y descripciones (líneas 1076-1098)
-Rediseñar la lista de productos del sidebar para que cada item muestre:
-- **Imagen** del producto (96x96 redondeada) usando `useProductImage(product.name)` o `buildProductImageUrl`
-- **Nombre** + estrella si es bestseller
-- **Descripción** (`product.description`) en 2 líneas con `line-clamp-2`, color muted
-- **Precio** en mono
-- Botón "Cambiar" / "+ Agregar" alineado a la derecha
-
-Como `useProductImage` es un hook, crearé un sub-componente `<SidebarProductCard product={...} onAdd={...} />` dentro del archivo que invoca el hook por item correctamente.
-
-Layout: `flex gap-3 p-3` con la imagen a la izquierda, contenido al centro (flex-1, min-w-0), botón a la derecha. Aumentar el ancho del sidebar de `w-[360px]` a `w-[420px]` para que respire bien.
-
-### Lo que NO se toca
-- Lógica de cálculo de tiers, totales, swap, addons
-- Pasos 1 y 2, hero, header, footer
-- Edge functions
-- PDF export
+## Resultado esperado
+- Cero llamadas a DALL-E desde el cotizador.
+- Mismas imágenes reales en `/menu` y en el sidebar "Cambiar/Agregar" del cotizador.
+- Productos sin imagen muestran un fallback editorial limpio por categoría (no un placeholder roto, no un `animate-pulse` infinito, no una imagen IA aleatoria).
+- Descripciones reales del catálogo visibles bajo cada producto en el sidebar.
 

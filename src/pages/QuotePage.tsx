@@ -122,7 +122,12 @@ const QuotePage = () => {
   const [dietary, setDietary] = useState<string[]>([]);
   const [clientName, setClientName] = useState("");
   const [empresa, setEmpresa] = useState("");
-  const [receiveConfirm, setReceiveConfirm] = useState(false);
+  const [dietaryDistribution, setDietaryDistribution] = useState<Record<string, number>>({
+    vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0,
+  });
+
+  // Ref para smooth scroll al formulario de detalles
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   // Smart Quote
   const { loading: smartLoading, generateQuote, submitFeedback } = useSmartQuote();
@@ -136,16 +141,39 @@ const QuotePage = () => {
   const isSmallGroup = typeof people === "number" && people >= 1 && people <= 3;
   const numPeople = typeof people === "number" ? people : 0;
 
-  const filteredEvents = useMemo(() => {
-    if (eventFilter === "todos") return EVENT_TYPES;
-    return EVENT_TYPES.filter(e => e.filters.includes(eventFilter));
-  }, [eventFilter]);
+  // Distribución de invitados por restricción
+  const totalRestricted = useMemo(
+    () => Object.values(dietaryDistribution).reduce((a, b) => a + b, 0),
+    [dietaryDistribution],
+  );
+  const sinRestriccion = Math.max(0, numPeople - totalRestricted);
+
+  const updateDietaryCount = (key: string, delta: number) => {
+    setDietaryDistribution(prev => {
+      const current = prev[key] || 0;
+      const next = current + delta;
+      if (next < 0) return prev;
+      const newTotal = totalRestricted - current + next;
+      if (newTotal > numPeople) return prev; // bloquear exceso
+      return { ...prev, [key]: next };
+    });
+  };
+
+  // Sincroniza distribución → array dietary que consume la API
+  useEffect(() => {
+    setDietary(Object.entries(dietaryDistribution).filter(([, v]) => v > 0).map(([k]) => k));
+  }, [dietaryDistribution]);
 
   const canNextStep1 = eventType !== "";
-  const canNextStep2 = numPeople >= 1 && !!date && eventTime !== "" && !cutoffBlocked && receiveConfirm;
+  const canNextStep2 = numPeople >= 1 && !!date && eventTime !== "" && !cutoffBlocked;
 
-  const toggleDietary = (val: string) => {
-    setDietary(prev => prev.includes(val) ? prev.filter(d => d !== val) : [...prev, val]);
+  // Auto-advance al seleccionar tipo de evento + smooth scroll
+  const handleSelectEventType = (value: string) => {
+    setEventType(value);
+    if (step === 0) setStep(1);
+    setTimeout(() => {
+      detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const durationHours = useMemo(() => {

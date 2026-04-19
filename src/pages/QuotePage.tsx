@@ -1,16 +1,15 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, X, Truck } from "lucide-react";
+import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import StepperProgress from "@/components/ui/StepperProgress";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { TOP_DELIVERY_ZONES, DURATION_OPTIONS } from "@/domain/entities/BerliozCatalog";
+import { TOP_DELIVERY_ZONES } from "@/domain/entities/BerliozCatalog";
 import ProposalStep from "@/components/quoter/ProposalStep";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useSmartQuote } from "@/hooks/useSmartQuote";
@@ -110,7 +109,7 @@ function isCutoff(selectedDate: Date | undefined): boolean {
 const QuotePage = () => {
   const [step, setStep] = useState(0);
   const [eventType, setEventType] = useState("");
-  const [eventFilter, setEventFilter] = useState("todos");
+  // (filtros eliminados)
   const [duration, setDuration] = useState("");
   const [people, setPeople] = useState<number | "">(10);
   const [postalCode, setPostalCode] = useState("");

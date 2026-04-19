@@ -840,7 +840,7 @@ export default function ProposalStep(props: ProposalStepProps) {
                   isSelected && !isRecommended && "ring-2 ring-[#014D6F]/30",
                 )}
               >
-                <div className="grid grid-cols-1 lg:grid-cols-[15%_65%_20%] gap-6 items-stretch">
+                <div className="grid grid-cols-1 lg:grid-cols-[15%_1fr_220px] gap-6 items-stretch">
                   {/* ═══ ZONA A — Identificación ═══ */}
                   <div className="flex flex-col gap-3 lg:pr-2">
                     {isRecommended && (

@@ -641,223 +641,168 @@ export default function ProposalStep(props: ProposalStepProps) {
           </div>
         )}
 
-        {/* ═══ THREE PROPOSAL CARDS — IMAGE-FIRST DESIGN ═══ */}
-        <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20 transition-opacity duration-500", smartQuoteLoading && !hasReceivedSmartData ? "opacity-40 pointer-events-none" : "opacity-100")}>
-          {TIERS.map((tier, idx) => {
+        {/* ═══ THREE PROPOSAL ROWS — HORIZONTAL LAYOUT ═══ */}
+        <div className={cn("flex flex-col gap-6 mb-20 transition-opacity duration-500", smartQuoteLoading && !hasReceivedSmartData ? "opacity-40 pointer-events-none" : "opacity-100")}>
+          {TIERS.map((tier) => {
             const pkg = packages[tier.id];
             const t = tierTotals[tier.id];
-            const isOpen = openSections[tier.id];
             const isSelected = selectedTier === tier.id;
-            const engineIsAI = isSmartQuote && smartQuoteData?.engineVersion === 'v3-claude-sonnet';
+            const isRecommended = tier.isPopular;
 
-              return (
-                <div key={tier.id} className={cn(
-                  "group relative flex flex-col rounded-2xl border-2 transition-all duration-500 h-full overflow-hidden",
-                  tier.isPopular ? "border-primary shadow-2xl shadow-primary/10 lg:-translate-y-4" : "border-border/60 hover:border-primary/30",
-                  isSelected && "border-primary ring-4 ring-primary/10",
-                )}>
-                {/* Popular badge */}
-                {tier.isPopular && (
-                  <div className="absolute -top-0 left-1/2 -translate-x-1/2 px-6 py-1.5 rounded-b-xl bg-primary text-primary-foreground font-heading text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/30 z-20 whitespace-nowrap">
-                    ⭐ Nuestra Recomendación
-                  </div>
+            return (
+              <div
+                key={tier.id}
+                className={cn(
+                  "relative bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-6",
+                  isRecommended && "border-[1.5px] border-[#014D6F]",
+                  isSelected && !isRecommended && "ring-2 ring-[#014D6F]/30",
                 )}
-
-                {/* 1. PHOTO MOSAIC — Image-first hero */}
-                <div className="relative w-full h-[200px] overflow-hidden" style={{ background: '#E8F2F6' }}>
-                  {(() => {
-                    const imgs = pkg.items
-                      .map(i => i.imageUrl)
-                      .filter(Boolean) as string[];
-
-                    if (imgs.length === 0) return (
-                      <div className="w-full h-full flex items-center justify-center text-6xl">🍱</div>
-                    );
-                    if (imgs.length === 1) return (
-                      <img src={imgs[0]} alt={tier.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-                    );
-                    if (imgs.length === 2) return (
-                      <div className="grid grid-cols-2 h-full" style={{ gap: 2 }}>
-                        {imgs.map((url, i) => (
-                          <img key={i} src={url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-                        ))}
-                      </div>
-                    );
-                    return (
-                      <div className="grid h-full" style={{ gridTemplateColumns: '60% 40%', gap: 2 }}>
-                        <img src={imgs[0]} alt="" className="w-full h-full object-cover" style={{ gridRow: '1/3' }} onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-                        <div className="flex flex-col" style={{ gap: 2 }}>
-                          {imgs.slice(1, 3).map((url, i) => (
-                            <img key={i} src={url} alt="" className="w-full flex-1 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to bottom, transparent 35%, rgba(0,0,0,0.65) 100%)' }} />
-                  {/* Tier badge */}
-                  <div className="absolute bottom-3 left-3 px-4 py-1.5 rounded-full text-white font-heading text-[11px] font-bold tracking-[0.12em] uppercase" style={{
-                    background: tier.id === 'esencial' ? '#446084' : tier.id === 'equilibrado' ? '#014D6F' : '#0a2540',
-                  }}>
-                    {tier.id === 'equilibrado' ? '⭐ ' : tier.id === 'experiencia' ? '✦ ' : ''}{tier.title}
-                  </div>
-                </div>
-
-                {/* 2. HEADER */}
-                <div className="px-6 pt-6 pb-2">
-                  <h3 className="font-heading text-2xl font-bold text-foreground mb-1">{tier.title}</h3>
-                  <p className="font-body text-sm text-muted-foreground italic leading-snug">
-                    {pkg.tagline || tier.subtitle}
-                  </p>
-                </div>
-
-                {/* 3. NARRATIVA from Claude */}
-                {pkg.narrativa && (
-                  <div className="mx-6 my-3 pl-4 py-3 pr-3 rounded-r-xl" style={{ borderLeft: '3px solid #EDD9C8', background: 'rgba(237,217,200,0.08)' }}>
-                    <p className="font-body text-[13px] italic text-muted-foreground leading-relaxed">
-                      "{pkg.narrativa}"
-                    </p>
-                  </div>
-                )}
-
-                <div className="px-6 flex-1 flex flex-col">
-                  {/* 4. FEATURES — compact chips */}
-                  <div className="flex flex-wrap gap-2 mb-4 mt-2">
-                    {(pkg.highlights || tier.bullets).map(b => (
-                      <span key={b} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold" style={{ background: '#E8F2F6', color: '#014D6F' }}>
-                        <Check className="w-3 h-3 stroke-[3]" />
-                        {b}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-[15%_65%_20%] gap-6 items-stretch">
+                  {/* ═══ ZONA A — Identificación ═══ */}
+                  <div className="flex flex-col gap-3 lg:pr-2">
+                    {isRecommended && (
+                      <span className="inline-flex items-center gap-1 self-start px-3 py-1 rounded-full bg-[#014D6F] text-[#EDD9C8] font-heading text-[9px] font-bold uppercase tracking-[0.15em] whitespace-nowrap">
+                        <Star className="w-3 h-3 fill-current" /> Nuestra Recomendación
                       </span>
-                    ))}
-                  </div>
-
-                  {tier.tip && (
-                    <div className="p-3 rounded-xl bg-primary/5 border border-primary/10 font-body text-xs text-primary leading-relaxed italic mb-4">
-                      {tier.tip}
-                    </div>
-                  )}
-
-                  {/* Item Customization Header */}
-                  <div className="flex items-center justify-between gap-2 mb-4 pt-4 border-t border-border/60">
-                    <button onClick={() => toggleSection(tier.id)}
-                      className="flex items-center gap-2 font-heading text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
-                      {isOpen ? "Ocultar detalles" : "Modificar menú"} 
-                      {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
-                    <button onClick={() => openSidebar(tier.id)}
-                      className="flex items-center gap-2 font-heading text-[10px] font-bold uppercase tracking-widest text-primary hover:opacity-80 transition-all">
-                      <Plus className="w-3 h-3" /> Agregar
+                    )}
+                    <h3 className="font-heading text-xl font-bold uppercase text-[#014D6F] leading-tight">
+                      {tier.title}
+                    </h3>
+                    <p className="font-body text-xs text-[#777] leading-snug">
+                      {pkg.tagline || tier.subtitle}
+                    </p>
+                    <button
+                      onClick={() => handleSelectTier(tier.id)}
+                      className={cn(
+                        "mt-auto inline-flex items-center justify-center px-4 py-2 rounded-full font-heading text-[11px] font-bold uppercase tracking-wider transition-all",
+                        isSelected || isRecommended
+                          ? "bg-[#014D6F] text-[#EDD9C8] hover:opacity-90"
+                          : "bg-white border border-[#014D6F] text-[#014D6F] hover:bg-[#014D6F]/5",
+                      )}
+                    >
+                      {isSelected ? "✓ Seleccionado" : "Elegir este →"}
                     </button>
                   </div>
 
-                  {/* Expandable Menu List — 72px item photos */}
-                  {isOpen && (
-                    <div className="space-y-2 mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
-                      {pkg.items.map(item => (
-                        <div key={item.instanceId} className="flex gap-3 p-3 bg-white rounded-xl border border-border/80 shadow-sm relative" style={{ alignItems: 'flex-start' }}>
-                          {/* 72px product photo */}
-                          <div className="w-[72px] h-[72px] rounded-[10px] overflow-hidden shrink-0 flex items-center justify-center" style={{ background: '#E8F2F6' }}>
-                            {item.imageUrl ? (
-                              <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" loading="lazy"
-                                onError={(e) => {
-                                  const el = e.target as HTMLImageElement;
-                                  el.style.display = 'none';
-                                  el.parentElement!.innerHTML = '<span style="font-size:28px">🍽️</span>';
-                                }} />
-                            ) : (
-                              <span style={{ fontSize: 28 }}>🍽️</span>
+                  {/* ═══ ZONA B — Carrusel horizontal de cards ═══ */}
+                  <div className="min-w-0">
+                    <p className="font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-[#777] mb-2">
+                      Personaliza tu menú ›
+                    </p>
+                    <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1">
+                      {pkg.items.map((item) => {
+                        const desc = (item.descripcion && item.descripcion.trim()) || item.categoria || item.category || '';
+                        return (
+                          <div
+                            key={item.instanceId}
+                            className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-3"
+                          >
+                            <div className="w-full h-[110px] rounded-lg overflow-hidden mb-2 flex items-center justify-center" style={{ background: '#E8F2F6' }}>
+                              {item.imageUrl ? (
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.productName}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    const el = e.target as HTMLImageElement;
+                                    el.style.display = 'none';
+                                    el.parentElement!.innerHTML = '<span style="font-size:32px">🍽️</span>';
+                                  }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: 32 }}>🍽️</span>
+                              )}
+                            </div>
+                            <p className="font-heading text-[13px] font-semibold uppercase text-[#014D6F] leading-tight line-clamp-2 mb-1">
+                              {item.isBestseller && <Star className="w-3 h-3 inline text-amber-500 fill-current mr-1 mb-0.5" />}
+                              {item.productName}
+                            </p>
+                            {desc && (
+                              <p className="font-body text-[11px] italic text-[#777] line-clamp-2 mb-2">
+                                {desc}
+                              </p>
                             )}
-                          </div>
-                          {/* Content — DO NOT CHANGE logic */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between mb-1">
-                              <div className="min-w-0 flex-1 pr-6">
-                                <p className="font-heading text-sm font-bold text-foreground">
-                                  {item.isBestseller && <Star className="w-3.5 h-3.5 inline text-amber-500 fill-current mr-1 mb-0.5" />}
-                                  {item.productName}
-                                </p>
-                                <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{formatMXN(item.unitPrice)}/u</p>
-                                {item.recommendationReason && (
-                                  <p className="font-body text-[10px] text-secondary/80 mt-1 flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3" /> {item.recommendationReason}
-                                  </p>
-                                )}
-                              </div>
-                              <button onClick={() => removeItem(tier.id, item.instanceId)}
-                                className="text-muted-foreground/40 hover:text-destructive transition-colors shrink-0">
+                            <div className="flex items-center gap-2 mb-2 mt-auto">
+                              <button
+                                onClick={() => updateItemQty(tier.id, item.instanceId, -1)}
+                                className="w-6 h-6 rounded-full border border-[#014D6F] text-[#014D6F] flex items-center justify-center hover:bg-[#014D6F]/5 transition-colors"
+                                aria-label="Disminuir"
+                              >
+                                <Minus className="w-3 h-3 stroke-[3]" />
+                              </button>
+                              <span className="font-heading text-sm font-bold text-[#014D6F] w-6 text-center">{item.qty}</span>
+                              <button
+                                onClick={() => updateItemQty(tier.id, item.instanceId, 1)}
+                                className="w-6 h-6 rounded-full border border-[#014D6F] text-[#014D6F] flex items-center justify-center hover:bg-[#014D6F]/5 transition-colors"
+                                aria-label="Aumentar"
+                              >
+                                <Plus className="w-3 h-3 stroke-[3]" />
+                              </button>
+                              <button
+                                onClick={() => removeItem(tier.id, item.instanceId)}
+                                className="ml-auto text-[#CEC1B9] hover:text-destructive transition-colors"
+                                aria-label="Eliminar"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <div className="flex items-center justify-between mt-2">
-                              <div className="flex items-center bg-muted/50 rounded-xl p-1">
-                                <button onClick={() => updateItemQty(tier.id, item.instanceId, -1)}
-                                  className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
-                                  <Minus className="w-3 h-3 stroke-[3]" />
-                                </button>
-                                <span className="font-mono text-sm font-black w-8 text-center">{item.qty}</span>
-                                <button onClick={() => updateItemQty(tier.id, item.instanceId, 1)}
-                                  className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary hover:bg-muted transition-colors">
-                                  <Plus className="w-3 h-3 stroke-[3]" />
-                                </button>
-                              </div>
-                              <div className="text-right">
-                                <span className="block font-heading text-sm font-bold text-primary">{formatMXN(item.unitPrice * item.qty)}</span>
-                                <button onClick={() => openSwapSidebar(tier.id, item.instanceId)}
-                                  className="font-heading text-[9px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mt-0.5">
-                                  <ArrowUpDown className="w-3 h-3 inline mr-1" /> Cambiar
-                                </button>
-                              </div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-heading text-[13px] font-bold text-[#014D6F]">
+                                {formatMXN(item.unitPrice * item.qty)}
+                              </span>
+                              <button
+                                onClick={() => openSwapSidebar(tier.id, item.instanceId)}
+                                className="font-body text-[10px] text-[#8B7355] underline hover:text-[#014D6F] transition-colors"
+                              >
+                                Cambiar
+                              </button>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
+
+                      {/* + Agregar producto card */}
+                      <button
+                        onClick={() => openSidebar(tier.id)}
+                        className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col items-center justify-center gap-2 bg-[#FDFAF7] border-2 border-dashed border-[#CEC1B9] rounded-xl text-[#777] hover:border-[#014D6F] hover:text-[#014D6F] transition-colors"
+                      >
+                        <Plus className="w-8 h-8" />
+                        <span className="font-heading text-[11px] font-bold uppercase tracking-wider">Agregar producto</span>
+                      </button>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Spacer for flex */}
-                  <div className="flex-1" />
-
-                  {/* Total Breakdown */}
-                  <div className="space-y-1.5 mb-4 pt-4 border-t border-border/60">
-                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Subtotal</span><span>{formatMXN(t.subtotal)}</span></div>
-                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Logística</span><span>{formatMXN(t.shipping + t.early)}</span></div>
-                    <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60"><span>Impuestos</span><span>{formatMXN(t.iva)}</span></div>
+                  {/* ═══ ZONA C — Desglose de precios ═══ */}
+                  <div className="bg-[#FDFAF7] rounded-xl p-4 flex flex-col">
+                    <p className="font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-[#777] mb-3">
+                      Desglose
+                    </p>
+                    <div className="space-y-2 flex-1">
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-body text-xs text-[#777]">Subtotal</span>
+                        <span className="font-mono text-xs text-[#014D6F]">{formatMXN(t.subtotal)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-body text-xs text-[#777]">Logística</span>
+                        <span className="font-mono text-xs text-[#014D6F]">{formatMXN(t.shipping + t.early)}</span>
+                      </div>
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-body text-xs text-[#777]">IVA 16%</span>
+                        <span className="font-mono text-xs text-[#014D6F]">{formatMXN(t.iva)}</span>
+                      </div>
+                    </div>
+                    <hr className="my-3 border-[#CEC1B9]/40" />
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-heading text-xs font-bold uppercase text-[#014D6F]">Total</span>
+                      <span className="font-heading text-lg font-bold text-[#014D6F]">{formatMXN(t.total)}</span>
+                    </div>
+                    <p className="font-body text-[10px] text-[#777] text-right mt-1">
+                      {formatMXN(t.total / Math.max(1, people))} / persona
+                    </p>
                   </div>
                 </div>
-
-                {/* 5. PRICE BAR — minimal, price left, CTA right */}
-                <div className="flex items-center justify-between px-5 py-3.5" style={{ borderTop: '1px solid #E2D3CA' }}>
-                  <div>
-                    <p className="font-heading text-xl font-bold" style={{ color: '#014D6F', margin: '0 0 2px' }}>
-                      {formatMXN(t.total)}
-                    </p>
-                    <p className="font-heading text-[11px] text-muted-foreground" style={{ margin: 0 }}>
-                      {formatMXN(t.total / Math.max(1, people))}/persona · IVA y envío incluidos
-                    </p>
-                  </div>
-                  <button onClick={() => handleSelectTier(tier.id)}
-                    className={cn(
-                      "px-5 py-2.5 rounded-lg font-heading text-[13px] font-semibold transition-all border-none cursor-pointer",
-                      isSelected ? "text-white" : "text-white hover:opacity-90"
-                    )}
-                    style={{ background: isSelected ? '#2d8a6e' : '#014D6F' }}>
-                    {isSelected ? "✓ Seleccionado" : "Elegir este →"}
-                  </button>
-                </div>
-
-                {/* 6. AI BADGE — footer */}
-                {engineIsAI && (
-                  <div className="text-center py-2 px-4" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA', borderRadius: '0 0 16px 16px' }}>
-                    <p className="font-heading text-[10px] text-muted-foreground" style={{ margin: 0, letterSpacing: '0.08em' }}>
-                      ✦ Propuesta compuesta con{' '}
-                      <span className="font-bold" style={{ color: '#014D6F' }}>Claude AI</span>
-                      {' · '}
-                      <span style={{ color: '#888' }}>imágenes por DALL-E</span>
-                      {' · '}Berlioz {new Date().getFullYear()}
-                    </p>
-                  </div>
-                )}
               </div>
             );
           })}

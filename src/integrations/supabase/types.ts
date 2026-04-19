@@ -1094,6 +1094,63 @@ export type Database = {
           },
         ]
       }
+      woo_order_items: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          delivery_date: string | null
+          delivery_schedule: string | null
+          email: string | null
+          empresa: string | null
+          id: string
+          order_date: string | null
+          order_total: number | null
+          payment_method: string | null
+          product_id: number | null
+          product_name: string | null
+          quantity: number | null
+          sku: string | null
+          unit_price: number | null
+          woo_order_id: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          delivery_date?: string | null
+          delivery_schedule?: string | null
+          email?: string | null
+          empresa?: string | null
+          id?: string
+          order_date?: string | null
+          order_total?: number | null
+          payment_method?: string | null
+          product_id?: number | null
+          product_name?: string | null
+          quantity?: number | null
+          sku?: string | null
+          unit_price?: number | null
+          woo_order_id: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          delivery_date?: string | null
+          delivery_schedule?: string | null
+          email?: string | null
+          empresa?: string | null
+          id?: string
+          order_date?: string | null
+          order_total?: number | null
+          payment_method?: string | null
+          product_id?: number | null
+          product_name?: string | null
+          quantity?: number | null
+          sku?: string | null
+          unit_price?: number | null
+          woo_order_id?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       popular_products_by_event: {
@@ -1114,6 +1171,7 @@ export type Database = {
     }
     Functions: {
       get_my_email_domain: { Args: never; Returns: string }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
       search_products_for_quote: {
         Args: {
           p_budget_max?: number

@@ -71,4 +71,17 @@ export function useCatalogoCotizador(category?: string) {
   return { items, loading };
 }
 
+/** Categorías visibles en el sidebar (orden importa). "Favoritos" y "Todos" son pestañas virtuales. */
+export const QUOTER_SIDEBAR_CATEGORIES = [
+  'Favoritos',
+  'Todos',
+  'Desayuno',
+  'Coffee Break',
+  'Working Lunch',
+  'Bebidas',
+  'Surtidos',
+  'Vegano',
+  'Piropo',
+] as const;
+
 export { SIDEBAR_CATEGORIES };

@@ -11,10 +11,12 @@ const SIDEBAR_MAP: Record<string, string> = {
   'Coffee Break': 'Coffee Break',
   'Working Lunch': 'Working Lunch',
   'Bebidas': 'Bebidas',
-  'Snacks': 'Snacks',
+  'Snacks': 'Coffee Break', // snacks viven dentro de coffee break en la DB
   'Surtidos': 'Surtidos',
   'Tortas Piropo': 'Piropo',
   'Piropo': 'Piropo',
+  'Vegano / Vegetariano': 'Vegano',
+  'Entrega Especial': 'Entrega Especial',
 };
 
 const FALLBACK_BY_CATEGORY: Record<string, string> = {
@@ -68,5 +70,18 @@ export function useCatalogoCotizador(category?: string) {
 
   return { items, loading };
 }
+
+/** Categorías visibles en el sidebar (orden importa). "Favoritos" y "Todos" son pestañas virtuales. */
+export const QUOTER_SIDEBAR_CATEGORIES = [
+  'Favoritos',
+  'Todos',
+  'Desayuno',
+  'Coffee Break',
+  'Working Lunch',
+  'Bebidas',
+  'Surtidos',
+  'Vegano',
+  'Piropo',
+] as const;
 
 export { SIDEBAR_CATEGORIES };

@@ -17,7 +17,7 @@ import logoImg from "@/assets/berlioz-logo.png";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";
-import { useCatalogoCotizador, getCategoryFallback } from "@/hooks/useCatalogoCotizador";
+import { useCatalogoCotizador, getCategoryFallback, QUOTER_SIDEBAR_CATEGORIES } from "@/hooks/useCatalogoCotizador";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -381,7 +381,7 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarTarget, setSidebarTarget] = useState<PackageTier>("esencial");
-  const [sidebarCategory, setSidebarCategory] = useState(SIDEBAR_CATEGORIES[0]);
+  const [sidebarCategory, setSidebarCategory] = useState<string>('Favoritos');
   const [swapTarget, setSwapTarget] = useState<{ tier: PackageTier; instanceId: string } | null>(null);
   const [selectedTier, setSelectedTier] = useState<PackageTier | null>(null);
   const [hasReceivedSmartData, setHasReceivedSmartData] = useState(!!smartQuoteData);
@@ -415,7 +415,32 @@ export default function ProposalStep(props: ProposalStepProps) {
     }));
   }, []);
 
-  const addProductToTier = useCallback((tier: PackageTier, product: CatalogProduct) => {
+  // Sidebar products — fetched from Supabase (productos table) so images & descriptions match /menu
+  const { items: dbCatalogItems } = useCatalogoCotizador();
+
+  // Quick lookup by normalized product name → enriches proposal cards with image+desc
+  const dbByName = useMemo(() => {
+    const map = new Map<string, typeof dbCatalogItems[0]>();
+    for (const it of dbCatalogItems) {
+      map.set(it.name.trim().toLowerCase(), it);
+    }
+    return map;
+  }, [dbCatalogItems]);
+
+  const enrichItem = useCallback((it: ProposalItem): ProposalItem => {
+    if (it.imageUrl && it.descripcion) return it;
+    const dbItem = dbByName.get(it.productName.trim().toLowerCase());
+    if (!dbItem) return it;
+    return {
+      ...it,
+      imageUrl: it.imageUrl || dbItem.imagen_url || getCategoryFallback(dbItem.categoriaDB || dbItem.sidebarCategory),
+      imagen_url: it.imagen_url || dbItem.imagen_url,
+      descripcion: it.descripcion || dbItem.description || dbItem.descripcion || undefined,
+      categoria: it.categoria || dbItem.categoriaDB,
+    };
+  }, [dbByName]);
+
+  const addProductToTier = useCallback((tier: PackageTier, product: CatalogProduct & { imagen_url?: string | null; descripcion?: string | null; categoriaDB?: string | null }) => {
     const newItem: ProposalItem = {
       instanceId: nextId(),
       productName: product.name,
@@ -423,6 +448,10 @@ export default function ProposalStep(props: ProposalStepProps) {
       qty: product.isPerPerson ? people : 1,
       isBestseller: product.isBestseller,
       category: product.sidebarCategory,
+      imageUrl: product.imagen_url || getCategoryFallback(product.categoriaDB || product.sidebarCategory),
+      imagen_url: product.imagen_url,
+      descripcion: (product as any).descripcion || product.description,
+      categoria: product.categoriaDB,
     };
     setPackages(prev => ({
       ...prev,
@@ -431,7 +460,7 @@ export default function ProposalStep(props: ProposalStepProps) {
     toast.success(`✓ ${product.name} agregado`);
   }, [people]);
 
-  const swapItem = useCallback((tier: PackageTier, instanceId: string, product: CatalogProduct) => {
+  const swapItem = useCallback((tier: PackageTier, instanceId: string, product: CatalogProduct & { imagen_url?: string | null; descripcion?: string | null; categoriaDB?: string | null }) => {
     setPackages(prev => ({
       ...prev,
       [tier]: {
@@ -442,6 +471,10 @@ export default function ProposalStep(props: ProposalStepProps) {
             unitPrice: product.price,
             isBestseller: product.isBestseller,
             category: product.sidebarCategory,
+            imageUrl: product.imagen_url || getCategoryFallback(product.categoriaDB || product.sidebarCategory),
+            imagen_url: product.imagen_url,
+            descripcion: (product as any).descripcion || product.description,
+            categoria: product.categoriaDB,
           } : i
         ),
       },
@@ -466,12 +499,16 @@ export default function ProposalStep(props: ProposalStepProps) {
   const pctEQ = tierTotals.esencial.total > 0 ? Math.round((diffEQ / tierTotals.esencial.total) * 100) : 0;
   const pctEX = tierTotals.equilibrado.total > 0 ? Math.round((diffEX / tierTotals.equilibrado.total) * 100) : 0;
 
-  // Sidebar products — fetched from Supabase (productos table) so images & descriptions match /menu
-  const { items: dbCatalogItems } = useCatalogoCotizador();
-  const sidebarProducts = useMemo(
-    () => dbCatalogItems.filter(p => p.sidebarCategory === sidebarCategory),
-    [dbCatalogItems, sidebarCategory]
-  );
+  const sidebarProducts = useMemo(() => {
+    if (sidebarCategory === 'Favoritos') {
+      return dbCatalogItems.filter(p => p.isBestseller).slice(0, 60);
+    }
+    if (sidebarCategory === 'Todos') {
+      return dbCatalogItems;
+    }
+    return dbCatalogItems.filter(p => p.sidebarCategory === sidebarCategory);
+  }, [dbCatalogItems, sidebarCategory]);
+
 
   // Actions
   const handleSelectTier = (tier: PackageTier) => {
@@ -738,12 +775,14 @@ export default function ProposalStep(props: ProposalStepProps) {
   const openSidebar = (tier: PackageTier) => {
     setSidebarTarget(tier);
     setSwapTarget(null);
+    setSidebarCategory('Favoritos');
     setSidebarOpen(true);
   };
 
   const openSwapSidebar = (tier: PackageTier, instanceId: string) => {
     setSidebarTarget(tier);
     setSwapTarget({ tier, instanceId });
+    setSidebarCategory('Favoritos');
     setSidebarOpen(true);
   };
 
@@ -878,7 +917,7 @@ export default function ProposalStep(props: ProposalStepProps) {
                   {/* ═══ ZONA B — Carrusel horizontal de cards ═══ */}
                   <TierCarousel
                     tier={tier}
-                    pkg={pkg}
+                    pkg={{ ...pkg, items: pkg.items.map(enrichItem) }}
                     updateItemQty={updateItemQty}
                     removeItem={removeItem}
                     openSwapSidebar={openSwapSidebar}
@@ -1068,11 +1107,11 @@ export default function ProposalStep(props: ProposalStepProps) {
 
             {/* Category chips */}
             <div className="flex gap-2 p-3 overflow-x-auto border-b border-border">
-              {SIDEBAR_CATEGORIES.map(cat => (
+              {QUOTER_SIDEBAR_CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => setSidebarCategory(cat)}
                   className={cn("px-3 py-1 rounded-full font-body text-xs font-medium whitespace-nowrap transition-all border",
                     sidebarCategory === cat ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:border-primary/40"
-                  )}>{cat}</button>
+                  )}>{cat === 'Favoritos' ? '★ Favoritos' : cat}</button>
               ))}
             </div>
 

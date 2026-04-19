@@ -17,7 +17,7 @@ import logoImg from "@/assets/berlioz-logo.png";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";
-import { useProductImage } from "@/hooks/useProductImage";
+import { useCatalogoCotizador, getCategoryFallback } from "@/hooks/useCatalogoCotizador";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -466,10 +466,11 @@ export default function ProposalStep(props: ProposalStepProps) {
   const pctEQ = tierTotals.esencial.total > 0 ? Math.round((diffEQ / tierTotals.esencial.total) * 100) : 0;
   const pctEX = tierTotals.equilibrado.total > 0 ? Math.round((diffEX / tierTotals.equilibrado.total) * 100) : 0;
 
-  // Sidebar products
-  const sidebarProducts = useMemo(() =>
-    CATALOG.filter(p => p.sidebarCategory === sidebarCategory),
-    [sidebarCategory]
+  // Sidebar products — fetched from Supabase (productos table) so images & descriptions match /menu
+  const { items: dbCatalogItems } = useCatalogoCotizador();
+  const sidebarProducts = useMemo(
+    () => dbCatalogItems.filter(p => p.sidebarCategory === sidebarCategory),
+    [dbCatalogItems, sidebarCategory]
   );
 
   // Actions
@@ -1105,25 +1106,26 @@ function SidebarProductCard({
   isSwap,
   onSelect,
 }: {
-  product: CatalogProduct;
+  product: CatalogProduct & { imagen_url?: string | null; categoriaDB?: string | null };
   isSwap: boolean;
   onSelect: () => void;
 }) {
-  const { imageUrl } = useProductImage({
-    id: product.id,
-    nombre: product.name,
-    descripcion: product.description,
-    categoria: product.category,
-  });
+  const fallback = getCategoryFallback(product.categoriaDB || product.sidebarCategory);
+  const initial = product.imagen_url || fallback;
 
   return (
     <div className="flex gap-3 p-3 rounded-lg border border-border hover:border-primary/40 hover:shadow-sm transition-all">
       <div className="w-20 h-20 shrink-0 rounded-md overflow-hidden bg-muted flex items-center justify-center">
-        {imageUrl ? (
-          <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
-        ) : (
-          <div className="w-full h-full bg-muted animate-pulse" />
-        )}
+        <img
+          src={initial}
+          alt={product.name}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (img.src !== fallback) img.src = fallback;
+          }}
+        />
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-between">
         <div className="min-w-0">

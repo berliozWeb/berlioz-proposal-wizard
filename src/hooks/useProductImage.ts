@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { buildProductImageUrl, buildImagePrompt } from '@/lib/imageUtils';
-import { supabase } from '@/integrations/supabase/client';
+import { buildProductImageUrl } from '@/lib/imageUtils';
 
 interface ProductImageInput {
   id: string;
@@ -12,40 +11,18 @@ interface ProductImageInput {
   categoria?: string | null;
 }
 
+/**
+ * Returns the product image URL from the existing fields.
+ * NOTE: Auto-generation via DALL-E has been disabled. If no image is available,
+ * the consumer is expected to render a category fallback (see useCatalogoCotizador).
+ */
 export function useProductImage(product: ProductImageInput) {
-  const [imageUrl, setImageUrl] = useState<string | null>(
-    buildProductImageUrl(product.imagen_url || product.imageUrl, product.imagen)
-  );
-  const [isGenerated, setIsGenerated] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const initial = buildProductImageUrl(product.imagen_url || product.imageUrl, product.imagen);
+  const [imageUrl, setImageUrl] = useState<string | null>(initial);
 
   useEffect(() => {
-    // If we already have a real image, done
-    if (imageUrl) return;
+    setImageUrl(buildProductImageUrl(product.imagen_url || product.imageUrl, product.imagen));
+  }, [product.id, product.imagen_url, product.imageUrl, product.imagen]);
 
-    let cancelled = false;
-
-    const generateImage = async () => {
-      setLoading(true);
-      try {
-        const prompt = buildImagePrompt(product);
-        const { data } = await supabase.functions.invoke('generate-product-image', {
-          body: { productId: product.id, prompt },
-        });
-        if (!cancelled && data?.url) {
-          setImageUrl(data.url);
-          setIsGenerated(true);
-        }
-      } catch (err) {
-        console.warn('Image generation failed for', product.nombre);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    generateImage();
-    return () => { cancelled = true; };
-  }, [product.id]);
-
-  return { imageUrl, isGenerated, loading };
+  return { imageUrl, isGenerated: false, loading: false };
 }

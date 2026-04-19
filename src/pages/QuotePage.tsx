@@ -367,9 +367,9 @@ const QuotePage = () => {
                     )}
                   </div>
 
-                  {/* Time Selector */}
+                  {/* Time Selector + disclaimer logística */}
                   <div>
-                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora?</label>
+                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora inicia tu evento?</label>
                     <select value={eventTime} onChange={e => setEventTime(e.target.value)}
                       className={cn("w-full h-14 px-5 rounded-2xl border-2 transition-all font-body text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 appearance-none bg-no-repeat bg-[right_1.25rem_center] bg-[length:1em_1em]",
                         eventTime ? "border-primary/30 bg-primary/5 font-semibold text-primary" : "border-border bg-background text-muted-foreground"
@@ -378,39 +378,41 @@ const QuotePage = () => {
                       <option value="">Selecciona horario</option>
                       {TIME_SLOTS.map(t => <option key={t} value={t} className="text-foreground">{t}</option>)}
                     </select>
-                    {deliveryTime && (
-                      <div className="mt-3 bg-muted/30 p-3 rounded-xl border border-border/50">
-                        <p className="font-body text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Entrega estimada</p>
-                        <p className="font-mono text-lg text-primary font-bold">{deliveryTime}</p>
-                        {isEarlyDelivery && (
-                          <div className="mt-2 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
-                            <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
-                          </div>
-                        )}
+                    {/* Disclaimer logística — siempre visible */}
+                    <div className="mt-3 bg-muted/40 border border-border/50 rounded-xl px-3 py-2.5 flex gap-2 items-start">
+                      <Truck className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                      <p className="font-body text-[11px] text-muted-foreground leading-relaxed">
+                        Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-semibold text-foreground">90 minutos de margen</span> para la entrega.
+                      </p>
+                    </div>
+                    {deliveryTime && isEarlyDelivery && (
+                      <div className="mt-2 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
+                        <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Duration Card */}
+              {/* Duration — pills simples */}
               <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-2 h-full bg-secondary/20" />
                 <label className="block font-heading text-sm font-bold text-foreground mb-6 uppercase tracking-wider">¿Cuál es la duración del evento?</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {DURATION_OPTIONS.map(d => (
-                    <button key={d.id} onClick={() => setDuration(d.id)}
-                      className={cn("p-6 rounded-3xl border-2 text-left transition-all relative group flex flex-col h-full",
-                        duration === d.id ? "border-secondary bg-secondary/5 ring-4 ring-secondary/5 shadow-md shadow-secondary/5" : "border-border bg-background hover:border-secondary/30 shadow-sm"
-                      )}>
-                      <div className="flex-1">
-                        <p className={cn("font-heading text-base font-bold transition-colors", duration === d.id ? "text-secondary" : "text-foreground")}>{d.label}</p>
-                        <p className="font-body text-[11px] text-muted-foreground mt-1 mb-4 leading-snug">{d.subtitle}</p>
-                      </div>
-                      <p className="font-body text-xs text-secondary font-bold pt-3 border-t border-secondary/10 mt-auto">{d.priceHint}</p>
-                      {duration === d.id && <div className="absolute top-4 right-4 text-secondary"><CheckCircle className="w-5 h-5 fill-current" /></div>}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-3">
+                  {DURATION_PILLS.map(d => {
+                    const active = duration === d.id;
+                    return (
+                      <button key={d.id} onClick={() => setDuration(d.id)}
+                        className={cn(
+                          "px-6 py-3 rounded-full border-2 font-body text-sm font-semibold transition-all",
+                          active
+                            ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/15"
+                            : "border-border bg-background text-foreground hover:border-primary/40",
+                        )}>
+                        {d.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -445,27 +447,44 @@ const QuotePage = () => {
                   )}
                 </div>
 
-                {/* Dietary Selection */}
+                {/* Distribución de invitados con restricciones */}
                 <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm">
-                  <label className="block font-heading text-sm font-bold text-foreground mb-6 uppercase tracking-wider">¿Restricciones dietéticas?</label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {DIETARY_OPTIONS.map(d => {
-                      const active = dietary.includes(d.value);
+                  <label className="block font-heading text-sm font-bold text-foreground mb-2 uppercase tracking-wider">Distribución de invitados</label>
+                  <p className="font-body text-xs text-muted-foreground mb-5">
+                    Distribución para <span className="font-bold text-foreground">{numPeople}</span> personas
+                  </p>
+                  <div className="space-y-3">
+                    {DIETARY_RESTRICTIONS.map(r => {
+                      const count = dietaryDistribution[r.value] || 0;
+                      const cantIncrease = totalRestricted >= numPeople;
                       return (
-                        <button key={d.value} onClick={() => toggleDietary(d.value)}
-                          className={cn("px-5 py-3 rounded-2xl border-2 font-body text-sm font-bold transition-all flex items-center gap-2",
-                            active ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105" : "border-border bg-background text-foreground hover:border-primary/30"
-                          )}>
-                          {d.label}
-                          {active && <X className="w-3.5 h-3.5" />}
-                        </button>
+                        <div key={r.value} className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="text-base shrink-0">{r.icon}</span>
+                            <span className="font-body text-sm text-foreground truncate">{r.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => updateDietaryCount(r.value, -1)}
+                              disabled={count === 0}
+                              className="w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center hover:border-primary/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="font-mono text-sm font-bold text-foreground w-6 text-center">{count}</span>
+                            <button
+                              onClick={() => updateDietaryCount(r.value, 1)}
+                              disabled={cantIncrease}
+                              className="w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center hover:border-primary/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       );
                     })}
-                    {dietary.length === 0 && (
-                      <div className="w-full py-8 text-center text-muted-foreground font-body text-sm border-2 border-dashed border-border rounded-2xl">
-                        Ninguna restricción seleccionada
-                      </div>
-                    )}
+                  </div>
+                  <div className="mt-5 pt-4 border-t border-border/60 flex items-center justify-between">
+                    <span className="font-body text-sm text-muted-foreground">Sin restricción</span>
+                    <span className="font-mono text-base font-bold text-primary">{sinRestriccion} personas</span>
                   </div>
                 </div>
               </div>
@@ -485,19 +504,7 @@ const QuotePage = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-6 border-t border-primary/10">
-                  <label className="flex items-start gap-4 cursor-pointer group max-w-lg">
-                    <div className={cn("mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", 
-                      receiveConfirm ? "bg-primary border-primary text-white" : "border-primary/30 group-hover:border-primary"
-                    )}>
-                      {receiveConfirm && <CheckCircle className="w-4 h-4 fill-current" />}
-                    </div>
-                    <Checkbox checked={receiveConfirm} onCheckedChange={(v) => setReceiveConfirm(v === true)} className="hidden" />
-                    <span className="font-body text-sm text-foreground leading-snug">
-                       Confirmo que habrá alguien responsable para recibir el pedido en el horario acordado
-                    </span>
-                  </label>
-
+                <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 pt-6 border-t border-primary/10">
                   <div className="flex gap-4">
                     <Button variant="outline" onClick={goBack} className="h-14 px-8 rounded-full font-bold border-2 hover:bg-muted transition-all">
                       Volver

@@ -291,9 +291,15 @@ const QuotePage = () => {
         </div>
       )}
 
-      {/* ═══ STEP 2 — EVENT DETAILS ═══ */}
-      {step === 1 && (
-        <div className="max-w-4xl mx-auto px-6 py-4 animate-slide-up">
+      {/* ═══ EVENT DETAILS (same page, revealed) ═══ */}
+      {step === 0 && showForm && (
+        <div
+          ref={detailsRef}
+          className={cn(
+            "max-w-4xl mx-auto px-6 py-4 transition-all duration-500 ease-out",
+            showForm ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+          )}
+        >
            <RevealOnScroll>
             <div className="text-center mb-12">
               <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4 tracking-tight">Detalles del evento</h2>

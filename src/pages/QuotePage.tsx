@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck } from "lucide-react";
+import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck, Package, Phone } from "lucide-react";
+import { lookupCP, type ShippingResult } from "@/data/shippingZones";
 import BaseLayout from "@/components/layout/BaseLayout";
 import StepperProgress from "@/components/ui/StepperProgress";
 import { Calendar } from "@/components/ui/calendar";

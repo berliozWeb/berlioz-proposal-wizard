@@ -14,6 +14,13 @@ serve(async (req) => {
     const secret = Deno.env.get("WOO_WEBHOOK_SECRET");
     const body = await req.text();
 
+    if (body.trim().startsWith('webhook_id=') || body.trim() === '') {
+      return new Response(JSON.stringify({ received: true, type: 'ping' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Verify signature only if secret is configured
     if (secret) {
       const signature = req.headers.get("x-wc-webhook-signature");

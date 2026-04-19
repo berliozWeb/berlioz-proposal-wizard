@@ -212,24 +212,15 @@ const QuotePage = () => {
   return (
     <BaseLayout hideFooter>
       <div className="bg-background min-h-screen pb-20">
-        {/* PREMIUM HERO SECTION (only step 0) */}
+        {/* COMPACT HERO 3:1 (only step 0) */}
         {step === 0 && (
-          <div className="relative h-[60vh] min-h-[500px] mb-12 overflow-hidden bg-primary">
-            <img src={heroImg} alt="Catering Berlioz" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
-            {/* Simple bottom gradient for text contrast only */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 py-24 px-6 text-center">
-              <RevealOnScroll delay={100}>
-                <span className="inline-block px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold tracking-[0.3em] uppercase mb-6 border border-white/20">
-                  L'ART DE RECEVOIR
-                </span>
-                <h1 className="font-heading text-5xl md:text-7xl text-white mb-6 tracking-tight drop-shadow-2xl">
-                  Cotizador <span className="italic">Gourmet</span>
-                </h1>
-                <p className="max-w-xl mx-auto font-body text-lg text-white/80 leading-relaxed shadow-sm">
-                  Crea una experiencia gastronómica a la medida de tu evento empresarial, con el sello distintivo de Berlioz.
-                </p>
-              </RevealOnScroll>
+          <div className="relative w-full aspect-[3/1] max-h-[260px] mb-8 overflow-hidden bg-primary">
+            <img src={heroImg} alt="Catering Berlioz" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
+              <h1 className="font-heading text-3xl md:text-5xl text-white tracking-tight drop-shadow-2xl">
+                Cuéntanos sobre tu <span className="italic">evento</span>
+              </h1>
             </div>
           </div>
         )}

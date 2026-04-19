@@ -775,12 +775,14 @@ export default function ProposalStep(props: ProposalStepProps) {
   const openSidebar = (tier: PackageTier) => {
     setSidebarTarget(tier);
     setSwapTarget(null);
+    setSidebarCategory('Favoritos');
     setSidebarOpen(true);
   };
 
   const openSwapSidebar = (tier: PackageTier, instanceId: string) => {
     setSidebarTarget(tier);
     setSwapTarget({ tier, instanceId });
+    setSidebarCategory('Favoritos');
     setSidebarOpen(true);
   };
 

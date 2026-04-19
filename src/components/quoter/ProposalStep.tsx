@@ -17,7 +17,7 @@ import logoImg from "@/assets/berlioz-logo.png";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";
-import { useCatalogoCotizador, getCategoryFallback } from "@/hooks/useCatalogoCotizador";
+import { useCatalogoCotizador, getCategoryFallback, QUOTER_SIDEBAR_CATEGORIES } from "@/hooks/useCatalogoCotizador";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -381,7 +381,7 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarTarget, setSidebarTarget] = useState<PackageTier>("esencial");
-  const [sidebarCategory, setSidebarCategory] = useState(SIDEBAR_CATEGORIES[0]);
+  const [sidebarCategory, setSidebarCategory] = useState<string>('Favoritos');
   const [swapTarget, setSwapTarget] = useState<{ tier: PackageTier; instanceId: string } | null>(null);
   const [selectedTier, setSelectedTier] = useState<PackageTier | null>(null);
   const [hasReceivedSmartData, setHasReceivedSmartData] = useState(!!smartQuoteData);

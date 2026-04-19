@@ -560,6 +560,14 @@ const QuotePage = () => {
                     Distribución para <span className="font-bold text-foreground">{numPeople}</span> personas
                   </p>
                   <div className="space-y-3">
+                    {/* Sin restricción primero */}
+                    <div className="flex items-center justify-between gap-4 pb-3 border-b border-border/60">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="text-base shrink-0">✅</span>
+                        <span className="font-body text-sm font-semibold text-foreground truncate">Sin restricción</span>
+                      </div>
+                      <span className="font-mono text-base font-bold text-primary shrink-0">{sinRestriccion}</span>
+                    </div>
                     {DIETARY_RESTRICTIONS.map(r => {
                       const count = dietaryDistribution[r.value] || 0;
                       const cantIncrease = totalRestricted >= numPeople;
@@ -587,10 +595,6 @@ const QuotePage = () => {
                         </div>
                       );
                     })}
-                  </div>
-                  <div className="mt-5 pt-4 border-t border-border/60 flex items-center justify-between">
-                    <span className="font-body text-sm text-muted-foreground">Sin restricción</span>
-                    <span className="font-mono text-base font-bold text-primary">{sinRestriccion} personas</span>
                   </div>
                 </div>
               </div>

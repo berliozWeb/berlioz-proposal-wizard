@@ -883,23 +883,23 @@ export default function ProposalStep(props: ProposalStepProps) {
                       Desglose
                     </p>
                     <div className="space-y-2 flex-1">
-                      <div className="flex justify-between items-baseline">
+                      <div className="flex justify-between items-baseline gap-3">
                         <span className="font-body text-xs text-[#777]">Subtotal</span>
-                        <span className="font-mono text-xs text-[#014D6F]">{formatMXN(t.subtotal)}</span>
+                        <span className="font-mono text-xs text-[#014D6F] whitespace-nowrap">{formatMXN(t.subtotal)}</span>
                       </div>
-                      <div className="flex justify-between items-baseline">
-                        <span className="font-body text-xs text-[#777]">Logística</span>
-                        <span className="font-mono text-xs text-[#014D6F]">{formatMXN(t.shipping + t.early)}</span>
+                      <div className="flex justify-between items-baseline gap-3">
+                        <span className="font-body text-xs text-[#777]">Envío</span>
+                        <span className="font-mono text-xs text-[#014D6F] whitespace-nowrap">{formatMXN(t.shipping + t.early)}</span>
                       </div>
-                      <div className="flex justify-between items-baseline">
+                      <div className="flex justify-between items-baseline gap-3">
                         <span className="font-body text-xs text-[#777]">IVA 16%</span>
-                        <span className="font-mono text-xs text-[#014D6F]">{formatMXN(t.iva)}</span>
+                        <span className="font-mono text-xs text-[#014D6F] whitespace-nowrap">{formatMXN(t.iva)}</span>
                       </div>
                     </div>
                     <hr className="my-3 border-[#CEC1B9]/40" />
-                    <div className="flex justify-between items-baseline">
+                    <div className="flex justify-between items-baseline gap-3">
                       <span className="font-heading text-xs font-bold uppercase text-[#014D6F]">Total</span>
-                      <span className="font-heading text-lg font-bold text-[#014D6F]">{formatMXN(t.total)}</span>
+                      <span className="font-heading text-lg font-bold text-[#014D6F] whitespace-nowrap">{formatMXN(t.total)}</span>
                     </div>
                     <p className="font-body text-[10px] text-[#777] text-right mt-1">
                       {formatMXN(t.total / Math.max(1, people))} / persona

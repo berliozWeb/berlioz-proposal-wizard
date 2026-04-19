@@ -1,16 +1,15 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, X } from "lucide-react";
+import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import StepperProgress from "@/components/ui/StepperProgress";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { TOP_DELIVERY_ZONES, DURATION_OPTIONS } from "@/domain/entities/BerliozCatalog";
+import { TOP_DELIVERY_ZONES } from "@/domain/entities/BerliozCatalog";
 import ProposalStep from "@/components/quoter/ProposalStep";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useSmartQuote } from "@/hooks/useSmartQuote";
@@ -48,57 +47,41 @@ interface EventTypeCard {
 
 const EVENT_TYPES: EventTypeCard[] = [
   {
-    value: "desayuno", label: "Desayuno", badge: "🍳 Perfecto para morning meetings", badgeStyle: "gold", badgePosition: "top",
-    desc: "Desde 4 personas · 7am en adelante", price: "Desde $170/persona", icon: "🍳", image: breakfastImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Vegano", color: "bg-green-100 text-green-700" }, { label: "Sin gluten", color: "bg-amber-100 text-amber-700" }],
-    filters: ["vegano", "gluten", "budget", "small"],
+    value: "desayuno", label: "Desayuno", badge: "", badgeStyle: "none", badgePosition: "top",
+    desc: "Perfecto para morning meetings", price: "Desde $170/persona", icon: "🍳", image: breakfastImg,
+    tags: [], filters: [],
   },
   {
-    value: "coffee-break", label: "Coffee Break", badge: "☕ Ideal para juntas", badgeStyle: "gold", badgePosition: "top",
-    desc: "Desde 4 personas · mañana o tarde", price: "Desde $240/persona", icon: "☕", image: coffeeImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }],
-    filters: ["vegano"],
-  },
-  {
-    value: "working-lunch", label: "Working Lunch", badge: "⭐ El más pedido", badgeStyle: "dark", badgePosition: "top",
+    value: "working-lunch", label: "Comida", badge: "", badgeStyle: "none", badgePosition: "top",
     desc: "El producto estrella de Berlioz", price: "Desde $150/persona", icon: "🍱", image: boxlunchImg,
-    tags: [{ label: "Vegano", color: "bg-green-100 text-green-700" }, { label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Sin gluten", color: "bg-amber-100 text-amber-700" }, { label: "Keto", color: "bg-purple-100 text-purple-700" }],
-    filters: ["vegano", "gluten", "budget"],
+    tags: [], filters: [],
   },
   {
-    value: "capacitacion", label: "Capacitación", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "Servicio completo de día", price: "Paquete de día completo", icon: "📋", image: juntaImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Vegano", color: "bg-green-100 text-green-700" }],
-    filters: ["vegano"],
+    value: "coffee-break", label: "Coffee Break", badge: "", badgeStyle: "none", badgePosition: "top",
+    desc: "Ideal para juntas y pausas", price: "Desde $240/persona", icon: "☕", image: coffeeImg,
+    tags: [], filters: [],
   },
   {
-    value: "reunion-ejecutiva", label: "Reunión ejecutiva", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "Para grupos pequeños y VIP", price: "Experiencia premium", icon: "💼", image: heroImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }, { label: "Sin gluten", color: "bg-amber-100 text-amber-700" }, { label: "Keto", color: "bg-purple-100 text-purple-700" }],
-    filters: ["gluten", "small"],
-  },
-  {
-    value: "filmacion", label: "Filmación", badge: "💡 Económico y portable", badgeStyle: "gold", badgePosition: "bottom",
-    desc: "Bags y opciones portables", price: "Opciones económicas portables", icon: "🎬", image: veganoImg,
-    tags: [{ label: "Vegetariano", color: "bg-emerald-100 text-emerald-700" }],
-    filters: ["budget", "small", "vegano"],
+    value: "otro", label: "Otro", badge: "", badgeStyle: "none", badgePosition: "top",
+    desc: "Cuéntanos qué necesitas", price: "Cotización a la medida", icon: "✨", image: juntaImg,
+    tags: [], filters: [],
   },
 ];
 
-const FILTER_CHIPS = [
-  { value: "todos", label: "Todos" },
-  { value: "vegano", label: "Con opciones veganas" },
-  { value: "gluten", label: "Sin gluten" },
-  { value: "budget", label: "Menos de $200/persona" },
-  { value: "small", label: "Grupos pequeños (<10)" },
+const DIETARY_RESTRICTIONS = [
+  { value: "vegano", label: "Vegano", icon: "🌱" },
+  { value: "vegetariano", label: "Vegetariano", icon: "🥗" },
+  { value: "sin_gluten", label: "Sin gluten", icon: "🚫🌾" },
+  { value: "sin_lactosa", label: "Sin lactosa", icon: "🥛" },
+  { value: "keto", label: "Keto", icon: "🔥" },
 ];
 
-const DIETARY_OPTIONS = [
-  { value: "vegano", label: "🌱 Vegano" },
-  { value: "vegetariano", label: "🌿 Vegetariano" },
-  { value: "sin_gluten", label: "🚫🌾 Sin gluten" },
-  { value: "sin_lactosa", label: "🥛 Sin lactosa" },
-  { value: "keto", label: "🔥 Keto" },
+const DURATION_PILLS = [
+  { id: "1h", label: "1 hora" },
+  { id: "2-3h", label: "2-3 horas" },
+  { id: "3-5h", label: "3-5 horas" },
+  { id: "5h+", label: "Día completo" },
+  { id: "otro", label: "Otro" },
 ];
 
 const TIME_SLOTS = Array.from({ length: 31 }, (_, i) => {
@@ -126,7 +109,7 @@ function isCutoff(selectedDate: Date | undefined): boolean {
 const QuotePage = () => {
   const [step, setStep] = useState(0);
   const [eventType, setEventType] = useState("");
-  const [eventFilter, setEventFilter] = useState("todos");
+  // (filtros eliminados)
   const [duration, setDuration] = useState("");
   const [people, setPeople] = useState<number | "">(10);
   const [postalCode, setPostalCode] = useState("");
@@ -138,7 +121,12 @@ const QuotePage = () => {
   const [dietary, setDietary] = useState<string[]>([]);
   const [clientName, setClientName] = useState("");
   const [empresa, setEmpresa] = useState("");
-  const [receiveConfirm, setReceiveConfirm] = useState(false);
+  const [dietaryDistribution, setDietaryDistribution] = useState<Record<string, number>>({
+    vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0,
+  });
+
+  // Ref para smooth scroll al formulario de detalles
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   // Smart Quote
   const { loading: smartLoading, generateQuote, submitFeedback } = useSmartQuote();
@@ -152,16 +140,39 @@ const QuotePage = () => {
   const isSmallGroup = typeof people === "number" && people >= 1 && people <= 3;
   const numPeople = typeof people === "number" ? people : 0;
 
-  const filteredEvents = useMemo(() => {
-    if (eventFilter === "todos") return EVENT_TYPES;
-    return EVENT_TYPES.filter(e => e.filters.includes(eventFilter));
-  }, [eventFilter]);
+  // Distribución de invitados por restricción
+  const totalRestricted = useMemo(
+    () => Object.values(dietaryDistribution).reduce((a, b) => a + b, 0),
+    [dietaryDistribution],
+  );
+  const sinRestriccion = Math.max(0, numPeople - totalRestricted);
+
+  const updateDietaryCount = (key: string, delta: number) => {
+    setDietaryDistribution(prev => {
+      const current = prev[key] || 0;
+      const next = current + delta;
+      if (next < 0) return prev;
+      const newTotal = totalRestricted - current + next;
+      if (newTotal > numPeople) return prev; // bloquear exceso
+      return { ...prev, [key]: next };
+    });
+  };
+
+  // Sincroniza distribución → array dietary que consume la API
+  useEffect(() => {
+    setDietary(Object.entries(dietaryDistribution).filter(([, v]) => v > 0).map(([k]) => k));
+  }, [dietaryDistribution]);
 
   const canNextStep1 = eventType !== "";
-  const canNextStep2 = numPeople >= 1 && !!date && eventTime !== "" && !cutoffBlocked && receiveConfirm;
+  const canNextStep2 = numPeople >= 1 && !!date && eventTime !== "" && !cutoffBlocked;
 
-  const toggleDietary = (val: string) => {
-    setDietary(prev => prev.includes(val) ? prev.filter(d => d !== val) : [...prev, val]);
+  // Auto-advance al seleccionar tipo de evento + smooth scroll
+  const handleSelectEventType = (value: string) => {
+    setEventType(value);
+    if (step === 0) setStep(1);
+    setTimeout(() => {
+      detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const durationHours = useMemo(() => {
@@ -200,24 +211,15 @@ const QuotePage = () => {
   return (
     <BaseLayout hideFooter>
       <div className="bg-background min-h-screen pb-20">
-        {/* PREMIUM HERO SECTION (only step 0) */}
+        {/* COMPACT HERO 3:1 (only step 0) */}
         {step === 0 && (
-          <div className="relative h-[60vh] min-h-[500px] mb-12 overflow-hidden bg-primary">
-            <img src={heroImg} alt="Catering Berlioz" className="absolute inset-0 w-full h-full object-cover opacity-80 scale-105" />
-            {/* Simple bottom gradient for text contrast only */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 py-24 px-6 text-center">
-              <RevealOnScroll delay={100}>
-                <span className="inline-block px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold tracking-[0.3em] uppercase mb-6 border border-white/20">
-                  L'ART DE RECEVOIR
-                </span>
-                <h1 className="font-heading text-5xl md:text-7xl text-white mb-6 tracking-tight drop-shadow-2xl">
-                  Cotizador <span className="italic">Gourmet</span>
-                </h1>
-                <p className="max-w-xl mx-auto font-body text-lg text-white/80 leading-relaxed shadow-sm">
-                  Crea una experiencia gastronómica a la medida de tu evento empresarial, con el sello distintivo de Berlioz.
-                </p>
-              </RevealOnScroll>
+          <div className="relative w-full aspect-[3/1] max-h-[260px] mb-8 overflow-hidden bg-primary">
+            <img src={heroImg} alt="Catering Berlioz" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
+              <h1 className="font-heading text-3xl md:text-5xl text-white tracking-tight drop-shadow-2xl">
+                Cuéntanos sobre tu <span className="italic">evento</span>
+              </h1>
             </div>
           </div>
         )}
@@ -238,90 +240,43 @@ const QuotePage = () => {
             </div>
           </RevealOnScroll>
 
-          {/* Filter chips */}
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            {FILTER_CHIPS.map(chip => (
-              <button key={chip.value} onClick={() => setEventFilter(chip.value)}
-                className={cn("px-6 py-2.5 rounded-full font-body text-sm font-semibold transition-all border shadow-sm",
-                  eventFilter === chip.value ? "bg-primary text-primary-foreground border-primary shadow-primary/20" : "bg-card text-foreground border-border hover:border-primary/40 hover:bg-muted/50"
-                )}>
-                {chip.label}
-              </button>
-            ))}
-          </div>
+          {/* (filtros eliminados) */}
 
-          {/* Event cards 2x3 grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((e, idx) => {
+          {/* 4 cards sin tags, con auto-advance */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {EVENT_TYPES.map((e) => {
               const selected = eventType === e.value;
               return (
-                <RevealOnScroll key={e.value} delay={idx * 50} className="h-full">
-                  <button onClick={() => setEventType(e.value)}
-                    className={cn(
-                      "group relative flex flex-col rounded-[32px] border-2 transition-all text-left overflow-hidden bg-card h-full w-full",
-                      selected ? "border-primary shadow-xl shadow-primary/10 ring-1 ring-primary/20" : "border-border hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1"
+                <button
+                  key={e.value}
+                  onClick={() => handleSelectEventType(e.value)}
+                  className={cn(
+                    "group relative flex flex-col rounded-[28px] border-2 transition-all text-left overflow-hidden bg-card h-full w-full",
+                    selected
+                      ? "border-primary shadow-xl shadow-primary/10 ring-1 ring-primary/20"
+                      : "border-border hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1",
+                  )}>
+                  <div className="relative h-40 overflow-hidden">
+                    <img src={e.image} alt={e.label} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="absolute bottom-3 left-3 w-11 h-11 rounded-2xl bg-card/30 backdrop-blur-md flex items-center justify-center text-2xl shadow-lg border border-card/40">
+                      {e.icon}
+                    </div>
+                    <div className={cn(
+                      "absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
+                      selected ? "bg-primary text-primary-foreground scale-100 opacity-100" : "scale-50 opacity-0",
                     )}>
-                    
-                    {/* Image Area */}
-                    <div className="relative h-48 overflow-hidden">
-                      <img src={e.image} alt={e.label} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                      
-                      {/* Icon overlay */}
-                      <div className="absolute bottom-4 left-4 w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shadow-lg border border-white/30">
-                        {e.icon}
-                      </div>
-
-                      {/* Badge top */}
-                      {e.badge && e.badgePosition === "top" && (
-                        <span className={cn("absolute top-4 right-4 px-3 py-1 rounded-full font-body text-[10px] font-bold tracking-wider uppercase backdrop-blur-md border",
-                          e.badgeStyle === "dark" ? "bg-black/60 text-white border-white/20" : "bg-white/80 text-amber-800 border-amber-200"
-                        )}>{e.badge.replace(/^[^ ]+ /, '')}</span>
-                      )}
+                      <CheckCircle className="w-5 h-5 fill-current" />
                     </div>
-
-                    <div className="p-6 flex flex-col flex-1">
-                      {/* Checkmark indicator */}
-                      <div className={cn("absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                        selected ? "bg-primary text-primary-foreground scale-100 opacity-100" : "bg-white/20 scale-50 opacity-0"
-                      )}>
-                        <CheckCircle className="w-5 h-5 fill-current" />
-                      </div>
-
-                      <h3 className="font-heading text-xl text-foreground mb-2 group-hover:text-primary transition-colors">{e.label}</h3>
-                      <p className="font-body text-sm text-muted-foreground mb-4 leading-relaxed">{e.desc}</p>
-                      
-                      <div className="mt-auto">
-                        <p className="font-body text-sm text-primary font-bold mb-4">{e.price}</p>
-                        
-                        {e.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-4 border-t border-border/60">
-                            {e.tags.map(tag => (
-                              <span key={tag.label} className={cn("px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-wider uppercase", tag.color)}>{tag.label}</span>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Badge bottom */}
-                        {e.badge && e.badgePosition === "bottom" && (
-                          <span className="mt-3 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 font-body text-[10px] font-bold tracking-wider uppercase border border-amber-200 self-start">{e.badge.replace(/^[^ ]+ /, '')}</span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                </RevealOnScroll>
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="font-heading text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{e.label}</h3>
+                    <p className="font-body text-xs text-muted-foreground leading-relaxed">{e.desc}</p>
+                  </div>
+                </button>
               );
             })}
           </div>
-
-          <RevealOnScroll delay={300}>
-            <div className="mt-16 flex justify-center">
-              <Button onClick={goNext} disabled={!canNextStep1} size="lg" className="h-14 px-12 rounded-full text-base font-bold shadow-lg shadow-primary/20 group">
-                Siguiente paso
-                <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </div>
-          </RevealOnScroll>
         </div>
       )}
 
@@ -411,9 +366,9 @@ const QuotePage = () => {
                     )}
                   </div>
 
-                  {/* Time Selector */}
+                  {/* Time Selector + disclaimer logística */}
                   <div>
-                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora?</label>
+                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora inicia tu evento?</label>
                     <select value={eventTime} onChange={e => setEventTime(e.target.value)}
                       className={cn("w-full h-14 px-5 rounded-2xl border-2 transition-all font-body text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 appearance-none bg-no-repeat bg-[right_1.25rem_center] bg-[length:1em_1em]",
                         eventTime ? "border-primary/30 bg-primary/5 font-semibold text-primary" : "border-border bg-background text-muted-foreground"
@@ -422,39 +377,41 @@ const QuotePage = () => {
                       <option value="">Selecciona horario</option>
                       {TIME_SLOTS.map(t => <option key={t} value={t} className="text-foreground">{t}</option>)}
                     </select>
-                    {deliveryTime && (
-                      <div className="mt-3 bg-muted/30 p-3 rounded-xl border border-border/50">
-                        <p className="font-body text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Entrega estimada</p>
-                        <p className="font-mono text-lg text-primary font-bold">{deliveryTime}</p>
-                        {isEarlyDelivery && (
-                          <div className="mt-2 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
-                            <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
-                          </div>
-                        )}
+                    {/* Disclaimer logística — siempre visible */}
+                    <div className="mt-3 bg-muted/40 border border-border/50 rounded-xl px-3 py-2.5 flex gap-2 items-start">
+                      <Truck className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+                      <p className="font-body text-[11px] text-muted-foreground leading-relaxed">
+                        Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-semibold text-foreground">90 minutos de margen</span> para la entrega.
+                      </p>
+                    </div>
+                    {deliveryTime && isEarlyDelivery && (
+                      <div className="mt-2 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
+                        <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Duration Card */}
+              {/* Duration — pills simples */}
               <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-2 h-full bg-secondary/20" />
                 <label className="block font-heading text-sm font-bold text-foreground mb-6 uppercase tracking-wider">¿Cuál es la duración del evento?</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {DURATION_OPTIONS.map(d => (
-                    <button key={d.id} onClick={() => setDuration(d.id)}
-                      className={cn("p-6 rounded-3xl border-2 text-left transition-all relative group flex flex-col h-full",
-                        duration === d.id ? "border-secondary bg-secondary/5 ring-4 ring-secondary/5 shadow-md shadow-secondary/5" : "border-border bg-background hover:border-secondary/30 shadow-sm"
-                      )}>
-                      <div className="flex-1">
-                        <p className={cn("font-heading text-base font-bold transition-colors", duration === d.id ? "text-secondary" : "text-foreground")}>{d.label}</p>
-                        <p className="font-body text-[11px] text-muted-foreground mt-1 mb-4 leading-snug">{d.subtitle}</p>
-                      </div>
-                      <p className="font-body text-xs text-secondary font-bold pt-3 border-t border-secondary/10 mt-auto">{d.priceHint}</p>
-                      {duration === d.id && <div className="absolute top-4 right-4 text-secondary"><CheckCircle className="w-5 h-5 fill-current" /></div>}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-3">
+                  {DURATION_PILLS.map(d => {
+                    const active = duration === d.id;
+                    return (
+                      <button key={d.id} onClick={() => setDuration(d.id)}
+                        className={cn(
+                          "px-6 py-3 rounded-full border-2 font-body text-sm font-semibold transition-all",
+                          active
+                            ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/15"
+                            : "border-border bg-background text-foreground hover:border-primary/40",
+                        )}>
+                        {d.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -489,27 +446,44 @@ const QuotePage = () => {
                   )}
                 </div>
 
-                {/* Dietary Selection */}
+                {/* Distribución de invitados con restricciones */}
                 <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm">
-                  <label className="block font-heading text-sm font-bold text-foreground mb-6 uppercase tracking-wider">¿Restricciones dietéticas?</label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {DIETARY_OPTIONS.map(d => {
-                      const active = dietary.includes(d.value);
+                  <label className="block font-heading text-sm font-bold text-foreground mb-2 uppercase tracking-wider">Distribución de invitados</label>
+                  <p className="font-body text-xs text-muted-foreground mb-5">
+                    Distribución para <span className="font-bold text-foreground">{numPeople}</span> personas
+                  </p>
+                  <div className="space-y-3">
+                    {DIETARY_RESTRICTIONS.map(r => {
+                      const count = dietaryDistribution[r.value] || 0;
+                      const cantIncrease = totalRestricted >= numPeople;
                       return (
-                        <button key={d.value} onClick={() => toggleDietary(d.value)}
-                          className={cn("px-5 py-3 rounded-2xl border-2 font-body text-sm font-bold transition-all flex items-center gap-2",
-                            active ? "border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105" : "border-border bg-background text-foreground hover:border-primary/30"
-                          )}>
-                          {d.label}
-                          {active && <X className="w-3.5 h-3.5" />}
-                        </button>
+                        <div key={r.value} className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <span className="text-base shrink-0">{r.icon}</span>
+                            <span className="font-body text-sm text-foreground truncate">{r.label}</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => updateDietaryCount(r.value, -1)}
+                              disabled={count === 0}
+                              className="w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center hover:border-primary/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="font-mono text-sm font-bold text-foreground w-6 text-center">{count}</span>
+                            <button
+                              onClick={() => updateDietaryCount(r.value, 1)}
+                              disabled={cantIncrease}
+                              className="w-8 h-8 rounded-full border border-border bg-background flex items-center justify-center hover:border-primary/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       );
                     })}
-                    {dietary.length === 0 && (
-                      <div className="w-full py-8 text-center text-muted-foreground font-body text-sm border-2 border-dashed border-border rounded-2xl">
-                        Ninguna restricción seleccionada
-                      </div>
-                    )}
+                  </div>
+                  <div className="mt-5 pt-4 border-t border-border/60 flex items-center justify-between">
+                    <span className="font-body text-sm text-muted-foreground">Sin restricción</span>
+                    <span className="font-mono text-base font-bold text-primary">{sinRestriccion} personas</span>
                   </div>
                 </div>
               </div>
@@ -529,19 +503,7 @@ const QuotePage = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-6 border-t border-primary/10">
-                  <label className="flex items-start gap-4 cursor-pointer group max-w-lg">
-                    <div className={cn("mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all", 
-                      receiveConfirm ? "bg-primary border-primary text-white" : "border-primary/30 group-hover:border-primary"
-                    )}>
-                      {receiveConfirm && <CheckCircle className="w-4 h-4 fill-current" />}
-                    </div>
-                    <Checkbox checked={receiveConfirm} onCheckedChange={(v) => setReceiveConfirm(v === true)} className="hidden" />
-                    <span className="font-body text-sm text-foreground leading-snug">
-                       Confirmo que habrá alguien responsable para recibir el pedido en el horario acordado
-                    </span>
-                  </label>
-
+                <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 pt-6 border-t border-primary/10">
                   <div className="flex gap-4">
                     <Button variant="outline" onClick={goBack} className="h-14 px-8 rounded-full font-bold border-2 hover:bg-muted transition-all">
                       Volver

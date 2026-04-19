@@ -7,6 +7,8 @@ import { AppDependenciesProvider } from "@/presentation/providers/AppDependencie
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
+import AdminRoute from "@/components/layout/AdminRoute";
+import AdminInsightsPage from "./pages/AdminInsightsPage";
 
 // Pages
 import HomePage from "./pages/HomePage";
@@ -73,6 +75,7 @@ const App = () => (
                 {/* Legacy */}
                 <Route path="/admin-leads" element={<AdminLeads />} />
                 <Route path="/admin/customers" element={<ProtectedRoute><AdminCustomersPage /></ProtectedRoute>} />
+                <Route path="/admin/insights" element={<AdminRoute><AdminInsightsPage /></AdminRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

@@ -915,7 +915,7 @@ export default function ProposalStep(props: ProposalStepProps) {
                   {/* ═══ ZONA B — Carrusel horizontal de cards ═══ */}
                   <TierCarousel
                     tier={tier}
-                    pkg={pkg}
+                    pkg={{ ...pkg, items: pkg.items.map(enrichItem) }}
                     updateItemQty={updateItemQty}
                     removeItem={removeItem}
                     openSwapSidebar={openSwapSidebar}
@@ -1105,11 +1105,11 @@ export default function ProposalStep(props: ProposalStepProps) {
 
             {/* Category chips */}
             <div className="flex gap-2 p-3 overflow-x-auto border-b border-border">
-              {SIDEBAR_CATEGORIES.map(cat => (
+              {QUOTER_SIDEBAR_CATEGORIES.map(cat => (
                 <button key={cat} onClick={() => setSidebarCategory(cat)}
                   className={cn("px-3 py-1 rounded-full font-body text-xs font-medium whitespace-nowrap transition-all border",
                     sidebarCategory === cat ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border hover:border-primary/40"
-                  )}>{cat}</button>
+                  )}>{cat === 'Favoritos' ? '★ Favoritos' : cat}</button>
               ))}
             </div>
 

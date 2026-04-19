@@ -889,53 +889,80 @@ export type Database = {
         Row: {
           ai_options: Json | null
           budget_per_person: number | null
+          categoria: string | null
           client_name: string | null
           created_at: string | null
           dietary_restrictions: string[] | null
+          empresa: string | null
           event_date: string | null
-          event_type: string
+          event_type: string | null
+          final_order_id: string | null
           id: string
-          people_count: number
+          insights_used: string[] | null
+          num_personas: number | null
+          people_count: number | null
+          proposal_text: string | null
+          rejection_reason: string | null
+          sector: string | null
           selected_option_index: number | null
           status: string
           time_slot: string | null
           total_estimated: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
+          user_message: string | null
         }
         Insert: {
           ai_options?: Json | null
           budget_per_person?: number | null
+          categoria?: string | null
           client_name?: string | null
           created_at?: string | null
           dietary_restrictions?: string[] | null
+          empresa?: string | null
           event_date?: string | null
-          event_type: string
+          event_type?: string | null
+          final_order_id?: string | null
           id?: string
-          people_count: number
+          insights_used?: string[] | null
+          num_personas?: number | null
+          people_count?: number | null
+          proposal_text?: string | null
+          rejection_reason?: string | null
+          sector?: string | null
           selected_option_index?: number | null
           status?: string
           time_slot?: string | null
           total_estimated?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
+          user_message?: string | null
         }
         Update: {
           ai_options?: Json | null
           budget_per_person?: number | null
+          categoria?: string | null
           client_name?: string | null
           created_at?: string | null
           dietary_restrictions?: string[] | null
+          empresa?: string | null
           event_date?: string | null
-          event_type?: string
+          event_type?: string | null
+          final_order_id?: string | null
           id?: string
-          people_count?: number
+          insights_used?: string[] | null
+          num_personas?: number | null
+          people_count?: number | null
+          proposal_text?: string | null
+          rejection_reason?: string | null
+          sector?: string | null
           selected_option_index?: number | null
           status?: string
           time_slot?: string | null
           total_estimated?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
+          user_message?: string | null
         }
         Relationships: []
       }
@@ -987,6 +1014,33 @@ export type Database = {
           total_qty_sold?: number | null
           total_revenue?: number | null
           unique_companies?: number | null
+        }
+        Relationships: []
+      }
+      sales_insights: {
+        Row: {
+          context_key: string
+          id: string
+          insight_text: string
+          insight_type: string
+          metadata: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          context_key: string
+          id?: string
+          insight_text: string
+          insight_type: string
+          metadata?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          context_key?: string
+          id?: string
+          insight_text?: string
+          insight_type?: string
+          metadata?: Json | null
+          updated_at?: string | null
         }
         Relationships: []
       }

@@ -82,15 +82,15 @@ type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string
 
 const TIERS: TierInfo[] = [
   {
+    id: "equilibrado", title: "Equilibrado", subtitle: "La experiencia que tu equipo merece",
+    bullets: ["Café/Té Berlioz + agua incluidos", "Variedad premium", "Presentación profesional"],
+    isPopular: true, ctaStyle: "primary",
+  },
+  {
     id: "esencial", title: "Esencial", subtitle: "Lo necesario, bien ejecutado",
     tip: "💡 El 85% de nuestros clientes agrega bebidas a este pedido",
     bullets: ["Entrega puntual garantizada", "Precio base sin bebidas", "Ideal para eventos recurrentes"],
     isPopular: false, ctaStyle: "outline",
-  },
-  {
-    id: "equilibrado", title: "Equilibrado", subtitle: "La experiencia que tu equipo merece",
-    bullets: ["Café/Té Berlioz + agua incluidos", "Variedad premium", "Presentación profesional"],
-    isPopular: true, ctaStyle: "primary",
   },
   {
     id: "experiencia", title: "Experiencia Completa", subtitle: "Cada detalle cuenta",
@@ -835,19 +835,22 @@ export default function ProposalStep(props: ProposalStepProps) {
               <div
                 key={tier.id}
                 className={cn(
-                  "relative bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] p-6",
-                  isRecommended && "border-[1.5px] border-[#014D6F]",
-                  isSelected && !isRecommended && "ring-2 ring-[#014D6F]/30",
+                  "relative bg-white rounded-2xl p-6 transition-all duration-200",
+                  isSelected
+                    ? "border-2 border-[#014D6F] shadow-[0_8px_30px_rgba(1,77,111,0.18)] bg-[#014D6F]/[0.02]"
+                    : isRecommended
+                      ? "border-[1.5px] border-[#014D6F] shadow-[0_2px_12px_rgba(0,0,0,0.06)]"
+                      : "border border-transparent shadow-[0_2px_12px_rgba(0,0,0,0.06)]",
                 )}
               >
+                {isSelected && (
+                  <span className="absolute -top-3 right-6 z-10 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#014D6F] text-[#EDD9C8] font-heading text-[10px] font-bold uppercase tracking-[0.12em] shadow-md">
+                    ✓ Paquete seleccionado
+                  </span>
+                )}
                 {/* ═══ ZONA A — Identificación (top bar horizontal) ═══ */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 mb-5 border-b border-[#CEC1B9]/40">
                   <div className="flex flex-col gap-2 min-w-0">
-                    {isRecommended && (
-                      <span className="inline-flex items-center gap-1 self-start px-3 py-1 rounded-full bg-[#014D6F] text-[#EDD9C8] font-heading text-[9px] font-bold uppercase tracking-[0.15em] whitespace-nowrap">
-                        <Star className="w-3 h-3 fill-current" /> Nuestra Recomendación
-                      </span>
-                    )}
                     <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
                       <h3 className="font-heading text-xl font-bold uppercase text-[#014D6F] leading-tight">
                         {tier.title}
@@ -1049,7 +1052,7 @@ export default function ProposalStep(props: ProposalStepProps) {
       {sidebarOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-50" onClick={() => { setSidebarOpen(false); setSwapTarget(null); }} />
-          <div className="fixed top-0 right-0 h-full w-[360px] max-w-[90vw] bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-slide-up">
+          <div className="fixed top-0 right-0 h-full w-[420px] max-w-[95vw] bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-slide-up">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div>
                 <p className="font-body text-sm font-semibold text-foreground">
@@ -1075,30 +1078,72 @@ export default function ProposalStep(props: ProposalStepProps) {
             {/* Products */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {sidebarProducts.map(product => (
-                <div key={product.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm font-medium text-foreground truncate">
-                      {product.isBestseller && <Star className="w-3 h-3 inline text-amber-500 mr-1" />}
-                      {product.name}
-                    </p>
-                    <p className="font-mono text-xs text-muted-foreground">{formatMXN(product.price)}</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="shrink-0 text-xs"
-                    onClick={() => {
-                      if (swapTarget) {
-                        swapItem(swapTarget.tier, swapTarget.instanceId, product);
-                      } else {
-                        addProductToTier(sidebarTarget, product);
-                      }
-                    }}>
-                    {swapTarget ? "Cambiar" : "+ Agregar"}
-                  </Button>
-                </div>
+                <SidebarProductCard
+                  key={product.id}
+                  product={product}
+                  isSwap={!!swapTarget}
+                  onSelect={() => {
+                    if (swapTarget) {
+                      swapItem(swapTarget.tier, swapTarget.instanceId, product);
+                    } else {
+                      addProductToTier(sidebarTarget, product);
+                    }
+                  }}
+                />
               ))}
             </div>
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ═══ Sidebar product row with image + description ═══
+function SidebarProductCard({
+  product,
+  isSwap,
+  onSelect,
+}: {
+  product: CatalogProduct;
+  isSwap: boolean;
+  onSelect: () => void;
+}) {
+  const { imageUrl } = useProductImage({
+    id: product.id,
+    nombre: product.name,
+    descripcion: product.description,
+    categoria: product.category,
+  });
+
+  return (
+    <div className="flex gap-3 p-3 rounded-lg border border-border hover:border-primary/40 hover:shadow-sm transition-all">
+      <div className="w-20 h-20 shrink-0 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+        {imageUrl ? (
+          <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
+        ) : (
+          <div className="w-full h-full bg-muted animate-pulse" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        <div className="min-w-0">
+          <p className="font-body text-sm font-semibold text-foreground leading-snug flex items-start gap-1">
+            {product.isBestseller && <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0 mt-0.5" />}
+            <span className="line-clamp-2">{product.name}</span>
+          </p>
+          {product.description && (
+            <p className="font-body text-xs text-muted-foreground leading-snug line-clamp-2 mt-1">
+              {product.description}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center justify-between mt-2 gap-2">
+          <p className="font-mono text-xs font-semibold text-[#014D6F]">{formatMXN(product.price)}</p>
+          <Button size="sm" variant={isSwap ? "outline" : "default"} className="shrink-0 text-xs h-7 px-3" onClick={onSelect}>
+            {isSwap ? "Cambiar" : "+ Agregar"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

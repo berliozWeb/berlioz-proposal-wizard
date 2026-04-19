@@ -521,14 +521,112 @@ const QuotePage = () => {
                   </div>
                 </div>
 
+                {/* ¿A qué dirección entregamos? — CP + dirección */}
+                <div className="mb-8 pt-2">
+                  <label className="block font-heading text-xs font-bold text-primary mb-4 uppercase tracking-[0.2em]">¿A qué dirección entregamos?</label>
+                  <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
+                    <div>
+                      <Input
+                        value={postalCode}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, "").slice(0, 5);
+                          setPostalCode(val);
+                          if (val.length === 5) setCpTouched(true);
+                        }}
+                        onBlur={() => setCpTouched(true)}
+                        inputMode="numeric"
+                        maxLength={5}
+                        placeholder="C.P. (5 dígitos)"
+                        aria-invalid={cpInvalidFormat || isSpecialQuoteCP}
+                        className="h-14 rounded-2xl border-2 border-primary/20 bg-background/50 focus:border-primary focus:ring-4 focus:ring-primary/5 text-lg font-mono tracking-wider"
+                      />
+                    </div>
+                    <Input
+                      value={streetAddress}
+                      onChange={e => setStreetAddress(e.target.value)}
+                      placeholder="Calle y número / Referencias"
+                      className="h-14 rounded-2xl border-2 border-primary/20 bg-background/50 focus:border-primary focus:ring-4 focus:ring-primary/5 text-lg"
+                    />
+                  </div>
+
+                  {/* Inline CP error */}
+                  {cpInvalidFormat && (
+                    <p className="mt-3 text-xs font-body text-destructive flex items-center gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      El código postal debe tener 5 dígitos
+                    </p>
+                  )}
+
+                  {/* Result chip */}
+                  {shippingResult && (() => {
+                    const z = shippingResult.zone;
+                    let bg = "bg-muted/40 border-border/60 text-foreground";
+                    let Icon = Package;
+                    let iconClass = "text-muted-foreground";
+                    if (z === 0) {
+                      bg = "bg-destructive/10 border-destructive/30 text-destructive";
+                      Icon = Phone;
+                      iconClass = "text-destructive";
+                    } else if (!shippingResult.found) {
+                      bg = "bg-muted/40 border-border/60 text-foreground";
+                      Icon = Package;
+                      iconClass = "text-muted-foreground";
+                    } else if (z === 1 || z === 2) {
+                      bg = "bg-emerald-50 border-emerald-200 text-emerald-900";
+                      Icon = Truck;
+                      iconClass = "text-emerald-700";
+                    } else if (z >= 3 && z <= 5) {
+                      bg = "bg-sky-50 border-sky-200 text-sky-900";
+                      Icon = Package;
+                      iconClass = "text-sky-700";
+                    } else if (z >= 6) {
+                      bg = "bg-amber-50 border-amber-200 text-amber-900";
+                      Icon = AlertTriangle;
+                      iconClass = "text-amber-700";
+                    }
+                    const headline = z === 0
+                      ? shippingResult.message
+                      : (z === 1 || z === 2)
+                        ? `Entrega disponible — ${shippingResult.message}`
+                        : shippingResult.message;
+                    return (
+                      <div className="mt-4 space-y-2">
+                        <div className={cn("rounded-2xl border-2 px-4 py-3 flex items-start gap-3", bg)}>
+                          <Icon className={cn("w-5 h-5 mt-0.5 shrink-0", iconClass)} />
+                          <p className="font-body text-sm font-semibold leading-snug">{headline}</p>
+                        </div>
+                        {shippingResult.showPickupSuggestion && z !== 0 && (
+                          <div className="rounded-2xl border border-amber-200 bg-amber-50/60 px-4 py-3 flex items-start gap-3">
+                            <MapPin className="w-4 h-4 mt-0.5 text-amber-700 shrink-0" />
+                            <p className="font-body text-xs text-amber-900 leading-relaxed">
+                              ¿Sabías que puedes recoger tu pedido en cocina? Escríbenos al{" "}
+                              <a href="https://wa.me/525582375469" target="_blank" rel="noopener" className="font-bold underline">
+                                55 8237 5469
+                              </a>.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 pt-6 border-t border-primary/10">
                   <div className="flex gap-4">
                     <Button variant="outline" onClick={goBack} className="h-14 px-8 rounded-full font-bold border-2 hover:bg-muted transition-all">
                       Volver
                     </Button>
-                    <Button onClick={goNext} disabled={!canNextStep2} className="h-14 px-12 rounded-full font-bold shadow-xl shadow-primary/20 group">
-                      Ver propuesta <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
-                    </Button>
+                    {isSpecialQuoteCP ? (
+                      <Button asChild className="h-14 px-12 rounded-full font-bold shadow-xl shadow-destructive/20 bg-destructive hover:bg-destructive/90 text-destructive-foreground group">
+                        <a href="https://wa.me/525582375469" target="_blank" rel="noopener">
+                          <Phone className="w-5 h-5 mr-2" /> Contáctanos para cotizar
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button onClick={goNext} disabled={!canNextStep2} className="h-14 px-12 rounded-full font-bold shadow-xl shadow-primary/20 group">
+                        Ver propuesta <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

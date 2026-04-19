@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check, Sparkles, Info } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Star, Check, Sparkles, Info } from "lucide-react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";

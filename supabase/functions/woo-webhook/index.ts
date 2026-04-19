@@ -35,7 +35,22 @@ serve(async (req) => {
       }
     }
 
-    const order = JSON.parse(body);
+    let order;
+    try {
+      order = JSON.parse(body);
+    } catch {
+      const params = new URLSearchParams(body);
+      const jsonStr = params.get('payload') || body;
+      try {
+        order = JSON.parse(jsonStr);
+      } catch {
+        console.error('Body recibido:', body.substring(0, 200));
+        return new Response(JSON.stringify({ error: 'Invalid payload', received: body.substring(0, 100) }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { format, addDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, Star, Check, Sparkles, Info } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowUpDown, Search, X, Download, Mail, Share2, ShoppingBag, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Star, Check, Sparkles, Info } from "lucide-react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -168,6 +169,187 @@ function calcTotals(items: ProposalItem[], isEarly: boolean) {
   const iva = Math.round(base * IVA_RATE * 100) / 100;
   const total = Math.round((base + iva) * 100) / 100;
   return { subtotal, shipping, early, iva, total };
+}
+
+/* ═══ TIER CAROUSEL (Zona B) — horizontal scroll with arrows + fade ═══ */
+function TierCarousel({
+  tier,
+  pkg,
+  updateItemQty,
+  removeItem,
+  openSwapSidebar,
+  openSidebar,
+}: {
+  tier: TierInfo;
+  pkg: PackageState;
+  updateItemQty: (tierId: PackageTier, instanceId: string, delta: number) => void;
+  removeItem: (tierId: PackageTier, instanceId: string) => void;
+  openSwapSidebar: (tierId: PackageTier, instanceId: string) => void;
+  openSidebar: (tierId: PackageTier) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanPrev(el.scrollLeft > 4);
+    setCanNext(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      ro.disconnect();
+    };
+  }, [updateScrollState, pkg.items.length]);
+
+  const scrollBy = (dir: 1 | -1) => {
+    scrollRef.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
+  };
+
+  return (
+    <div className="min-w-0 relative">
+      <p className="font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-[#777] mb-2">
+        Personaliza tu menú ›
+      </p>
+      <div className="relative">
+        {/* Fade gradients */}
+        <div
+          className={cn(
+            "pointer-events-none absolute left-0 top-0 bottom-3 w-8 z-10 bg-gradient-to-r from-white to-transparent transition-opacity",
+            canPrev ? "opacity-100" : "opacity-0",
+          )}
+        />
+        <div
+          className={cn(
+            "pointer-events-none absolute right-0 top-0 bottom-3 w-8 z-10 bg-gradient-to-l from-white to-transparent transition-opacity",
+            canNext ? "opacity-100" : "opacity-0",
+          )}
+        />
+        {/* Arrows (desktop) */}
+        <button
+          type="button"
+          onClick={() => scrollBy(-1)}
+          aria-label="Anterior"
+          className={cn(
+            "hidden lg:flex absolute left-1 top-[55%] -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.15)] border border-[#CEC1B9]/40 items-center justify-center text-[#014D6F] hover:bg-[#014D6F] hover:text-white transition-all",
+            canPrev ? "opacity-100" : "opacity-0 pointer-events-none",
+          )}
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollBy(1)}
+          aria-label="Siguiente"
+          className={cn(
+            "hidden lg:flex absolute right-1 top-[55%] -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.15)] border border-[#CEC1B9]/40 items-center justify-center text-[#014D6F] hover:bg-[#014D6F] hover:text-white transition-all",
+            canNext ? "opacity-100" : "opacity-0 pointer-events-none",
+          )}
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1 tier-scrollbar"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#014D6F #EDE6E0",
+          }}
+        >
+          {pkg.items.map((item) => {
+            const desc = (item.descripcion && item.descripcion.trim()) || item.categoria || item.category || '';
+            return (
+              <div
+                key={item.instanceId}
+                className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-3"
+              >
+                <div className="w-full h-[110px] rounded-lg overflow-hidden mb-2 flex items-center justify-center" style={{ background: '#E8F2F6' }}>
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.productName}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        const el = e.target as HTMLImageElement;
+                        el.style.display = 'none';
+                        el.parentElement!.innerHTML = '<span style="font-size:32px">🍽️</span>';
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 32 }}>🍽️</span>
+                  )}
+                </div>
+                <p className="font-heading text-[13px] font-semibold uppercase text-[#014D6F] leading-tight line-clamp-2 mb-1">
+                  {item.isBestseller && <Star className="w-3 h-3 inline text-amber-500 fill-current mr-1 mb-0.5" />}
+                  {item.productName}
+                </p>
+                {desc && (
+                  <p className="font-body text-[11px] italic text-[#777] line-clamp-2 mb-2">
+                    {desc}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mb-2 mt-auto">
+                  <button
+                    onClick={() => updateItemQty(tier.id, item.instanceId, -1)}
+                    className="w-6 h-6 rounded-full border border-[#014D6F] text-[#014D6F] flex items-center justify-center hover:bg-[#014D6F]/5 transition-colors"
+                    aria-label="Disminuir"
+                  >
+                    <Minus className="w-3 h-3 stroke-[3]" />
+                  </button>
+                  <span className="font-heading text-sm font-bold text-[#014D6F] w-6 text-center">{item.qty}</span>
+                  <button
+                    onClick={() => updateItemQty(tier.id, item.instanceId, 1)}
+                    className="w-6 h-6 rounded-full border border-[#014D6F] text-[#014D6F] flex items-center justify-center hover:bg-[#014D6F]/5 transition-colors"
+                    aria-label="Aumentar"
+                  >
+                    <Plus className="w-3 h-3 stroke-[3]" />
+                  </button>
+                  <button
+                    onClick={() => removeItem(tier.id, item.instanceId)}
+                    className="ml-auto text-[#CEC1B9] hover:text-destructive transition-colors"
+                    aria-label="Eliminar"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-heading text-[13px] font-bold text-[#014D6F]">
+                    {formatMXN(item.unitPrice * item.qty)}
+                  </span>
+                  <button
+                    onClick={() => openSwapSidebar(tier.id, item.instanceId)}
+                    className="font-body text-[10px] text-[#8B7355] underline hover:text-[#014D6F] transition-colors"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* + Agregar producto card */}
+          <button
+            onClick={() => openSidebar(tier.id)}
+            className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col items-center justify-center gap-2 bg-[#FDFAF7] border-2 border-dashed border-[#CEC1B9] rounded-xl text-[#777] hover:border-[#014D6F] hover:text-[#014D6F] transition-colors"
+          >
+            <Plus className="w-8 h-8" />
+            <span className="font-heading text-[11px] font-bold uppercase tracking-wider">Agregar producto</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* ═══ COMPONENT ═══ */
@@ -686,96 +868,17 @@ export default function ProposalStep(props: ProposalStepProps) {
                   </div>
 
                   {/* ═══ ZONA B — Carrusel horizontal de cards ═══ */}
-                  <div className="min-w-0">
-                    <p className="font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-[#777] mb-2">
-                      Personaliza tu menú ›
-                    </p>
-                    <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1">
-                      {pkg.items.map((item) => {
-                        const desc = (item.descripcion && item.descripcion.trim()) || item.categoria || item.category || '';
-                        return (
-                          <div
-                            key={item.instanceId}
-                            className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-3"
-                          >
-                            <div className="w-full h-[110px] rounded-lg overflow-hidden mb-2 flex items-center justify-center" style={{ background: '#E8F2F6' }}>
-                              {item.imageUrl ? (
-                                <img
-                                  src={item.imageUrl}
-                                  alt={item.productName}
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                  onError={(e) => {
-                                    const el = e.target as HTMLImageElement;
-                                    el.style.display = 'none';
-                                    el.parentElement!.innerHTML = '<span style="font-size:32px">🍽️</span>';
-                                  }}
-                                />
-                              ) : (
-                                <span style={{ fontSize: 32 }}>🍽️</span>
-                              )}
-                            </div>
-                            <p className="font-heading text-[13px] font-semibold uppercase text-[#014D6F] leading-tight line-clamp-2 mb-1">
-                              {item.isBestseller && <Star className="w-3 h-3 inline text-amber-500 fill-current mr-1 mb-0.5" />}
-                              {item.productName}
-                            </p>
-                            {desc && (
-                              <p className="font-body text-[11px] italic text-[#777] line-clamp-2 mb-2">
-                                {desc}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mb-2 mt-auto">
-                              <button
-                                onClick={() => updateItemQty(tier.id, item.instanceId, -1)}
-                                className="w-6 h-6 rounded-full border border-[#014D6F] text-[#014D6F] flex items-center justify-center hover:bg-[#014D6F]/5 transition-colors"
-                                aria-label="Disminuir"
-                              >
-                                <Minus className="w-3 h-3 stroke-[3]" />
-                              </button>
-                              <span className="font-heading text-sm font-bold text-[#014D6F] w-6 text-center">{item.qty}</span>
-                              <button
-                                onClick={() => updateItemQty(tier.id, item.instanceId, 1)}
-                                className="w-6 h-6 rounded-full border border-[#014D6F] text-[#014D6F] flex items-center justify-center hover:bg-[#014D6F]/5 transition-colors"
-                                aria-label="Aumentar"
-                              >
-                                <Plus className="w-3 h-3 stroke-[3]" />
-                              </button>
-                              <button
-                                onClick={() => removeItem(tier.id, item.instanceId)}
-                                className="ml-auto text-[#CEC1B9] hover:text-destructive transition-colors"
-                                aria-label="Eliminar"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="font-heading text-[13px] font-bold text-[#014D6F]">
-                                {formatMXN(item.unitPrice * item.qty)}
-                              </span>
-                              <button
-                                onClick={() => openSwapSidebar(tier.id, item.instanceId)}
-                                className="font-body text-[10px] text-[#8B7355] underline hover:text-[#014D6F] transition-colors"
-                              >
-                                Cambiar
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                  <TierCarousel
+                    tier={tier}
+                    pkg={pkg}
+                    updateItemQty={updateItemQty}
+                    removeItem={removeItem}
+                    openSwapSidebar={openSwapSidebar}
+                    openSidebar={openSidebar}
+                  />
 
-                      {/* + Agregar producto card */}
-                      <button
-                        onClick={() => openSidebar(tier.id)}
-                        className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col items-center justify-center gap-2 bg-[#FDFAF7] border-2 border-dashed border-[#CEC1B9] rounded-xl text-[#777] hover:border-[#014D6F] hover:text-[#014D6F] transition-colors"
-                      >
-                        <Plus className="w-8 h-8" />
-                        <span className="font-heading text-[11px] font-bold uppercase tracking-wider">Agregar producto</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* ═══ ZONA C — Desglose de precios ═══ */}
-                  <div className="bg-[#FDFAF7] rounded-xl p-4 flex flex-col">
+                  {/* ═══ ZONA C — Desglose de precios (integrado) ═══ */}
+                  <div className="flex flex-col lg:border-l lg:border-[#CEC1B9]/40 lg:pl-6 pt-2 lg:pt-0">
                     <p className="font-heading text-[10px] font-bold uppercase tracking-[0.15em] text-[#777] mb-3">
                       Desglose
                     </p>

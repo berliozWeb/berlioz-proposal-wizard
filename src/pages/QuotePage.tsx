@@ -383,46 +383,9 @@ const QuotePage = () => {
                     )}
                   </div>
 
-                  {/* Time Selector + disclaimer logística */}
+                  {/* CP */}
                   <div>
-                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora inicia tu evento?</label>
-                    <div className="relative">
-                      <select value={eventTime} onChange={e => setEventTime(e.target.value)}
-                        className={cn("w-full h-14 pl-5 pr-12 rounded-2xl border-2 transition-all font-body text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 appearance-none cursor-pointer",
-                          eventTime ? "border-primary/30 bg-primary/5 font-semibold text-primary" : "border-border bg-background text-muted-foreground"
-                        )}>
-                        <option value="">Selecciona horario</option>
-                        {TIME_SLOTS.map(t => <option key={t} value={t} className="text-foreground">{t}</option>)}
-                      </select>
-                      <ChevronRight className={cn("absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rotate-90 pointer-events-none", eventTime ? "text-primary" : "text-muted-foreground")} />
-                    </div>
-                    {/* Disclaimer logística — crece al seleccionar hora */}
-                    <div className={cn(
-                      "mt-3 border rounded-xl flex gap-2 items-start transition-all duration-300",
-                      eventTime
-                        ? "bg-primary/5 border-primary/20 px-4 py-3.5"
-                        : "bg-muted/40 border-border/50 px-3 py-2.5"
-                    )}>
-                      <Truck className={cn("mt-0.5 shrink-0 transition-all", eventTime ? "w-5 h-5 text-primary" : "w-4 h-4 text-muted-foreground")} />
-                      <p className={cn(
-                        "font-body leading-relaxed transition-all",
-                        eventTime ? "text-sm text-foreground" : "text-[11px] text-muted-foreground"
-                      )}>
-                        Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-bold text-primary">90 minutos de margen</span> para la entrega.
-                      </p>
-                    </div>
-                    {deliveryTime && isEarlyDelivery && (
-                      <div className="mt-2 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
-                        <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* ¿A qué dirección entregamos? — CP dentro del mismo card */}
-                <div className="mt-8 pt-8 border-t border-border/60">
-                  <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué dirección entregamos?</label>
-                  <div className="max-w-xs">
+                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué dirección entregamos?</label>
                     <Input
                       value={postalCode}
                       onChange={e => {
@@ -435,68 +398,106 @@ const QuotePage = () => {
                       maxLength={5}
                       placeholder="C.P. (5 dígitos)"
                       aria-invalid={cpInvalidFormat || isSpecialQuoteCP}
-                      className="h-14 rounded-2xl border-2 border-border bg-background focus:border-primary focus:ring-4 focus:ring-primary/10 text-lg font-mono tracking-wider"
+                      className="h-14 rounded-2xl border-2 border-border bg-background focus:border-primary focus:ring-4 focus:ring-primary/10 text-base font-mono tracking-wider"
                     />
-                  </div>
-
-                  {cpInvalidFormat && (
-                    <p className="mt-3 text-xs font-body text-destructive flex items-center gap-2">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      El código postal debe tener 5 dígitos
-                    </p>
-                  )}
-
-                  {shippingResult && (() => {
-                    const z = shippingResult.zone;
-                    let bg = "bg-muted/40 border-border/60 text-foreground";
-                    let Icon = Package;
-                    let iconClass = "text-muted-foreground";
-                    if (z === 0) {
-                      bg = "bg-destructive/10 border-destructive/30 text-destructive";
-                      Icon = Phone;
-                      iconClass = "text-destructive";
-                    } else if (!shippingResult.found) {
-                      bg = "bg-muted/40 border-border/60 text-foreground";
-                      Icon = Package;
-                      iconClass = "text-muted-foreground";
-                    } else if (z === 1 || z === 2) {
-                      bg = "bg-emerald-50 border-emerald-200 text-emerald-900";
-                      Icon = Truck;
-                      iconClass = "text-emerald-700";
-                    } else if (z >= 3 && z <= 5) {
-                      bg = "bg-sky-50 border-sky-200 text-sky-900";
-                      Icon = Package;
-                      iconClass = "text-sky-700";
-                    } else if (z >= 6) {
-                      bg = "bg-amber-50 border-amber-200 text-amber-900";
-                      Icon = AlertTriangle;
-                      iconClass = "text-amber-700";
-                    }
-                    const headline = z === 0
-                      ? shippingResult.message
-                      : (z === 1 || z === 2)
-                        ? `Entrega disponible — ${shippingResult.message}`
-                        : shippingResult.message;
-                    return (
-                      <div className="mt-4 space-y-2">
-                        <div className={cn("rounded-2xl border-2 px-4 py-3 flex items-start gap-3", bg)}>
-                          <Icon className={cn("w-5 h-5 mt-0.5 shrink-0", iconClass)} />
-                          <p className="font-body text-sm font-semibold leading-snug">{headline}</p>
-                        </div>
-                        {shippingResult.showPickupSuggestion && z !== 0 && (
-                          <div className="rounded-2xl border border-amber-200 bg-amber-50/60 px-4 py-3 flex items-start gap-3">
-                            <MapPin className="w-4 h-4 mt-0.5 text-amber-700 shrink-0" />
-                            <p className="font-body text-xs text-amber-900 leading-relaxed">
-                              ¿Sabías que puedes recoger tu pedido en cocina? Escríbenos al{" "}
-                              <a href="https://wa.me/525582375469" target="_blank" rel="noopener" className="font-bold underline">
-                                55 8237 5469
-                              </a>.
-                            </p>
+                    {cpInvalidFormat && (
+                      <p className="mt-3 text-xs font-body text-destructive flex items-center gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        El código postal debe tener 5 dígitos
+                      </p>
+                    )}
+                    {shippingResult && (() => {
+                      const z = shippingResult.zone;
+                      let bg = "bg-muted/40 border-border/60 text-foreground";
+                      let Icon = Package;
+                      let iconClass = "text-muted-foreground";
+                      if (z === 0) {
+                        bg = "bg-destructive/10 border-destructive/30 text-destructive";
+                        Icon = Phone;
+                        iconClass = "text-destructive";
+                      } else if (!shippingResult.found) {
+                        bg = "bg-muted/40 border-border/60 text-foreground";
+                        Icon = Package;
+                        iconClass = "text-muted-foreground";
+                      } else if (z === 1 || z === 2) {
+                        bg = "bg-emerald-50 border-emerald-200 text-emerald-900";
+                        Icon = Truck;
+                        iconClass = "text-emerald-700";
+                      } else if (z >= 3 && z <= 5) {
+                        bg = "bg-sky-50 border-sky-200 text-sky-900";
+                        Icon = Package;
+                        iconClass = "text-sky-700";
+                      } else if (z >= 6) {
+                        bg = "bg-amber-50 border-amber-200 text-amber-900";
+                        Icon = AlertTriangle;
+                        iconClass = "text-amber-700";
+                      }
+                      const headline = z === 0
+                        ? shippingResult.message
+                        : (z === 1 || z === 2)
+                          ? `Entrega disponible — ${shippingResult.message}`
+                          : shippingResult.message;
+                      return (
+                        <div className="mt-3 space-y-2">
+                          <div className={cn("rounded-2xl border-2 px-3 py-2.5 flex items-start gap-2", bg)}>
+                            <Icon className={cn("w-4 h-4 mt-0.5 shrink-0", iconClass)} />
+                            <p className="font-body text-xs font-semibold leading-snug">{headline}</p>
                           </div>
-                        )}
+                          {shippingResult.showPickupSuggestion && z !== 0 && (
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 px-3 py-2.5 flex items-start gap-2">
+                              <MapPin className="w-3.5 h-3.5 mt-0.5 text-amber-700 shrink-0" />
+                              <p className="font-body text-[11px] text-amber-900 leading-relaxed">
+                                ¿Sabías que puedes recoger tu pedido en cocina? Escríbenos al{" "}
+                                <a href="https://wa.me/525582375469" target="_blank" rel="noopener" className="font-bold underline">
+                                  55 8237 5469
+                                </a>.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Time card — separado para mejor distribución del disclaimer */}
+              <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-2 h-full bg-primary/20" />
+                <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 items-start">
+                  <div>
+                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora inicia tu evento?</label>
+                    <div className="relative">
+                      <select value={eventTime} onChange={e => setEventTime(e.target.value)}
+                        className={cn("w-full h-14 pl-5 pr-12 rounded-2xl border-2 transition-all font-body text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 appearance-none cursor-pointer",
+                          eventTime ? "border-primary/30 bg-primary/5 font-semibold text-primary" : "border-border bg-background text-muted-foreground"
+                        )}>
+                        <option value="">Selecciona horario</option>
+                        {TIME_SLOTS.map(t => <option key={t} value={t} className="text-foreground">{t}</option>)}
+                      </select>
+                      <ChevronRight className={cn("absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rotate-90 pointer-events-none", eventTime ? "text-primary" : "text-muted-foreground")} />
+                    </div>
+                    {deliveryTime && isEarlyDelivery && (
+                      <div className="mt-3 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
+                        <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
                       </div>
-                    );
-                  })()}
+                    )}
+                  </div>
+                  {/* Disclaimer logística — al lado, ocupa el espacio restante */}
+                  <div className={cn(
+                    "border rounded-2xl flex gap-3 items-start transition-all duration-300 px-4 py-4",
+                    eventTime
+                      ? "bg-primary/5 border-primary/20"
+                      : "bg-muted/40 border-border/50"
+                  )}>
+                    <Truck className={cn("mt-0.5 shrink-0 transition-all", eventTime ? "w-5 h-5 text-primary" : "w-4 h-4 text-muted-foreground")} />
+                    <p className={cn(
+                      "font-body leading-relaxed transition-all",
+                      eventTime ? "text-sm text-foreground" : "text-xs text-muted-foreground"
+                    )}>
+                      Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-bold text-primary">90 minutos de margen</span> para la entrega.
+                    </p>
+                  </div>
                 </div>
               </div>
 

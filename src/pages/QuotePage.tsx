@@ -241,90 +241,43 @@ const QuotePage = () => {
             </div>
           </RevealOnScroll>
 
-          {/* Filter chips */}
-          <div className="flex flex-wrap justify-center gap-3 mb-10">
-            {FILTER_CHIPS.map(chip => (
-              <button key={chip.value} onClick={() => setEventFilter(chip.value)}
-                className={cn("px-6 py-2.5 rounded-full font-body text-sm font-semibold transition-all border shadow-sm",
-                  eventFilter === chip.value ? "bg-primary text-primary-foreground border-primary shadow-primary/20" : "bg-card text-foreground border-border hover:border-primary/40 hover:bg-muted/50"
-                )}>
-                {chip.label}
-              </button>
-            ))}
-          </div>
+          {/* (filtros eliminados) */}
 
-          {/* Event cards 2x3 grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((e, idx) => {
+          {/* 4 cards sin tags, con auto-advance */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {EVENT_TYPES.map((e) => {
               const selected = eventType === e.value;
               return (
-                <RevealOnScroll key={e.value} delay={idx * 50} className="h-full">
-                  <button onClick={() => setEventType(e.value)}
-                    className={cn(
-                      "group relative flex flex-col rounded-[32px] border-2 transition-all text-left overflow-hidden bg-card h-full w-full",
-                      selected ? "border-primary shadow-xl shadow-primary/10 ring-1 ring-primary/20" : "border-border hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1"
+                <button
+                  key={e.value}
+                  onClick={() => handleSelectEventType(e.value)}
+                  className={cn(
+                    "group relative flex flex-col rounded-[28px] border-2 transition-all text-left overflow-hidden bg-card h-full w-full",
+                    selected
+                      ? "border-primary shadow-xl shadow-primary/10 ring-1 ring-primary/20"
+                      : "border-border hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1",
+                  )}>
+                  <div className="relative h-40 overflow-hidden">
+                    <img src={e.image} alt={e.label} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="absolute bottom-3 left-3 w-11 h-11 rounded-2xl bg-card/30 backdrop-blur-md flex items-center justify-center text-2xl shadow-lg border border-card/40">
+                      {e.icon}
+                    </div>
+                    <div className={cn(
+                      "absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
+                      selected ? "bg-primary text-primary-foreground scale-100 opacity-100" : "scale-50 opacity-0",
                     )}>
-                    
-                    {/* Image Area */}
-                    <div className="relative h-48 overflow-hidden">
-                      <img src={e.image} alt={e.label} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                      
-                      {/* Icon overlay */}
-                      <div className="absolute bottom-4 left-4 w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-3xl shadow-lg border border-white/30">
-                        {e.icon}
-                      </div>
-
-                      {/* Badge top */}
-                      {e.badge && e.badgePosition === "top" && (
-                        <span className={cn("absolute top-4 right-4 px-3 py-1 rounded-full font-body text-[10px] font-bold tracking-wider uppercase backdrop-blur-md border",
-                          e.badgeStyle === "dark" ? "bg-black/60 text-white border-white/20" : "bg-white/80 text-amber-800 border-amber-200"
-                        )}>{e.badge.replace(/^[^ ]+ /, '')}</span>
-                      )}
+                      <CheckCircle className="w-5 h-5 fill-current" />
                     </div>
-
-                    <div className="p-6 flex flex-col flex-1">
-                      {/* Checkmark indicator */}
-                      <div className={cn("absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                        selected ? "bg-primary text-primary-foreground scale-100 opacity-100" : "bg-white/20 scale-50 opacity-0"
-                      )}>
-                        <CheckCircle className="w-5 h-5 fill-current" />
-                      </div>
-
-                      <h3 className="font-heading text-xl text-foreground mb-2 group-hover:text-primary transition-colors">{e.label}</h3>
-                      <p className="font-body text-sm text-muted-foreground mb-4 leading-relaxed">{e.desc}</p>
-                      
-                      <div className="mt-auto">
-                        <p className="font-body text-sm text-primary font-bold mb-4">{e.price}</p>
-                        
-                        {e.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 pt-4 border-t border-border/60">
-                            {e.tags.map(tag => (
-                              <span key={tag.label} className={cn("px-2.5 py-1 rounded-lg text-[9px] font-bold tracking-wider uppercase", tag.color)}>{tag.label}</span>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* Badge bottom */}
-                        {e.badge && e.badgePosition === "bottom" && (
-                          <span className="mt-3 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 font-body text-[10px] font-bold tracking-wider uppercase border border-amber-200 self-start">{e.badge.replace(/^[^ ]+ /, '')}</span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                </RevealOnScroll>
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="font-heading text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{e.label}</h3>
+                    <p className="font-body text-xs text-muted-foreground leading-relaxed">{e.desc}</p>
+                  </div>
+                </button>
               );
             })}
           </div>
-
-          <RevealOnScroll delay={300}>
-            <div className="mt-16 flex justify-center">
-              <Button onClick={goNext} disabled={!canNextStep1} size="lg" className="h-14 px-12 rounded-full text-base font-bold shadow-lg shadow-primary/20 group">
-                Siguiente paso
-                <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </div>
-          </RevealOnScroll>
         </div>
       )}
 

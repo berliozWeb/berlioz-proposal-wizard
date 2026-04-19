@@ -271,9 +271,9 @@ function TierCarousel({
             return (
               <div
                 key={item.instanceId}
-                className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-3"
+                className="snap-start shrink-0 w-[220px] min-h-[330px] flex flex-col bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] p-3"
               >
-                <div className="w-full h-[110px] rounded-lg overflow-hidden mb-2 flex items-center justify-center" style={{ background: '#E8F2F6' }}>
+                <div className="w-full h-[176px] rounded-lg overflow-hidden mb-2 flex items-center justify-center" style={{ background: '#E8F2F6' }}>
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}
@@ -341,7 +341,7 @@ function TierCarousel({
           {/* + Agregar producto card */}
           <button
             onClick={() => openSidebar(tier.id)}
-            className="snap-start shrink-0 w-[180px] min-h-[260px] flex flex-col items-center justify-center gap-2 bg-[#FDFAF7] border-2 border-dashed border-[#CEC1B9] rounded-xl text-[#777] hover:border-[#014D6F] hover:text-[#014D6F] transition-colors"
+            className="snap-start shrink-0 w-[220px] min-h-[330px] flex flex-col items-center justify-center gap-2 bg-[#FDFAF7] border-2 border-dashed border-[#CEC1B9] rounded-xl text-[#777] hover:border-[#014D6F] hover:text-[#014D6F] transition-colors"
           >
             <Plus className="w-8 h-8" />
             <span className="font-heading text-[11px] font-bold uppercase tracking-wider">Agregar producto</span>
@@ -840,33 +840,37 @@ export default function ProposalStep(props: ProposalStepProps) {
                   isSelected && !isRecommended && "ring-2 ring-[#014D6F]/30",
                 )}
               >
-                <div className="grid grid-cols-1 lg:grid-cols-[15%_1fr_220px] gap-6 items-stretch">
-                  {/* ═══ ZONA A — Identificación ═══ */}
-                  <div className="flex flex-col gap-3 lg:pr-2">
+                {/* ═══ ZONA A — Identificación (top bar horizontal) ═══ */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 mb-5 border-b border-[#CEC1B9]/40">
+                  <div className="flex flex-col gap-2 min-w-0">
                     {isRecommended && (
                       <span className="inline-flex items-center gap-1 self-start px-3 py-1 rounded-full bg-[#014D6F] text-[#EDD9C8] font-heading text-[9px] font-bold uppercase tracking-[0.15em] whitespace-nowrap">
                         <Star className="w-3 h-3 fill-current" /> Nuestra Recomendación
                       </span>
                     )}
-                    <h3 className="font-heading text-xl font-bold uppercase text-[#014D6F] leading-tight">
-                      {tier.title}
-                    </h3>
-                    <p className="font-body text-xs text-[#777] leading-snug">
-                      {pkg.tagline || tier.subtitle}
-                    </p>
-                    <button
-                      onClick={() => handleSelectTier(tier.id)}
-                      className={cn(
-                        "mt-auto inline-flex items-center justify-center px-4 py-2 rounded-full font-heading text-[11px] font-bold uppercase tracking-wider transition-all",
-                        isSelected || isRecommended
-                          ? "bg-[#014D6F] text-[#EDD9C8] hover:opacity-90"
-                          : "bg-white border border-[#014D6F] text-[#014D6F] hover:bg-[#014D6F]/5",
-                      )}
-                    >
-                      {isSelected ? "✓ Seleccionado" : "Elegir este →"}
-                    </button>
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-3">
+                      <h3 className="font-heading text-xl font-bold uppercase text-[#014D6F] leading-tight">
+                        {tier.title}
+                      </h3>
+                      <p className="font-body text-xs text-[#777] leading-snug">
+                        {pkg.tagline || tier.subtitle}
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={() => handleSelectTier(tier.id)}
+                    className={cn(
+                      "shrink-0 inline-flex items-center justify-center px-5 py-2.5 rounded-full font-heading text-[11px] font-bold uppercase tracking-wider transition-all",
+                      isSelected || isRecommended
+                        ? "bg-[#014D6F] text-[#EDD9C8] hover:opacity-90"
+                        : "bg-white border border-[#014D6F] text-[#014D6F] hover:bg-[#014D6F]/5",
+                    )}
+                  >
+                    {isSelected ? "✓ Seleccionado" : "Elegir este →"}
+                  </button>
+                </div>
 
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-6 items-stretch">
                   {/* ═══ ZONA B — Carrusel horizontal de cards ═══ */}
                   <TierCarousel
                     tier={tier}

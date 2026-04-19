@@ -4,7 +4,6 @@ import { es } from "date-fns/locale";
 import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck, Package, Phone } from "lucide-react";
 import { lookupCP, type ShippingResult } from "@/data/shippingZones";
 import BaseLayout from "@/components/layout/BaseLayout";
-import StepperProgress from "@/components/ui/StepperProgress";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
@@ -184,10 +183,9 @@ const QuotePage = () => {
     postalCode.length === 5 &&
     !isSpecialQuoteCP;
 
-  // Auto-advance al seleccionar tipo de evento + smooth scroll
+  // Auto-show form al seleccionar tipo de evento + smooth scroll
   const handleSelectEventType = (value: string) => {
     setEventType(value);
-    if (step === 0) setStep(1);
     setTimeout(() => {
       detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
@@ -202,8 +200,7 @@ const QuotePage = () => {
   }, [duration]);
 
   const goNext = useCallback(() => {
-    if (step === 0 && canNextStep1) setStep(1);
-    else if (step === 1 && canNextStep2) {
+    if (canNextStep1 && canNextStep2) {
       setStep(2);
       generateQuote({
         eventType,
@@ -222,14 +219,16 @@ const QuotePage = () => {
         if (data) setSmartData(data);
       });
     }
-  }, [step, canNextStep1, canNextStep2, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, hasBudget, budget, dietary, clientName, empresa, generateQuote]);
+  }, [canNextStep1, canNextStep2, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, hasBudget, budget, dietary, clientName, empresa, generateQuote]);
 
-  const goBack = () => setStep(s => Math.max(0, s - 1));
+  const goBack = () => { setStep(0); setEventType(""); };
+
+  const showForm = eventType !== "";
 
   return (
     <BaseLayout hideFooter>
       <div className="bg-background min-h-screen pb-20">
-        {/* COMPACT HERO 3:1 (only step 0) */}
+        {/* COMPACT HERO 3:1 (only intake) */}
         {step === 0 && (
           <div className="relative w-full aspect-[3/1] max-h-[260px] mb-8 overflow-hidden bg-primary">
             <img src={heroImg} alt="Catering Berlioz" className="absolute inset-0 w-full h-full object-cover opacity-80" />
@@ -242,13 +241,7 @@ const QuotePage = () => {
           </div>
         )}
 
-        <div className={cn("py-8 border-b border-border shadow-sm sticky top-0 bg-white/80 backdrop-blur-xl z-50 transition-all", step > 0 ? "mb-12 py-6" : "mb-12")}>
-          <div className="max-w-4xl mx-auto px-6">
-            <StepperProgress steps={WIZARD_STEPS} currentStep={step} />
-          </div>
-        </div>
-
-      {/* ═══ STEP 1 — EVENT TYPE ═══ */}
+      {/* ═══ INTAKE — EVENT TYPE + DETAILS (single page) ═══ */}
       {step === 0 && (
         <div className="max-w-6xl mx-auto px-6 py-4 animate-slide-up">
           <RevealOnScroll>
@@ -298,9 +291,15 @@ const QuotePage = () => {
         </div>
       )}
 
-      {/* ═══ STEP 2 — EVENT DETAILS ═══ */}
-      {step === 1 && (
-        <div className="max-w-4xl mx-auto px-6 py-4 animate-slide-up">
+      {/* ═══ EVENT DETAILS (same page, revealed) ═══ */}
+      {step === 0 && showForm && (
+        <div
+          ref={detailsRef}
+          className={cn(
+            "max-w-4xl mx-auto px-6 py-4 transition-all duration-500 ease-out",
+            showForm ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+          )}
+        >
            <RevealOnScroll>
             <div className="text-center mb-12">
               <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4 tracking-tight">Detalles del evento</h2>

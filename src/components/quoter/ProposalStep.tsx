@@ -82,15 +82,15 @@ type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string
 
 const TIERS: TierInfo[] = [
   {
+    id: "equilibrado", title: "Equilibrado", subtitle: "La experiencia que tu equipo merece",
+    bullets: ["Café/Té Berlioz + agua incluidos", "Variedad premium", "Presentación profesional"],
+    isPopular: true, ctaStyle: "primary",
+  },
+  {
     id: "esencial", title: "Esencial", subtitle: "Lo necesario, bien ejecutado",
     tip: "💡 El 85% de nuestros clientes agrega bebidas a este pedido",
     bullets: ["Entrega puntual garantizada", "Precio base sin bebidas", "Ideal para eventos recurrentes"],
     isPopular: false, ctaStyle: "outline",
-  },
-  {
-    id: "equilibrado", title: "Equilibrado", subtitle: "La experiencia que tu equipo merece",
-    bullets: ["Café/Té Berlioz + agua incluidos", "Variedad premium", "Presentación profesional"],
-    isPopular: true, ctaStyle: "primary",
   },
   {
     id: "experiencia", title: "Experiencia Completa", subtitle: "Cada detalle cuenta",

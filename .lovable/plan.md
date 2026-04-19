@@ -1,29 +1,32 @@
 
-User wants two changes to the tier rows in ProposalStep.tsx:
-1. The price breakdown (Zona C) feels visually disconnected — make it look like it belongs inside the main tier container.
-2. Add a visual affordance on the product carousel (Zona B) showing more cards exist horizontally — arrows and/or a scroll indicator.
+User wants Step 3 tier rows in `ProposalStep.tsx` redesigned:
+1. Compact Zona A (tier name + tagline) — move to top instead of left column, freeing horizontal space
+2. Give product carousel (Zona B) more room
+3. Make product card images larger / cards taller for visual impact
 
-Both are pure UI tweaks within the existing tier row block (~lines 644+). No logic changes.
+Current layout: `lg:grid-cols-[15%_1fr_220px]` — 3 columns side by side. Zona A takes 15% on left as a vertical block.
 
-## Plan
+### Plan
 
-### 1. Desglose dentro del contenedor (Zona C)
-Actualmente la Zona C tiene su propio `bg-[#FDFAF7] rounded-xl` que la hace ver como una "tarjeta dentro de la tarjeta". Cambios:
-- Quitar el fondo crema y border-radius propios de Zona C
-- Añadir un divisor vertical sutil entre Zona B y Zona C (`border-l border-border/40 pl-6`)
-- Mantener tipografía y jerarquía igual (Subtotal / Logística / IVA / TOTAL)
-- El TOTAL queda visualmente integrado como parte del mismo card blanco del tier
+**File:** `src/components/quoter/ProposalStep.tsx` (only tier row block, ~lines 644+)
 
-### 2. Indicador de scroll horizontal en el carrusel (Zona B)
-- **Flechas laterales** ‹ › : botones circulares blancos con sombra, posicionados absolute sobre los bordes izquierdo/derecho del scroll. Solo visibles en desktop (`hidden lg:flex`). Hacen `scrollBy({ left: ±200, behavior: 'smooth' })` sobre el ref del contenedor scrollable.
-- **Fade gradient en los bordes**: pseudo-elementos con `bg-gradient-to-r from-white` a la derecha y `from-white` invertido a la izquierda, indicando que hay contenido cortado.
-- **Scrollbar visible y estilizada**: cambiar `pb-2` a una scrollbar fina visible (track gris claro, thumb navy) usando utilidades tailwind o estilos inline.
-- Las flechas se ocultan automáticamente cuando no hay overflow (detectar con `scrollWidth > clientWidth` en un useEffect ligero por tier).
+**1. Restructure tier row layout**
+- Change from 3-column grid to a vertical stack with 2 zones:
+  - **Top bar** (full width): Zona A horizontal — tier name + tagline on left, "ELEGIR ESTE →" button on right
+  - **Bottom**: 2-column grid `lg:grid-cols-[1fr_220px]` — Zona B carousel | Zona C breakdown
+- Result: products get ~85% width instead of 70%
 
-### Archivo afectado
-- `src/components/quoter/ProposalStep.tsx` — solo el bloque de cada tier row (Zona B y Zona C). Sin tocar handlers, cálculos ni el resto del archivo.
+**2. Enlarge product cards in TierCarousel**
+- Card width: `w-[180px]` → `w-[220px]`
+- Image container height: current ~`h-32` → `h-44` (taller, more visual)
+- Keep aspect, padding, qty controls intact
+- "AGREGAR PRODUCTO" placeholder card matches new dimensions
 
-### Lo que NO se toca
-- Lógica de `tierTotals`, `updateItemQty`, `removeItem`, `openSwapSidebar`
-- Zona A (identificación del tier) ni el resto del Step 3
-- Steps 1 y 2, header, footer, Edge Functions
+**3. Keep untouched**
+- All scroll logic, arrows, fades in TierCarousel
+- Price calculations, handlers
+- Zona C breakdown styling and content
+
+### What NOT to touch
+- Steps 1, 2, hero, header, footer
+- Edge functions, totals logic, swap modal

@@ -1052,7 +1052,7 @@ export default function ProposalStep(props: ProposalStepProps) {
       {sidebarOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-50" onClick={() => { setSidebarOpen(false); setSwapTarget(null); }} />
-          <div className="fixed top-0 right-0 h-full w-[360px] max-w-[90vw] bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-slide-up">
+          <div className="fixed top-0 right-0 h-full w-[420px] max-w-[95vw] bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-slide-up">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div>
                 <p className="font-body text-sm font-semibold text-foreground">
@@ -1078,25 +1078,18 @@ export default function ProposalStep(props: ProposalStepProps) {
             {/* Products */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {sidebarProducts.map(product => (
-                <div key={product.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-body text-sm font-medium text-foreground truncate">
-                      {product.isBestseller && <Star className="w-3 h-3 inline text-amber-500 mr-1" />}
-                      {product.name}
-                    </p>
-                    <p className="font-mono text-xs text-muted-foreground">{formatMXN(product.price)}</p>
-                  </div>
-                  <Button size="sm" variant="outline" className="shrink-0 text-xs"
-                    onClick={() => {
-                      if (swapTarget) {
-                        swapItem(swapTarget.tier, swapTarget.instanceId, product);
-                      } else {
-                        addProductToTier(sidebarTarget, product);
-                      }
-                    }}>
-                    {swapTarget ? "Cambiar" : "+ Agregar"}
-                  </Button>
-                </div>
+                <SidebarProductCard
+                  key={product.id}
+                  product={product}
+                  isSwap={!!swapTarget}
+                  onSelect={() => {
+                    if (swapTarget) {
+                      swapItem(swapTarget.tier, swapTarget.instanceId, product);
+                    } else {
+                      addProductToTier(sidebarTarget, product);
+                    }
+                  }}
+                />
               ))}
             </div>
           </div>

@@ -51,6 +51,22 @@ export interface SmartQuoteResponse {
   };
 }
 
+export interface MultiDeliverySlot {
+  id: string;
+  label: string;
+  date: string;
+  time: string;
+  guests_count: number;
+  dietary: {
+    sin_restriccion: number;
+    vegano: number;
+    vegetariano: number;
+    sin_gluten: number;
+    sin_lactosa: number;
+    keto: number;
+  };
+}
+
 export interface SmartQuoteRequest {
   eventType: string;
   peopleCount: number;
@@ -65,4 +81,8 @@ export interface SmartQuoteRequest {
   contactName?: string;
   companyName?: string;
   userId?: string;
+  /** When 'multi', deliveryGroups must be provided and the AI should produce a per-slot menu. */
+  mode?: 'single' | 'multi';
+  deliveryGroups?: MultiDeliverySlot[];
+  address?: string;
 }

@@ -295,7 +295,7 @@ const QuotePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{title}</h3>
-                      <p className="font-body text-xs text-muted-foreground leading-tight mt-0.5 truncate">{subtitle}</p>
+                      <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{subtitle}</p>
                     </div>
                   </button>
                 );

@@ -1049,9 +1049,23 @@ const QuotePage = () => {
       {step === 2 && (
         <>
           {smartData?.proposals && smartData.proposals.length > 0 ? (
-            <div className="space-y-10 px-4 sm:px-6">
+            <Tabs defaultValue={smartData.proposals[0].slot_id} className="px-4 sm:px-6">
+              <div className="max-w-7xl mx-auto mb-6">
+                <div className="overflow-x-auto -mx-2 px-2">
+                  <TabsList className="inline-flex h-auto bg-muted p-1 rounded-full w-max">
+                    {smartData.proposals.map((slot, idx) => (
+                      <TabsTrigger
+                        key={slot.slot_id}
+                        value={slot.slot_id}
+                        className="rounded-full px-4 py-2 text-xs font-bold tracking-wide uppercase whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                      >
+                        {slot.label || `Entrega ${idx + 1}`}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+              </div>
               {smartData.proposals.map((slot, idx) => {
-                // Synthesize a per-slot SmartQuoteResponse so ProposalStep stays generic
                 const slotResponse: SmartQuoteResponse = {
                   ...smartData,
                   packages: slot.tiers,
@@ -1061,7 +1075,7 @@ const QuotePage = () => {
                 };
                 const slotDate = slot.date ? new Date(slot.date + 'T00:00:00') : date;
                 return (
-                  <div key={slot.slot_id} className="space-y-3">
+                  <TabsContent key={slot.slot_id} value={slot.slot_id} className="mt-0 space-y-3">
                     <div className="max-w-7xl mx-auto px-2">
                       <div className="flex items-center gap-3 flex-wrap">
                         <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold tracking-wide uppercase">
@@ -1092,10 +1106,10 @@ const QuotePage = () => {
                         onSubmitFeedback={submitFeedback}
                       />
                     </div>
-                  </div>
+                  </TabsContent>
                 );
               })}
-            </div>
+            </Tabs>
           ) : (
             <div className="bg-white rounded-[40px] border border-border shadow-2xl mx-4 sm:mx-6 overflow-hidden">
               <ProposalStep

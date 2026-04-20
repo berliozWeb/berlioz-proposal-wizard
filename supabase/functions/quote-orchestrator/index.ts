@@ -8,6 +8,22 @@ const corsHeaders = {
 };
 
 // ═══ TYPES ═══
+interface MultiDeliverySlot {
+  id: string;
+  label: string;
+  date: string;
+  time: string;
+  guests_count: number;
+  dietary: {
+    sin_restriccion: number;
+    vegano: number;
+    vegetariano: number;
+    sin_gluten: number;
+    sin_lactosa: number;
+    keto: number;
+  };
+}
+
 interface QuoteRequest {
   eventType: string;
   peopleCount: number;
@@ -22,6 +38,9 @@ interface QuoteRequest {
   contactName?: string;
   companyName?: string;
   userId?: string;
+  mode?: 'single' | 'multi';
+  deliveryGroups?: MultiDeliverySlot[];
+  address?: string;
 }
 
 interface DbProduct {
@@ -319,6 +338,12 @@ async function composeWithClaude(
     dietary_tags: (p.dietary_tags || []).join(','),
   }));
 
+  const isMulti = req.mode === 'multi' && Array.isArray(req.deliveryGroups) && req.deliveryGroups.length > 0;
+
+  const multiInstruction = isMulti
+    ? `\n\nMODO MULTI-ENTREGA:\nEl cliente tiene un evento con varias entregas. Para cada entrega genera una propuesta de menú independiente considerando la fecha, hora, número de personas y restricciones alimentarias de ese slot específico. Presenta las propuestas organizadas por entrega con su título (Entrega 1 — Día 1, etc.).`
+    : '';
+
   const systemPrompt = `Eres ANA, el motor de cotización inteligente de Berlioz Catering Corporativo en CDMX.
 Tu tarea es seleccionar productos del catálogo para componer 3 paquetes de catering (Esencial, Equilibrado, Experiencia).
 
@@ -349,7 +374,11 @@ OUTPUT FORMAT:
     { "tier": "equilibrado", ... },
     { "tier": "experiencia", ... }
   ]
-}`;
+}${multiInstruction}`;
+
+  const multiBlock = isMulti
+    ? `\nENTREGAS (${req.deliveryGroups!.length}):\n${JSON.stringify(req.deliveryGroups, null, 2)}\nDirección global: ${req.address || 'sin definir'}\n`
+    : '';
 
   const userPrompt = `EVENTO:
 - Tipo: ${req.eventType}
@@ -359,7 +388,7 @@ OUTPUT FORMAT:
 - Duración: ${req.durationHours || 'sin definir'} horas
 - Presupuesto: ${req.budgetEnabled ? '$' + req.budgetPerPerson + '/persona' : 'sin restricción'}
 - Dieta: ${req.dietaryRestrictions?.join(', ') || 'ninguna'}
-
+${multiBlock}
 ${feedbackSummary ? `HISTORIAL DE PREFERENCIAS:\n${feedbackSummary}\n` : ''}
 CANDIDATOS DEL CATÁLOGO (${catalog.length} productos):
 ${JSON.stringify(catalog)}

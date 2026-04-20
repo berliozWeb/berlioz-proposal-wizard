@@ -281,7 +281,7 @@ const QuotePage = () => {
                       if (mode === 'single') setDeliveryGroups(buildSingleDeliveryGroup());
                     }}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left h-[88px]",
+                      "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left min-h-[88px]",
                       selected
                         ? "border-primary bg-primary/5 shadow-sm"
                         : "border-border bg-card hover:border-primary/40",

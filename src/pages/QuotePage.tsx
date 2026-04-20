@@ -618,6 +618,7 @@ const QuotePage = () => {
                                     const guests = g.guests_count || numPeople || 1;
                                     return (
                                       <div key={item.id} className="flex items-center gap-2 p-2 rounded-lg border border-border hover:border-primary/30">
+                                        <SlotProductImage productId={item.id} category={item.category} alt={item.name} />
                                         <div className="flex-1 min-w-0">
                                           <p className="font-body text-xs font-medium text-foreground truncate">{item.name}</p>
                                           <p className="font-body text-[10px] text-muted-foreground">{item.pricePerPerson > 0 ? `${formatMXN(item.pricePerPerson)}/p` : 'Por grupo'}</p>

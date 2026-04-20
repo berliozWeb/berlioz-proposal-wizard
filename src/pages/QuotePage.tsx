@@ -21,6 +21,10 @@ import {
   type DeliveryGroup,
   type EventMode,
 } from "@/domain/entities/DeliveryGroup";
+import { MENU_CATALOG } from "@/domain/entities/MenuCatalog";
+import { MENU_CATEGORY_LABELS, type MenuCategory } from "@/domain/entities/MenuItem";
+import { formatMXN } from "@/domain/value-objects/Money";
+import type { ProposedProduct } from "@/domain/entities/SmartQuote";
 
 // Images
 // Premium Images from src/assets/imagenes_menu
@@ -141,6 +145,8 @@ const QuotePage = () => {
   const [dietaryDistribution, setDietaryDistribution] = useState<Record<string, number>>({
     vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0,
   });
+  const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
+  const [slotPickerCat, setSlotPickerCat] = useState<MenuCategory>('working_lunch');
 
   // Ref para smooth scroll al formulario de detalles
   const detailsRef = useRef<HTMLDivElement>(null);

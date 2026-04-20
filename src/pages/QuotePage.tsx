@@ -21,11 +21,6 @@ import {
   type DeliveryGroup,
   type EventMode,
 } from "@/domain/entities/DeliveryGroup";
-import { MENU_CATALOG } from "@/domain/entities/MenuCatalog";
-import { MENU_CATEGORY_LABELS, type MenuCategory } from "@/domain/entities/MenuItem";
-import { getProductImage, CATEGORY_IMAGES } from "@/domain/entities/ProductImages";
-import { formatMXN } from "@/domain/value-objects/Money";
-import type { ProposedProduct } from "@/domain/entities/SmartQuote";
 
 // Images
 // Premium Images from src/assets/imagenes_menu

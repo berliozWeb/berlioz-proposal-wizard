@@ -281,7 +281,7 @@ const QuotePage = () => {
                       if (mode === 'single') setDeliveryGroups(buildSingleDeliveryGroup());
                     }}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left h-[88px]",
+                      "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left min-h-[88px]",
                       selected
                         ? "border-primary bg-primary/5 shadow-sm"
                         : "border-border bg-card hover:border-primary/40",
@@ -295,7 +295,7 @@ const QuotePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{title}</h3>
-                      <p className="font-body text-xs text-muted-foreground leading-tight mt-0.5 truncate">{subtitle}</p>
+                      <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{subtitle}</p>
                     </div>
                   </button>
                 );
@@ -373,7 +373,7 @@ const QuotePage = () => {
                       key={e.value}
                       onClick={() => handleSelectEventType(e.value)}
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left h-[88px]",
+                        "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left min-h-[88px]",
                         selected
                           ? "border-primary bg-primary/5 shadow-sm"
                           : "border-border bg-card hover:border-primary/40",
@@ -387,7 +387,7 @@ const QuotePage = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{e.label}</h3>
-                        <p className="font-body text-xs text-muted-foreground leading-tight mt-0.5 truncate">{e.desc}</p>
+                        <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{e.desc}</p>
                       </div>
                     </button>
                   );

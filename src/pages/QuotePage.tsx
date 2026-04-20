@@ -150,6 +150,19 @@ const QuotePage = () => {
   const { loading: smartLoading, generateQuote, submitFeedback } = useSmartQuote();
   const [smartData, setSmartData] = useState<SmartQuoteResponse | null>(null);
 
+  // Per-slot tier selection in multi-delivery mode
+  type SlotSelection = { tier: string; tierLabel: string; total: number; subtotal: number };
+  const [slotSelections, setSlotSelections] = useState<Record<string, SlotSelection>>({});
+  const [activeSlotTab, setActiveSlotTab] = useState<string | null>(null);
+
+  // Reset selections when a new multi-delivery proposal arrives
+  useEffect(() => {
+    if (smartData?.proposals && smartData.proposals.length > 0) {
+      setSlotSelections({});
+      setActiveSlotTab(smartData.proposals[0].slot_id);
+    }
+  }, [smartData]);
+
   const tomorrow = addDays(new Date(), 1);
   const deliveryTime = eventTime ? calcDeliveryTime(eventTime) : "";
   const isEarlyDelivery = deliveryTime !== "" && (parseInt(deliveryTime.split(":")[0]) < 7 || (deliveryTime.startsWith("07:") && parseInt(deliveryTime.split(":")[1]) < 30));

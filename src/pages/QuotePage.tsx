@@ -395,6 +395,111 @@ const QuotePage = () => {
               </div>
             </section>
           )}
+
+          {/* ── Section D: Per-delivery configuration (only multi + event type chosen) ── */}
+          {eventMode === 'multi' && eventType !== '' && deliveryGroups.length > 0 && (
+            <section className="animate-slide-up max-w-4xl mx-auto w-full">
+              <div className="text-center mb-6">
+                <h2 className="font-heading text-3xl md:text-4xl text-primary mb-2 tracking-tight">Configura cada entrega</h2>
+                <p className="font-body text-sm text-muted-foreground">Define la fecha, hora y menú por slot</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {deliveryGroups.map((g, idx) => {
+                  const isFirst = idx === 0;
+                  const dateValue = g.date ? new Date(g.date + 'T00:00:00') : undefined;
+                  const updateGroup = (patch: Partial<DeliveryGroup>) => {
+                    setDeliveryGroups(prev => prev.map((x, i) => i === idx ? { ...x, ...patch } : x));
+                  };
+                  return (
+                    <div key={g.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-heading text-base font-bold text-primary">{g.label ?? `Entrega ${idx + 1}`}</h3>
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                          Slot {idx + 1}/{deliveryGroups.length}
+                        </span>
+                      </div>
+
+                      {/* Fecha */}
+                      <div>
+                        <label className="block font-body text-xs font-semibold text-foreground mb-1.5">Fecha</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn("w-full justify-start text-left font-normal h-10", !dateValue && "text-muted-foreground")}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateValue ? format(dateValue, "PPP", { locale: es }) : <span>Selecciona fecha</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={dateValue}
+                              onSelect={(d) => updateGroup({ date: d ? format(d, 'yyyy-MM-dd') : '' })}
+                              disabled={(d) => isBefore(d, new Date(new Date().setHours(0, 0, 0, 0)))}
+                              initialFocus
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      {/* Hora */}
+                      <div>
+                        <label className="block font-body text-xs font-semibold text-foreground mb-1.5">Hora</label>
+                        <input
+                          type="time"
+                          value={g.time || '09:00'}
+                          onChange={(e) => updateGroup({ time: e.target.value })}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+
+                      {/* Mismo menú toggle */}
+                      {!isFirst && (
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50">
+                          <div className="flex-1 min-w-0 pr-3">
+                            <p className="font-body text-xs font-semibold text-foreground">¿Mismo menú que la entrega anterior?</p>
+                            <p className="font-body text-[11px] text-muted-foreground mt-0.5">Copia los productos del slot anterior</p>
+                          </div>
+                          <div className="flex gap-1.5 shrink-0">
+                            {([
+                              { val: true, label: 'Sí' },
+                              { val: false, label: 'No' },
+                            ]).map(opt => {
+                              const active = (g.sameMenuAsPrevious ?? true) === opt.val;
+                              return (
+                                <button
+                                  key={String(opt.val)}
+                                  onClick={() => {
+                                    const prev = deliveryGroups[idx - 1];
+                                    updateGroup({
+                                      sameMenuAsPrevious: opt.val,
+                                      items: opt.val && prev ? [...prev.items] : g.items,
+                                    });
+                                  }}
+                                  className={cn(
+                                    "px-3 h-8 rounded-lg font-heading text-xs font-bold border-2 transition-all",
+                                    active
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border bg-background text-foreground hover:border-primary/40",
+                                  )}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       )}
 

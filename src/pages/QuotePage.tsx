@@ -47,6 +47,7 @@ interface EventTypeCard {
   desc: string;
   price: string;
   icon: string;
+  Icon: LucideIcon;
   image: string;
   tags: { label: string; color: string }[];
   filters: string[];
@@ -55,22 +56,22 @@ interface EventTypeCard {
 const EVENT_TYPES: EventTypeCard[] = [
   {
     value: "desayuno", label: "Desayuno", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "Perfecto para morning meetings", price: "Desde $170/persona", icon: "🍳", image: breakfastImg,
+    desc: "Perfecto para morning meetings", price: "Desde $170/persona", icon: "🍳", Icon: Croissant, image: breakfastImg,
     tags: [], filters: [],
   },
   {
     value: "working-lunch", label: "Comida", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "El producto estrella de Berlioz", price: "Desde $150/persona", icon: "🍱", image: boxlunchImg,
+    desc: "El producto estrella de Berlioz", price: "Desde $150/persona", icon: "🍱", Icon: UtensilsCrossed, image: boxlunchImg,
     tags: [], filters: [],
   },
   {
     value: "coffee-break", label: "Coffee Break", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "Ideal para juntas y pausas", price: "Desde $240/persona", icon: "☕", image: coffeeImg,
+    desc: "Ideal para juntas y pausas", price: "Desde $240/persona", icon: "☕", Icon: Coffee, image: coffeeImg,
     tags: [], filters: [],
   },
   {
     value: "otro", label: "Otro", badge: "", badgeStyle: "none", badgePosition: "top",
-    desc: "Cuéntanos qué necesitas", price: "Cotización a la medida", icon: "✨", image: juntaImg,
+    desc: "Cuéntanos qué necesitas", price: "Cotización a la medida", icon: "✨", Icon: Sparkles, image: juntaImg,
     tags: [], filters: [],
   },
 ];

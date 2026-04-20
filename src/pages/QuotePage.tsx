@@ -248,7 +248,46 @@ const QuotePage = () => {
 
   const goBack = () => { setStep(0); setEventType(""); setEventMode(null); setDeliveryGroups(buildSingleDeliveryGroup()); };
 
-  const showForm = eventType !== "";
+  const showForm = eventType !== "" && eventMode === 'single';
+
+  // ── Multi mode validation & submit ──
+  const multiTotalGuests = useMemo(
+    () => deliveryGroups.reduce((sum, g) => sum + (g.guests_count || 0), 0),
+    [deliveryGroups],
+  );
+  const multiAllSlotsValid = deliveryGroups.length > 0 && deliveryGroups.every(
+    g => !!g.date && !!g.time && (g.guests_count || 0) > 0,
+  );
+  const canSubmitMulti =
+    eventMode === 'multi' &&
+    eventType !== '' &&
+    multiAllSlotsValid &&
+    postalCode.length === 5 &&
+    !isSpecialQuoteCP;
+
+  const goNextMulti = useCallback(() => {
+    if (!canSubmitMulti) return;
+    const firstSlot = deliveryGroups[0];
+    const firstDate = firstSlot?.date ? new Date(firstSlot.date + 'T00:00:00') : undefined;
+    const firstTime = firstSlot?.time || '09:00';
+    setStep(2);
+    generateQuote({
+      eventType,
+      peopleCount: multiTotalGuests,
+      eventDate: firstSlot?.date,
+      eventTime: firstTime,
+      deliveryTime: calcDeliveryTime(firstTime),
+      zipCode: postalCode,
+      durationHours: 3,
+      budgetEnabled: false,
+      dietaryRestrictions: [],
+      contactName: clientName,
+      companyName: empresa,
+    }).then(data => { if (data) setSmartData(data); });
+    if (firstDate) setDate(firstDate);
+    if (firstTime) setEventTime(firstTime);
+    setPeople(multiTotalGuests);
+  }, [canSubmitMulti, deliveryGroups, eventType, multiTotalGuests, postalCode, isSpecialQuoteCP, clientName, empresa, generateQuote]);
 
   return (
     <BaseLayout hideFooter>
@@ -493,40 +532,79 @@ const QuotePage = () => {
                         </div>
                       </div>
 
-                      {/* Mismo menú toggle (preferencia para la IA) */}
-                      {!isFirst && (
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border/50">
-                          <div className="flex-1 min-w-0 pr-3">
-                            <p className="font-body text-xs font-semibold text-foreground">¿Mismo menú que la entrega anterior?</p>
-                            <p className="font-body text-[11px] text-muted-foreground mt-0.5">La IA usará esto como preferencia al sugerir productos</p>
-                          </div>
-                          <div className="flex gap-1.5 shrink-0">
-                            {([
-                              { val: true, label: 'Sí' },
-                              { val: false, label: 'No' },
-                            ]).map(opt => {
-                              const active = (g.sameMenuAsPrevious ?? true) === opt.val;
-                              return (
-                                <button
-                                  key={String(opt.val)}
-                                  onClick={() => updateGroup({ sameMenuAsPrevious: opt.val })}
-                                  className={cn(
-                                    "px-3 h-8 rounded-lg font-heading text-xs font-bold border-2 transition-all",
-                                    active
-                                      ? "border-primary bg-primary text-primary-foreground"
-                                      : "border-border bg-background text-foreground hover:border-primary/40",
-                                  )}
-                                >
-                                  {opt.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Dirección global del evento (CP) */}
+              <div className="mt-8 bg-card rounded-3xl border border-border p-6 md:p-8 shadow-sm">
+                <label className="block font-heading text-sm font-bold text-foreground mb-3 uppercase tracking-wider">¿A qué dirección entregamos?</label>
+                <p className="font-body text-xs text-muted-foreground mb-3">Aplica para todas las entregas del evento</p>
+                <Input
+                  value={postalCode}
+                  onChange={e => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 5);
+                    setPostalCode(val);
+                    if (val.length === 5) setCpTouched(true);
+                  }}
+                  onBlur={() => setCpTouched(true)}
+                  inputMode="numeric"
+                  maxLength={5}
+                  placeholder="C.P. (5 dígitos)"
+                  className="h-14 rounded-2xl border-2 border-border bg-background focus:border-primary focus:ring-4 focus:ring-primary/10 text-base font-mono tracking-wider"
+                />
+                {cpInvalidFormat && (
+                  <p className="mt-3 text-xs font-body text-destructive flex items-center gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5" /> El código postal debe tener 5 dígitos
+                  </p>
+                )}
+                {shippingResult && (
+                  <div className={cn(
+                    "mt-3 rounded-2xl border-2 px-3 py-2.5 flex items-start gap-2",
+                    isSpecialQuoteCP ? "bg-destructive/10 border-destructive/30 text-destructive" : "bg-muted/40 border-border/60 text-foreground",
+                  )}>
+                    {isSpecialQuoteCP ? <Phone className="w-4 h-4 mt-0.5 shrink-0" /> : <Truck className="w-4 h-4 mt-0.5 shrink-0" />}
+                    <p className="font-body text-xs font-semibold leading-snug">{shippingResult.message}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Datos de contacto opcionales */}
+              <div className="mt-6 bg-primary/5 rounded-3xl border border-primary/10 p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block font-heading text-xs font-bold text-primary mb-3 uppercase tracking-[0.2em]">Tu nombre</label>
+                  <Input value={clientName} onChange={e => setClientName(e.target.value)} placeholder='Ej. "Anne Seguy"'
+                    className="h-14 rounded-2xl border-2 border-primary/20 bg-background/50 focus:border-primary focus:ring-4 focus:ring-primary/5" />
+                </div>
+                <div>
+                  <label className="block font-heading text-xs font-bold text-primary mb-3 uppercase tracking-[0.2em]">Empresa</label>
+                  <Input value={empresa} onChange={e => setEmpresa(e.target.value)} placeholder='Ej. "Berlioz"'
+                    className="h-14 rounded-2xl border-2 border-primary/20 bg-background/50 focus:border-primary focus:ring-4 focus:ring-primary/5" />
+                </div>
+              </div>
+
+              {/* CTA Generar propuesta */}
+              <div className="mt-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="font-body text-sm text-muted-foreground">
+                  Total estimado: <span className="font-bold text-foreground">{multiTotalGuests}</span> personas en <span className="font-bold text-foreground">{deliveryGroups.length}</span> entregas
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={goBack} className="h-14 px-8 rounded-full font-bold border-2">
+                    Volver
+                  </Button>
+                  {isSpecialQuoteCP ? (
+                    <Button asChild className="h-14 px-12 rounded-full font-bold bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+                      <a href="https://wa.me/525582375469" target="_blank" rel="noopener">
+                        <Phone className="w-5 h-5 mr-2" /> Contáctanos para cotizar
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button onClick={goNextMulti} disabled={!canSubmitMulti} className="h-14 px-12 rounded-full font-bold shadow-xl shadow-primary/20 group">
+                      Generar propuesta <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </section>
           )}

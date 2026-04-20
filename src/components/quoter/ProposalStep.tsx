@@ -522,6 +522,11 @@ export default function ProposalStep(props: ProposalStepProps) {
     if (proposalId && onSubmitFeedback) {
       onSubmitFeedback({ proposalId, selectedTier: tier });
     }
+    if (onSelectTier) {
+      const t = tierTotals[tier];
+      const tierLabel = TIERS.find(x => x.id === tier)?.title ?? tier;
+      onSelectTier({ tier, tierLabel, total: t.total, subtotal: t.subtotal });
+    }
   };
 
   const handleConfirmOrder = () => {

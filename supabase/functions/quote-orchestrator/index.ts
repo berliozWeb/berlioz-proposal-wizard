@@ -637,27 +637,92 @@ serve(async (req) => {
     }
 
     // ── 5. AI Composition with Claude (heuristic fallback) ──
+    // Helper: compose 3 packages for a specific request signature
+    const composeFor = async (
+      reqOverride: QuoteRequest,
+      label: string,
+    ): Promise<{ packages: Package[]; engineVersion: string; fallbackUsed: boolean }> => {
+      const ev0 = 'v1-heuristic';
+      let pkgs: Package[];
+      let ev = ev0;
+      let fb = false;
+
+      const specs = await composeWithClaude(allScored, reqOverride, feedbackSummary + salesContext);
+      if (specs && specs.length === 3) {
+        pkgs = specs.map(spec => buildPackageFromClaude(spec, productMap, reqOverride.peopleCount));
+        const valid = pkgs.every(p => p.items.length >= 1);
+        if (valid) {
+          ev = 'v3-claude-sonnet';
+          ensureDifferentiation(pkgs, reqOverride.peopleCount);
+        } else {
+          console.warn(`[${label}] Claude packages invalid, falling back to heuristic`);
+          fb = true;
+          pkgs = buildHeuristicFallback(allProducts, reqOverride, parentMap, reqOverride.peopleCount);
+        }
+      } else {
+        fb = true;
+        pkgs = buildHeuristicFallback(allProducts, reqOverride, parentMap, reqOverride.peopleCount);
+      }
+      return { packages: pkgs, engineVersion: ev, fallbackUsed: fb };
+    };
+
+    // Multi-delivery: produce one proposal per slot
+    const isMulti = body.mode === 'multi' && Array.isArray(body.deliveryGroups) && body.deliveryGroups.length > 0;
+    let proposalsBySlot: Array<{
+      slot_id: string;
+      label: string;
+      date: string;
+      time: string;
+      guests_count: number;
+      tiers: Package[];
+      engineVersion: string;
+      fallbackUsed: boolean;
+    }> = [];
     let packages: Package[];
     let engineVersion = 'v1-heuristic';
     let fallbackUsed = false;
 
-    const claudeSpecs = await composeWithClaude(allScored, body, feedbackSummary + salesContext);
+    if (isMulti) {
+      for (const slot of body.deliveryGroups!) {
+        const slotDietary: string[] = [];
+        if ((slot.dietary?.vegano || 0) > 0) slotDietary.push('vegano');
+        if ((slot.dietary?.vegetariano || 0) > 0) slotDietary.push('vegetariano');
+        if ((slot.dietary?.sin_gluten || 0) > 0) slotDietary.push('sin_gluten');
+        if ((slot.dietary?.sin_lactosa || 0) > 0) slotDietary.push('sin_lactosa');
+        if ((slot.dietary?.keto || 0) > 0) slotDietary.push('keto');
 
-    if (claudeSpecs && claudeSpecs.length === 3) {
-      packages = claudeSpecs.map(spec => buildPackageFromClaude(spec, productMap, peopleCount));
-
-      const valid = packages.every(p => p.items.length >= 1);
-      if (valid) {
-        engineVersion = 'v3-claude-sonnet';
-        ensureDifferentiation(packages, peopleCount);
-      } else {
-        console.warn('Claude packages invalid (empty items), falling back to heuristic');
-        fallbackUsed = true;
-        packages = buildHeuristicFallback(allProducts, body, parentMap, peopleCount);
+        const slotReq: QuoteRequest = {
+          ...body,
+          peopleCount: Math.max(1, slot.guests_count || 1),
+          eventDate: slot.date || body.eventDate,
+          eventTime: slot.time || body.eventTime,
+          dietaryRestrictions: slotDietary,
+          mode: 'multi',
+          deliveryGroups: [slot], // pass only this slot to Claude for context
+        };
+        const result = await composeFor(slotReq, slot.label || slot.id);
+        proposalsBySlot.push({
+          slot_id: slot.id,
+          label: slot.label || slot.id,
+          date: slot.date,
+          time: slot.time,
+          guests_count: slot.guests_count,
+          tiers: result.packages,
+          engineVersion: result.engineVersion,
+          fallbackUsed: result.fallbackUsed,
+        });
       }
+      // Backward compat: expose first slot's packages as `packages`
+      packages = proposalsBySlot[0]?.tiers ?? [];
+      engineVersion = proposalsBySlot.every(p => p.engineVersion === 'v3-claude-sonnet')
+        ? 'v3-claude-sonnet-multi'
+        : 'v1-heuristic-multi';
+      fallbackUsed = proposalsBySlot.some(p => p.fallbackUsed);
     } else {
-      fallbackUsed = true;
-      packages = buildHeuristicFallback(allProducts, body, parentMap, peopleCount);
+      const single = await composeFor(body, 'single');
+      packages = single.packages;
+      engineVersion = single.engineVersion;
+      fallbackUsed = single.fallbackUsed;
     }
 
     // ── 6. Persist proposal ──

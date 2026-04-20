@@ -8,6 +8,22 @@ const corsHeaders = {
 };
 
 // ═══ TYPES ═══
+interface MultiDeliverySlot {
+  id: string;
+  label: string;
+  date: string;
+  time: string;
+  guests_count: number;
+  dietary: {
+    sin_restriccion: number;
+    vegano: number;
+    vegetariano: number;
+    sin_gluten: number;
+    sin_lactosa: number;
+    keto: number;
+  };
+}
+
 interface QuoteRequest {
   eventType: string;
   peopleCount: number;
@@ -22,6 +38,9 @@ interface QuoteRequest {
   contactName?: string;
   companyName?: string;
   userId?: string;
+  mode?: 'single' | 'multi';
+  deliveryGroups?: MultiDeliverySlot[];
+  address?: string;
 }
 
 interface DbProduct {

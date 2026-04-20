@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TOP_DELIVERY_ZONES } from "@/domain/entities/BerliozCatalog";
 import ProposalStep from "@/components/quoter/ProposalStep";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useSmartQuote } from "@/hooks/useSmartQuote";
 import type { SmartQuoteResponse } from "@/domain/entities/SmartQuote";

@@ -76,6 +76,10 @@ interface ProposalStepProps {
     productsAdded?: string[];
     productsRemoved?: string[];
   }) => void;
+  /** Notify parent when user picks a tier (used by multi-delivery to advance tabs and build summary). */
+  onSelectTier?: (info: { tier: PackageTier; tierLabel: string; total: number; subtotal: number }) => void;
+  /** Hide the bottom sticky confirm bar (multi-delivery uses its own global summary). */
+  hideConfirmBar?: boolean;
 }
 
 type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string; bullets: string[]; isPopular: boolean; ctaStyle: 'outline' | 'primary' };
@@ -354,7 +358,7 @@ function TierCarousel({
 
 /* ═══ COMPONENT ═══ */
 export default function ProposalStep(props: ProposalStepProps) {
-  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback } = props;
+  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback, onSelectTier, hideConfirmBar } = props;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem, clearCart } = useCart();
@@ -517,6 +521,11 @@ export default function ProposalStep(props: ProposalStepProps) {
     const proposalId = smartQuoteData?.proposalId;
     if (proposalId && onSubmitFeedback) {
       onSubmitFeedback({ proposalId, selectedTier: tier });
+    }
+    if (onSelectTier) {
+      const t = tierTotals[tier];
+      const tierLabel = TIERS.find(x => x.id === tier)?.title ?? tier;
+      onSelectTier({ tier, tierLabel, total: t.total, subtotal: t.subtotal });
     }
   };
 
@@ -1054,6 +1063,7 @@ export default function ProposalStep(props: ProposalStepProps) {
       </div>
 
       {/* ═══ PREMIUM STICKY ACTION BAR ═══ */}
+      {!hideConfirmBar && (
       <div className="sticky bottom-0 z-50 px-6 pb-6 pt-0 pointer-events-none">
         <div className="max-w-6xl mx-auto pointer-events-auto">
           <div className="bg-white/80 backdrop-blur-2xl border border-primary/10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-[32px] overflow-hidden">
@@ -1087,7 +1097,7 @@ export default function ProposalStep(props: ProposalStepProps) {
           </div>
         </div>
       </div>
-
+      )}
       {/* ═══ SIDEBAR PANEL ═══ */}
       {sidebarOpen && (
         <>

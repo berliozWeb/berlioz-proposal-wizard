@@ -150,6 +150,19 @@ const QuotePage = () => {
   const { loading: smartLoading, generateQuote, submitFeedback } = useSmartQuote();
   const [smartData, setSmartData] = useState<SmartQuoteResponse | null>(null);
 
+  // Per-slot tier selection in multi-delivery mode
+  type SlotSelection = { tier: string; tierLabel: string; total: number; subtotal: number };
+  const [slotSelections, setSlotSelections] = useState<Record<string, SlotSelection>>({});
+  const [activeSlotTab, setActiveSlotTab] = useState<string | null>(null);
+
+  // Reset selections when a new multi-delivery proposal arrives
+  useEffect(() => {
+    if (smartData?.proposals && smartData.proposals.length > 0) {
+      setSlotSelections({});
+      setActiveSlotTab(smartData.proposals[0].slot_id);
+    }
+  }, [smartData]);
+
   const tomorrow = addDays(new Date(), 1);
   const deliveryTime = eventTime ? calcDeliveryTime(eventTime) : "";
   const isEarlyDelivery = deliveryTime !== "" && (parseInt(deliveryTime.split(":")[0]) < 7 || (deliveryTime.startsWith("07:") && parseInt(deliveryTime.split(":")[1]) < 30));
@@ -1050,19 +1063,28 @@ const QuotePage = () => {
       {step === 2 && (
         <>
           {smartData?.proposals && smartData.proposals.length > 0 ? (
-            <Tabs defaultValue={smartData.proposals[0].slot_id} className="px-4 sm:px-6">
+            <>
+            <Tabs
+              value={activeSlotTab ?? smartData.proposals[0].slot_id}
+              onValueChange={setActiveSlotTab}
+              className="px-4 sm:px-6"
+            >
               <div className="max-w-7xl mx-auto mb-6">
                 <div className="overflow-x-auto -mx-2 px-2">
                   <TabsList className="inline-flex h-auto bg-muted p-1 rounded-full w-max">
-                    {smartData.proposals.map((slot, idx) => (
-                      <TabsTrigger
-                        key={slot.slot_id}
-                        value={slot.slot_id}
-                        className="rounded-full px-4 py-2 text-xs font-bold tracking-wide uppercase whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                      >
-                        {slot.label || `Entrega ${idx + 1}`}
-                      </TabsTrigger>
-                    ))}
+                    {smartData.proposals.map((slot, idx) => {
+                      const sel = slotSelections[slot.slot_id];
+                      return (
+                        <TabsTrigger
+                          key={slot.slot_id}
+                          value={slot.slot_id}
+                          className="rounded-full px-4 py-2 text-xs font-bold tracking-wide uppercase whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2"
+                        >
+                          <span>{slot.label || `Entrega ${idx + 1}`}</span>
+                          {sel && <CheckCircle className="w-4 h-4 text-success" />}
+                        </TabsTrigger>
+                      );
+                    })}
                   </TabsList>
                 </div>
               </div>
@@ -1085,6 +1107,12 @@ const QuotePage = () => {
                         <span className="font-body text-sm text-muted-foreground">
                           {slot.date} · {slot.time} · {slot.guests_count} personas
                         </span>
+                        {slotSelections[slot.slot_id] && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/10 text-success text-xs font-bold uppercase tracking-wide">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            {slotSelections[slot.slot_id].tierLabel}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="bg-white rounded-[40px] border border-border shadow-2xl overflow-hidden">
@@ -1105,12 +1133,101 @@ const QuotePage = () => {
                         smartQuoteData={slotResponse}
                         smartQuoteLoading={smartLoading}
                         onSubmitFeedback={submitFeedback}
+                        hideConfirmBar
+                        onSelectTier={(info) => {
+                          setSlotSelections(prev => ({ ...prev, [slot.slot_id]: info }));
+                          // Advance to next unselected slot
+                          const proposals = smartData.proposals!;
+                          const updated = { ...slotSelections, [slot.slot_id]: info };
+                          const next = proposals.find(p => !updated[p.slot_id]);
+                          if (next) setActiveSlotTab(next.slot_id);
+                        }}
                       />
                     </div>
                   </TabsContent>
                 );
               })}
             </Tabs>
+
+            {/* ═══ GLOBAL SUMMARY — shown when every slot has a tier selected ═══ */}
+            {smartData.proposals.every(s => slotSelections[s.slot_id]) && (
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-10">
+                <div className="bg-white rounded-[32px] border border-border shadow-2xl overflow-hidden">
+                  <div className="px-8 py-6 bg-primary text-primary-foreground">
+                    <p className="font-heading text-[10px] font-bold tracking-[0.3em] uppercase opacity-80">Resumen del evento</p>
+                    <h3 className="font-heading text-2xl font-black mt-1">Tu propuesta multi-entrega</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/40 text-muted-foreground">
+                        <tr>
+                          <th className="text-left px-6 py-3 font-bold uppercase text-[10px] tracking-wider">Entrega</th>
+                          <th className="text-left px-4 py-3 font-bold uppercase text-[10px] tracking-wider">Fecha</th>
+                          <th className="text-left px-4 py-3 font-bold uppercase text-[10px] tracking-wider">Hora</th>
+                          <th className="text-left px-4 py-3 font-bold uppercase text-[10px] tracking-wider">Personas</th>
+                          <th className="text-left px-4 py-3 font-bold uppercase text-[10px] tracking-wider">Tier</th>
+                          <th className="text-right px-6 py-3 font-bold uppercase text-[10px] tracking-wider">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {smartData.proposals.map((slot, idx) => {
+                          const sel = slotSelections[slot.slot_id];
+                          return (
+                            <tr key={slot.slot_id} className="border-t border-border/60">
+                              <td className="px-6 py-4 font-bold text-foreground">{slot.label || `Entrega ${idx + 1}`}</td>
+                              <td className="px-4 py-4 text-muted-foreground">{slot.date}</td>
+                              <td className="px-4 py-4 text-muted-foreground">{slot.time}</td>
+                              <td className="px-4 py-4 text-muted-foreground">{slot.guests_count}</td>
+                              <td className="px-4 py-4">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-success/10 text-success text-xs font-bold uppercase">
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  {sel.tierLabel}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right font-mono font-black text-primary">
+                                ${sel.total.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr className="border-t-2 border-primary/20 bg-muted/20">
+                          <td colSpan={5} className="px-6 py-5 text-right font-heading font-bold uppercase text-xs tracking-widest text-foreground">Total general</td>
+                          <td className="px-6 py-5 text-right font-mono font-black text-2xl text-primary">
+                            ${Object.values(slotSelections).reduce((s, x) => s + x.total, 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                  <div className="px-6 sm:px-8 py-6 flex flex-col sm:flex-row gap-3 justify-end border-t border-border/60 bg-muted/10">
+                    <Button
+                      variant="outline"
+                      className="h-12 px-6 rounded-2xl border-2 font-bold gap-2"
+                      onClick={() => window.print()}
+                    >
+                      Descargar PDF
+                    </Button>
+                    <Button
+                      className="h-12 px-6 rounded-2xl font-bold gap-2 bg-[#25D366] hover:bg-[#1fb955] text-white"
+                      onClick={() => {
+                        const lines = smartData.proposals!.map((slot, idx) => {
+                          const sel = slotSelections[slot.slot_id];
+                          return `• ${slot.label || `Entrega ${idx + 1}`} — ${slot.date} ${slot.time} · ${slot.guests_count} pax · ${sel.tierLabel}: $${sel.total.toLocaleString('es-MX')}`;
+                        }).join('\n');
+                        const total = Object.values(slotSelections).reduce((s, x) => s + x.total, 0);
+                        const msg = `Propuesta Berlioz — ${eventType}\n\n${lines}\n\nTotal: $${total.toLocaleString('es-MX')}`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                      }}
+                    >
+                      Compartir por WhatsApp
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div className="bg-white rounded-[40px] border border-border shadow-2xl mx-4 sm:mx-6 overflow-hidden">
               <ProposalStep

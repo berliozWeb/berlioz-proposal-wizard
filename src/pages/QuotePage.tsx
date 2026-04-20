@@ -270,6 +270,28 @@ const QuotePage = () => {
     const firstSlot = deliveryGroups[0];
     const firstDate = firstSlot?.date ? new Date(firstSlot.date + 'T00:00:00') : undefined;
     const firstTime = firstSlot?.time || '09:00';
+
+    // Build per-slot payload for ANA (multi-delivery)
+    const slotsPayload = deliveryGroups.map((g, idx) => {
+      const dist = g.dietaryDistribution || {};
+      const guests = g.guests_count || 0;
+      const vegano = dist.vegano || 0;
+      const vegetariano = dist.vegetariano || 0;
+      const sin_gluten = dist.sin_gluten || 0;
+      const sin_lactosa = dist.sin_lactosa || 0;
+      const keto = dist.keto || 0;
+      const usados = vegano + vegetariano + sin_gluten + sin_lactosa + keto;
+      const sin_restriccion = Math.max(0, guests - usados);
+      return {
+        id: g.id || `slot-${idx + 1}`,
+        label: g.label || `Entrega ${idx + 1}`,
+        date: g.date,
+        time: g.time,
+        guests_count: guests,
+        dietary: { sin_restriccion, vegano, vegetariano, sin_gluten, sin_lactosa, keto },
+      };
+    });
+
     setStep(2);
     generateQuote({
       eventType,
@@ -283,6 +305,9 @@ const QuotePage = () => {
       dietaryRestrictions: [],
       contactName: clientName,
       companyName: empresa,
+      mode: 'multi',
+      deliveryGroups: slotsPayload,
+      address: postalCode,
     }).then(data => { if (data) setSmartData(data); });
     if (firstDate) setDate(firstDate);
     if (firstTime) setEventTime(firstTime);

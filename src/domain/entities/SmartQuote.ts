@@ -36,18 +36,33 @@ export interface ProposalPackage {
   highlights: string[];
 }
 
+export interface SlotProposal {
+  slot_id: string;
+  label: string;
+  date: string;
+  time: string;
+  guests_count: number;
+  tiers: ProposalPackage[];
+  engineVersion?: string;
+  fallbackUsed?: boolean;
+}
+
 export interface SmartQuoteResponse {
   requestId: string | null;
   proposalId: string | null;
   engineVersion: string;
   fallbackUsed: boolean;
+  mode?: 'single' | 'multi';
   packages: ProposalPackage[];
+  /** Present only when mode === 'multi' — one entry per delivery slot. */
+  proposals?: SlotProposal[];
   recommendationSummary: string;
   debug?: {
     retrievalStrategy?: string;
     scoringVersion?: string;
     matchedProducts?: number;
     dataWarnings?: string[];
+    slotsCount?: number;
   };
 }
 

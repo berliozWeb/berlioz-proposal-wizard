@@ -1047,26 +1047,78 @@ const QuotePage = () => {
 
       {/* ═══ STEP 3 — PROPOSAL ═══ */}
       {step === 2 && (
-        <div className="bg-white rounded-[40px] border border-border shadow-2xl mx-4 sm:mx-6 overflow-hidden">
-          <ProposalStep
-            eventType={eventType}
-            eventLabel={EVENT_TYPES.find(e => e.value === eventType)?.label ?? eventType}
-            people={numPeople}
-            date={date}
-            eventTime={eventTime}
-            deliveryTime={deliveryTime}
-            isEarlyDelivery={!!isEarlyDelivery}
-            postalCode={postalCode}
-            clientName={clientName}
-            empresa={empresa}
-            duration={duration}
-            onBack={goBack}
-            onRestart={() => { setStep(0); setSmartData(null); }}
-            smartQuoteData={smartData}
-            smartQuoteLoading={smartLoading}
-            onSubmitFeedback={submitFeedback}
-          />
-        </div>
+        <>
+          {smartData?.proposals && smartData.proposals.length > 0 ? (
+            <div className="space-y-10 px-4 sm:px-6">
+              {smartData.proposals.map((slot, idx) => {
+                // Synthesize a per-slot SmartQuoteResponse so ProposalStep stays generic
+                const slotResponse: SmartQuoteResponse = {
+                  ...smartData,
+                  packages: slot.tiers,
+                  proposals: undefined,
+                  mode: 'single',
+                  fallbackUsed: !!slot.fallbackUsed,
+                };
+                const slotDate = slot.date ? new Date(slot.date + 'T00:00:00') : date;
+                return (
+                  <div key={slot.slot_id} className="space-y-3">
+                    <div className="max-w-7xl mx-auto px-2">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold tracking-wide uppercase">
+                          {slot.label || `Entrega ${idx + 1}`}
+                        </span>
+                        <span className="font-body text-sm text-muted-foreground">
+                          {slot.date} · {slot.time} · {slot.guests_count} personas
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-[40px] border border-border shadow-2xl overflow-hidden">
+                      <ProposalStep
+                        eventType={eventType}
+                        eventLabel={EVENT_TYPES.find(e => e.value === eventType)?.label ?? eventType}
+                        people={slot.guests_count}
+                        date={slotDate}
+                        eventTime={slot.time}
+                        deliveryTime={calcDeliveryTime(slot.time || '09:00')}
+                        isEarlyDelivery={false}
+                        postalCode={postalCode}
+                        clientName={clientName}
+                        empresa={empresa}
+                        duration={duration}
+                        onBack={goBack}
+                        onRestart={() => { setStep(0); setSmartData(null); }}
+                        smartQuoteData={slotResponse}
+                        smartQuoteLoading={smartLoading}
+                        onSubmitFeedback={submitFeedback}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="bg-white rounded-[40px] border border-border shadow-2xl mx-4 sm:mx-6 overflow-hidden">
+              <ProposalStep
+                eventType={eventType}
+                eventLabel={EVENT_TYPES.find(e => e.value === eventType)?.label ?? eventType}
+                people={numPeople}
+                date={date}
+                eventTime={eventTime}
+                deliveryTime={deliveryTime}
+                isEarlyDelivery={!!isEarlyDelivery}
+                postalCode={postalCode}
+                clientName={clientName}
+                empresa={empresa}
+                duration={duration}
+                onBack={goBack}
+                onRestart={() => { setStep(0); setSmartData(null); }}
+                smartQuoteData={smartData}
+                smartQuoteLoading={smartLoading}
+                onSubmitFeedback={submitFeedback}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   </BaseLayout>

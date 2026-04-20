@@ -248,7 +248,46 @@ const QuotePage = () => {
 
   const goBack = () => { setStep(0); setEventType(""); setEventMode(null); setDeliveryGroups(buildSingleDeliveryGroup()); };
 
-  const showForm = eventType !== "";
+  const showForm = eventType !== "" && eventMode === 'single';
+
+  // ── Multi mode validation & submit ──
+  const multiTotalGuests = useMemo(
+    () => deliveryGroups.reduce((sum, g) => sum + (g.guests_count || 0), 0),
+    [deliveryGroups],
+  );
+  const multiAllSlotsValid = deliveryGroups.length > 0 && deliveryGroups.every(
+    g => !!g.date && !!g.time && (g.guests_count || 0) > 0,
+  );
+  const canSubmitMulti =
+    eventMode === 'multi' &&
+    eventType !== '' &&
+    multiAllSlotsValid &&
+    postalCode.length === 5 &&
+    !isSpecialQuoteCP;
+
+  const goNextMulti = useCallback(() => {
+    if (!canSubmitMulti) return;
+    const firstSlot = deliveryGroups[0];
+    const firstDate = firstSlot?.date ? new Date(firstSlot.date + 'T00:00:00') : undefined;
+    const firstTime = firstSlot?.time || '09:00';
+    setStep(2);
+    generateQuote({
+      eventType,
+      peopleCount: multiTotalGuests,
+      eventDate: firstSlot?.date,
+      eventTime: firstTime,
+      deliveryTime: calcDeliveryTime(firstTime),
+      zipCode: postalCode,
+      durationHours: 3,
+      budgetEnabled: false,
+      dietaryRestrictions: [],
+      contactName: clientName,
+      companyName: empresa,
+    }).then(data => { if (data) setSmartData(data); });
+    if (firstDate) setDate(firstDate);
+    if (firstTime) setEventTime(firstTime);
+    setPeople(multiTotalGuests);
+  }, [canSubmitMulti, deliveryGroups, eventType, multiTotalGuests, postalCode, isSpecialQuoteCP, clientName, empresa, generateQuote]);
 
   return (
     <BaseLayout hideFooter>

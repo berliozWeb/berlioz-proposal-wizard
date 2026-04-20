@@ -254,8 +254,123 @@ const QuotePage = () => {
           </div>
         )}
 
+      {/* ═══ STEP 0a — EVENT MODE (single vs multi delivery) ═══ */}
+      {step === 0 && eventMode === null && (
+        <div className="max-w-5xl mx-auto px-6 py-4 animate-slide-up">
+          <RevealOnScroll>
+            <div className="text-center mb-12">
+              <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4 tracking-tight">¿Cómo es tu evento?</h2>
+              <p className="font-body text-lg text-muted-foreground">Cuéntanos cuántas entregas necesitas</p>
+            </div>
+          </RevealOnScroll>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <button
+              onClick={() => {
+                setEventMode('single');
+                setDeliveryGroups(buildSingleDeliveryGroup());
+              }}
+              className="group relative flex flex-col rounded-[28px] border-2 border-border bg-card hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1 transition-all text-left overflow-hidden"
+            >
+              <div className="p-8 flex flex-col items-center text-center gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-4xl">🎯</div>
+                <h3 className="font-heading text-xl text-foreground group-hover:text-primary transition-colors">Una sola entrega</h3>
+                <p className="font-body text-sm text-muted-foreground leading-relaxed">Evento de un momento, una vez</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setEventMode('multi')}
+              className="group relative flex flex-col rounded-[28px] border-2 border-border bg-card hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1 transition-all text-left overflow-hidden"
+            >
+              <div className="p-8 flex flex-col items-center text-center gap-3">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-4xl">📅</div>
+                <h3 className="font-heading text-xl text-foreground group-hover:text-primary transition-colors">Evento con varias entregas</h3>
+                <p className="font-body text-sm text-muted-foreground leading-relaxed">Varios días o varias entregas en el mismo día</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ STEP 0b — MULTI DELIVERY CONFIG ═══ */}
+      {step === 0 && eventMode === 'multi' && deliveryGroups.length <= 1 && (
+        <div className="max-w-3xl mx-auto px-6 py-4 animate-slide-up">
+          <RevealOnScroll>
+            <div className="text-center mb-10">
+              <h2 className="font-heading text-3xl md:text-4xl text-primary mb-3 tracking-tight">Configura tus entregas</h2>
+              <p className="font-body text-base text-muted-foreground">Define el alcance de tu evento</p>
+            </div>
+          </RevealOnScroll>
+
+          <div className="bg-card rounded-[32px] border border-border p-8 shadow-sm space-y-8">
+            <div>
+              <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿Cuántos días dura el evento?</label>
+              <div className="flex items-center gap-4">
+                <button onClick={() => setMultiDays(d => Math.max(1, d - 1))} className="w-12 h-12 rounded-2xl border border-border bg-background flex items-center justify-center hover:bg-muted hover:border-primary/40 transition-all">
+                  <Minus className="w-5 h-5" />
+                </button>
+                <input
+                  type="number" min={1} max={30} value={multiDays}
+                  onChange={(e) => setMultiDays(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
+                  className="w-20 h-12 text-center rounded-2xl border border-primary/30 bg-background font-mono text-2xl font-bold focus:outline-none focus:ring-4 focus:ring-primary/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <button onClick={() => setMultiDays(d => Math.min(30, d + 1))} className="w-12 h-12 rounded-2xl border border-border bg-background flex items-center justify-center hover:bg-muted hover:border-primary/40 transition-all">
+                  <Plus className="w-5 h-5" />
+                </button>
+                <span className="font-body text-sm text-muted-foreground">días (máx. 30)</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿Cuántas entregas por día?</label>
+              <div className="grid grid-cols-4 gap-3">
+                {([1, 2, 3, 4] as const).map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => setMultiPerDay(n)}
+                    className={cn(
+                      "h-14 rounded-2xl border-2 font-heading text-lg font-bold transition-all",
+                      multiPerDay === n ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground hover:border-primary/40",
+                    )}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-muted/40 border border-border/50">
+              <p className="font-body text-sm text-muted-foreground">
+                Se crearán <span className="font-bold text-foreground">{multiDays * multiPerDay}</span> entregas
+                <span> ({multiDays} día{multiDays > 1 ? 's' : ''} × {multiPerDay} entrega{multiPerDay > 1 ? 's' : ''}/día)</span>
+              </p>
+            </div>
+
+            <div className="flex justify-between gap-4 pt-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEventMode(null);
+                  setDeliveryGroups(buildSingleDeliveryGroup());
+                }}
+                className="h-12 px-6 rounded-full font-bold border-2"
+              >
+                Volver
+              </Button>
+              <Button
+                onClick={() => setDeliveryGroups(buildDeliveryGroupSlots(multiDays, multiPerDay))}
+                className="h-12 px-8 rounded-full font-bold shadow-lg shadow-primary/20 group"
+              >
+                Continuar <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ INTAKE — EVENT TYPE + DETAILS (single page) ═══ */}
-      {step === 0 && (
+      {step === 0 && (eventMode === 'single' || (eventMode === 'multi' && deliveryGroups.length > 1)) && (
         <div className="max-w-6xl mx-auto px-6 py-4 animate-slide-up">
           <RevealOnScroll>
             <div className="text-center mb-12">

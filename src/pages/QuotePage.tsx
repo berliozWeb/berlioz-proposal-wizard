@@ -22,6 +22,8 @@ import {
   type DeliveryGroup,
   type EventMode,
 } from "@/domain/entities/DeliveryGroup";
+import { generateMultiDeliveryPdf } from "@/lib/multiDeliveryPdf";
+import { toast } from "sonner";
 
 // Images
 // Premium Images from src/assets/imagenes_menu
@@ -1205,7 +1207,31 @@ const QuotePage = () => {
                     <Button
                       variant="outline"
                       className="h-12 px-6 rounded-2xl border-2 font-bold gap-2"
-                      onClick={() => window.print()}
+                      onClick={async () => {
+                        if (!smartData?.proposals) return;
+                        try {
+                          await generateMultiDeliveryPdf({
+                            clientName,
+                            empresa,
+                            eventLabel: EVENT_TYPES.find(e => e.value === eventType)?.label ?? eventType,
+                            postalCode,
+                            slots: smartData.proposals.map(slot => {
+                              const sel = slotSelections[slot.slot_id];
+                              return {
+                                slot,
+                                selectedTier: sel.tier,
+                                tierLabel: sel.tierLabel,
+                                total: sel.total,
+                                subtotal: sel.subtotal,
+                              };
+                            }),
+                          });
+                          toast.success("PDF generado correctamente");
+                        } catch (err) {
+                          console.error("Multi PDF error:", err);
+                          toast.error("Ocurrió un error al generar el PDF");
+                        }
+                      }}
                     >
                       Descargar PDF
                     </Button>

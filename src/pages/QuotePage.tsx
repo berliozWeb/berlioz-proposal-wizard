@@ -256,168 +256,145 @@ const QuotePage = () => {
           </div>
         )}
 
-      {/* ═══ STEP 0a — EVENT MODE (single vs multi delivery) ═══ */}
-      {step === 0 && eventMode === null && (
-        <div className="max-w-5xl mx-auto px-6 py-4 animate-slide-up">
-          <RevealOnScroll>
-            <div className="text-center mb-12">
-              <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4 tracking-tight">¿Cómo es tu evento?</h2>
-              <p className="font-body text-lg text-muted-foreground">Cuéntanos cuántas entregas necesitas</p>
-            </div>
-          </RevealOnScroll>
+      {/* ═══ STEP 0 — SINGLE PAGE, CONTINUOUS SCROLL ═══ */}
+      {step === 0 && (
+        <div className="max-w-5xl mx-auto px-6 py-4 space-y-12">
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            <button
-              onClick={() => {
-                setEventMode('single');
-                setDeliveryGroups(buildSingleDeliveryGroup());
-              }}
-              className="group relative flex flex-col rounded-[28px] border-2 border-border bg-card hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1 transition-all text-left overflow-hidden"
-            >
-              <div className="p-8 flex flex-col items-center text-center gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-4xl">🎯</div>
-                <h3 className="font-heading text-xl text-foreground group-hover:text-primary transition-colors">Una sola entrega</h3>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed">Evento de un momento, una vez</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setEventMode('multi')}
-              className="group relative flex flex-col rounded-[28px] border-2 border-border bg-card hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1 transition-all text-left overflow-hidden"
-            >
-              <div className="p-8 flex flex-col items-center text-center gap-3">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-4xl">📅</div>
-                <h3 className="font-heading text-xl text-foreground group-hover:text-primary transition-colors">Evento con varias entregas</h3>
-                <p className="font-body text-sm text-muted-foreground leading-relaxed">Varios días o varias entregas en el mismo día</p>
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ STEP 0b — MULTI DELIVERY CONFIG ═══ */}
-      {step === 0 && eventMode === 'multi' && deliveryGroups.length <= 1 && (
-        <div className="max-w-3xl mx-auto px-6 py-4 animate-slide-up">
-          <RevealOnScroll>
-            <div className="text-center mb-10">
-              <h2 className="font-heading text-3xl md:text-4xl text-primary mb-3 tracking-tight">Configura tus entregas</h2>
-              <p className="font-body text-base text-muted-foreground">Define el alcance de tu evento</p>
-            </div>
-          </RevealOnScroll>
-
-          <div className="bg-card rounded-[32px] border border-border p-8 shadow-sm space-y-8">
-            <div>
-              <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿Cuántos días dura el evento?</label>
-              <div className="flex items-center gap-4">
-                <button onClick={() => setMultiDays(d => Math.max(1, d - 1))} className="w-12 h-12 rounded-2xl border border-border bg-background flex items-center justify-center hover:bg-muted hover:border-primary/40 transition-all">
-                  <Minus className="w-5 h-5" />
-                </button>
-                <input
-                  type="number" min={1} max={30} value={multiDays}
-                  onChange={(e) => setMultiDays(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
-                  className="w-20 h-12 text-center rounded-2xl border border-primary/30 bg-background font-mono text-2xl font-bold focus:outline-none focus:ring-4 focus:ring-primary/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <button onClick={() => setMultiDays(d => Math.min(30, d + 1))} className="w-12 h-12 rounded-2xl border border-border bg-background flex items-center justify-center hover:bg-muted hover:border-primary/40 transition-all">
-                  <Plus className="w-5 h-5" />
-                </button>
-                <span className="font-body text-sm text-muted-foreground">días (máx. 30)</span>
-              </div>
+          {/* ── Section A: Event mode (compact cards) ── */}
+          <section className="animate-slide-up">
+            <div className="text-center mb-6">
+              <h2 className="font-heading text-3xl md:text-4xl text-primary mb-2 tracking-tight">¿Cómo es tu evento?</h2>
+              <p className="font-body text-sm text-muted-foreground">Cuéntanos cuántas entregas necesitas</p>
             </div>
 
-            <div>
-              <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿Cuántas entregas por día?</label>
-              <div className="grid grid-cols-4 gap-3">
-                {([1, 2, 3, 4] as const).map((n) => (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
+              {([
+                { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Evento de un momento' },
+                { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Varios días o entregas' },
+              ]).map(({ mode, Icon, title, subtitle }) => {
+                const selected = eventMode === mode;
+                return (
                   <button
-                    key={n}
-                    onClick={() => setMultiPerDay(n)}
+                    key={mode}
+                    onClick={() => {
+                      setEventMode(mode);
+                      if (mode === 'single') setDeliveryGroups(buildSingleDeliveryGroup());
+                    }}
                     className={cn(
-                      "h-14 rounded-2xl border-2 font-heading text-lg font-bold transition-all",
-                      multiPerDay === n ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground hover:border-primary/40",
+                      "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left h-[88px]",
+                      selected
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border bg-card hover:border-primary/40",
                     )}
                   >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-muted/40 border border-border/50">
-              <p className="font-body text-sm text-muted-foreground">
-                Se crearán <span className="font-bold text-foreground">{multiDays * multiPerDay}</span> entregas
-                <span> ({multiDays} día{multiDays > 1 ? 's' : ''} × {multiPerDay} entrega{multiPerDay > 1 ? 's' : ''}/día)</span>
-              </p>
-            </div>
-
-            <div className="flex justify-between gap-4 pt-4 border-t border-border">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setEventMode(null);
-                  setDeliveryGroups(buildSingleDeliveryGroup());
-                }}
-                className="h-12 px-6 rounded-full font-bold border-2"
-              >
-                Volver
-              </Button>
-              <Button
-                onClick={() => setDeliveryGroups(buildDeliveryGroupSlots(multiDays, multiPerDay))}
-                className="h-12 px-8 rounded-full font-bold shadow-lg shadow-primary/20 group"
-              >
-                Continuar <ChevronRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ INTAKE — EVENT TYPE + DETAILS (single page) ═══ */}
-      {step === 0 && (eventMode === 'single' || (eventMode === 'multi' && deliveryGroups.length > 1)) && (
-        <div className="max-w-6xl mx-auto px-6 py-4 animate-slide-up">
-          <RevealOnScroll>
-            <div className="text-center mb-12">
-              <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4 tracking-tight">¿Qué tipo de evento es?</h2>
-              <p className="font-body text-lg text-muted-foreground">Selecciona el tipo de momento para tu cotización</p>
-            </div>
-          </RevealOnScroll>
-
-          {/* (filtros eliminados) */}
-
-          {/* 4 cards sin tags, con auto-advance */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {EVENT_TYPES.map((e) => {
-              const selected = eventType === e.value;
-              return (
-                <button
-                  key={e.value}
-                  onClick={() => handleSelectEventType(e.value)}
-                  className={cn(
-                    "group relative flex flex-col rounded-[28px] border-2 transition-all text-left overflow-hidden bg-card h-full w-full",
-                    selected
-                      ? "border-primary shadow-xl shadow-primary/10 ring-1 ring-primary/20"
-                      : "border-border hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1",
-                  )}>
-                  <div className="relative h-40 overflow-hidden">
-                    <img src={e.image} alt={e.label} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                    <div className="absolute bottom-3 left-3 w-11 h-11 rounded-2xl bg-card/30 backdrop-blur-md flex items-center justify-center text-2xl shadow-lg border border-card/40">
-                      {e.icon}
-                    </div>
                     <div className={cn(
-                      "absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                      selected ? "bg-primary text-primary-foreground scale-100 opacity-100" : "scale-50 opacity-0",
+                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                      selected ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
                     )}>
-                      <CheckCircle className="w-5 h-5 fill-current" />
+                      <Icon className="w-5 h-5" />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{title}</h3>
+                      <p className="font-body text-xs text-muted-foreground leading-tight mt-0.5 truncate">{subtitle}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* ── Section B: Multi delivery config (only if multi) ── */}
+          {eventMode === 'multi' && (
+            <section className="animate-slide-up max-w-3xl mx-auto w-full">
+              <div className="bg-card rounded-3xl border border-border p-6 md:p-8 shadow-sm space-y-6">
+                <div>
+                  <label className="block font-heading text-sm font-bold text-foreground mb-3 uppercase tracking-wider">¿Cuántos días dura el evento?</label>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setMultiDays(d => Math.max(1, d - 1))} className="w-10 h-10 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-muted hover:border-primary/40 transition-all">
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input
+                      type="number" min={1} max={30} value={multiDays}
+                      onChange={(e) => setMultiDays(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
+                      className="w-16 h-10 text-center rounded-xl border border-primary/30 bg-background font-mono text-lg font-bold focus:outline-none focus:ring-4 focus:ring-primary/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <button onClick={() => setMultiDays(d => Math.min(30, d + 1))} className="w-10 h-10 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-muted hover:border-primary/40 transition-all">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <span className="font-body text-xs text-muted-foreground">días (máx. 30)</span>
                   </div>
-                  <div className="p-5 flex flex-col flex-1">
-                    <h3 className="font-heading text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{e.label}</h3>
-                    <p className="font-body text-xs text-muted-foreground leading-relaxed">{e.desc}</p>
+                </div>
+
+                <div>
+                  <label className="block font-heading text-sm font-bold text-foreground mb-3 uppercase tracking-wider">¿Cuántas entregas por día?</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {([1, 2, 3, 4] as const).map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => {
+                          setMultiPerDay(n);
+                          setDeliveryGroups(buildDeliveryGroupSlots(multiDays, n));
+                        }}
+                        className={cn(
+                          "h-12 rounded-xl border-2 font-heading text-base font-bold transition-all",
+                          multiPerDay === n ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-foreground hover:border-primary/40",
+                        )}
+                      >
+                        {n}
+                      </button>
+                    ))}
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-muted/40 border border-border/50">
+                  <p className="font-body text-xs text-muted-foreground">
+                    Se crearán <span className="font-bold text-foreground">{multiDays * multiPerDay}</span> entregas
+                    <span> ({multiDays} día{multiDays > 1 ? 's' : ''} × {multiPerDay} entrega{multiPerDay > 1 ? 's' : ''}/día)</span>
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ── Section C: Event type (compact cards, only if mode chosen) ── */}
+          {eventMode !== null && (
+            <section className="animate-slide-up">
+              <div className="text-center mb-6">
+                <h2 className="font-heading text-3xl md:text-4xl text-primary mb-2 tracking-tight">¿Qué tipo de evento es?</h2>
+                <p className="font-body text-sm text-muted-foreground">Selecciona el tipo de momento para tu cotización</p>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
+                {EVENT_TYPES.map((e) => {
+                  const selected = eventType === e.value;
+                  const Icon = e.Icon;
+                  return (
+                    <button
+                      key={e.value}
+                      onClick={() => handleSelectEventType(e.value)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left h-[88px]",
+                        selected
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border bg-card hover:border-primary/40",
+                      )}
+                    >
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                        selected ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                      )}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{e.label}</h3>
+                        <p className="font-body text-xs text-muted-foreground leading-tight mt-0.5 truncate">{e.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       )}
 

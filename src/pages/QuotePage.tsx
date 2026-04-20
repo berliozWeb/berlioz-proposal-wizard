@@ -532,6 +532,66 @@ const QuotePage = () => {
                         </div>
                       </div>
 
+                      {/* Distribución de invitados — por slot */}
+                      {(() => {
+                        const slotPeople = g.guests_count || 0;
+                        const slotDist = g.dietaryDistribution ?? { vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0 };
+                        const slotTotalRestricted = Object.values(slotDist).reduce((a, b) => a + (b || 0), 0);
+                        const slotSinRestriccion = Math.max(0, slotPeople - slotTotalRestricted);
+                        const updateSlotDietary = (key: string, delta: number) => {
+                          const current = slotDist[key] || 0;
+                          const next = current + delta;
+                          if (next < 0) return;
+                          const newTotal = slotTotalRestricted - current + next;
+                          if (newTotal > slotPeople) return;
+                          updateGroup({ dietaryDistribution: { ...slotDist, [key]: next } });
+                        };
+                        return (
+                          <div className="pt-2 border-t border-border/60">
+                            <label className="block font-body text-xs font-semibold text-foreground mb-1">Distribución de invitados</label>
+                            <p className="font-body text-[11px] text-muted-foreground mb-3">
+                              Distribución para <span className="font-bold text-foreground">{slotPeople}</span> personas
+                            </p>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/40">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                  <span className="text-sm shrink-0">✅</span>
+                                  <span className="font-body text-xs font-semibold text-foreground truncate">Sin restricción</span>
+                                </div>
+                                <span className="font-mono text-sm font-bold text-primary shrink-0">{slotSinRestriccion}</span>
+                              </div>
+                              {DIETARY_RESTRICTIONS.map(r => {
+                                const count = slotDist[r.value] || 0;
+                                const cantIncrease = slotTotalRestricted >= slotPeople;
+                                return (
+                                  <div key={r.value} className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                      <span className="text-sm shrink-0">{r.icon}</span>
+                                      <span className="font-body text-xs text-foreground truncate">{r.label}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <button
+                                        onClick={() => updateSlotDietary(r.value, -1)}
+                                        disabled={count === 0}
+                                        className="w-7 h-7 rounded-full border border-border bg-background flex items-center justify-center hover:border-primary/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                                        <Minus className="w-3 h-3" />
+                                      </button>
+                                      <span className="font-mono text-xs font-bold text-foreground w-5 text-center">{count}</span>
+                                      <button
+                                        onClick={() => updateSlotDietary(r.value, 1)}
+                                        disabled={cantIncrease}
+                                        className="w-7 h-7 rounded-full border border-border bg-background flex items-center justify-center hover:border-primary/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                     </div>
                   );
                 })}

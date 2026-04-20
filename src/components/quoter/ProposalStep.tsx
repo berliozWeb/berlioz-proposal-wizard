@@ -76,6 +76,10 @@ interface ProposalStepProps {
     productsAdded?: string[];
     productsRemoved?: string[];
   }) => void;
+  /** Notify parent when user picks a tier (used by multi-delivery to advance tabs and build summary). */
+  onSelectTier?: (info: { tier: PackageTier; tierLabel: string; total: number; subtotal: number }) => void;
+  /** Hide the bottom sticky confirm bar (multi-delivery uses its own global summary). */
+  hideConfirmBar?: boolean;
 }
 
 type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string; bullets: string[]; isPopular: boolean; ctaStyle: 'outline' | 'primary' };

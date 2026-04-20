@@ -23,6 +23,7 @@ import {
 } from "@/domain/entities/DeliveryGroup";
 import { MENU_CATALOG } from "@/domain/entities/MenuCatalog";
 import { MENU_CATEGORY_LABELS, type MenuCategory } from "@/domain/entities/MenuItem";
+import { getProductImage, CATEGORY_IMAGES } from "@/domain/entities/ProductImages";
 import { formatMXN } from "@/domain/value-objects/Money";
 import type { ProposedProduct } from "@/domain/entities/SmartQuote";
 
@@ -116,6 +117,33 @@ function isCutoff(selectedDate: Date | undefined): boolean {
   const sel = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
   return sel.getTime() === tomorrow.getTime() && now.getHours() >= 15;
 }
+
+/* ── Slot product image with fallback ── */
+const SlotProductImage = ({ productId, category, alt }: { productId: string; category: MenuCategory; alt: string }) => {
+  const [errored, setErrored] = useState(false);
+  const src = getProductImage(productId);
+  const fallback = CATEGORY_IMAGES[category as keyof typeof CATEGORY_IMAGES];
+  if (errored || !src) {
+    return (
+      <div className="shrink-0 w-10 h-10 rounded-md bg-muted flex items-center justify-center overflow-hidden">
+        {fallback ? (
+          <img src={fallback} alt={alt} crossOrigin="anonymous" className="w-full h-full object-cover opacity-70" />
+        ) : (
+          <Package className="w-4 h-4 text-muted-foreground" />
+        )}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      crossOrigin="anonymous"
+      onError={() => setErrored(true)}
+      className="shrink-0 w-10 h-10 rounded-md object-cover bg-muted"
+    />
+  );
+};
 
 /* ── component ── */
 const QuotePage = () => {
@@ -617,6 +645,7 @@ const QuotePage = () => {
                                     const guests = g.guests_count || numPeople || 1;
                                     return (
                                       <div key={item.id} className="flex items-center gap-2 p-2 rounded-lg border border-border hover:border-primary/30">
+                                        <SlotProductImage productId={item.id} category={item.category} alt={item.name} />
                                         <div className="flex-1 min-w-0">
                                           <p className="font-body text-xs font-medium text-foreground truncate">{item.name}</p>
                                           <p className="font-body text-[10px] text-muted-foreground">{item.pricePerPerson > 0 ? `${formatMXN(item.pricePerPerson)}/p` : 'Por grupo'}</p>

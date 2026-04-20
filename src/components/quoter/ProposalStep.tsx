@@ -1097,7 +1097,7 @@ export default function ProposalStep(props: ProposalStepProps) {
           </div>
         </div>
       </div>
-
+      )}
       {/* ═══ SIDEBAR PANEL ═══ */}
       {sidebarOpen && (
         <>

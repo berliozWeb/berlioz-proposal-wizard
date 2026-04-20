@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck, Package, Phone, Target, CalendarDays, Coffee, UtensilsCrossed, Croissant, Sparkles } from "lucide-react";
+import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck, Package, Phone, Target, CalendarDays, Coffee, UtensilsCrossed, Croissant, Sparkles, Lock, ChevronDown, ChevronUp, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { lookupCP, type ShippingResult } from "@/data/shippingZones";
 import BaseLayout from "@/components/layout/BaseLayout";
@@ -21,6 +21,10 @@ import {
   type DeliveryGroup,
   type EventMode,
 } from "@/domain/entities/DeliveryGroup";
+import { MENU_CATALOG } from "@/domain/entities/MenuCatalog";
+import { MENU_CATEGORY_LABELS, type MenuCategory } from "@/domain/entities/MenuItem";
+import { formatMXN } from "@/domain/value-objects/Money";
+import type { ProposedProduct } from "@/domain/entities/SmartQuote";
 
 // Images
 // Premium Images from src/assets/imagenes_menu
@@ -141,6 +145,8 @@ const QuotePage = () => {
   const [dietaryDistribution, setDietaryDistribution] = useState<Record<string, number>>({
     vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0,
   });
+  const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
+  const [slotPickerCat, setSlotPickerCat] = useState<MenuCategory>('working_lunch');
 
   // Ref para smooth scroll al formulario de detalles
   const detailsRef = useRef<HTMLDivElement>(null);
@@ -489,6 +495,7 @@ const QuotePage = () => {
                                       sameMenuAsPrevious: opt.val,
                                       items: opt.val && prev ? [...prev.items] : g.items,
                                     });
+                                    if (opt.val) setExpandedSlot(s => s === g.id ? null : s);
                                   }}
                                   className={cn(
                                     "px-3 h-8 rounded-lg font-heading text-xs font-bold border-2 transition-all",
@@ -504,6 +511,149 @@ const QuotePage = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Productos: locked vs editable */}
+                      {(() => {
+                        const isLocked = !isFirst && (g.sameMenuAsPrevious ?? true) === true;
+                        const isExpanded = expandedSlot === g.id && !isLocked;
+                        const summary = g.items.length === 0
+                          ? 'Sin productos'
+                          : g.items.map(it => `${it.productName} × ${it.quantity}`).join(', ');
+
+                        if (isLocked) {
+                          return (
+                            <div className="p-3 rounded-xl border border-dashed border-border bg-muted/30">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span className="font-body text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Copiado del slot anterior</span>
+                              </div>
+                              <p className="font-body text-xs text-foreground line-clamp-2">{summary}</p>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="space-y-2">
+                            {/* Collapsed summary */}
+                            {!isExpanded && (
+                              <div className="p-3 rounded-xl border border-border bg-background">
+                                <p className="font-body text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Productos seleccionados</p>
+                                <p className={cn("font-body text-xs", g.items.length === 0 ? "text-muted-foreground italic" : "text-foreground")}>
+                                  {summary}
+                                </p>
+                              </div>
+                            )}
+
+                            <button
+                              onClick={() => setExpandedSlot(s => s === g.id ? null : g.id)}
+                              className="w-full h-10 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary transition-all flex items-center justify-center gap-2 font-body text-xs font-semibold text-primary"
+                            >
+                              {isExpanded ? <><ChevronUp className="w-4 h-4" /> Cerrar selector</> : <><Plus className="w-4 h-4" /> Agregar productos</>}
+                            </button>
+
+                            {/* Inline product picker */}
+                            {isExpanded && (
+                              <div className="rounded-xl border border-border bg-background overflow-hidden">
+                                {/* Selected items list */}
+                                {g.items.length > 0 && (
+                                  <div className="p-3 border-b border-border bg-muted/30 space-y-1.5 max-h-40 overflow-y-auto">
+                                    {g.items.map((it, itIdx) => (
+                                      <div key={`${it.productId}-${itIdx}`} className="flex items-center gap-2">
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-body text-xs font-medium text-foreground truncate">{it.productName}</p>
+                                          <p className="font-body text-[10px] text-muted-foreground">{formatMXN(it.unitPrice)} c/u</p>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <button
+                                            onClick={() => {
+                                              const newItems = g.items.map((x, i) => i === itIdx ? { ...x, quantity: Math.max(1, x.quantity - 1), computedPrice: x.unitPrice * Math.max(1, x.quantity - 1) } : x);
+                                              updateGroup({ items: newItems });
+                                            }}
+                                            className="w-6 h-6 rounded-md border border-border bg-background flex items-center justify-center hover:border-primary/40"
+                                          >
+                                            <Minus className="w-3 h-3" />
+                                          </button>
+                                          <span className="font-mono text-xs font-bold text-foreground w-6 text-center">{it.quantity}</span>
+                                          <button
+                                            onClick={() => {
+                                              const newItems = g.items.map((x, i) => i === itIdx ? { ...x, quantity: x.quantity + 1, computedPrice: x.unitPrice * (x.quantity + 1) } : x);
+                                              updateGroup({ items: newItems });
+                                            }}
+                                            className="w-6 h-6 rounded-md border border-border bg-background flex items-center justify-center hover:border-primary/40"
+                                          >
+                                            <Plus className="w-3 h-3" />
+                                          </button>
+                                          <button
+                                            onClick={() => updateGroup({ items: g.items.filter((_, i) => i !== itIdx) })}
+                                            className="w-6 h-6 rounded-md text-muted-foreground hover:text-destructive flex items-center justify-center"
+                                          >
+                                            <X className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Category tabs */}
+                                <div className="flex flex-wrap gap-1 p-2 border-b border-border bg-card">
+                                  {(['desayuno', 'coffee_break', 'working_lunch', 'bebidas'] as MenuCategory[]).map(cat => (
+                                    <button
+                                      key={cat}
+                                      onClick={() => setSlotPickerCat(cat)}
+                                      className={cn(
+                                        "px-2.5 py-1 rounded-full text-[10px] font-semibold transition-all",
+                                        slotPickerCat === cat ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70",
+                                      )}
+                                    >
+                                      {MENU_CATEGORY_LABELS[cat] ?? cat}
+                                    </button>
+                                  ))}
+                                </div>
+
+                                {/* Catalog items */}
+                                <div className="p-2 max-h-56 overflow-y-auto space-y-1.5">
+                                  {MENU_CATALOG.filter(m => m.category === slotPickerCat).map(item => {
+                                    const guests = g.guests_count || numPeople || 1;
+                                    return (
+                                      <div key={item.id} className="flex items-center gap-2 p-2 rounded-lg border border-border hover:border-primary/30">
+                                        <div className="flex-1 min-w-0">
+                                          <p className="font-body text-xs font-medium text-foreground truncate">{item.name}</p>
+                                          <p className="font-body text-[10px] text-muted-foreground">{item.pricePerPerson > 0 ? `${formatMXN(item.pricePerPerson)}/p` : 'Por grupo'}</p>
+                                        </div>
+                                        <button
+                                          onClick={() => {
+                                            const newItem: ProposedProduct = {
+                                              productId: item.id,
+                                              parentProductId: null,
+                                              productName: item.name,
+                                              quantity: guests,
+                                              unitPrice: item.pricePerPerson,
+                                              computedPrice: item.pricePerPerson * guests,
+                                              score: 0,
+                                              recommendationReason: 'Agregado manualmente',
+                                              imageUrl: null,
+                                              imageSource: 'product_image',
+                                              imagePrompt: null,
+                                              sourceType: 'deterministic-fallback',
+                                              swapGroup: null,
+                                              categoria: item.category,
+                                            };
+                                            updateGroup({ items: [...g.items, newItem] });
+                                          }}
+                                          className="shrink-0 px-2.5 h-7 rounded-md bg-primary text-primary-foreground text-[10px] font-bold hover:bg-primary/90"
+                                        >
+                                          + Agregar
+                                        </button>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}

@@ -118,6 +118,33 @@ function isCutoff(selectedDate: Date | undefined): boolean {
   return sel.getTime() === tomorrow.getTime() && now.getHours() >= 15;
 }
 
+/* ── Slot product image with fallback ── */
+const SlotProductImage = ({ productId, category, alt }: { productId: string; category: MenuCategory; alt: string }) => {
+  const [errored, setErrored] = useState(false);
+  const src = getProductImage(productId);
+  const fallback = CATEGORY_IMAGES[category as keyof typeof CATEGORY_IMAGES];
+  if (errored || !src) {
+    return (
+      <div className="shrink-0 w-10 h-10 rounded-md bg-muted flex items-center justify-center overflow-hidden">
+        {fallback ? (
+          <img src={fallback} alt={alt} crossOrigin="anonymous" className="w-full h-full object-cover opacity-70" />
+        ) : (
+          <Package className="w-4 h-4 text-muted-foreground" />
+        )}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      crossOrigin="anonymous"
+      onError={() => setErrored(true)}
+      className="shrink-0 w-10 h-10 rounded-md object-cover bg-muted"
+    />
+  );
+};
+
 /* ── component ── */
 const QuotePage = () => {
   const [step, setStep] = useState(0);

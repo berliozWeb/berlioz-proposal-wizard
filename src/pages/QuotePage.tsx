@@ -180,6 +180,16 @@ const QuotePage = () => {
     setDietary(Object.entries(dietaryDistribution).filter(([, v]) => v > 0).map(([k]) => k));
   }, [dietaryDistribution]);
 
+  // Pre-fill consecutive dates for multi-delivery slots based on main event date
+  useEffect(() => {
+    if (eventMode !== 'multi' || !date) return;
+    setDeliveryGroups(prev => prev.map((g, idx) => {
+      if (g.date) return g; // don't overwrite user-edited dates
+      const dayOffset = (g.dayIndex ?? Math.floor(idx / multiPerDay) + 1) - 1;
+      return { ...g, date: format(addDays(date, dayOffset), 'yyyy-MM-dd') };
+    }));
+  }, [date, eventMode, multiPerDay, multiDays]);
+
   const canNextStep1 = eventType !== "";
 
   // CP shipping lookup — only runs when 5 digits entered

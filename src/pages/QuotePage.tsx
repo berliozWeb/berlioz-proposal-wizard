@@ -14,6 +14,12 @@ import ProposalStep from "@/components/quoter/ProposalStep";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useSmartQuote } from "@/hooks/useSmartQuote";
 import type { SmartQuoteResponse } from "@/domain/entities/SmartQuote";
+import {
+  buildSingleDeliveryGroup,
+  buildDeliveryGroupSlots,
+  type DeliveryGroup,
+  type EventMode,
+} from "@/domain/entities/DeliveryGroup";
 
 // Images
 // Premium Images from src/assets/imagenes_menu
@@ -108,6 +114,13 @@ function isCutoff(selectedDate: Date | undefined): boolean {
 /* ── component ── */
 const QuotePage = () => {
   const [step, setStep] = useState(0);
+  // NEW: event mode pre-step (single vs multi delivery). null = not chosen yet.
+  const [eventMode, setEventMode] = useState<EventMode | null>(null);
+  const [multiDays, setMultiDays] = useState<number>(1);
+  const [multiPerDay, setMultiPerDay] = useState<1 | 2 | 3 | 4>(1);
+  const [deliveryGroups, setDeliveryGroups] = useState<DeliveryGroup[]>(
+    () => buildSingleDeliveryGroup(),
+  );
   const [eventType, setEventType] = useState("");
   // (filtros eliminados)
   const [duration, setDuration] = useState("");

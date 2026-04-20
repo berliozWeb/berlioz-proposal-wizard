@@ -20,6 +20,8 @@ export interface DeliveryGroup {
   label?: string;
   dayIndex?: number;     // 1-based
   deliveryIndex?: number; // 1-based within the day
+  /** Per-slot dietary distribution (counts per restriction). */
+  dietaryDistribution?: Record<string, number>;
 }
 
 export type EventMode = 'single' | 'multi';

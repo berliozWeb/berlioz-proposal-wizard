@@ -787,8 +787,10 @@ serve(async (req) => {
       proposalId,
       engineVersion,
       fallbackUsed,
+      mode: isMulti ? 'multi' : 'single',
       packages,
-      recommendationSummary: engineVersion === 'v3-claude-sonnet'
+      proposals: isMulti ? proposalsBySlot : undefined,
+      recommendationSummary: engineVersion.startsWith('v3-claude-sonnet')
         ? 'Propuesta inteligente generada con Claude AI, basada en el catálogo Berlioz y las preferencias de clientes anteriores.'
         : 'Propuesta generada con el catálogo real de Berlioz.',
       debug: {
@@ -796,8 +798,11 @@ serve(async (req) => {
         scoringVersion: engineVersion,
         matchedProducts: allProducts.length,
         feedbackDataUsed: feedbackSummary.length > 0,
+        slotsCount: isMulti ? proposalsBySlot.length : 1,
       },
     }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

@@ -234,7 +234,7 @@ const QuotePage = () => {
     }
   }, [canNextStep1, canNextStep2, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, hasBudget, budget, dietary, clientName, empresa, generateQuote]);
 
-  const goBack = () => { setStep(0); setEventType(""); };
+  const goBack = () => { setStep(0); setEventType(""); setEventMode(null); setDeliveryGroups(buildSingleDeliveryGroup()); };
 
   const showForm = eventType !== "";
 

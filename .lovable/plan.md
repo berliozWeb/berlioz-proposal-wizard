@@ -1,50 +1,51 @@
+## Objetivo
 
+Producir **un solo archivo `.sql`** descargable desde `/mnt/documents/berlioz_full_export.sql` que, ejecutado en el SQL Editor de tu proyecto `ktyupdpzgmzzfkskkvpn` (vacío), recree el backend Berlioz tal cual hoy: tablas, tipos, funciones, RLS, políticas y todos los datos.
 
-## Diagnóstico
+## Contenido del archivo (en orden)
 
-**Por qué se generan imágenes con DALL-E en el cotizador:**
-- El menú (`/menu`) lee de la tabla `productos` de la base de datos → ya tiene `imagen_url` real (261/270 productos activos con imagen lista en el bucket `Berlioz-images`).
-- El cotizador (`/cotizar`) lee de un **catálogo hardcodeado** en `src/domain/entities/BerliozCatalog.ts` y `MenuCatalog.ts` que **no tiene campos de imagen**.
-- Por eso `SidebarProductCard` llama a `useProductImage` con `imagen=undefined, imagen_url=undefined` → cae al fallback que invoca `generate-product-image` (DALL-E 3) y genera imágenes nuevas cada vez (gastando crédito y devolviendo cosas inconsistentes).
+1. **Header con instrucciones** de uso (cómo correrlo, requisitos, orden).
+2. **Extensiones**: `pgcrypto` (para `gen_random_uuid`).
+3. **Tipos enum**: `order_frequency` y cualquier otro USER-DEFINED detectado en `profiles`.
+4. **Tablas (DDL)** — las 22 tablas actuales con columnas, tipos, defaults, NOT NULL y PRIMARY KEY:
+   `catalog_import_runs, companies, coupons, delivery_addresses, discount_codes, generated_images_cache, order_items, orders, product_relations, productos, products, profiles, quote_feedback, quote_package_items, quote_packages, quote_proposals, quote_requests, quotes, sales_history, sales_insights, scheduled_orders, woo_order_items`.
+   - Sin FOREIGN KEYs hacia `auth.users` (se quedan como `uuid` sueltos para que no truene en un proyecto vacío).
+   - Con FKs internas que sí existen entre tablas públicas (ej. `quote_packages.proposal_id → quote_proposals.id`).
+5. **Funciones** (las 5 actuales): `is_admin`, `search_products_for_quote`, `handle_new_user`, `update_updated_at`, `get_my_email_domain`. Todas con `SECURITY DEFINER` y `SET search_path = public` como están hoy.
+6. **Trigger** `on_auth_user_created` envuelto en `DO $$ ... IF EXISTS (auth.users) ... $$` para que no truene si en tu proyecto destino el schema `auth` aún no está listo.
+7. **RLS**: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` en cada tabla.
+8. **Políticas**: las ~50 políticas actuales recreadas literalmente con sus `USING` y `WITH CHECK`.
+9. **Datos (INSERTs)** — total ≈ 1,800 filas, ordenados respetando dependencias:
+   - `productos` (270), `products` (10), `companies` (0), `discount_codes` (0), `coupons` (0)
+   - `sales_history` (218), `sales_insights` (13), `product_relations` (0), `generated_images_cache` (15)
+   - `woo_order_items` (389), `catalog_import_runs` (0)
+   - `profiles` (1), `delivery_addresses` (1), `scheduled_orders` (0)
+   - `orders` (0) → `order_items` (0)
+   - `quotes` (1), `quote_requests` (61) → `quote_proposals` (61) → `quote_packages` (183) → `quote_package_items` (544) → `quote_feedback` (13)
+   - Cada bloque de inserts envuelto en `BEGIN; ... COMMIT;` y con `ON CONFLICT (id) DO NOTHING` para que sea idempotente (puedes correrlo dos veces sin romper nada).
+   - Strings escapados con `quote_literal`, JSONB serializado correctamente, arrays Postgres en notación `'{a,b,c}'`.
+10. **Verificación final**: bloque `SELECT count(*) FROM ...` por tabla para que veas en pantalla que todo cargó con los conteos esperados.
 
-**Otros problemas detectados:**
-- 9 filas activas son `Order – septiembre 2019…` (basura histórica) sin categoría — hay que desactivarlas.
-- Solo 94 productos `simple/variable` están activos (los 270 incluyen `variation`s). El cotizador necesita esos 94 con su descripción + imagen.
+## Cómo lo voy a generar (cuando apruebes)
 
-## Plan de solución (3 fases)
+Un script Python en `/tmp/export.py` que:
+1. Conecta vía `psql` (las env vars `PG*` ya están en el sandbox) y vuelca DDL + datos.
+2. Para DDL: usa `pg_dump --schema-only --schema=public --no-owner --no-acl` filtrado.
+3. Para datos: por cada tabla, `COPY ... TO STDOUT` y los reformatea como `INSERT INTO ... VALUES (...) ON CONFLICT DO NOTHING`.
+4. Concatena todo en `/mnt/documents/berlioz_full_export.sql`.
+5. Ejecuta una QA sobre el archivo: cuenta `INSERT INTO` por tabla y verifica que coincida con los conteos reales (productos=270, woo_order_items=389, etc.).
 
-### Fase 1 — Limpiar y normalizar la base de datos
-Migración SQL:
-1. **Desactivar productos basura**: `UPDATE productos SET activo=false WHERE nombre ILIKE 'Order –%'` (9 filas viejas de WooCommerce).
-2. **Backfill desde el JSON subido** (`berlioz_catalog_updated.json`):
-   - Hacer match por `sku` o `nombre` normalizado.
-   - Rellenar `descripcion`, `descripcion_corta` y `imagen_url` (usando `img_main` del JSON) cuando la fila de DB esté vacía.
-   - Normalizar nombres a Title Case y limpiar HTML (ya hay regla en memoria).
-3. **Garantizar fallback de imagen**: agregar columna/regla para que `imagen_url` nunca sea NULL en activos. Si después del backfill quedan productos activos sin imagen, asignar una **imagen genérica por categoría** (placeholder editorial) subida al bucket: `_fallback_desayuno.jpg`, `_fallback_coffee.jpg`, `_fallback_lunch.jpg`, `_fallback_bebidas.jpg`, `_fallback_default.jpg`. Esto elimina por completo cualquier llamada a DALL-E.
+Te entrego el archivo como `presentation-artifact` para que lo descargues y lo pegues en el SQL Editor de tu proyecto destino.
 
-### Fase 2 — Unificar la fuente de verdad: cotizador lee de Supabase
-1. Crear hook `useCatalogoCotizador()` (sobre `useProductos`) que devuelve los productos activos `simple/variable` mapeados al shape `CatalogProduct` que espera el cotizador, incluyendo `imagen_url`, `descripcion` y `descripcion_corta`.
-2. En `src/components/quoter/ProposalStep.tsx`:
-   - Reemplazar el import de `CATALOG` hardcodeado por el hook.
-   - Pasar `imagen_url` y `imagen` reales a `SidebarProductCard`.
-3. En `SidebarProductCard`:
-   - **Eliminar `useProductImage`** (que dispara DALL-E). Usar directamente `buildProductImageUrl(imagen_url, imagen)` con un `<img onError>` que cae al fallback de categoría.
-4. Aplicar el mismo cambio en `ProductBrowsePanel.tsx` y `ProductSwapModal.tsx` (también usaban catálogos hardcodeados con imágenes inconsistentes).
-5. Mantener `BerliozCatalog.ts` solo para la lógica de tiers/templates (estructura de paquetes), pero los **datos de producto** (precio, imagen, descripción) vienen de Supabase haciendo lookup por nombre normalizado.
+## Lo que NO incluye (y por qué)
 
-### Fase 3 — Apagar la generación con DALL-E
-1. En `useProductImage.ts`: cambiar el comportamiento — si no hay imagen real, devolver el fallback de categoría en vez de invocar la edge function. La generación queda como opción manual desde admin (no automática en cada render).
-2. Dejar la edge function `generate-product-image` deployada por compatibilidad pero no se llama desde la UI.
-
-## Lo que NO se toca
-- Lógica de tiers (Equilibrado/Esencial/Experiencia), totales, swap de productos, addons.
-- Pasos 1 y 2 del cotizador, hero, header, footer.
-- Página `/menu` (ya funciona bien con Supabase).
-- PDF export (ya usa `buildProductImageUrl` correctamente).
+- **Usuarios de `auth.users`** — son del schema gestionado de Supabase. Tendrás que recrearlos desde Authentication → Users en el dashboard de tu proyecto destino, o dejar que se autogeneren cuando alguien firme. El UUID del único `profile` actual quedará huérfano hasta que crees un usuario con ese mismo UUID, o lo borres.
+- **Storage buckets** — hoy el proyecto no tiene buckets en `storage.objects` (las imágenes viven en un bucket externo `Berlioz-images`). No hay nada que migrar ahí.
+- **Edge functions** — son código, no DB. Si las quieres en el otro proyecto las copias manualmente desde `supabase/functions/`.
+- **Secrets** (`ANTHROPIC_API_KEY`, `WOO_WEBHOOK_SECRET`, etc.) — los configuras a mano en el dashboard del proyecto destino.
 
 ## Resultado esperado
-- Cero llamadas a DALL-E desde el cotizador.
-- Mismas imágenes reales en `/menu` y en el sidebar "Cambiar/Agregar" del cotizador.
-- Productos sin imagen muestran un fallback editorial limpio por categoría (no un placeholder roto, no un `animate-pulse` infinito, no una imagen IA aleatoria).
-- Descripciones reales del catálogo visibles bajo cada producto en el sidebar.
 
+Un archivo `.sql` de ~3-5 MB, autocontenido, idempotente, que en el SQL Editor de `ktyupdpzgmzzfkskkvpn` corre en 30-90 segundos y deja la base con esquema y datos idénticos a Lovable Cloud.
+
+Después de aprobar, vuelvo a modo default, ejecuto la generación y te entrego el artifact.

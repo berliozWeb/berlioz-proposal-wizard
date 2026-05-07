@@ -1139,6 +1139,7 @@ const QuotePage = () => {
                         smartQuoteLoading={smartLoading}
                         onSubmitFeedback={submitFeedback}
                         hideConfirmBar
+                        budgetPerPerson={hasBudget === true ? budget : undefined}
                         onSelectTier={(info) => {
                           setSlotSelections(prev => ({ ...prev, [slot.slot_id]: info }));
                           // Advance to next unselected slot
@@ -1276,6 +1277,8 @@ const QuotePage = () => {
                 smartQuoteData={smartData}
                 smartQuoteLoading={smartLoading}
                 onSubmitFeedback={submitFeedback}
+                budgetPerPerson={hasBudget === true ? budget : undefined}
+                dietaryDistribution={dietaryDistribution}
               />
             </div>
           )}

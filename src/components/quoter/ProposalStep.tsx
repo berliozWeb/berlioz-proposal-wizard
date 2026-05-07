@@ -18,6 +18,7 @@ import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/Smar
 import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";
 import { useCatalogoCotizador, getCategoryFallback, QUOTER_SIDEBAR_CATEGORIES } from "@/hooks/useCatalogoCotizador";
+import AdminFeedbackPanel from "@/components/proposal/AdminFeedbackPanel";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -80,6 +81,10 @@ interface ProposalStepProps {
   onSelectTier?: (info: { tier: PackageTier; tierLabel: string; total: number; subtotal: number }) => void;
   /** Hide the bottom sticky confirm bar (multi-delivery uses its own global summary). */
   hideConfirmBar?: boolean;
+  /** Per-person budget set by user (drives in-card budget badge & price compliance). */
+  budgetPerPerson?: number;
+  /** Dietary distribution by type (used for admin feedback context). */
+  dietaryDistribution?: Record<string, number>;
 }
 
 type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string; bullets: string[]; isPopular: boolean; ctaStyle: 'outline' | 'primary' };
@@ -358,7 +363,7 @@ function TierCarousel({
 
 /* ═══ COMPONENT ═══ */
 export default function ProposalStep(props: ProposalStepProps) {
-  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback, onSelectTier, hideConfirmBar } = props;
+  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback, onSelectTier, hideConfirmBar, budgetPerPerson, dietaryDistribution } = props;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem, clearCart } = useCart();
@@ -907,6 +912,32 @@ export default function ProposalStep(props: ProposalStepProps) {
                       <p className="font-body text-xs text-[#777] leading-snug">
                         {pkg.tagline || tier.subtitle}
                       </p>
+                      {(() => {
+                        const ppp = t.total / Math.max(1, people);
+                        const over = budgetPerPerson && budgetPerPerson > 0 ? ppp > budgetPerPerson : false;
+                        const overPct = over ? ((ppp - budgetPerPerson!) / budgetPerPerson!) * 100 : 0;
+                        const tone = !budgetPerPerson
+                          ? 'neutral'
+                          : !over
+                            ? 'green'
+                            : overPct <= 10 ? 'amber' : 'red';
+                        return (
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[11px] font-bold whitespace-nowrap',
+                              tone === 'green' && 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                              tone === 'amber' && 'bg-amber-50 text-amber-800 border border-amber-200',
+                              tone === 'red' && 'bg-red-50 text-red-700 border border-red-200',
+                              tone === 'neutral' && 'bg-[#014D6F]/5 text-[#014D6F] border border-[#014D6F]/15',
+                            )}
+                            title={budgetPerPerson ? `Presupuesto: $${budgetPerPerson}/persona` : 'Precio por persona (incluye IVA y envío)'}
+                          >
+                            {formatMXN(ppp)}/persona
+                            {budgetPerPerson && over && ` · +${overPct.toFixed(0)}%`}
+                            {budgetPerPerson && !over && ` · ✓`}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                   <button
@@ -962,6 +993,22 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </p>
                   </div>
                 </div>
+                <AdminFeedbackPanel
+                  proposalId={smartQuoteData?.proposalId || null}
+                  packageTier={tier.id}
+                  packageDisplayName={tier.title}
+                  requestSnapshot={{
+                    eventType,
+                    peopleCount: people,
+                    budgetPerPerson: budgetPerPerson || null,
+                    dietary: dietaryDistribution || null,
+                    codigoPostal: postalCode,
+                    fechaInicio: date ? format(date, 'yyyy-MM-dd') : null,
+                    pricePerPerson: t.total / Math.max(1, people),
+                    total: t.total,
+                    items: pkg.items.map(i => ({ name: i.productName, qty: i.qty, unitPrice: i.unitPrice })),
+                  }}
+                />
               </div>
             );
           })}

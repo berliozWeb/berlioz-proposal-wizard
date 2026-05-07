@@ -636,6 +636,58 @@ serve(async (req) => {
       console.warn('Could not fetch sales history:', e);
     }
 
+    // ── 4c. Fetch business rules & insights from sales_insights ──
+    let insightsContext = '';
+    try {
+      const { data: insights } = await supabase
+        .from('sales_insights')
+        .select('insight_type, context_key, insight_text, metadata')
+        .limit(100);
+
+      if (insights && insights.length > 0) {
+        const people = peopleCount;
+        // Determine which historico bands apply to this request
+        const band =
+          people <= 10 ? 'banda_1_10'
+          : people <= 30 ? 'banda_11_30'
+          : people <= 60 ? 'banda_31_60'
+          : people <= 120 ? 'banda_61_120'
+          : 'banda_120_mas';
+
+        const ppBand = (() => {
+          const b = (req as QuoteRequest).budgetPerPerson || 0;
+          if (!b) return null;
+          if (b < 250) return 'menor_250';
+          if (b < 350) return 'rango_250_350';
+          if (b < 500) return 'rango_350_500';
+          if (b < 800) return 'rango_500_800';
+          return 'mayor_800';
+        })();
+
+        const relevant = insights.filter((i: any) => {
+          if (i.insight_type === 'historico_comensales') {
+            return i.context_key === band || i.context_key === 'resumen_dataset';
+          }
+          if (i.insight_type === 'historico_presupuesto_pp') {
+            return ppBand ? i.context_key === ppBand : false;
+          }
+          // Always include business rules & upselling
+          return ['reglas_negocio', 'operaciones', 'presupuesto', 'precios_adicionales', 'upselling'].includes(i.insight_type);
+        });
+
+        const high = relevant.filter((i: any) => i.metadata?.priority === 'alta');
+        const others = relevant.filter((i: any) => i.metadata?.priority !== 'alta');
+        const ordered = [...high, ...others].slice(0, 30);
+
+        if (ordered.length > 0) {
+          insightsContext = `\n\nREGLAS DE NEGOCIO Y APRENDIZAJES BERLIOZ (úsalos como contexto para componer la propuesta):\n` +
+            ordered.map((i: any) => `- [${i.insight_type}${i.metadata?.priority ? ' · ' + i.metadata.priority : ''}] ${i.insight_text}`).join('\n');
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch sales_insights:', e);
+    }
+
     // ── 5. AI Composition with Claude (heuristic fallback) ──
     // Helper: compose 3 packages for a specific request signature
     const composeFor = async (
@@ -647,7 +699,7 @@ serve(async (req) => {
       let ev = ev0;
       let fb = false;
 
-      const specs = await composeWithClaude(allScored, reqOverride, feedbackSummary + salesContext);
+      const specs = await composeWithClaude(allScored, reqOverride, feedbackSummary + salesContext + insightsContext);
       if (specs && specs.length === 3) {
         pkgs = specs.map(spec => buildPackageFromClaude(spec, productMap, reqOverride.peopleCount));
         const valid = pkgs.every(p => p.items.length >= 1);

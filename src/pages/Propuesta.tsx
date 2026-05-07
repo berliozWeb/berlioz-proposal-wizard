@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import berliozLogo from "@/assets/berlioz-logo.png";
 import BerliozHeader from "@/components/BerliozHeader";
 import PackageCard from "@/components/proposal/PackageCard";
+import AdminFeedbackPanel from "@/components/proposal/AdminFeedbackPanel";
 import MenuProposal from "@/components/proposal/MenuProposal";
 import AddonsBar from "@/components/proposal/AddonsBar";
 import LeadGateModal from "@/components/proposal/LeadGateModal";
@@ -183,16 +184,31 @@ const Propuesta = () => {
               <>
                 <div className="proposal-packages grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   {p.proposal.packages.map((pkg) => (
-                    <PackageCard
-                      key={pkg.id}
-                      pkg={pkg}
-                      isRecommended={pkg.id === 'recomendado'}
-                      onSelect={() => p.handlePackageSelect(pkg.displayName)}
-                      earlyDeliverySurcharge={earlyDelivery}
-                      volumeSurcharge={volume80}
-                      people={personas}
-                      onItemsChange={handleItemsChange}
-                    />
+                    <div key={pkg.id} className="flex flex-col">
+                      <PackageCard
+                        pkg={pkg}
+                        isRecommended={pkg.id === 'recomendado'}
+                        onSelect={() => p.handlePackageSelect(pkg.displayName)}
+                        earlyDeliverySurcharge={earlyDelivery}
+                        volumeSurcharge={volume80}
+                        people={personas}
+                        onItemsChange={handleItemsChange}
+                        budgetPerPerson={p.form.tienePresupuesto ? p.form.presupuestoPorPersona : undefined}
+                      />
+                      <AdminFeedbackPanel
+                        proposalId={p.proposal?.proposalId || null}
+                        packageTier={pkg.id}
+                        packageDisplayName={pkg.displayName}
+                        requestSnapshot={{
+                          eventType: p.form.eventType,
+                          peopleCount: p.form.personas,
+                          budgetPerPerson: p.form.tienePresupuesto ? p.form.presupuestoPorPersona : null,
+                          dietary: p.form.dietaryCounts || p.form.restriccionesDieteticas,
+                          codigoPostal: p.form.codigoPostal,
+                          fechaInicio: p.form.fechaInicio,
+                        }}
+                      />
+                    </div>
                   ))}
                 </div>
 

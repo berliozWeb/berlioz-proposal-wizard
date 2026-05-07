@@ -1,51 +1,104 @@
+
 ## Objetivo
 
-Producir **un solo archivo `.sql`** descargable desde `/mnt/documents/berlioz_full_export.sql` que, ejecutado en el SQL Editor de tu proyecto `ktyupdpzgmzzfkskkvpn` (vacío), recree el backend Berlioz tal cual hoy: tablas, tipos, funciones, RLS, políticas y todos los datos.
+Tres mejoras concretas al cotizador:
 
-## Contenido del archivo (en orden)
+1. **Aprendizaje admin → insights**: que tú (admin) puedas calificar/comentar propuestas generadas y que ese feedback alimente automáticamente `sales_insights`.
+2. **Restricciones dietéticas como conteo parcial**: si dices "2 veganos de 10 personas", la propuesta debe incluir 2 opciones veganas + 8 normales (no convertir todo a vegano).
+3. **Precio por persona visible en el header de cada paquete** (junto a "Equilibrado / descripción"), respetando el presupuesto por persona si se indicó.
 
-1. **Header con instrucciones** de uso (cómo correrlo, requisitos, orden).
-2. **Extensiones**: `pgcrypto` (para `gen_random_uuid`).
-3. **Tipos enum**: `order_frequency` y cualquier otro USER-DEFINED detectado en `profiles`.
-4. **Tablas (DDL)** — las 22 tablas actuales con columnas, tipos, defaults, NOT NULL y PRIMARY KEY:
-   `catalog_import_runs, companies, coupons, delivery_addresses, discount_codes, generated_images_cache, order_items, orders, product_relations, productos, products, profiles, quote_feedback, quote_package_items, quote_packages, quote_proposals, quote_requests, quotes, sales_history, sales_insights, scheduled_orders, woo_order_items`.
-   - Sin FOREIGN KEYs hacia `auth.users` (se quedan como `uuid` sueltos para que no truene en un proyecto vacío).
-   - Con FKs internas que sí existen entre tablas públicas (ej. `quote_packages.proposal_id → quote_proposals.id`).
-5. **Funciones** (las 5 actuales): `is_admin`, `search_products_for_quote`, `handle_new_user`, `update_updated_at`, `get_my_email_domain`. Todas con `SECURITY DEFINER` y `SET search_path = public` como están hoy.
-6. **Trigger** `on_auth_user_created` envuelto en `DO $$ ... IF EXISTS (auth.users) ... $$` para que no truene si en tu proyecto destino el schema `auth` aún no está listo.
-7. **RLS**: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` en cada tabla.
-8. **Políticas**: las ~50 políticas actuales recreadas literalmente con sus `USING` y `WITH CHECK`.
-9. **Datos (INSERTs)** — total ≈ 1,800 filas, ordenados respetando dependencias:
-   - `productos` (270), `products` (10), `companies` (0), `discount_codes` (0), `coupons` (0)
-   - `sales_history` (218), `sales_insights` (13), `product_relations` (0), `generated_images_cache` (15)
-   - `woo_order_items` (389), `catalog_import_runs` (0)
-   - `profiles` (1), `delivery_addresses` (1), `scheduled_orders` (0)
-   - `orders` (0) → `order_items` (0)
-   - `quotes` (1), `quote_requests` (61) → `quote_proposals` (61) → `quote_packages` (183) → `quote_package_items` (544) → `quote_feedback` (13)
-   - Cada bloque de inserts envuelto en `BEGIN; ... COMMIT;` y con `ON CONFLICT (id) DO NOTHING` para que sea idempotente (puedes correrlo dos veces sin romper nada).
-   - Strings escapados con `quote_literal`, JSONB serializado correctamente, arrays Postgres en notación `'{a,b,c}'`.
-10. **Verificación final**: bloque `SELECT count(*) FROM ...` por tabla para que veas en pantalla que todo cargó con los conteos esperados.
+---
 
-## Cómo lo voy a generar (cuando apruebes)
+## 1. Loop de aprendizaje (admin feedback → insights)
 
-Un script Python en `/tmp/export.py` que:
-1. Conecta vía `psql` (las env vars `PG*` ya están en el sandbox) y vuelca DDL + datos.
-2. Para DDL: usa `pg_dump --schema-only --schema=public --no-owner --no-acl` filtrado.
-3. Para datos: por cada tabla, `COPY ... TO STDOUT` y los reformatea como `INSERT INTO ... VALUES (...) ON CONFLICT DO NOTHING`.
-4. Concatena todo en `/mnt/documents/berlioz_full_export.sql`.
-5. Ejecuta una QA sobre el archivo: cuenta `INSERT INTO` por tabla y verifica que coincida con los conteos reales (productos=270, woo_order_items=389, etc.).
+### UI nueva
+En `src/pages/Propuesta.tsx`, mostrar un panel **solo visible para admins** (usar `is_admin(auth.uid())` ya existente) debajo de cada `PackageCard` con:
+- 👍 / 👎 rápido por paquete
+- Textarea: "¿Qué falta o sobra? ¿Qué regla deberíamos aprender?"
+- Selector de categoría: `presupuesto | operaciones | reglas_negocio | upselling | dietetico | balance_paquete`
+- Botón **"Guardar como insight"**
 
-Te entrego el archivo como `presentation-artifact` para que lo descargues y lo pegues en el SQL Editor de tu proyecto destino.
+### Flujo
+1. El componente llama a una nueva edge function `admin-insight-feedback` con: `{ proposalId, packageTier, rating (-1|+1), comment, category, requestSnapshot }` (snapshot = peopleCount, budget, eventType, dietary).
+2. La edge function:
+   - Inserta en `sales_insights` con `insight_type = category`, `context_key = slug auto-generado` (ej. `feedback_<proposalId>_<tier>`), `insight_text = comment + contexto auto-anexado` ("Para evento X de N personas con presupuesto $Y/p..."), `metadata = { source: 'admin_feedback', rating, proposal_id, snapshot, priority: 'alta' }`.
+   - Si `rating = -1`, también marca con `metadata.priority = 'alta'` para que Claude la priorice más.
+3. Las nuevas reglas son consumidas automáticamente por `quote-orchestrator` en la siguiente cotización (ya tenemos el fetch de `sales_insights` con priorización por `metadata.priority='alta'`).
 
-## Lo que NO incluye (y por qué)
+### Tabla auxiliar opcional
+Crear `proposal_admin_feedback (id, proposal_id, package_tier, rating, comment, category, created_by, created_at)` para auditoría además del insight; el insert en `sales_insights` queda como la "regla aprendida".
 
-- **Usuarios de `auth.users`** — son del schema gestionado de Supabase. Tendrás que recrearlos desde Authentication → Users en el dashboard de tu proyecto destino, o dejar que se autogeneren cuando alguien firme. El UUID del único `profile` actual quedará huérfano hasta que crees un usuario con ese mismo UUID, o lo borres.
-- **Storage buckets** — hoy el proyecto no tiene buckets en `storage.objects` (las imágenes viven en un bucket externo `Berlioz-images`). No hay nada que migrar ahí.
-- **Edge functions** — son código, no DB. Si las quieres en el otro proyecto las copias manualmente desde `supabase/functions/`.
-- **Secrets** (`ANTHROPIC_API_KEY`, `WOO_WEBHOOK_SECRET`, etc.) — los configuras a mano en el dashboard del proyecto destino.
+### Resultado
+Cada vez que rechazas una propuesta y dejas un comentario, se vuelve regla viva que Claude leerá la próxima vez.
 
-## Resultado esperado
+---
 
-Un archivo `.sql` de ~3-5 MB, autocontenido, idempotente, que en el SQL Editor de `ktyupdpzgmzzfkskkvpn` corre en 30-90 segundos y deja la base con esquema y datos idénticos a Lovable Cloud.
+## 2. Restricciones dietéticas como conteo parcial
 
-Después de aprobar, vuelvo a modo default, ejecuto la generación y te entrego el artifact.
+### Cambio de modelo
+Hoy `restriccionesDieteticas: DietaryRestriction[]` es un array global ("toda la propuesta es vegana"). Cambiarlo a:
+
+```ts
+restriccionesDieteticas: { tipo: DietaryRestriction; cantidad: number }[]
+// ej: [{ tipo: 'vegano', cantidad: 2 }, { tipo: 'sin_gluten', cantidad: 1 }]
+```
+
+### Wizard (`StepPeople.tsx` o donde se capture)
+- Por cada restricción seleccionada, agregar un input numérico "¿Cuántas personas?" con max = `personas` totales.
+- Validación: suma de restricciones ≤ `personas`.
+
+### Backend (`quote-orchestrator/index.ts`)
+En la generación de paquetes:
+- Calcular `personasNormales = total - sum(cantidad)`.
+- Para cada item "principal" (ej. lunch box, breakfast box) con `pricing_model='per_person'`:
+  - Generar **N items separados**: 1 línea por subgrupo dietético + 1 línea para los normales, cada una con su `quantity` correcto y producto compatible (`dietary_tags` que incluya el restrictivo).
+- Mantener bebidas/snacks compartidos en cantidad total.
+- Pasar a Claude el contexto: `"Distribución: 2 veganos, 1 sin gluten, 7 sin restricción → entrega líneas separadas por subgrupo"`.
+
+### UI propuesta
+En `PackageCard.tsx` mostrar las líneas etiquetadas: `🌱 PINK BOX VEGANO × 2`, `WHITE BOX × 7`, etc.
+
+---
+
+## 3. Precio por persona en header del paquete
+
+### `PackageCard.tsx`
+Mover/duplicar el `pricePerPerson` (línea 206) al **header** junto al título "Equilibrado":
+
+```
+EQUILIBRADO   $661/persona     [ELEGIR ESTE →]
+Balance perfecto vegano para tu equipo
+```
+
+- Mostrar siempre con sufijo `/persona`.
+- Si `form.tienePresupuesto && form.presupuestoPorPersona > 0`:
+  - Si `pricePerPerson <= presupuestoPorPersona` → badge verde `✓ Dentro de tu presupuesto ($X/p)`.
+  - Si excede ≤ 10% → badge ámbar `+$Y sobre tu presupuesto`.
+  - Si excede > 10% → badge rojo + tooltip "Considera Esencial".
+- En el orquestador, si hay presupuesto, **forzar** que al menos el paquete `equilibrado` cumpla `total/personas ≤ presupuestoPorPersona` (ajustar selección iterativamente o reducir cantidades opcionales).
+
+---
+
+## Archivos a tocar
+
+- `supabase/functions/admin-insight-feedback/index.ts` — **nueva**
+- Migración: tabla `proposal_admin_feedback` + grant admin-only RLS
+- `src/pages/Propuesta.tsx` — panel admin de feedback (gated por `is_admin`)
+- `src/components/proposal/AdminFeedbackPanel.tsx` — **nuevo**
+- `src/domain/entities/IntakeForm.ts` — cambiar shape de `restriccionesDieteticas`
+- `src/components/wizard/StepPeople.tsx` (o el step de dietética) — inputs de cantidad
+- `src/domain/shared/WizardValidation.ts` — validar suma ≤ personas
+- `supabase/functions/quote-orchestrator/index.ts` — distribución por subgrupo + presupuesto duro
+- `src/components/proposal/PackageCard.tsx` — header con precio/persona + badge de presupuesto
+- `src/presentation/hooks/useProposalPresenter.ts` — pasar dietary breakdown y presupuesto al orquestador
+- Migración de datos: convertir `restriccionesDieteticas` legacy (string[]) a la nueva forma con `cantidad: personas` para compatibilidad temporal
+
+---
+
+## Notas técnicas
+
+- El admin check será server-side en la edge function (`SELECT is_admin(auth.uid())`) antes de insertar.
+- El `ON CONFLICT (insight_type, context_key) DO UPDATE` ya soportado evita duplicados si el admin re-edita el mismo feedback.
+- El presupuesto duro en orquestador puede romper si el catálogo no tiene productos suficientemente baratos: en ese caso, devolver el paquete con flag `excedePresupuesto: true` y que la UI lo muestre claramente, no fallar silenciosamente.
+
+¿Apruebas que lo implemente así?

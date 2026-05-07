@@ -36,9 +36,11 @@ interface PackageCardProps {
   volumeSurcharge?: boolean;
   people: number;
   onItemsChange?: (pkgId: string, items: PackageItem[]) => void;
+  /** Optional per-person budget set by user; used to show fit/excess badge. */
+  budgetPerPerson?: number;
 }
 
-const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, volumeSurcharge, people, onItemsChange }: PackageCardProps) => {
+const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, volumeSurcharge, people, onItemsChange, budgetPerPerson }: PackageCardProps) => {
   const [localItems, setLocalItems] = useState<PackageItem[]>(pkg.items);
   const [isModified, setIsModified] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -55,6 +57,16 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
   const pricePerPerson = roundCents(totalAmount / Math.max(1, people));
 
   const heroImage = getHeroImage(pkg);
+
+  // Budget fit badge
+  const budget = budgetPerPerson && budgetPerPerson > 0 ? budgetPerPerson : null;
+  const overBudget = budget ? pricePerPerson > budget : false;
+  const overPct = budget && overBudget ? ((pricePerPerson - budget) / budget) * 100 : 0;
+  const budgetBadge = !budget ? null : !overBudget
+    ? { tone: 'green', text: `✓ Dentro de tu presupuesto ($${budget}/p)` }
+    : overPct <= 10
+      ? { tone: 'amber', text: `+${formatMXN(pricePerPerson - budget)} sobre tu presupuesto` }
+      : { tone: 'red', text: `Excede tu presupuesto de $${budget}/p — considera Esencial` };
 
   // Notify parent of changes
   useEffect(() => {
@@ -192,6 +204,30 @@ const PackageCard = ({ pkg, isRecommended, onSelect, earlyDeliverySurcharge, vol
 
 
         <div className="p-5 flex flex-col flex-1">
+          {/* Header strip: price/persona prominent */}
+          <div className="flex items-baseline justify-between mb-2">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{pkg.displayName}</p>
+            <p className={cn(
+              "font-mono text-lg font-bold transition-transform",
+              priceAnimating && "scale-110",
+              budgetBadge?.tone === 'red' ? 'text-destructive'
+                : budgetBadge?.tone === 'amber' ? 'text-amber-600'
+                : budgetBadge?.tone === 'green' ? 'text-success'
+                : 'text-foreground',
+            )}>
+              {formatMXN(pricePerPerson)}<span className="text-xs font-normal text-muted-foreground">/persona</span>
+            </p>
+          </div>
+          {budgetBadge && (
+            <div className={cn(
+              "mb-2 px-2 py-1 rounded text-[11px] font-medium",
+              budgetBadge.tone === 'green' && 'bg-success/10 text-success',
+              budgetBadge.tone === 'amber' && 'bg-amber-100 text-amber-700',
+              budgetBadge.tone === 'red' && 'bg-destructive/10 text-destructive',
+            )}>
+              {budgetBadge.text}
+            </div>
+          )}
           {/* Total price — GRAND total including IVA */}
           <div className="mb-1">
             <span className={cn(

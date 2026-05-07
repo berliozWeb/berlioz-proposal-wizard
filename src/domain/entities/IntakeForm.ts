@@ -12,6 +12,21 @@ export const DIETARY_OPTIONS: { value: DietaryRestriction; label: string }[] = [
   { value: 'keto', label: 'Keto' },
 ];
 
+export interface DietaryCount {
+  tipo: DietaryRestriction;
+  cantidad: number;
+}
+
+/** Read counts from form, with backwards-compat for legacy string[] form. */
+export function getDietaryCounts(form: Pick<IntakeForm, 'restriccionesDieteticas' | 'dietaryCounts' | 'personas'>): DietaryCount[] {
+  if (form.dietaryCounts && form.dietaryCounts.length > 0) return form.dietaryCounts;
+  // legacy: assume the whole group has each restriction
+  if (Array.isArray(form.restriccionesDieteticas) && form.restriccionesDieteticas.length > 0) {
+    return form.restriccionesDieteticas.map(t => ({ tipo: t, cantidad: form.personas || 0 }));
+  }
+  return [];
+}
+
 export interface IntakeForm {
   nombre: string;
   empresa: string;
@@ -32,6 +47,8 @@ export interface IntakeForm {
   nivelEsperado: ServiceLevel | '';
   tieneRestricciones: boolean;
   restriccionesDieteticas: DietaryRestriction[];
+  /** Per-restriction count: e.g. [{ tipo:'vegano', cantidad:2 }, { tipo:'sin_gluten', cantidad:1 }] */
+  dietaryCounts?: DietaryCount[];
   notasDieteticas?: string;
   confirmaRecepcion: boolean;
   contacto: {
@@ -63,6 +80,7 @@ export const DEFAULT_INTAKE: IntakeForm = {
   nivelEsperado: '',
   tieneRestricciones: false,
   restriccionesDieteticas: [],
+  dietaryCounts: [],
   notasDieteticas: '',
   confirmaRecepcion: false,
   contacto: {

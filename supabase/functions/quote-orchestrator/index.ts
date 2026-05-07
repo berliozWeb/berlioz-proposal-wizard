@@ -364,6 +364,18 @@ REGLAS ABSOLUTAS — NUNCA violar:
 - Prioriza productos con score alto y destacado=true
 - Cada tier debe usar productos DIFERENTES entre sí cuando sea posible
 
+REGLAS DE PRESUPUESTO — CRÍTICO, el sistema validará y rechazará tu respuesta:
+- Si el usuario dio un presupuesto/persona, el TIER EQUILIBRADO debe tener pricePerPerson <= presupuesto.
+  Calcula mentalmente: sum(precio_i * qty_i) para per_person items, + items fijos / personas, + 360 envío + 16% IVA, todo dividido entre personas.
+  Si no cabe: elimina items caros o cámbialos por opciones más baratas del catálogo. NO IGNORES esta regla.
+- ESENCIAL siempre debe estar por debajo del presupuesto. EXPERIENCIA puede excederlo hasta 25%.
+
+REGLAS DIETÉTICAS PARCIALES — CRÍTICO:
+- Si recibes una distribución parcial (ej: "2 veganos en grupo de 10"), NO conviertas todo el menú a vegano.
+- En su lugar: agrega un item adicional vegano al paquete (ej: "PINK BOX VEGANO" con qty=2) Y mantén los items normales con qty para el resto (8 personas).
+- Para esto, en `selectedProductIds` puedes incluir tanto items normales como los alternativos dietéticos: el sistema interpretará la cantidad correctamente cuando el id del producto contiene tags compatibles.
+- Las bebidas y snacks compartidos siempre van por el total del grupo.
+
 Responde SOLO con JSON válido, sin texto adicional ni markdown.
 
 OUTPUT FORMAT:

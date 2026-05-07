@@ -774,6 +774,13 @@ serve(async (req) => {
           eventDate: slot.date || body.eventDate,
           eventTime: slot.time || body.eventTime,
           dietaryRestrictions: slotDietary,
+          dietaryCounts: [
+            { tipo: 'vegano', cantidad: slot.dietary?.vegano || 0 },
+            { tipo: 'vegetariano', cantidad: slot.dietary?.vegetariano || 0 },
+            { tipo: 'sin_gluten', cantidad: slot.dietary?.sin_gluten || 0 },
+            { tipo: 'sin_lactosa', cantidad: slot.dietary?.sin_lactosa || 0 },
+            { tipo: 'keto', cantidad: slot.dietary?.keto || 0 },
+          ].filter(c => c.cantidad > 0),
           mode: 'multi',
           deliveryGroups: [slot], // pass only this slot to Claude for context
         };

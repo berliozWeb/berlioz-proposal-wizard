@@ -93,6 +93,8 @@ export interface SmartQuoteRequest {
   budgetEnabled?: boolean;
   budgetPerPerson?: number;
   dietaryRestrictions?: string[];
+  /** Per-restriction count: e.g. [{ tipo:'vegano', cantidad:2 }] — partial dietary distribution within the group */
+  dietaryCounts?: { tipo: string; cantidad: number }[];
   contactName?: string;
   companyName?: string;
   userId?: string;

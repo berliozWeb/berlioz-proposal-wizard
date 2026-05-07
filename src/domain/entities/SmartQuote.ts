@@ -34,6 +34,8 @@ export interface ProposalPackage {
   rankingScore: number;
   isRecommended: boolean;
   highlights: string[];
+  excedePresupuesto?: boolean;
+  diferenciaPresupuesto?: number;
 }
 
 export interface SlotProposal {

@@ -595,6 +595,42 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_admin_feedback: {
+        Row: {
+          category: string
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          package_tier: string | null
+          proposal_id: string | null
+          rating: number
+          request_snapshot: Json | null
+        }
+        Insert: {
+          category: string
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          package_tier?: string | null
+          proposal_id?: string | null
+          rating: number
+          request_snapshot?: Json | null
+        }
+        Update: {
+          category?: string
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          package_tier?: string | null
+          proposal_id?: string | null
+          rating?: number
+          request_snapshot?: Json | null
+        }
+        Relationships: []
+      }
       quote_feedback: {
         Row: {
           accepted: boolean | null

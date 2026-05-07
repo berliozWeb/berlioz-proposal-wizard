@@ -18,6 +18,7 @@ import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/Smar
 import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";
 import { useCatalogoCotizador, getCategoryFallback, QUOTER_SIDEBAR_CATEGORIES } from "@/hooks/useCatalogoCotizador";
+import AdminFeedbackPanel from "@/components/proposal/AdminFeedbackPanel";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -80,6 +81,10 @@ interface ProposalStepProps {
   onSelectTier?: (info: { tier: PackageTier; tierLabel: string; total: number; subtotal: number }) => void;
   /** Hide the bottom sticky confirm bar (multi-delivery uses its own global summary). */
   hideConfirmBar?: boolean;
+  /** Per-person budget set by user (drives in-card budget badge & price compliance). */
+  budgetPerPerson?: number;
+  /** Dietary distribution by type (used for admin feedback context). */
+  dietaryDistribution?: Record<string, number>;
 }
 
 type TierInfo = { id: PackageTier; title: string; subtitle: string; tip?: string; bullets: string[]; isPopular: boolean; ctaStyle: 'outline' | 'primary' };

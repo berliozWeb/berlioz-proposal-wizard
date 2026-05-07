@@ -373,7 +373,7 @@ REGLAS DE PRESUPUESTO — CRÍTICO, el sistema validará y rechazará tu respues
 REGLAS DIETÉTICAS PARCIALES — CRÍTICO:
 - Si recibes una distribución parcial (ej: "2 veganos en grupo de 10"), NO conviertas todo el menú a vegano.
 - En su lugar: agrega un item adicional vegano al paquete (ej: "PINK BOX VEGANO" con qty=2) Y mantén los items normales con qty para el resto (8 personas).
-- Para esto, en `selectedProductIds` puedes incluir tanto items normales como los alternativos dietéticos: el sistema interpretará la cantidad correctamente cuando el id del producto contiene tags compatibles.
+- Para esto, en selectedProductIds puedes incluir tanto items normales como los alternativos dietéticos: el sistema interpretará la cantidad correctamente cuando el id del producto contiene tags compatibles.
 - Las bebidas y snacks compartidos siempre van por el total del grupo.
 
 Responde SOLO con JSON válido, sin texto adicional ni markdown.

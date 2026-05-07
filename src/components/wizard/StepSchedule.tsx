@@ -39,7 +39,19 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
     const next = current.includes(val)
       ? current.filter((d) => d !== val)
       : [...current, val];
-    onChange({ ...form, restriccionesDieteticas: next });
+    const counts = (form.dietaryCounts || []).filter(c => next.includes(c.tipo));
+    if (!current.includes(val)) counts.push({ tipo: val, cantidad: 1 });
+    onChange({ ...form, restriccionesDieteticas: next, dietaryCounts: counts });
+  };
+
+  const setDietaryCount = (val: DietaryRestriction, cantidad: number) => {
+    const max = form.personas || 999;
+    const safe = Math.max(0, Math.min(max, Math.floor(cantidad || 0)));
+    const existing = form.dietaryCounts || [];
+    const next = existing.some(c => c.tipo === val)
+      ? existing.map(c => c.tipo === val ? { ...c, cantidad: safe } : c)
+      : [...existing, { tipo: val, cantidad: safe }];
+    onChange({ ...form, dietaryCounts: next });
   };
 
   return (
@@ -157,18 +169,45 @@ const StepSchedule = ({ form, onChange }: StepScheduleProps) => {
           </button>
         </div>
         {form.tieneRestricciones && (
-          <div className="animate-slide-in flex flex-wrap gap-3">
-            {DIETARY_OPTIONS.map((opt) => (
-              <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.restriccionesDieteticas.includes(opt.value)}
-                  onChange={() => toggleDietary(opt.value)}
-                  className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
-                />
-                <span className="text-sm text-foreground">{opt.label}</span>
-              </label>
-            ))}
+          <div className="animate-slide-in space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Indica cuántas personas tienen cada restricción. El resto se cotiza normal.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {DIETARY_OPTIONS.map((opt) => {
+                const checked = form.restriccionesDieteticas.includes(opt.value);
+                const count = form.dietaryCounts?.find(c => c.tipo === opt.value)?.cantidad ?? 0;
+                return (
+                  <div key={opt.value} className="flex items-center gap-2 px-3 py-2 rounded border border-border bg-card">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleDietary(opt.value)}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-ring"
+                    />
+                    <span className="text-sm text-foreground flex-1">{opt.label}</span>
+                    {checked && (
+                      <input
+                        type="number"
+                        min={1}
+                        max={form.personas || 999}
+                        value={count || 1}
+                        onChange={(e) => setDietaryCount(opt.value, Number(e.target.value))}
+                        className="w-16 px-2 py-1 rounded border border-border text-sm text-right"
+                      />
+                    )}
+                    {checked && <span className="text-xs text-muted-foreground">pers.</span>}
+                  </div>
+                );
+              })}
+            </div>
+            {(() => {
+              const sum = (form.dietaryCounts || []).reduce((a, c) => a + (c.cantidad || 0), 0);
+              if (sum > (form.personas || 0)) {
+                return <p className="text-xs text-destructive">⚠️ La suma ({sum}) supera el total de personas ({form.personas}).</p>;
+              }
+              return null;
+            })()}
           </div>
         )}
       </div>

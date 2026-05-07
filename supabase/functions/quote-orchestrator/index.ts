@@ -655,7 +655,7 @@ serve(async (req) => {
           : 'banda_120_mas';
 
         const ppBand = (() => {
-          const b = (req as QuoteRequest).budgetPerPerson || 0;
+          const b = body.budgetPerPerson || 0;
           if (!b) return null;
           if (b < 250) return 'menor_250';
           if (b < 350) return 'rango_250_350';

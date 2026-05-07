@@ -254,6 +254,9 @@ const QuotePage = () => {
         budgetEnabled: hasBudget === true,
         budgetPerPerson: hasBudget === true ? budget : undefined,
         dietaryRestrictions: dietary,
+        dietaryCounts: Object.entries(dietaryDistribution)
+          .filter(([, v]) => v > 0)
+          .map(([k, v]) => ({ tipo: k, cantidad: v as number })),
         contactName: clientName,
         companyName: empresa,
       }).then(data => {

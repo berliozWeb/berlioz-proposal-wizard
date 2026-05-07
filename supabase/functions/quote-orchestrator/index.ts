@@ -105,6 +105,10 @@ interface Package {
   rankingScore: number;
   isRecommended: boolean;
   highlights: string[];
+  /** Set true when budgetPerPerson was provided but pricePerPerson exceeds it after composition. */
+  excedePresupuesto?: boolean;
+  /** When excedePresupuesto, this is the absolute over-amount per person. */
+  diferenciaPresupuesto?: number;
 }
 
 // ═══ CONSTANTS ═══

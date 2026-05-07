@@ -1276,6 +1276,8 @@ const QuotePage = () => {
                 smartQuoteData={smartData}
                 smartQuoteLoading={smartLoading}
                 onSubmitFeedback={submitFeedback}
+                budgetPerPerson={hasBudget === true ? budget : undefined}
+                dietaryDistribution={dietaryDistribution}
               />
             </div>
           )}

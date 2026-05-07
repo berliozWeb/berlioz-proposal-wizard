@@ -35,6 +35,7 @@ interface QuoteRequest {
   budgetEnabled?: boolean;
   budgetPerPerson?: number;
   dietaryRestrictions?: string[];
+  dietaryCounts?: { tipo: string; cantidad: number }[];
   contactName?: string;
   companyName?: string;
   userId?: string;
@@ -387,7 +388,17 @@ OUTPUT FORMAT:
 - Hora: ${req.eventTime || 'sin definir'}
 - Duración: ${req.durationHours || 'sin definir'} horas
 - Presupuesto: ${req.budgetEnabled ? '$' + req.budgetPerPerson + '/persona' : 'sin restricción'}
-- Dieta: ${req.dietaryRestrictions?.join(', ') || 'ninguna'}
+- Dieta: ${(() => {
+    const counts = req.dietaryCounts || [];
+    if (counts.length === 0) return 'ninguna';
+    const total = req.peopleCount;
+    const used = counts.reduce((s, c) => s + (c.cantidad || 0), 0);
+    const normales = Math.max(0, total - used);
+    const parts = counts.filter(c => c.cantidad > 0).map(c => `${c.cantidad} ${c.tipo}`);
+    if (normales > 0) parts.push(`${normales} sin restricción`);
+    return `DISTRIBUCIÓN PARCIAL — ${parts.join(', ')}. NO conviertas todo el menú a la dieta minoritaria; solo ofrece OPCIONES ALTERNATIVAS para los subgrupos restringidos (ej: si hay 2 veganos en 10 personas, propón 2 cajas veganas + 8 normales). Las bebidas y snacks compartidos van por el total.`;
+  })()}
+${req.budgetEnabled && req.budgetPerPerson ? `\n- LÍMITE DURO DE PRESUPUESTO: el precio/persona del paquete EQUILIBRADO no debe exceder $${req.budgetPerPerson} (incluye IVA y envío). Selecciona productos que sumen menos. Esencial debe estar por debajo; Experiencia puede excederlo hasta 25%.` : ''}
 ${multiBlock}
 ${feedbackSummary ? `HISTORIAL DE PREFERENCIAS:\n${feedbackSummary}\n` : ''}
 CANDIDATOS DEL CATÁLOGO (${catalog.length} productos):

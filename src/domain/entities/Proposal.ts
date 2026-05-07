@@ -21,6 +21,8 @@ export interface Package {
   deliveryFee: number;
   total: number;
   pricePerPerson: number;
+  excedePresupuesto?: boolean;
+  diferenciaPresupuesto?: number;
 }
 
 export interface Proposal {

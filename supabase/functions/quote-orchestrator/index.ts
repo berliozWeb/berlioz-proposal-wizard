@@ -730,6 +730,16 @@ serve(async (req) => {
         fb = true;
         pkgs = buildHeuristicFallback(allProducts, reqOverride, parentMap, reqOverride.peopleCount);
       }
+      // Budget enforcement flag
+      if (reqOverride.budgetEnabled && reqOverride.budgetPerPerson && reqOverride.budgetPerPerson > 0) {
+        const limit = reqOverride.budgetPerPerson;
+        for (const p of pkgs) {
+          if (p.pricePerPerson > limit) {
+            p.excedePresupuesto = true;
+            p.diferenciaPresupuesto = Math.round((p.pricePerPerson - limit) * 100) / 100;
+          }
+        }
+      }
       return { packages: pkgs, engineVersion: ev, fallbackUsed: fb };
     };
 

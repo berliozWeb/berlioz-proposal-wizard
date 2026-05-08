@@ -373,10 +373,11 @@ REGLAS DE PRESUPUESTO — CRÍTICO, el sistema validará y rechazará tu respues
 - ESENCIAL siempre debe estar por debajo del presupuesto. EXPERIENCIA puede excederlo hasta 25%.
 
 REGLAS DIETÉTICAS PARCIALES — CRÍTICO:
-- Si recibes una distribución parcial (ej: "2 veganos en grupo de 10"), NO conviertas todo el menú a vegano.
-- En su lugar: agrega un item adicional vegano al paquete (ej: "PINK BOX VEGANO" con qty=2) Y mantén los items normales con qty para el resto (8 personas).
-- Para esto, en selectedProductIds puedes incluir tanto items normales como los alternativos dietéticos: el sistema interpretará la cantidad correctamente cuando el id del producto contiene tags compatibles.
-- Las bebidas y snacks compartidos siempre van por el total del grupo.
+- Si recibes una distribución parcial (ej: "1 vegano + 1 sin_gluten + 14 sin restricción" en grupo de 16), NUNCA conviertas todo el menú al perfil minoritario.
+- En su lugar, para CADA subgrupo dietético con cantidad>0, agrega 1 producto del catálogo con dietary_tags compatibles y especifica su cantidad EXACTA en productQuantities (ej: { "<id_producto_vegano>": 1, "<id_producto_sin_gluten>": 1 }).
+- Mantén el item principal normal con cantidad = (personas_totales - suma_de_dietarios) para no duplicar (ej: 14 desayunos normales + 1 vegano + 1 sin_gluten).
+- Las bebidas y snacks compartidos siempre van por el total del grupo (no los reduzcas).
+- Devuelve SIEMPRE un objeto productQuantities con la cantidad por producto cuando haya distribución dietética parcial o cuando una cantidad difiera del default.
 
 Responde SOLO con JSON válido, sin texto adicional ni markdown.
 
@@ -388,7 +389,8 @@ OUTPUT FORMAT:
       "tagline": "frase corta memorable",
       "narrativa": "2 oraciones sobre por qué este paquete encaja con el evento",
       "selectedProductIds": ["id1", "id2"],
-      "productReasons": { "id1": "razón corta max 8 palabras", "id2": "razón" }
+      "productReasons": { "id1": "razón corta max 8 palabras", "id2": "razón" },
+      "productQuantities": { "id1": 14, "id2": 1 }
     },
     { "tier": "equilibrado", ... },
     { "tier": "experiencia", ... }

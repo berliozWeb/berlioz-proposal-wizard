@@ -345,6 +345,18 @@ async function composeWithClaude(
     dietary_tags: (p.dietary_tags || []).join(','),
   }));
 
+  // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items
+  // (e.g. fruta etiquetada como vegano pero NO keto cuando piden keto).
+  const dietaryWhitelists: Record<string, { id: string; nombre: string; precio: number; categoria: string | null }[]> = {};
+  const activeRestrictions = (req.dietaryCounts || []).filter(c => c.cantidad > 0).map(c => c.tipo);
+  for (const r of activeRestrictions) {
+    const rl = r.toLowerCase();
+    dietaryWhitelists[r] = products
+      .filter(p => (p.dietary_tags || []).some(t => t.toLowerCase().includes(rl)))
+      .slice(0, 25)
+      .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, categoria: p.categoria }));
+  }
+
   const isMulti = req.mode === 'multi' && Array.isArray(req.deliveryGroups) && req.deliveryGroups.length > 0;
 
   const multiInstruction = isMulti
@@ -375,7 +387,9 @@ REGLAS DE PRESUPUESTO — CRÍTICO, el sistema validará y rechazará tu respues
 
 REGLAS DIETÉTICAS PARCIALES — CRÍTICO:
 - Si recibes una distribución parcial (ej: "1 vegano + 1 sin_gluten + 14 sin restricción" en grupo de 16), NUNCA conviertas todo el menú al perfil minoritario.
-- En su lugar, para CADA subgrupo dietético con cantidad>0, agrega 1 producto del catálogo con dietary_tags compatibles y especifica su cantidad EXACTA en productQuantities (ej: { "<id_producto_vegano>": 1, "<id_producto_sin_gluten>": 1 }).
+- En su lugar, para CADA subgrupo dietético con cantidad>0, agrega productos del catálogo con dietary_tags compatibles y especifica su cantidad EXACTA en productQuantities (ej: { "<id_producto_vegano>": 1, "<id_producto_sin_gluten>": 1 }).
+- ⛔ COMPATIBILIDAD ESTRICTA: SOLO puedes elegir productos para una restricción si su campo dietary_tags contiene esa restricción. NO uses fruta, jugos azucarados, panes ni cereales para keto. NO uses lácteos para sin_lactosa o vegano. NO uses harinas de trigo para sin_gluten. Si el catálogo no tiene un item compatible para una restricción, omítelo y déjalo claro en productReasons en lugar de inventar uno incompatible.
+- Usa OBLIGATORIAMENTE solo IDs que aparezcan en la sección "WHITELIST DIETÉTICA" del prompt cuando elijas productos para esa restricción.
 - Mantén el item principal normal con cantidad = (personas_totales - suma_de_dietarios) para no duplicar (ej: 14 desayunos normales + 1 vegano + 1 sin_gluten).
 - Las bebidas y snacks compartidos siempre van por el total del grupo (no los reduzcas).
 - Devuelve SIEMPRE un objeto productQuantities con la cantidad por producto cuando haya distribución dietética parcial o cuando una cantidad difiera del default.
@@ -434,6 +448,12 @@ ${req.budgetEnabled && req.budgetPerPerson ? `\n- 🚨 LÍMITE DURO DE PRESUPUES
    • EXPERIENCIA: puede llegar a $${Math.round(req.budgetPerPerson * 1.25)} máximo (no más).
    Cálculo aproximado: (suma de precio*qty) / personas + (360+IVA)/personas. Para ${req.peopleCount} personas el envío+IVA por persona ≈ $${Math.round((360 * 1.16) / req.peopleCount)}.` : ''}
 ${multiBlock}
+${activeRestrictions.length > 0 ? `\nWHITELIST DIETÉTICA — únicos IDs válidos por restricción (no inventes ni uses otros para esa restricción):
+${activeRestrictions.map(r => {
+  const list = dietaryWhitelists[r] || [];
+  if (list.length === 0) return `• ${r}: ⚠️ catálogo sin opciones compatibles — omite este subgrupo y anótalo en productReasons.`;
+  return `• ${r} (${list.length} opciones): ${list.map(p => `${p.id}=${p.nombre} ($${p.precio})`).join(' | ')}`;
+}).join('\n')}\n` : ''}
 ${feedbackSummary ? `HISTORIAL DE PREFERENCIAS:\n${feedbackSummary}\n` : ''}
 CANDIDATOS DEL CATÁLOGO (${catalog.length} productos):
 ${JSON.stringify(catalog)}

@@ -318,6 +318,8 @@ interface ClaudePackageSpec {
   narrativa: string;
   selectedProductIds: string[];
   productReasons: Record<string, string>;
+  /** Optional explicit quantities per productId. If omitted, system uses pricing_model defaults. */
+  productQuantities?: Record<string, number>;
 }
 
 async function composeWithClaude(

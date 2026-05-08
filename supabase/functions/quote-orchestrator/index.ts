@@ -416,9 +416,22 @@ OUTPUT FORMAT:
     const normales = Math.max(0, total - used);
     const parts = counts.filter(c => c.cantidad > 0).map(c => `${c.cantidad} ${c.tipo}`);
     if (normales > 0) parts.push(`${normales} sin restricción`);
-    return `DISTRIBUCIÓN PARCIAL — ${parts.join(', ')}. NO conviertas todo el menú a la dieta minoritaria; solo ofrece OPCIONES ALTERNATIVAS para los subgrupos restringidos (ej: si hay 2 veganos en 10 personas, propón 2 cajas veganas + 8 normales). Las bebidas y snacks compartidos van por el total.`;
+    const dietaryInstructions = counts.filter(c => c.cantidad > 0).map(c =>
+      `   • ${c.cantidad} producto(s) con dietary_tags que contenga "${c.tipo}" (qty=${c.cantidad} en productQuantities)`
+    ).join('\n');
+    return `DISTRIBUCIÓN PARCIAL OBLIGATORIA — ${parts.join(', ')}.
+   ⚠️ ACCIÓN REQUERIDA — para CADA tier debes incluir en selectedProductIds:
+${dietaryInstructions}
+   • El item PRINCIPAL normal (ej: BREAKFAST IN ROMA) con qty=${normales} (sin restricción)
+   • Bebidas/snacks compartidos van por el total ${total}
+   Ejemplo: si hay 1 vegano + 1 sin_gluten en 16 personas → 14 BREAKFAST normal + 1 BREAKFAST VEGETARIAN + 1 opción sin gluten + bebidas x16.
+   USA productQuantities OBLIGATORIAMENTE para fijar las cantidades exactas.`;
   })()}
-${req.budgetEnabled && req.budgetPerPerson ? `\n- LÍMITE DURO DE PRESUPUESTO: el precio/persona del paquete EQUILIBRADO no debe exceder $${req.budgetPerPerson} (incluye IVA y envío). Selecciona productos que sumen menos. Esencial debe estar por debajo; Experiencia puede excederlo hasta 25%.` : ''}
+${req.budgetEnabled && req.budgetPerPerson ? `\n- 🚨 LÍMITE DURO DE PRESUPUESTO: el cliente fijó $${req.budgetPerPerson}/persona (IVA y envío incluidos).
+   • EQUILIBRADO: pricePerPerson DEBE ser <= $${req.budgetPerPerson}. Si tu selección excede, elimina el item más caro o cámbialo por uno barato del catálogo.
+   • ESENCIAL: debe ser <= $${Math.round(req.budgetPerPerson * 0.85)} (15% bajo el presupuesto).
+   • EXPERIENCIA: puede llegar a $${Math.round(req.budgetPerPerson * 1.25)} máximo (no más).
+   Cálculo aproximado: (suma de precio*qty) / personas + (360+IVA)/personas. Para ${req.peopleCount} personas el envío+IVA por persona ≈ $${Math.round((360 * 1.16) / req.peopleCount)}.` : ''}
 ${multiBlock}
 ${feedbackSummary ? `HISTORIAL DE PREFERENCIAS:\n${feedbackSummary}\n` : ''}
 CANDIDATOS DEL CATÁLOGO (${catalog.length} productos):

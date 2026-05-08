@@ -485,7 +485,10 @@ function buildPackageFromClaude(
     const product = productMap.get(productId);
     if (!product) continue;
 
-    const qty = product.pricing_model === 'per_person' ? people : 1;
+    const overrideQty = spec.productQuantities?.[productId];
+    const qty = typeof overrideQty === 'number' && overrideQty > 0
+      ? overrideQty
+      : (product.pricing_model === 'per_person' ? people : 1);
     const reason = spec.productReasons?.[productId] || product.recommendationReason;
     items.push({
       productId: product.id,

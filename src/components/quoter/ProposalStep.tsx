@@ -914,27 +914,12 @@ export default function ProposalStep(props: ProposalStepProps) {
                       </p>
                       {(() => {
                         const ppp = t.total / Math.max(1, people);
-                        const over = budgetPerPerson && budgetPerPerson > 0 ? ppp > budgetPerPerson : false;
-                        const overPct = over ? ((ppp - budgetPerPerson!) / budgetPerPerson!) * 100 : 0;
-                        const tone = !budgetPerPerson
-                          ? 'neutral'
-                          : !over
-                            ? 'green'
-                            : overPct <= 10 ? 'amber' : 'red';
                         return (
                           <span
-                            className={cn(
-                              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-mono text-[11px] font-bold whitespace-nowrap',
-                              tone === 'green' && 'bg-emerald-50 text-emerald-700 border border-emerald-200',
-                              tone === 'amber' && 'bg-amber-50 text-amber-800 border border-amber-200',
-                              tone === 'red' && 'bg-red-50 text-red-700 border border-red-200',
-                              tone === 'neutral' && 'bg-[#014D6F]/5 text-[#014D6F] border border-[#014D6F]/15',
-                            )}
+                            className="font-heading text-[12px] font-semibold text-[#014D6F]/80 whitespace-nowrap"
                             title={budgetPerPerson ? `Presupuesto: $${budgetPerPerson}/persona` : 'Precio por persona (incluye IVA y envío)'}
                           >
                             {formatMXN(ppp)}/persona
-                            {budgetPerPerson && over && ` · +${overPct.toFixed(0)}%`}
-                            {budgetPerPerson && !over && ` · ✓`}
                           </span>
                         );
                       })()}

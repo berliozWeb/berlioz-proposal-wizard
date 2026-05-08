@@ -318,6 +318,8 @@ interface ClaudePackageSpec {
   narrativa: string;
   selectedProductIds: string[];
   productReasons: Record<string, string>;
+  /** Optional explicit quantities per productId. If omitted, system uses pricing_model defaults. */
+  productQuantities?: Record<string, number>;
 }
 
 async function composeWithClaude(
@@ -371,10 +373,11 @@ REGLAS DE PRESUPUESTO — CRÍTICO, el sistema validará y rechazará tu respues
 - ESENCIAL siempre debe estar por debajo del presupuesto. EXPERIENCIA puede excederlo hasta 25%.
 
 REGLAS DIETÉTICAS PARCIALES — CRÍTICO:
-- Si recibes una distribución parcial (ej: "2 veganos en grupo de 10"), NO conviertas todo el menú a vegano.
-- En su lugar: agrega un item adicional vegano al paquete (ej: "PINK BOX VEGANO" con qty=2) Y mantén los items normales con qty para el resto (8 personas).
-- Para esto, en selectedProductIds puedes incluir tanto items normales como los alternativos dietéticos: el sistema interpretará la cantidad correctamente cuando el id del producto contiene tags compatibles.
-- Las bebidas y snacks compartidos siempre van por el total del grupo.
+- Si recibes una distribución parcial (ej: "1 vegano + 1 sin_gluten + 14 sin restricción" en grupo de 16), NUNCA conviertas todo el menú al perfil minoritario.
+- En su lugar, para CADA subgrupo dietético con cantidad>0, agrega 1 producto del catálogo con dietary_tags compatibles y especifica su cantidad EXACTA en productQuantities (ej: { "<id_producto_vegano>": 1, "<id_producto_sin_gluten>": 1 }).
+- Mantén el item principal normal con cantidad = (personas_totales - suma_de_dietarios) para no duplicar (ej: 14 desayunos normales + 1 vegano + 1 sin_gluten).
+- Las bebidas y snacks compartidos siempre van por el total del grupo (no los reduzcas).
+- Devuelve SIEMPRE un objeto productQuantities con la cantidad por producto cuando haya distribución dietética parcial o cuando una cantidad difiera del default.
 
 Responde SOLO con JSON válido, sin texto adicional ni markdown.
 
@@ -386,7 +389,8 @@ OUTPUT FORMAT:
       "tagline": "frase corta memorable",
       "narrativa": "2 oraciones sobre por qué este paquete encaja con el evento",
       "selectedProductIds": ["id1", "id2"],
-      "productReasons": { "id1": "razón corta max 8 palabras", "id2": "razón" }
+      "productReasons": { "id1": "razón corta max 8 palabras", "id2": "razón" },
+      "productQuantities": { "id1": 14, "id2": 1 }
     },
     { "tier": "equilibrado", ... },
     { "tier": "experiencia", ... }
@@ -412,9 +416,22 @@ OUTPUT FORMAT:
     const normales = Math.max(0, total - used);
     const parts = counts.filter(c => c.cantidad > 0).map(c => `${c.cantidad} ${c.tipo}`);
     if (normales > 0) parts.push(`${normales} sin restricción`);
-    return `DISTRIBUCIÓN PARCIAL — ${parts.join(', ')}. NO conviertas todo el menú a la dieta minoritaria; solo ofrece OPCIONES ALTERNATIVAS para los subgrupos restringidos (ej: si hay 2 veganos en 10 personas, propón 2 cajas veganas + 8 normales). Las bebidas y snacks compartidos van por el total.`;
+    const dietaryInstructions = counts.filter(c => c.cantidad > 0).map(c =>
+      `   • ${c.cantidad} producto(s) con dietary_tags que contenga "${c.tipo}" (qty=${c.cantidad} en productQuantities)`
+    ).join('\n');
+    return `DISTRIBUCIÓN PARCIAL OBLIGATORIA — ${parts.join(', ')}.
+   ⚠️ ACCIÓN REQUERIDA — para CADA tier debes incluir en selectedProductIds:
+${dietaryInstructions}
+   • El item PRINCIPAL normal (ej: BREAKFAST IN ROMA) con qty=${normales} (sin restricción)
+   • Bebidas/snacks compartidos van por el total ${total}
+   Ejemplo: si hay 1 vegano + 1 sin_gluten en 16 personas → 14 BREAKFAST normal + 1 BREAKFAST VEGETARIAN + 1 opción sin gluten + bebidas x16.
+   USA productQuantities OBLIGATORIAMENTE para fijar las cantidades exactas.`;
   })()}
-${req.budgetEnabled && req.budgetPerPerson ? `\n- LÍMITE DURO DE PRESUPUESTO: el precio/persona del paquete EQUILIBRADO no debe exceder $${req.budgetPerPerson} (incluye IVA y envío). Selecciona productos que sumen menos. Esencial debe estar por debajo; Experiencia puede excederlo hasta 25%.` : ''}
+${req.budgetEnabled && req.budgetPerPerson ? `\n- 🚨 LÍMITE DURO DE PRESUPUESTO: el cliente fijó $${req.budgetPerPerson}/persona (IVA y envío incluidos).
+   • EQUILIBRADO: pricePerPerson DEBE ser <= $${req.budgetPerPerson}. Si tu selección excede, elimina el item más caro o cámbialo por uno barato del catálogo.
+   • ESENCIAL: debe ser <= $${Math.round(req.budgetPerPerson * 0.85)} (15% bajo el presupuesto).
+   • EXPERIENCIA: puede llegar a $${Math.round(req.budgetPerPerson * 1.25)} máximo (no más).
+   Cálculo aproximado: (suma de precio*qty) / personas + (360+IVA)/personas. Para ${req.peopleCount} personas el envío+IVA por persona ≈ $${Math.round((360 * 1.16) / req.peopleCount)}.` : ''}
 ${multiBlock}
 ${feedbackSummary ? `HISTORIAL DE PREFERENCIAS:\n${feedbackSummary}\n` : ''}
 CANDIDATOS DEL CATÁLOGO (${catalog.length} productos):
@@ -483,7 +500,10 @@ function buildPackageFromClaude(
     const product = productMap.get(productId);
     if (!product) continue;
 
-    const qty = product.pricing_model === 'per_person' ? people : 1;
+    const overrideQty = spec.productQuantities?.[productId];
+    const qty = typeof overrideQty === 'number' && overrideQty > 0
+      ? overrideQty
+      : (product.pricing_model === 'per_person' ? people : 1);
     const reason = spec.productReasons?.[productId] || product.recommendationReason;
     items.push({
       productId: product.id,

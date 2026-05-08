@@ -365,6 +365,7 @@ REGLAS ABSOLUTAS — NUNCA violar:
 - experiencia: 4-6 items, todo premium, máxima variedad
 - Prioriza productos con score alto y destacado=true
 - Cada tier debe usar productos DIFERENTES entre sí cuando sea posible
+- NUNCA repitas el mismo productId dentro de selectedProductIds del mismo tier. Cada producto aparece UNA sola vez con su cantidad total en productQuantities.
 
 REGLAS DE PRESUPUESTO — CRÍTICO, el sistema validará y rechazará tu respuesta:
 - Si el usuario dio un presupuesto/persona, el TIER EQUILIBRADO debe tener pricePerPerson <= presupuesto.

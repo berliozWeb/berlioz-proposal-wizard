@@ -123,8 +123,21 @@ function buildFromSmartQuote(smartData: SmartQuoteResponse): Record<PackageTier,
     const tier = pkg.tier as PackageTier;
     if (!result[tier]) continue;
 
+    // Deduplicate by productId (defensive: backend may have repeats)
+    const merged = new Map<string, typeof pkg.items[0]>();
+    for (const it of pkg.items) {
+      const key = it.productId || it.productName;
+      const prev = merged.get(key);
+      if (prev) {
+        prev.quantity += it.quantity;
+        prev.computedPrice = prev.unitPrice * prev.quantity;
+      } else {
+        merged.set(key, { ...it });
+      }
+    }
+
     result[tier] = {
-      items: pkg.items.map(item => ({
+      items: Array.from(merged.values()).map(item => ({
         instanceId: nextId(),
         productName: item.productName,
         unitPrice: item.unitPrice,

@@ -496,7 +496,9 @@ function buildPackageFromClaude(
   };
 
   const items: PackageItem[] = [];
-  for (const productId of spec.selectedProductIds) {
+  const seen = new Map<string, number>(); // productId -> items index
+  const uniqueIds = Array.from(new Set(spec.selectedProductIds));
+  for (const productId of uniqueIds) {
     const product = productMap.get(productId);
     if (!product) continue;
 
@@ -505,6 +507,13 @@ function buildPackageFromClaude(
       ? overrideQty
       : (product.pricing_model === 'per_person' ? people : 1);
     const reason = spec.productReasons?.[productId] || product.recommendationReason;
+    if (seen.has(productId)) {
+      const idx = seen.get(productId)!;
+      items[idx].quantity += qty;
+      items[idx].computedPrice = items[idx].unitPrice * items[idx].quantity;
+      continue;
+    }
+    seen.set(productId, items.length);
     items.push({
       productId: product.id,
       parentProductId: product.parent_id,

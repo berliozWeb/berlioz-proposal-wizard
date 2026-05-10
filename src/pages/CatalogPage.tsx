@@ -347,8 +347,8 @@ const CatalogPage = () => {
                           )}
                           <TagChips tags={tagsForChips} />
 
-                          <div className="mt-auto flex items-center justify-between">
-                            <div>
+                          <div className="mt-auto flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
                               {hasDiscount ? (
                                 <div className="flex items-baseline gap-1.5">
                                   <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>${product.precio_rebajado}</span>
@@ -361,7 +361,7 @@ const CatalogPage = () => {
                               ) : price > 0 ? (
                                 <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>${price.toLocaleString("es-MX")}</span>
                               ) : (
-                                <span className="text-sm text-muted-foreground italic">Precio variable</span>
+                                <span className="text-xs text-muted-foreground italic truncate block">Cotizar</span>
                               )}
                             </div>
 

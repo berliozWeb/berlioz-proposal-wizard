@@ -23,6 +23,7 @@ import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
 import { useProductos, type Producto } from "@/hooks/useProductos";
+import { getCategoryFallback } from "@/hooks/useCatalogoCotizador";
 
 const CATEGORY_FILTERS = [
   { value: "favoritos", label: "Favoritos", emoji: "⭐" },
@@ -205,7 +206,7 @@ const CatalogPage = () => {
                 {filtered.map((product, i) => {
                   const price = getDisplayPrice(product);
                   const inCart = isInCart(product.id);
-                  const imgSrc = product.imagen_url || `https://ktyupdpzgmzzfkskkvpn.supabase.co/storage/v1/object/public/Berlioz-images/${product.imagen}`;
+                  const imgSrc = product.imagen_url || getCategoryFallback(product.categoria);
 
                   return (
                     <RevealOnScroll key={product.id} delay={i % 3 * 100}>

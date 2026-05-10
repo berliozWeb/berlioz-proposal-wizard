@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchExternalCatalog, invalidateExternalCatalog } from '@/lib/externalCatalog';
 
 export interface Producto {
   id: string;
@@ -36,25 +36,51 @@ interface Filters {
 export function useProductos(filters: Filters = {}) {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    let q = supabase.from('productos').select('*').order('orden').order('nombre');
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
 
-    if (filters.activo !== undefined) q = q.eq('activo', filters.activo);
-    if (filters.categoria) q = q.eq('categoria', filters.categoria);
-    if (filters.parent_id) q = q.eq('parent_id', filters.parent_id);
-    if (filters.tipo) {
-      if (Array.isArray(filters.tipo)) q = q.in('tipo', filters.tipo);
-      else q = q.eq('tipo', filters.tipo);
-    }
+    fetchExternalCatalog()
+      .then((all) => {
+        if (cancelled) return;
+        const tipos = filters.tipo
+          ? Array.isArray(filters.tipo)
+            ? filters.tipo
+            : [filters.tipo]
+          : null;
+        const filtered = all.filter((p) => {
+          if (filters.activo !== undefined && p.activo !== filters.activo) return false;
+          if (filters.categoria && p.categoria !== filters.categoria) return false;
+          if (filters.parent_id && p.parent_id !== filters.parent_id) return false;
+          if (tipos && !tipos.includes(p.tipo ?? '')) return false;
+          return true;
+        });
+        setProductos(filtered);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('[useProductos] catálogo externo falló:', err);
+        setError('No pudimos cargar el catálogo. Intenta de nuevo.');
+        setProductos([]);
+        setLoading(false);
+      });
 
-    q.then(({ data, error }) => {
-      if (!error && data) setProductos(data as unknown as Producto[]);
-      setLoading(false);
-    });
-  }, [JSON.stringify(filters)]);
+    return () => {
+      cancelled = true;
+    };
+  }, [JSON.stringify(filters), reloadKey]);
 
-  return { productos, loading };
+  const reload = () => {
+    invalidateExternalCatalog();
+    setReloadKey((k) => k + 1);
+  };
+
+  return { productos, loading, error, reload };
 }
 
 export function useMenuProductos(categoria?: string) {

@@ -17,6 +17,7 @@ export interface Producto {
   variantes: string | null;
   imagen: string | null;
   imagen_url: string | null;
+  imagenes_galeria: string[] | null;
   parent_id: string | null;
   activo: boolean;
   destacado: boolean;

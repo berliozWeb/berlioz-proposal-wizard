@@ -15,6 +15,7 @@ import {
 import BaseLayout from "@/components/layout/BaseLayout";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchExternalCatalog } from "@/lib/externalCatalog";
 import { cn } from "@/lib/utils";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import CartSidebar from "@/components/ui/CartSidebar";
@@ -99,27 +100,26 @@ const ProductDetailPage = () => {
           is_bestseller: !!local.isTopSeller,
         });
       } else {
-        const { data, error } = await supabase
-          .from("productos")
-          .select("*")
-          .eq("id", slug)
-          .maybeSingle();
-        
-        if (!error && data) {
-          const imgUrl = data.imagen_url || (data.imagen ? `https://ktyupdpzgmzzfkskkvpn.supabase.co/storage/v1/object/public/Berlioz-images/${data.imagen}` : null);
-          setProduct({
-            id: data.id,
-            name: data.nombre,
-            slug: data.id,
-            description: data.descripcion,
-            short_description: (data as any).descripcion_corta || data.descripcion,
-            price_per_person: data.precio ?? data.precio_min ?? 0,
-            image_url: imgUrl,
-            occasion: data.categoria ? [data.categoria] : [],
-            dietary_tags: [],
-            included_items: stripHtml(data.descripcion ?? '').split(/\n+/).filter((l: string) => l.trim().length > 3),
-            is_bestseller: data.destacado ?? false,
-          });
+        try {
+          const all = await fetchExternalCatalog();
+          const data = all.find((p) => p.id === slug);
+          if (data) {
+            setProduct({
+              id: data.id,
+              name: data.nombre,
+              slug: data.id,
+              description: data.descripcion,
+              short_description: data.descripcion_corta || data.descripcion,
+              price_per_person: data.precio ?? data.precio_min ?? 0,
+              image_url: data.imagen_url,
+              occasion: data.categoria ? [data.categoria] : [],
+              dietary_tags: data.dietary_tags ?? [],
+              included_items: stripHtml(data.descripcion ?? '').split(/\n+/).filter((l: string) => l.trim().length > 3),
+              is_bestseller: data.destacado ?? false,
+            });
+          }
+        } catch (err) {
+          console.error('[ProductDetailPage] catálogo externo falló:', err);
         }
       }
       

@@ -5,17 +5,22 @@ const CATALOG_URL =
 
 interface RemoteProduct {
   id: string;
+  woo_tipo?: string | null;
   sku?: string | null;
   nombre: string;
   descripcion_corta?: string | null;
   descripcion_larga?: string | null;
   precio_base?: number | null;
   precio_max?: number | null;
+  precio_rebajado?: number | null;
   categoria?: string | null;
   imagen_url?: string | null;
+  imagenes_galeria?: string[] | null;
   tags?: string[] | null;
   visible_en_web?: boolean;
   activo?: boolean;
+  destacado?: boolean;
+  orden_display?: number | null;
 }
 
 interface RemoteCatalogResponse {
@@ -55,22 +60,23 @@ function mapRemoteToProducto(r: RemoteProduct, idx: number): Producto {
     id: r.id,
     sku: r.sku ?? null,
     nombre: r.nombre,
-    tipo: 'simple',
+    tipo: r.woo_tipo ?? 'simple',
     categoria: normalizeCategoria(r.categoria),
     precio: r.precio_base ?? null,
     precio_min: r.precio_base ?? null,
     precio_max: r.precio_max ?? null,
-    precio_rebajado: null,
+    precio_rebajado: r.precio_rebajado ?? null,
     descripcion: r.descripcion_larga ?? null,
     descripcion_corta: r.descripcion_corta ?? null,
     variante_nombre: null,
     variantes: null,
     imagen: null,
     imagen_url: r.imagen_url ?? null,
+    imagenes_galeria: Array.isArray(r.imagenes_galeria) ? r.imagenes_galeria : null,
     parent_id: null,
     activo: isActive,
-    destacado: false,
-    orden: idx,
+    destacado: r.destacado ?? false,
+    orden: r.orden_display ?? idx,
     created_at: null,
     popularity_rank: null,
     dietary_tags: r.tags ?? [],
@@ -91,7 +97,9 @@ export function fetchExternalCatalog(): Promise<Producto[]> {
       }
       const json = (await res.json()) as RemoteCatalogResponse;
       const list = Array.isArray(json?.productos) ? json.productos : [];
-      return list.map(mapRemoteToProducto);
+      return list
+        .filter((p) => p.visible_en_web !== false)
+        .map(mapRemoteToProducto);
     })();
   }
   return cache;

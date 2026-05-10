@@ -51,7 +51,7 @@ function getDisplayPrice(p: Producto): number {
 const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const { addItem, itemCount, isInCart } = useCart();
-  const { productos, loading } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
+  const { productos, loading, error, reload } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
   const [filter, setFilter] = useState(searchParams.get("categoria") || "favoritos");
   const [sort, setSort] = useState("orden");
   const [search, setSearch] = useState("");
@@ -159,7 +159,21 @@ const CatalogPage = () => {
         <div className="flex gap-10">
           {/* Product Grid */}
           <div className="flex-1">
-            {loading ? (
+            {error ? (
+              <div className="text-center py-32 rounded-[40px] border border-dashed border-destructive/40 flex flex-col items-center justify-center bg-destructive/5">
+                <div className="w-24 h-24 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
+                  <ShoppingBag className="w-10 h-10 text-destructive/70" />
+                </div>
+                <h3 className="font-heading text-2xl text-foreground mb-2">No pudimos cargar el catálogo</h3>
+                <p className="font-body text-muted-foreground mb-8 max-w-sm">{error}</p>
+                <button
+                  onClick={reload}
+                  className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="rounded-[32px] border border-border bg-card animate-pulse overflow-hidden">

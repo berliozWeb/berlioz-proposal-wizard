@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 
 /** Strip HTML tags and decode entities for plain text display */
@@ -24,6 +24,80 @@ import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
 import { useProductos, type Producto } from "@/hooks/useProductos";
 import { getCategoryFallback } from "@/hooks/useCatalogoCotizador";
+
+/* ── Tag chips ── */
+const TAG_STYLES: Record<string, { label: string; emoji: string; className: string }> = {
+  vegetariano: { label: 'Vegetariano', emoji: '🌿', className: 'bg-green-100 text-green-800 border-green-200' },
+  vegano:      { label: 'Vegano',      emoji: '🌿', className: 'bg-green-100 text-green-800 border-green-200' },
+  keto:        { label: 'Keto',        emoji: '🥑', className: 'bg-amber-100 text-amber-800 border-amber-200' },
+  sin_gluten:  { label: 'Sin Gluten',  emoji: '🌾', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  'sin gluten':{ label: 'Sin Gluten',  emoji: '🌾', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
+  favorito:    { label: 'Favorito',    emoji: '⭐', className: 'bg-primary/10 text-primary border-primary/20' },
+};
+
+function TagChips({ tags }: { tags: string[] }) {
+  const styled = tags
+    .map((t) => TAG_STYLES[t.toLowerCase().trim()])
+    .filter(Boolean) as { label: string; emoji: string; className: string }[];
+  if (styled.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-2">
+      {styled.map((s, i) => (
+        <span
+          key={i}
+          className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold",
+            s.className
+          )}
+        >
+          <span>{s.emoji}</span> {s.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/* ── Image carousel with dots ── */
+function ProductImageCarousel({
+  images,
+  alt,
+  fallback,
+}: {
+  images: string[];
+  alt: string;
+  fallback: string;
+}) {
+  const [idx, setIdx] = useState(0);
+  const list = images.length > 0 ? images : [fallback];
+  const showDots = list.length >= 2;
+  return (
+    <div className="relative w-full h-full">
+      <img
+        src={list[idx]}
+        alt={alt}
+        loading="lazy"
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
+      />
+      {showDots && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          {list.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIdx(i); }}
+              className={cn(
+                "w-1.5 h-1.5 rounded-full transition-all",
+                idx === i ? "bg-white w-4" : "bg-white/60 hover:bg-white/80"
+              )}
+              aria-label={`Imagen ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const CATEGORY_FILTERS = [
   { value: "favoritos", label: "Favoritos", emoji: "⭐" },

@@ -206,7 +206,10 @@ const CatalogPage = () => {
                 {filtered.map((product, i) => {
                   const price = getDisplayPrice(product);
                   const inCart = isInCart(product.id);
-                  const imgSrc = product.imagen_url || getCategoryFallback(product.categoria);
+                  const imgSrc = product.imagen_url
+                    || (product.imagen
+                      ? `https://ktyupdpzgmzzfkskkvpn.supabase.co/storage/v1/object/public/Berlioz-images/${product.imagen}`
+                      : getCategoryFallback(product.categoria));
 
                   return (
                     <RevealOnScroll key={product.id} delay={i % 3 * 100}>

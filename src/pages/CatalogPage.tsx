@@ -99,17 +99,25 @@ function ProductImageCarousel({
   );
 }
 
-const CATEGORY_FILTERS = [
+const CATEGORY_EMOJIS: Record<string, string> = {
+  "Coffee Break": "☕",
+  "Working Lunch": "🍱",
+  "Desayuno": "🍳",
+  "Bebidas": "🥤",
+  "Snacks": "🍪",
+  "Surtidos": "🥐",
+  "Tortas Piropo": "🥖",
+  "Piropo": "🎂",
+  "Entrega Especial": "🎁",
+  "Otros": "🍽️",
+};
+const STATIC_FILTERS = [
   { value: "favoritos", label: "Favoritos", emoji: "⭐" },
   { value: "todos", label: "Todos", emoji: "🍽️" },
-  { value: "Coffee Break", label: "Coffee Break", emoji: "☕" },
-  { value: "Working Lunch", label: "Working Lunch", emoji: "🍱" },
-  { value: "Desayuno", label: "Desayuno", emoji: "🍳" },
-  { value: "Bebidas", label: "Bebidas", emoji: "🥤" },
+];
+const TAG_FILTERS = [
   { value: "vegano", label: "Vegano/Vegetariano", emoji: "🌱" },
   { value: "keto", label: "Keto", emoji: "🥑" },
-  { value: "Tortas Piropo", label: "Tortas Piropo", emoji: "🥖" },
-  { value: "Entrega Especial", label: "Entrega Especial", emoji: "🎁" },
 ];
 
 const SORT_OPTIONS = [
@@ -133,6 +141,16 @@ const CatalogPage = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Build category chips from actual data
+  const categoryFilters = useMemo(() => {
+    const cats = Array.from(new Set(productos.map((p) => p.categoria).filter(Boolean) as string[])).sort();
+    return [
+      ...STATIC_FILTERS,
+      ...cats.map((c) => ({ value: c, label: c, emoji: CATEGORY_EMOJIS[c] ?? "🍽️" })),
+      ...TAG_FILTERS,
+    ];
+  }, [productos]);
+
   const filtered = useMemo(() => {
     let list = [...productos];
     if (search.trim()) {
@@ -140,8 +158,8 @@ const CatalogPage = () => {
       list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion_corta?.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
     }
     if (filter === "favoritos") {
-      list = list.filter((p) => p.popularity_rank != null);
-      list.sort((a, b) => (a.popularity_rank ?? 999) - (b.popularity_rank ?? 999));
+      list = list.filter((p) => p.destacado);
+      list.sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999));
     } else if (filter === "vegano") {
       list = list.filter((p) => p.dietary_tags?.some(t => ['vegano', 'vegetariano'].includes(t.toLowerCase())));
     } else if (filter === "keto") {
@@ -185,7 +203,7 @@ const CatalogPage = () => {
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-1">
               <div className="flex bg-muted/30 p-1 rounded-2xl border border-border/50">
-                {CATEGORY_FILTERS.map((f) => (
+                {categoryFilters.map((f) => (
                   <button
                     key={f.value}
                     onClick={() => setFilter(f.value)}

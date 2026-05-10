@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 /** Strip HTML tags and decode entities for plain text display */
 function stripHtml(html: string): string {
@@ -133,13 +135,75 @@ function getDisplayPrice(p: Producto): number {
 
 const CatalogPage = () => {
   const [searchParams] = useSearchParams();
-  const { addItem, itemCount, isInCart } = useCart();
+  const { addItem, itemCount, isInCart, items: cartItems } = useCart();
   const { productos, loading, error, reload } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
   const [filter, setFilter] = useState(searchParams.get("categoria") || "favoritos");
   const [sort, setSort] = useState("orden");
   const [search, setSearch] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const navigate = useNavigate();
+
+  /** After adding, fetch quick cross-sell suggestions and show as toast chips */
+  const fetchAndShowSuggestions = useCallback(
+    async (justAdded: { name: string; category?: string; price: number }) => {
+      try {
+        const payload = {
+          cartItems: [
+            ...cartItems.map((i) => ({ name: i.name, category: i.category, price: i.price, qty: i.quantity })),
+            { name: justAdded.name, category: justAdded.category, price: justAdded.price, qty: 1 },
+          ],
+          cartTotal:
+            cartItems.reduce((s, i) => s + i.price * i.quantity, 0) + justAdded.price,
+        };
+        const { data, error } = await supabase.functions.invoke("cart-recommendations", { body: payload });
+        if (error || !data?.recommendations) return;
+        const recs = (data.recommendations as { productName: string; reason?: string }[]).slice(0, 3);
+
+        // Match each rec to an actual product (case-insensitive contains)
+        const matched = recs
+          .map((r) => {
+            const norm = r.productName.toLowerCase();
+            const prod =
+              productos.find((p) => p.nombre.toLowerCase() === norm) ||
+              productos.find((p) => p.nombre.toLowerCase().includes(norm) || norm.includes(p.nombre.toLowerCase()));
+            return prod ? { prod, reason: r.reason } : null;
+          })
+          .filter(Boolean) as { prod: Producto; reason?: string }[];
+
+        if (matched.length === 0) return;
+
+        toast(`También llevan con "${justAdded.name}"`, {
+          duration: 8000,
+          description: (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {matched.map(({ prod }) => (
+                <button
+                  key={prod.id}
+                  onClick={() => {
+                    addItem({
+                      id: prod.id,
+                      name: prod.nombre,
+                      price: getDisplayPrice(prod),
+                      image: prod.imagen_url || undefined,
+                      category: prod.categoria || undefined,
+                      isPerPerson: true,
+                    });
+                    toast.success(`${prod.nombre} añadido`);
+                  }}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold hover:bg-primary/20 transition-colors border border-primary/20"
+                >
+                  + {prod.nombre}
+                </button>
+              ))}
+            </div>
+          ) as any,
+        });
+      } catch {
+        /* silent */
+      }
+    },
+    [cartItems, productos, addItem]
+  );
 
   // Build category chips from actual data
   const categoryFilters = useMemo(() => {
@@ -382,6 +446,11 @@ const CatalogPage = () => {
                                     image: product.imagen_url || undefined,
                                     category: product.categoria || undefined,
                                     isPerPerson: true,
+                                  });
+                                  fetchAndShowSuggestions({
+                                    name: product.nombre,
+                                    category: product.categoria || undefined,
+                                    price,
                                   });
                                 }}
                                 className="h-10 px-4 rounded-xl font-body text-xs font-semibold flex items-center gap-1.5 transition-all bg-primary text-primary-foreground hover:bg-primary/90"

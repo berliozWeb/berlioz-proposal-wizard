@@ -280,22 +280,29 @@ const CatalogPage = () => {
                 {filtered.map((product, i) => {
                   const price = getDisplayPrice(product);
                   const inCart = isInCart(product.id);
-                  const imgSrc = product.imagen_url
+                  const fallbackImg = product.imagen_url
                     || (product.imagen
                       ? `https://ktyupdpzgmzzfkskkvpn.supabase.co/storage/v1/object/public/Berlioz-images/${product.imagen}`
                       : getCategoryFallback(product.categoria));
+                  const galleryImgs = (product.imagenes_galeria && product.imagenes_galeria.length > 0)
+                    ? product.imagenes_galeria
+                    : (product.imagen_url ? [product.imagen_url] : []);
+                  const tagsForChips = [
+                    ...(product.dietary_tags ?? []),
+                    ...(product.destacado ? ['favorito'] : []),
+                  ];
+                  const hasRange = product.precio_max && product.precio && product.precio_max > product.precio;
+                  const hasDiscount = product.precio_rebajado && product.precio && product.precio_rebajado < product.precio;
 
                   return (
                     <RevealOnScroll key={product.id} delay={i % 3 * 100}>
                       <div className="group relative flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                         {/* Image */}
                         <Link to={`/producto/${product.id}`} className="relative aspect-square overflow-hidden bg-muted block">
-                          <img
-                            src={imgSrc}
+                          <ProductImageCarousel
+                            images={galleryImgs}
                             alt={product.nombre}
-                            loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            fallback={fallbackImg}
                           />
                           {/* Category badge */}
                           {product.categoria && (
@@ -320,14 +327,19 @@ const CatalogPage = () => {
                           {(product.descripcion_corta || product.descripcion) && (
                             <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{(product.descripcion_corta || stripHtml(product.descripcion || '')).replace(/\s+/g, ' ').trim()}</p>
                           )}
+                          <TagChips tags={tagsForChips} />
 
                           <div className="mt-auto flex items-center justify-between">
                             <div>
-                              {product.precio_rebajado && product.precio && product.precio_rebajado < product.precio ? (
+                              {hasDiscount ? (
                                 <div className="flex items-baseline gap-1.5">
                                   <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>${product.precio_rebajado}</span>
-                                  <span className="text-sm text-muted-foreground line-through">${product.precio}</span>
+                                  <span className="text-sm text-muted-foreground line-through">${product.precio?.toLocaleString('es-MX')}</span>
                                 </div>
+                              ) : hasRange ? (
+                                <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>
+                                  ${product.precio?.toLocaleString('es-MX')} — ${product.precio_max?.toLocaleString('es-MX')}
+                                </span>
                               ) : price > 0 ? (
                                 <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>${price.toLocaleString("es-MX")}</span>
                               ) : (

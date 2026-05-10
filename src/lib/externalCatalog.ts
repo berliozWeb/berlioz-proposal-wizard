@@ -24,6 +24,31 @@ interface RemoteCatalogResponse {
   categorias?: string[];
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  coffee_break: 'Coffee Break',
+  desayuno: 'Desayuno',
+  working_lunch: 'Working Lunch',
+  bebidas: 'Bebidas',
+  snacks: 'Snacks',
+  surtidos: 'Surtidos',
+  tortas_piropo: 'Tortas Piropo',
+  piropo: 'Piropo',
+  vegano: 'Vegano / Vegetariano',
+  entrega_especial: 'Entrega Especial',
+};
+
+function normalizeCategoria(raw?: string | null): string | null {
+  if (!raw) return null;
+  const key = raw.trim().toLowerCase();
+  if (CATEGORY_LABELS[key]) return CATEGORY_LABELS[key];
+  // generic fallback: snake_case -> Title Case
+  return key
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+    .join(' ');
+}
+
 function mapRemoteToProducto(r: RemoteProduct, idx: number): Producto {
   const isActive = (r.visible_en_web ?? true) && (r.activo ?? true);
   return {
@@ -31,7 +56,7 @@ function mapRemoteToProducto(r: RemoteProduct, idx: number): Producto {
     sku: r.sku ?? null,
     nombre: r.nombre,
     tipo: 'simple',
-    categoria: r.categoria ?? null,
+    categoria: normalizeCategoria(r.categoria),
     precio: r.precio_base ?? null,
     precio_min: r.precio_base ?? null,
     precio_max: r.precio_max ?? null,

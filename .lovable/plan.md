@@ -1,104 +1,75 @@
 
+# Migrar el catálogo de productos al Quote Builder externo
+
 ## Objetivo
+Reemplazar todas las lecturas de la tabla local `productos` por un fetch a:
+`https://rrfvdhegvgmejxmsdijn.supabase.co/functions/v1/get-catalog`
 
-Tres mejoras concretas al cotizador:
+Sin tocar el cotizador, el formulario de contacto, el diseño ni otras secciones — solo la fuente de datos.
 
-1. **Aprendizaje admin → insights**: que tú (admin) puedas calificar/comentar propuestas generadas y que ese feedback alimente automáticamente `sales_insights`.
-2. **Restricciones dietéticas como conteo parcial**: si dices "2 veganos de 10 personas", la propuesta debe incluir 2 opciones veganas + 8 normales (no convertir todo a vegano).
-3. **Precio por persona visible en el header de cada paquete** (junto a "Equilibrado / descripción"), respetando el presupuesto por persona si se indicó.
+## Lugares donde hoy se lee `productos` (auditoría)
+1. `src/hooks/useProductos.ts` → hook raíz que hace `supabase.from('productos')`. Lo consumen:
+   - `src/pages/CatalogPage.tsx` (página de catálogo público)
+   - `src/hooks/useCatalogoCotizador.ts` → consumido por `ProposalStep.tsx` (cotizador)
+2. `src/pages/ProductDetailPage.tsx` → query directo `supabase.from('productos').select(...).eq('id', slug)`
 
----
+> Nota: el cotizador consume el catálogo a través de `useCatalogoCotizador` → `useProductos`. Cambiar la fuente en `useProductos` cumple el requisito sin tocar la UI ni la lógica del cotizador (solo cambia de dónde llegan los datos).
 
-## 1. Loop de aprendizaje (admin feedback → insights)
+## Estrategia
+**Punto único de cambio**: reescribir `useProductos` para que internamente llame a la edge function externa, cachee el resultado en memoria (singleton) y mapee cada producto remoto al tipo local `Producto` para no romper a ningún consumidor.
 
-### UI nueva
-En `src/pages/Propuesta.tsx`, mostrar un panel **solo visible para admins** (usar `is_admin(auth.uid())` ya existente) debajo de cada `PackageCard` con:
-- 👍 / 👎 rápido por paquete
-- Textarea: "¿Qué falta o sobra? ¿Qué regla deberíamos aprender?"
-- Selector de categoría: `presupuesto | operaciones | reglas_negocio | upselling | dietetico | balance_paquete`
-- Botón **"Guardar como insight"**
+## Cambios
 
-### Flujo
-1. El componente llama a una nueva edge function `admin-insight-feedback` con: `{ proposalId, packageTier, rating (-1|+1), comment, category, requestSnapshot }` (snapshot = peopleCount, budget, eventType, dietary).
-2. La edge function:
-   - Inserta en `sales_insights` con `insight_type = category`, `context_key = slug auto-generado` (ej. `feedback_<proposalId>_<tier>`), `insight_text = comment + contexto auto-anexado` ("Para evento X de N personas con presupuesto $Y/p..."), `metadata = { source: 'admin_feedback', rating, proposal_id, snapshot, priority: 'alta' }`.
-   - Si `rating = -1`, también marca con `metadata.priority = 'alta'` para que Claude la priorice más.
-3. Las nuevas reglas son consumidas automáticamente por `quote-orchestrator` en la siguiente cotización (ya tenemos el fetch de `sales_insights` con priorización por `metadata.priority='alta'`).
+### 1. Nuevo módulo `src/lib/externalCatalog.ts`
+- `fetchExternalCatalog()`: hace `fetch` a la URL, devuelve `Producto[]` ya mapeado.
+- Cache en memoria (`let cache: Promise<Producto[]> | null`) para evitar refetch en cada hook.
+- Función `mapRemoteToProducto(remote)` con este mapping:
 
-### Tabla auxiliar opcional
-Crear `proposal_admin_feedback (id, proposal_id, package_tier, rating, comment, category, created_by, created_at)` para auditoría además del insight; el insert en `sales_insights` queda como la "regla aprendida".
+| Remoto                       | Local (`Producto`)                |
+|------------------------------|-----------------------------------|
+| `id`, `sku`, `nombre`        | iguales                           |
+| `descripcion_larga`          | `descripcion`                     |
+| `descripcion_corta`          | `descripcion_corta`               |
+| `precio_base`                | `precio` y `precio_min`           |
+| `precio_max`                 | `precio_max`                      |
+| `categoria`                  | `categoria`                       |
+| `imagen_url`                 | `imagen_url` (`imagen` = null)    |
+| `tags[]`                     | `dietary_tags`                    |
+| `visible_en_web && activo`   | `activo`                          |
+| —                            | `tipo: 'simple'`, `parent_id: null`, `destacado: false`, `orden: 0`, `popularity_rank: null`, `variantes: null`, `precio_rebajado: null`, `variante_nombre: null`, `created_at: null` |
 
-### Resultado
-Cada vez que rechazas una propuesta y dejas un comentario, se vuelve regla viva que Claude leerá la próxima vez.
+### 2. Reescribir `src/hooks/useProductos.ts`
+- Mantener la firma pública (`useProductos`, `useMenuProductos`, `useCatalogoCompleto`, `useVariantes`, interfaz `Producto`, `Filters`).
+- Internamente: `useEffect` con `fetchExternalCatalog()`, aplicar los mismos filtros (`activo`, `categoria`, `tipo`, `parent_id`) en memoria sobre el array mapeado.
+- Estados: `loading: true` mientras carga, `error: string | null` cuando falla. Añadir `error` al return (no rompe consumidores que solo desestructuran `productos`/`loading`).
+- `useVariantes` queda devolviendo `[]` (la API externa no expone variations, no se usa en producción crítica).
 
----
-
-## 2. Restricciones dietéticas como conteo parcial
-
-### Cambio de modelo
-Hoy `restriccionesDieteticas: DietaryRestriction[]` es un array global ("toda la propuesta es vegana"). Cambiarlo a:
-
+### 3. `src/pages/ProductDetailPage.tsx`
+Reemplazar el bloque `else { supabase.from('productos')... }` por:
 ```ts
-restriccionesDieteticas: { tipo: DietaryRestriction; cantidad: number }[]
-// ej: [{ tipo: 'vegano', cantidad: 2 }, { tipo: 'sin_gluten', cantidad: 1 }]
+const all = await fetchExternalCatalog();
+const data = all.find(p => p.id === slug);
 ```
+y construir el `setProduct({...})` con los mismos campos que ya usa hoy. Mantener el fallback a `findProduct(slug)` del catálogo local que ya existe arriba.
 
-### Wizard (`StepPeople.tsx` o donde se capture)
-- Por cada restricción seleccionada, agregar un input numérico "¿Cuántas personas?" con max = `personas` totales.
-- Validación: suma de restricciones ≤ `personas`.
+### 4. UX de loading / error
+- `useProductos` ya expone `loading` (lo usan `CatalogPage` y `useCatalogoCotizador`). No hace falta cambiar UI: ya muestran skeletons.
+- Añadir banner de error elegante en `CatalogPage` cuando `error` esté presente: card centrada con texto "No pudimos cargar el catálogo. Intenta de nuevo." y botón "Reintentar" que limpia el cache y refetch.
+- En `ProductDetailPage`, si el fetch falla y no hay producto local, mantener el actual estado "Producto no encontrado" con CTA de regreso.
 
-### Backend (`quote-orchestrator/index.ts`)
-En la generación de paquetes:
-- Calcular `personasNormales = total - sum(cantidad)`.
-- Para cada item "principal" (ej. lunch box, breakfast box) con `pricing_model='per_person'`:
-  - Generar **N items separados**: 1 línea por subgrupo dietético + 1 línea para los normales, cada una con su `quantity` correcto y producto compatible (`dietary_tags` que incluya el restrictivo).
-- Mantener bebidas/snacks compartidos en cantidad total.
-- Pasar a Claude el contexto: `"Distribución: 2 veganos, 1 sin gluten, 7 sin restricción → entrega líneas separadas por subgrupo"`.
+## Archivos a modificar
+- `src/lib/externalCatalog.ts` (nuevo)
+- `src/hooks/useProductos.ts` (reescritura interna, API pública intacta)
+- `src/pages/ProductDetailPage.tsx` (reemplazar query directo)
+- `src/pages/CatalogPage.tsx` (añadir estado de error)
 
-### UI propuesta
-En `PackageCard.tsx` mostrar las líneas etiquetadas: `🌱 PINK BOX VEGANO × 2`, `WHITE BOX × 7`, etc.
+## Lo que NO se toca
+- `src/components/quoter/ProposalStep.tsx` y todo el cotizador
+- `src/components/landing/CotizaForm.tsx` y formulario de contacto
+- Edge function `quote-orchestrator` (sigue leyendo `productos` server-side; está fuera del alcance porque corre en el backend de este proyecto y el usuario pidió solo cambios de fuente en lectura cliente)
+- Diseño visual, rutas, layout
 
----
-
-## 3. Precio por persona en header del paquete
-
-### `PackageCard.tsx`
-Mover/duplicar el `pricePerPerson` (línea 206) al **header** junto al título "Equilibrado":
-
-```
-EQUILIBRADO   $661/persona     [ELEGIR ESTE →]
-Balance perfecto vegano para tu equipo
-```
-
-- Mostrar siempre con sufijo `/persona`.
-- Si `form.tienePresupuesto && form.presupuestoPorPersona > 0`:
-  - Si `pricePerPerson <= presupuestoPorPersona` → badge verde `✓ Dentro de tu presupuesto ($X/p)`.
-  - Si excede ≤ 10% → badge ámbar `+$Y sobre tu presupuesto`.
-  - Si excede > 10% → badge rojo + tooltip "Considera Esencial".
-- En el orquestador, si hay presupuesto, **forzar** que al menos el paquete `equilibrado` cumpla `total/personas ≤ presupuestoPorPersona` (ajustar selección iterativamente o reducir cantidades opcionales).
-
----
-
-## Archivos a tocar
-
-- `supabase/functions/admin-insight-feedback/index.ts` — **nueva**
-- Migración: tabla `proposal_admin_feedback` + grant admin-only RLS
-- `src/pages/Propuesta.tsx` — panel admin de feedback (gated por `is_admin`)
-- `src/components/proposal/AdminFeedbackPanel.tsx` — **nuevo**
-- `src/domain/entities/IntakeForm.ts` — cambiar shape de `restriccionesDieteticas`
-- `src/components/wizard/StepPeople.tsx` (o el step de dietética) — inputs de cantidad
-- `src/domain/shared/WizardValidation.ts` — validar suma ≤ personas
-- `supabase/functions/quote-orchestrator/index.ts` — distribución por subgrupo + presupuesto duro
-- `src/components/proposal/PackageCard.tsx` — header con precio/persona + badge de presupuesto
-- `src/presentation/hooks/useProposalPresenter.ts` — pasar dietary breakdown y presupuesto al orquestador
-- Migración de datos: convertir `restriccionesDieteticas` legacy (string[]) a la nueva forma con `cantidad: personas` para compatibilidad temporal
-
----
-
-## Notas técnicas
-
-- El admin check será server-side en la edge function (`SELECT is_admin(auth.uid())`) antes de insertar.
-- El `ON CONFLICT (insight_type, context_key) DO UPDATE` ya soportado evita duplicados si el admin re-edita el mismo feedback.
-- El presupuesto duro en orquestador puede romper si el catálogo no tiene productos suficientemente baratos: en ese caso, devolver el paquete con flag `excedePresupuesto: true` y que la UI lo muestre claramente, no fallar silenciosamente.
-
-¿Apruebas que lo implemente así?
+## Detalles técnicos
+- La edge function externa es pública (no requiere auth). Fetch directo con `fetch(URL)` sin headers de auth.
+- Cache TTL: una sola carga por sesión del navegador (suficiente; al recargar se refresca). Exponer `invalidateExternalCatalog()` para el botón "Reintentar".
+- Tipos: definir `RemoteProduct` interno en `externalCatalog.ts` con los campos del JSON remoto. No exportar — los consumidores siguen viendo `Producto`.

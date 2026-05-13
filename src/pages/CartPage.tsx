@@ -44,6 +44,15 @@ const CartPage = () => {
     }
   }, [cpInput, setPostalCode]);
 
+  const isOutOfZone = !!shippingInfo && shippingInfo.zone === null;
+
+  // Forzar pickup si CP fuera de zona
+  useEffect(() => {
+    if (isOutOfZone && shippingType === "delivery") {
+      setShippingType("pickup");
+    }
+  }, [isOutOfZone, shippingType, setShippingType]);
+
   // Fetch AI recommendations
   useEffect(() => {
     if (items.length === 0) return;
@@ -250,6 +259,11 @@ const CartPage = () => {
                       ⚠️ {shippingInfo.message}
                     </div>
                   )}
+                  {isOutOfZone && (
+                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                      ⚠️ {shippingInfo!.message}
+                    </div>
+                  )}
                   {shippingInfo && shippingInfo.zone !== null && shippingInfo.zone !== 0 && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
@@ -264,7 +278,7 @@ const CartPage = () => {
                   )}
 
                   {/* Delivery vs Pickup */}
-                  {shippingInfo && shippingInfo.zone !== 0 && (
+                  {shippingInfo && shippingInfo.zone !== 0 && shippingInfo.zone !== null && (
                     <>
                       <label className={cn("flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all", shippingType === "delivery" ? "border-primary bg-primary/5" : "border-border")}>
                         <input type="radio" name="shipping" checked={shippingType === "delivery"} onChange={() => setShippingType("delivery")} className="accent-primary" />
@@ -293,6 +307,20 @@ const CartPage = () => {
                         </div>
                       )}
                     </>
+                  )}
+                  {isOutOfZone && (
+                    <label className={cn("flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all border-primary bg-primary/5")}>
+                      <input type="radio" name="shipping" checked readOnly className="accent-primary mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">Recoger en sucursal</span>
+                          <span className="font-semibold text-green-600">Gratis</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> Lago Onega 265, Modelo Pensil, 11450 CDMX
+                        </p>
+                      </div>
+                    </label>
                   )}
                   {(!shippingInfo || cpInput.length < 5) && (
                     <>
@@ -372,6 +400,20 @@ const CartPage = () => {
                 >
                   Solicitar cotización de envío →
                 </Button>
+              ) : isOutOfZone ? (
+                <div className="space-y-2">
+                  <Button onClick={() => navigate("/checkout")} className="w-full" size="lg">
+                    Continuar con recolección →
+                  </Button>
+                  <Button
+                    onClick={() => window.open("https://wa.me/5215582375469?text=Hola%2C+necesito+cotización+de+envío+para+CP+" + cpInput, "_blank")}
+                    className="w-full"
+                    size="sm"
+                    variant="outline"
+                  >
+                    Solicitar cotización por WhatsApp
+                  </Button>
+                </div>
               ) : (
                 <Button onClick={() => navigate("/checkout")} className="w-full" size="lg">
                   FINALIZAR COMPRA →

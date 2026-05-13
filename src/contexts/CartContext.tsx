@@ -213,7 +213,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const subtotal = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const totals = useMemo((): CartTotals => {
-    const shippingBase = state.shippingPrice ?? 360;
+    const shippingBase = state.shippingPrice ?? 0;
     const shipping = state.shippingType === "pickup" ? 0 : shippingBase;
     const earlySurcharge = state.earlySurcharge;
     const iva = Math.round(subtotal * 0.16);

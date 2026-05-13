@@ -41,13 +41,12 @@ export function getShippingInfo(postalCode: string): ShippingInfo {
     return info;
   }
 
-  // Fallback: zone 3 default
-  const defaultZone = SHIPPING_ZONES.find(z => z.isDefault);
+  // CP no está en nuestras zonas de cobertura
   return {
-    zone: defaultZone?.zone ?? 3,
-    price: defaultZone?.price ?? 360,
+    zone: null,
+    price: null,
     hasPickup: true,
-    isValid: true,
-    message: "Envío estándar para tu zona.",
+    isValid: false,
+    message: "Por el momento no realizamos entregas a este código postal. Puedes recoger tu pedido en sucursal o contáctanos al 55 8237 5469 para una cotización especial.",
   };
 }

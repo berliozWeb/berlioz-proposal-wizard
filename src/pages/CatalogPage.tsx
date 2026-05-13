@@ -120,6 +120,8 @@ const STATIC_FILTERS = [
 const TAG_FILTERS = [
   { value: "vegano", label: "Vegano/Vegetariano", emoji: "🌱" },
   { value: "keto", label: "Keto", emoji: "🥑" },
+  { value: "sin_gluten", label: "Sin Gluten", emoji: "🌾" },
+  { value: "sin_lactosa", label: "Sin Lactosa", emoji: "🥛" },
 ];
 
 const SORT_OPTIONS = [
@@ -228,6 +230,16 @@ const CatalogPage = () => {
       list = list.filter((p) => p.dietary_tags?.some(t => ['vegano', 'vegetariano'].includes(t.toLowerCase())));
     } else if (filter === "keto") {
       list = list.filter((p) => p.dietary_tags?.some(t => t.toLowerCase() === 'keto'));
+    } else if (filter === "sin_gluten") {
+      list = list.filter((p) => p.dietary_tags?.some(t => {
+        const n = t.toLowerCase().replace(/[\s-]/g, '_');
+        return n === 'sin_gluten' || n === 'gluten_free' || n === 'libre_de_gluten';
+      }));
+    } else if (filter === "sin_lactosa") {
+      list = list.filter((p) => p.dietary_tags?.some(t => {
+        const n = t.toLowerCase().replace(/[\s-]/g, '_');
+        return n === 'sin_lactosa' || n === 'lactose_free' || n === 'libre_de_lactosa' || n === 'sin_lacteos';
+      }));
     } else if (filter !== "todos") {
       list = list.filter((p) => p.categoria === filter);
     }

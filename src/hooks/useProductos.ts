@@ -25,6 +25,18 @@ export interface Producto {
   created_at: string | null;
   popularity_rank: number | null;
   dietary_tags: string[] | null;
+  variaciones?: ProductoVariante[] | null;
+  requiere_variante?: boolean;
+}
+
+export interface ProductoVariante {
+  id: string;
+  sku: string | null;
+  nombre: string;
+  opcion: string;
+  precio: number | null;
+  imagen_url: string | null;
+  en_stock: boolean;
 }
 
 interface Filters {

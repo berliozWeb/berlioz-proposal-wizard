@@ -22,6 +22,7 @@ import CartSidebar from "@/components/ui/CartSidebar";
 import { getMenuItemBySlug, getDisplayPrice } from "@/domain/entities/MenuCatalog";
 import { getProductGallery, FALLBACK_IMAGE } from "@/domain/entities/ProductImages";
 import type { MenuItem } from "@/domain/entities/MenuItem";
+import type { ProductoVariante } from "@/hooks/useProductos";
 
 /* ── types ── */
 interface Product {
@@ -36,6 +37,7 @@ interface Product {
   dietary_tags: string[];
   included_items: string[];
   is_bestseller: boolean;
+  variaciones?: ProductoVariante[] | null;
 }
 
 interface AiSuggestion {
@@ -71,6 +73,7 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(10);
   const [added, setAdded] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   
   // Gallery state
   const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -116,7 +119,11 @@ const ProductDetailPage = () => {
               dietary_tags: data.dietary_tags ?? [],
               included_items: stripHtml(data.descripcion ?? '').split(/\n+/).filter((l: string) => l.trim().length > 3),
               is_bestseller: data.destacado ?? false,
+              variaciones: data.variaciones ?? null,
             });
+            // Pre-select first in-stock variant
+            const firstVariant = data.variaciones?.find((v) => v.en_stock) ?? data.variaciones?.[0] ?? null;
+            setSelectedVariantId(firstVariant?.id ?? null);
           }
         } catch (err) {
           console.error('[ProductDetailPage] catálogo externo falló:', err);
@@ -151,18 +158,24 @@ const ProductDetailPage = () => {
     return localGallery;
   }, [product, slug]);
 
+  const selectedVariant = useMemo(
+    () => product?.variaciones?.find((v) => v.id === selectedVariantId) ?? null,
+    [product, selectedVariantId]
+  );
+
   const handleAdd = () => {
     if (!product) return;
-    
-    const price = localItem 
-      ? getDisplayPrice(localItem, quantity)
-      : product.price_per_person;
 
-    addItem({ 
-      id: product.id, 
-      name: product.name, 
-      price: price, 
-      image: product.image_url || undefined, 
+    const price = selectedVariant?.precio
+      ?? (localItem ? getDisplayPrice(localItem, quantity) : product.price_per_person);
+
+    addItem({
+      id: selectedVariant?.id ?? product.id,
+      name: selectedVariant
+        ? `${product.name} — ${selectedVariant.opcion}`
+        : product.name,
+      price: price,
+      image: selectedVariant?.imagen_url || product.image_url || undefined,
       isPerPerson: true, 
       quantity 
     });
@@ -200,7 +213,8 @@ const ProductDetailPage = () => {
     );
   }
 
-  const finalPrice = localItem ? getDisplayPrice(localItem, quantity) : product.price_per_person;
+  const finalPrice = selectedVariant?.precio
+    ?? (localItem ? getDisplayPrice(localItem, quantity) : product.price_per_person);
   const cleanDescription = stripHtml(product.description || product.short_description || '');
   const shortDescription = product.short_description ? stripHtml(product.short_description) : (cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription);
 
@@ -325,6 +339,56 @@ const ProductDetailPage = () => {
                   {/* Controls Card — Only Quantity + Add to Cart */}
                   <div className="space-y-6 pt-4">
                     <div className="bg-card/40 rounded-[32px] border border-border/50 p-6 sm:p-8 space-y-8 shadow-sm">
+                      {/* Variant Selector */}
+                      {product.variaciones && product.variaciones.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <h3 className="font-body text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                              Elige tu opción
+                            </h3>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2">
+                            {product.variaciones.map((v) => {
+                              const active = v.id === selectedVariantId;
+                              const disabled = !v.en_stock;
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  disabled={disabled}
+                                  onClick={() => setSelectedVariantId(v.id)}
+                                  className={cn(
+                                    "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border text-left transition-all",
+                                    active
+                                      ? "border-primary bg-primary/5 shadow-sm"
+                                      : "border-border/40 bg-background hover:border-primary/40",
+                                    disabled && "opacity-40 cursor-not-allowed"
+                                  )}
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <span className={cn(
+                                      "w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center",
+                                      active ? "border-primary" : "border-muted-foreground/30"
+                                    )}>
+                                      {active && <span className="w-2 h-2 rounded-full bg-primary" />}
+                                    </span>
+                                    <span className="font-body text-sm text-foreground truncate">
+                                      {v.opcion}
+                                    </span>
+                                  </div>
+                                  {v.precio != null && (
+                                    <span className="font-body text-xs font-bold text-primary whitespace-nowrap">
+                                      ${v.precio.toLocaleString("es-MX")}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Quantity Selector */}
                       <div>
                         <div className="flex items-center gap-2 mb-4">

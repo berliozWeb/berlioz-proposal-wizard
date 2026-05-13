@@ -1,4 +1,4 @@
-import type { Producto } from '@/hooks/useProductos';
+import type { Producto, ProductoVariante } from '@/hooks/useProductos';
 
 const CATALOG_URL =
   'https://rrfvdhegvgmejxmsdijn.supabase.co/functions/v1/get-catalog';
@@ -21,6 +21,10 @@ interface RemoteProduct {
   activo?: boolean;
   destacado?: boolean;
   orden_display?: number | null;
+  opciones?: string[] | null;
+  variaciones?: RemoteProduct[] | null;
+  requiere_variante?: boolean;
+  en_stock?: boolean;
 }
 
 interface RemoteCatalogResponse {
@@ -56,6 +60,25 @@ function normalizeCategoria(raw?: string | null): string | null {
 
 function mapRemoteToProducto(r: RemoteProduct, idx: number): Producto {
   const isActive = (r.visible_en_web ?? true) && (r.activo ?? true);
+  const variaciones: ProductoVariante[] | null = Array.isArray(r.variaciones) && r.variaciones.length > 0
+    ? r.variaciones
+        .filter((v) => (v.activo ?? true))
+        .map((v) => {
+          // Display option: prefer first 'opciones' entry, fallback to text after " - " in name
+          const opcion = (Array.isArray(v.opciones) && v.opciones[0])
+            ? v.opciones[0]
+            : (v.nombre.includes(' - ') ? v.nombre.split(' - ').slice(1).join(' - ') : v.nombre);
+          return {
+            id: v.id,
+            sku: v.sku ?? null,
+            nombre: v.nombre,
+            opcion,
+            precio: v.precio_base ?? null,
+            imagen_url: v.imagen_url ?? null,
+            en_stock: v.en_stock ?? true,
+          };
+        })
+    : null;
   return {
     id: r.id,
     sku: r.sku ?? null,
@@ -80,6 +103,8 @@ function mapRemoteToProducto(r: RemoteProduct, idx: number): Producto {
     created_at: null,
     popularity_rank: null,
     dietary_tags: r.tags ?? [],
+    variaciones,
+    requiere_variante: r.requiere_variante ?? (r.woo_tipo === 'variable' && !!variaciones?.length),
   };
 }
 

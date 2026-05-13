@@ -339,6 +339,56 @@ const ProductDetailPage = () => {
                   {/* Controls Card — Only Quantity + Add to Cart */}
                   <div className="space-y-6 pt-4">
                     <div className="bg-card/40 rounded-[32px] border border-border/50 p-6 sm:p-8 space-y-8 shadow-sm">
+                      {/* Variant Selector */}
+                      {product.variaciones && product.variaciones.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <h3 className="font-body text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                              Elige tu opción
+                            </h3>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2">
+                            {product.variaciones.map((v) => {
+                              const active = v.id === selectedVariantId;
+                              const disabled = !v.en_stock;
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  disabled={disabled}
+                                  onClick={() => setSelectedVariantId(v.id)}
+                                  className={cn(
+                                    "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border text-left transition-all",
+                                    active
+                                      ? "border-primary bg-primary/5 shadow-sm"
+                                      : "border-border/40 bg-background hover:border-primary/40",
+                                    disabled && "opacity-40 cursor-not-allowed"
+                                  )}
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <span className={cn(
+                                      "w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center",
+                                      active ? "border-primary" : "border-muted-foreground/30"
+                                    )}>
+                                      {active && <span className="w-2 h-2 rounded-full bg-primary" />}
+                                    </span>
+                                    <span className="font-body text-sm text-foreground truncate">
+                                      {v.opcion}
+                                    </span>
+                                  </div>
+                                  {v.precio != null && (
+                                    <span className="font-body text-xs font-bold text-primary whitespace-nowrap">
+                                      ${v.precio.toLocaleString("es-MX")}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Quantity Selector */}
                       <div>
                         <div className="flex items-center gap-2 mb-4">

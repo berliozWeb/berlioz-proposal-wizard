@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Phone, Instagram, Mail, ArrowRight } from "lucide-react";
+import berliozLogoCream from "@/assets/berlioz-logo-cream.png";
 
 const Footer = () => (
   <footer style={{ background: '#014D6F', color: 'white' }}>
@@ -28,7 +29,7 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
         {/* Brand */}
         <div className="md:col-span-1">
-          <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 500, fontSize: 20, color: '#EDD9C8', letterSpacing: '0.32em', display: 'block', marginBottom: 16, paddingRight: '0.32em' }}>BERLIOZ</span>
+          <img src={berliozLogoCream} alt="Berlioz" style={{ height: 26, width: 'auto', display: 'block', marginBottom: 16 }} />
           <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
             Catering corporativo premium en Ciudad de México. Desayunos, coffee breaks y working lunches.
           </p>

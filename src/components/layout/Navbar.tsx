@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart, User, Menu, X, Phone, ChevronDown, LogOut, Package, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import berliozLogo from "@/assets/berlioz-logo.png";
 
 const NAV_LINKS = [
   { to: "/menu", label: "Realizar Pedido" },
@@ -51,8 +52,8 @@ const Navbar = () => {
     >
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 h-full">
         {/* Logo */}
-        <Link to="/" className="shrink-0" style={{ letterSpacing: '0.32em', fontSize: 22, fontWeight: 500, color: '#014D6F', textTransform: 'uppercase' as const, textDecoration: 'none', fontFamily: "'Montserrat', sans-serif", paddingRight: '0.32em' }}>
-          BERLIOZ
+        <Link to="/" className="shrink-0 flex items-center" aria-label="Berlioz" style={{ textDecoration: 'none' }}>
+          <img src={berliozLogo} alt="Berlioz" style={{ height: 26, width: 'auto', display: 'block' }} />
         </Link>
 
         {/* Desktop nav */}

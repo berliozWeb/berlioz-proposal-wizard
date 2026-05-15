@@ -1,4 +1,5 @@
 import { Phone } from "lucide-react";
+import berliozLogo from "@/assets/berlioz-logo.png";
 
 const MinimalHeader = () => (
   <header
@@ -13,9 +14,7 @@ const MinimalHeader = () => (
   >
     <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-full">
       {/* Logo */}
-      <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 20, color: '#014D6F', letterSpacing: '0.18em', textTransform: 'uppercase' as const }}>
-        BERLIOZ
-      </span>
+      <img src={berliozLogo} alt="Berlioz" style={{ height: 24, width: 'auto', display: 'block' }} />
 
       {/* Right side */}
       <div className="flex items-center" style={{ gap: 20 }}>

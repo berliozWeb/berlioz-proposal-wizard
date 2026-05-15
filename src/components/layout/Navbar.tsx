@@ -51,7 +51,7 @@ const Navbar = () => {
     >
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 h-full">
         {/* Logo */}
-        <Link to="/" className="shrink-0" style={{ letterSpacing: '0.18em', fontSize: 20, fontWeight: 700, color: '#014D6F', textTransform: 'uppercase' as const, textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+        <Link to="/" className="shrink-0" style={{ letterSpacing: '0.32em', fontSize: 22, fontWeight: 500, color: '#014D6F', textTransform: 'uppercase' as const, textDecoration: 'none', fontFamily: "'Montserrat', sans-serif", paddingRight: '0.32em' }}>
           BERLIOZ
         </Link>
 

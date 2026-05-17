@@ -14,7 +14,7 @@ const MinimalHeader = () => (
   >
     <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-full">
       {/* Logo */}
-      <img src={berliozLogo} alt="Berlioz" style={{ height: 24, width: 'auto', display: 'block' }} />
+      <img src={berliozLogo} alt="Berlioz" style={{ height: 48, width: 'auto', display: 'block' }} />
 
       {/* Right side */}
       <div className="flex items-center" style={{ gap: 20 }}>

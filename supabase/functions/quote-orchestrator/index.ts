@@ -841,6 +841,30 @@ function sanitizePackageForRequest(
     }
   }
 
+  for (const [productId, quantity] of assignedQuantities.entries()) {
+    if (pkg.items.some((item) => item.productId === productId)) continue;
+    const product = productMap.get(productId);
+    if (!product || quantity <= 0) continue;
+    const reason = pkg.items.find((item) => item.categoria === product.categoria)?.recommendationReason
+      || product.recommendationReason;
+    pkg.items.push({
+      productId: product.id,
+      parentProductId: product.parent_id,
+      productName: product.nombre,
+      quantity,
+      unitPrice: product.effectivePrice,
+      computedPrice: product.effectivePrice * quantity,
+      score: product.finalScore,
+      recommendationReason: reason,
+      imageUrl: product.resolvedImageUrl,
+      imageSource: product.imageSource,
+      imagePrompt: product.imagePrompt,
+      sourceType: 'supabase',
+      swapGroup: product.categoria,
+      categoria: product.categoria,
+    });
+  }
+
   pkg.items = pkg.items
     .map((item) => {
       const product = productMap.get(item.productId);

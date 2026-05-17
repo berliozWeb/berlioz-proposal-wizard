@@ -53,7 +53,7 @@ const Navbar = () => {
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 h-full">
         {/* Logo */}
         <Link to="/" className="shrink-0 flex items-center" aria-label="Berlioz" style={{ textDecoration: 'none' }}>
-          <img src={berliozLogo} alt="Berlioz" style={{ height: 26, width: 'auto', display: 'block' }} />
+          <img src={berliozLogo} alt="Berlioz" style={{ height: 52, width: 'auto', display: 'block' }} />
         </Link>
 
         {/* Desktop nav */}

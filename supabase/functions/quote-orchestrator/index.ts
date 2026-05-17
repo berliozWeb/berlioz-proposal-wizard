@@ -747,6 +747,32 @@ function packageFitsTierBudget(pkg: Package, req: QuoteRequest): boolean {
   return cap === null || pkg.pricePerPerson <= cap + 0.01;
 }
 
+function sanitizePackageForRequest(
+  pkg: Package,
+  req: QuoteRequest,
+  productMap: Map<string, ScoredProduct>,
+): Package {
+  const countMap = getDietaryCountMap(req);
+  const activeRestrictions = Object.entries(countMap).filter(([, count]) => count > 0);
+  if (activeRestrictions.length === 0) return pkg;
+
+  for (const item of pkg.items) {
+    if (isBeverageCategory(item.categoria)) continue;
+    const product = productMap.get(item.productId);
+    if (!product) continue;
+
+    const matched = activeRestrictions.filter(([restriction]) => productSupportsRestriction(product, restriction));
+    if (matched.length === 0) continue;
+
+    const maxQtyForRestrictedItem = Math.max(...matched.map(([, count]) => count));
+    item.quantity = Math.min(item.quantity, maxQtyForRestrictedItem);
+    item.computedPrice = item.unitPrice * item.quantity;
+  }
+
+  recalc(pkg, req.peopleCount);
+  return pkg;
+}
+
 // ═══ MAIN HANDLER ═══
 serve(async (req) => {
   if (req.method === "OPTIONS") {

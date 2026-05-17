@@ -6,6 +6,8 @@ import { useCart } from "@/contexts/CartContext";
 import berliozLogo from "@/assets/berlioz-logo.png";
 
 const NAV_LINKS = [
+
+const NAV_LINKS = [
   { to: "/menu", label: "Realizar Pedido" },
   { to: "/cotizar", label: "Cotizar" },
   { to: "/recompensas", label: "Recompensas" },

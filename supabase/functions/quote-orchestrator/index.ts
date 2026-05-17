@@ -342,7 +342,7 @@ async function composeWithClaude(
     pricing_model: p.pricing_model,
     score: p.finalScore,
     destacado: p.destacado,
-    dietary_tags: (p.dietary_tags || []).join(','),
+    dietary_tags: p.dietary_tags || [],
   }));
 
   // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items

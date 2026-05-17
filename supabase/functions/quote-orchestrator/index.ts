@@ -1074,8 +1074,17 @@ serve(async (req) => {
 
       const specs = await composeWithClaude(allScored, reqOverride, feedbackSummary + salesContext + insightsContext);
       if (specs && specs.length === 3) {
-        pkgs = specs.map(spec => buildPackageFromClaude(spec, productMap, reqOverride.peopleCount));
-        const valid = pkgs.every(p => p.items.length >= 1);
+        pkgs = specs.map(spec => sanitizePackageForRequest(
+          buildPackageFromClaude(spec, productMap, reqOverride.peopleCount),
+          reqOverride,
+          productMap,
+        ));
+        const valid = pkgs.every(p =>
+          p.items.length >= 1
+          && packageIncludesRequiredDietaryCoverage(p, reqOverride, productMap)
+          && packageIncludesNormalCoverage(p, reqOverride, productMap)
+          && packageFitsTierBudget(p, reqOverride)
+        );
         if (valid) {
           ev = 'v3-claude-sonnet';
           ensureDifferentiation(pkgs, reqOverride.peopleCount);

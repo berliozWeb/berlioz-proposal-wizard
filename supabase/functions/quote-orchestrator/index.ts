@@ -453,11 +453,11 @@ async function composeWithClaude(
   // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items
   // (e.g. fruta etiquetada como vegano pero NO keto cuando piden keto).
   const dietaryWhitelists: Record<string, { id: string; nombre: string; precio: number; categoria: string | null }[]> = {};
-  const activeRestrictions = (req.dietaryCounts || []).filter(c => c.cantidad > 0).map(c => c.tipo);
+  const activeRestrictions = getActiveDietaryRestrictions(req);
   for (const r of activeRestrictions) {
-    const rl = r.toLowerCase();
+    const rl = normalizeDietaryTag(r);
     dietaryWhitelists[r] = products
-      .filter(p => (p.dietary_tags || []).some(t => t.toLowerCase().includes(rl)))
+      .filter(p => productSupportsRestriction(p, rl))
       .slice(0, 25)
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, categoria: p.categoria }));
   }
@@ -723,32 +723,28 @@ function buildPackageFromClaude(
   };
 }
 
-function packageIncludesRequiredDietaryCoverage(pkg: Package, req: QuoteRequest): boolean {
-  const countMap = getDietaryCountMap(req);
-  const activeRestrictions = Object.entries(countMap).filter(([, count]) => count > 0);
+function packageIncludesRequiredDietaryCoverage(
+  pkg: Package,
+  req: QuoteRequest,
+  productMap: Map<string, ScoredProduct>,
+): boolean {
+  const activeRestrictions = Object.entries(getDietaryCountMap(req)).filter(([, count]) => count > 0);
   if (activeRestrictions.length === 0) return true;
 
-  const beverageIds = new Set(pkg.items.filter((item) => isBeverageCategory(item.categoria)).map((item) => item.productId));
-
   return activeRestrictions.every(([restriction, requiredCount]) => {
-    const covered = pkg.items
-      .filter((item) => !beverageIds.has(item.productId))
-      .filter((item) => {
-        const pseudoProduct = { dietary_tags: item.recommendationReason ? [] : [] } as Pick<DbProduct, 'dietary_tags'>;
-        const product = { dietary_tags: [] as string[] };
-        void pseudoProduct;
-        void product;
-        return true;
-      });
-    const qty = pkg.items
-      .filter((item) => !beverageIds.has(item.productId))
-      .reduce((sum, item) => {
-        const fakeProduct = { dietary_tags: [] as string[] };
-        void fakeProduct;
-        return sum;
-      }, 0);
-    return qty >= requiredCount;
+    const coveredQty = pkg.items.reduce((sum, item) => {
+      if (isBeverageCategory(item.categoria)) return sum;
+      const product = productMap.get(item.productId);
+      if (!product || !productSupportsRestriction(product, restriction)) return sum;
+      return sum + item.quantity;
+    }, 0);
+    return coveredQty >= requiredCount;
   });
+}
+
+function packageFitsTierBudget(pkg: Package, req: QuoteRequest): boolean {
+  const cap = getTierPriceCap(req, pkg.tier);
+  return cap === null || pkg.pricePerPerson <= cap + 0.01;
 }
 
 // ═══ MAIN HANDLER ═══

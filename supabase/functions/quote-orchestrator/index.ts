@@ -669,7 +669,7 @@ function buildPackageFromClaude(
     const overrideQty = spec.productQuantities?.[productId];
     const qty = typeof overrideQty === 'number' && overrideQty > 0
       ? overrideQty
-      : (product.pricing_model === 'per_person' ? people : 1);
+      : getDefaultQuantity(product, people);
     const reason = spec.productReasons?.[productId] || product.recommendationReason;
     if (seen.has(productId)) {
       const idx = seen.get(productId)!;
@@ -721,6 +721,34 @@ function buildPackageFromClaude(
     isRecommended: tier === 'equilibrado',
     highlights: [],
   };
+}
+
+function packageIncludesRequiredDietaryCoverage(pkg: Package, req: QuoteRequest): boolean {
+  const countMap = getDietaryCountMap(req);
+  const activeRestrictions = Object.entries(countMap).filter(([, count]) => count > 0);
+  if (activeRestrictions.length === 0) return true;
+
+  const beverageIds = new Set(pkg.items.filter((item) => isBeverageCategory(item.categoria)).map((item) => item.productId));
+
+  return activeRestrictions.every(([restriction, requiredCount]) => {
+    const covered = pkg.items
+      .filter((item) => !beverageIds.has(item.productId))
+      .filter((item) => {
+        const pseudoProduct = { dietary_tags: item.recommendationReason ? [] : [] } as Pick<DbProduct, 'dietary_tags'>;
+        const product = { dietary_tags: [] as string[] };
+        void pseudoProduct;
+        void product;
+        return true;
+      });
+    const qty = pkg.items
+      .filter((item) => !beverageIds.has(item.productId))
+      .reduce((sum, item) => {
+        const fakeProduct = { dietary_tags: [] as string[] };
+        void fakeProduct;
+        return sum;
+      }, 0);
+    return qty >= requiredCount;
+  });
 }
 
 // ═══ MAIN HANDLER ═══

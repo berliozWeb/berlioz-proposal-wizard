@@ -342,7 +342,7 @@ async function composeWithClaude(
     pricing_model: p.pricing_model,
     score: p.finalScore,
     destacado: p.destacado,
-    dietary_tags: (p.dietary_tags || []).join(','),
+    dietary_tags: p.dietary_tags || [],
   }));
 
   // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items
@@ -431,7 +431,28 @@ Responde ÚNICAMENTE con el JSON especificado. Sin texto fuera del JSON.`;
     ? `\nENTREGAS (${req.deliveryGroups!.length}):\n${JSON.stringify(req.deliveryGroups, null, 2)}\nDirección global: ${req.address || 'sin definir'}\n`
     : '';
 
-  const userPrompt = `EVENTO:
+  const budgetPerPerson = req.budgetPerPerson || 0;
+  const totalDisponible = budgetPerPerson * req.peopleCount;
+  const subtotalComidaMax = Math.round((totalDisponible - 360) / 1.16);
+  const contextoPedido = `=== CONTEXTO DEL PEDIDO ===
+Personas totales: ${req.peopleCount}
+Presupuesto por persona: $${budgetPerPerson} MXN
+Restricciones alimentarias declaradas: ${JSON.stringify(req.dietaryRestrictions || [])}
+
+CÁLCULO DE PRESUPUESTO:
+- Total disponible: $${totalDisponible} MXN
+- Envío fijo: $360 MXN
+- Subtotal máximo de comida: $${subtotalComidaMax} MXN
+- El tier EQUILIBRADO debe estar lo más cerca posible a ese subtotal.
+
+RESTRICCIÓN ABSOLUTA:
+Solo puedes proponer productos que tengan en su campo dietary_tags los tags correspondientes a las restricciones declaradas.
+Los dietary_tags de cada producto están incluidos en el catálogo que recibes abajo.
+=== FIN CONTEXTO ===
+
+`;
+
+  const userPrompt = contextoPedido + `EVENTO:
 - Tipo: ${req.eventType}
 - Personas: ${req.peopleCount}
 - Fecha: ${req.eventDate || 'sin definir'}
@@ -477,6 +498,7 @@ Compón 3 paquetes: Esencial (económico), Equilibrado (balance), Experiencia (p
 
   try {
     console.log('quote-orchestrator system prompt v2 activo');
+    console.log('USER MESSAGE SNIPPET:', userPrompt?.substring(0, 500));
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {

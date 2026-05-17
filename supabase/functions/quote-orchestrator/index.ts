@@ -798,30 +798,15 @@ function sanitizePackageForRequest(
   const addAssignedQuantity = (productId: string, quantity: number) => {
     assignedQuantities.set(productId, (assignedQuantities.get(productId) || 0) + quantity);
   };
-
-  // Identify SNACK/SIDE categories we want to avoid as a "main equivalent" for restricted guests.
-  // A restricted guest must receive a full main course, not just crudités/snacks/dips.
-  const isSnackOrSide = (categoria: string | null | undefined) => {
-    if (!categoria) return false;
-    const c = categoria.toLowerCase();
-    return /(snack|surtido|crudit|dip|botana|fruta|galleta|postre)/i.test(c);
-  };
-
   const rankCandidate = (
     candidate: { item?: PackageItem; product: ScoredProduct },
-    opts: { restriction?: string; targetCategory?: string | null; isMain?: boolean } = {},
+    restriction?: string,
   ) => {
     const { item, product } = candidate;
-    const { restriction, targetCategory, isMain } = opts;
     const categoryIndex = categoryPriority.indexOf(product.categoria || '');
     const categoryBoost = categoryIndex >= 0 ? (categoryPriority.length - categoryIndex) * 100 : 0;
     const supportsCount = restrictionNames.filter((name) => productSupportsRestriction(product, name)).length;
-    const sameCategoryBoost = targetCategory && product.categoria === targetCategory ? 800 : 0;
-    // Heavy penalty if we're trying to pick a MAIN dish but the candidate is a snack/side.
-    const snackPenalty = isMain && isSnackOrSide(product.categoria) ? -1500 : 0;
     return categoryBoost
-      + sameCategoryBoost
-      + snackPenalty
       + (restriction && productSupportsRestriction(product, restriction) ? 1000 : 0)
       + (!restriction && !productSupportsAnyRestriction(product, restrictionNames) ? 500 : 0)
       + (product.categoria === 'Vegano / Vegetariano' ? 60 : 0)
@@ -830,58 +815,30 @@ function sanitizePackageForRequest(
       - supportsCount * 10;
   };
 
-  // 1) Pick the NORMAL main first so we know the target category that
-  //    restricted guests should match (e.g., desayuno → desayuno equivalent).
-  const totalRestricted = activeRestrictions.reduce((sum, [, count]) => sum + count, 0);
-  const normalCount = Math.max(0, req.peopleCount - totalRestricted);
-
-  let normalTargetCategory: string | null = null;
-
-  if (normalCount > 0) {
-    const preferredNormalCandidates = assignableItems
-      .filter(({ product }) => !productSupportsAnyRestriction(product, restrictionNames) && !isSnackOrSide(product.categoria))
-      .sort((a, b) => rankCandidate(b, { isMain: true }) - rankCandidate(a, { isMain: true }));
-    const fallbackNormalCandidates = assignableItems
-      .filter(({ product }) => !reservedProductIds.has(product.id) && !isSnackOrSide(product.categoria))
-      .sort((a, b) => rankCandidate(b, { isMain: true }) - rankCandidate(a, { isMain: true }));
-    const chosenNormal = preferredNormalCandidates[0]
-      || fallbackNormalCandidates[0]
-      || [...assignableItems].sort((a, b) => rankCandidate(b, { isMain: true }) - rankCandidate(a, { isMain: true }))[0];
-    if (chosenNormal) {
-      addAssignedQuantity(chosenNormal.product.id, normalCount);
-      reservedProductIds.add(chosenNormal.product.id);
-      normalTargetCategory = chosenNormal.product.categoria;
-    }
-  } else {
-    // No normal guests — infer target category from existing main item if any.
-    const existingMain = pkg.items.find((it) => !isBeverageCategory(it.categoria) && !isSnackOrSide(it.categoria));
-    normalTargetCategory = existingMain?.categoria || categoryPriority[0] || null;
-  }
-
-  // 2) For each restriction, prefer a compatible product in the SAME main category
-  //    (so a keto guest gets a keto desayuno, not just crudités).
   for (const [restriction, requiredCount] of activeRestrictions) {
     const compatibleCandidates = assignableItems
       .filter(({ product }) => productSupportsRestriction(product, restriction))
-      .sort((a, b) =>
-        rankCandidate(b, { restriction, targetCategory: normalTargetCategory, isMain: true })
-        - rankCandidate(a, { restriction, targetCategory: normalTargetCategory, isMain: true }),
-      );
-    // Prefer: same main category + not snack + not already reserved.
-    const chosen =
-      compatibleCandidates.find(({ product }) =>
-        !reservedProductIds.has(product.id)
-        && product.categoria === normalTargetCategory
-        && !isSnackOrSide(product.categoria),
-      )
-      || compatibleCandidates.find(({ product }) =>
-        !reservedProductIds.has(product.id) && !isSnackOrSide(product.categoria),
-      )
-      || compatibleCandidates.find(({ product }) => !reservedProductIds.has(product.id))
-      || compatibleCandidates[0];
+      .sort((a, b) => rankCandidate(b, restriction) - rankCandidate(a, restriction));
+    const chosen = compatibleCandidates.find(({ product }) => !reservedProductIds.has(product.id)) || compatibleCandidates[0];
     if (!chosen) continue;
     addAssignedQuantity(chosen.product.id, requiredCount);
     reservedProductIds.add(chosen.product.id);
+  }
+
+  const totalRestricted = activeRestrictions.reduce((sum, [, count]) => sum + count, 0);
+  const normalCount = Math.max(0, req.peopleCount - totalRestricted);
+
+  if (normalCount > 0) {
+    const preferredNormalCandidates = assignableItems
+      .filter(({ product }) => !productSupportsAnyRestriction(product, restrictionNames))
+      .sort((a, b) => rankCandidate(b) - rankCandidate(a));
+    const fallbackNormalCandidates = assignableItems
+      .filter(({ product }) => !reservedProductIds.has(product.id))
+      .sort((a, b) => rankCandidate(b) - rankCandidate(a));
+    const chosenNormal = preferredNormalCandidates[0] || fallbackNormalCandidates[0] || [...assignableItems].sort((a, b) => rankCandidate(b) - rankCandidate(a))[0];
+    if (chosenNormal) {
+      addAssignedQuantity(chosenNormal.product.id, normalCount);
+    }
   }
 
   for (const [productId, quantity] of assignedQuantities.entries()) {

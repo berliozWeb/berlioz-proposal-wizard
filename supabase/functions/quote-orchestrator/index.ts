@@ -125,6 +125,108 @@ const EVENT_TO_CATEGORIES: Record<string, string[]> = {
   'filmacion': ['Working Lunch', 'Coffee Break', 'Bebidas'],
 };
 
+const DIETARY_ALIAS_MAP: Record<string, string> = {
+  vegetarian: 'vegetariano',
+  vegetariana: 'vegetariano',
+  vegetariano: 'vegetariano',
+  vegan: 'vegano',
+  vegana: 'vegano',
+  vegano: 'vegano',
+  keto: 'keto',
+  ketogenic: 'keto',
+  sin_gluten: 'sin_gluten',
+  'sin gluten': 'sin_gluten',
+  gluten_free: 'sin_gluten',
+  libre_de_gluten: 'sin_gluten',
+  sin_lactosa: 'sin_lactosa',
+  'sin lactosa': 'sin_lactosa',
+  lactose_free: 'sin_lactosa',
+  libre_de_lactosa: 'sin_lactosa',
+  sin_lacteos: 'sin_lactosa',
+  'sin lacteos': 'sin_lactosa',
+};
+
+function normalizeDietaryTag(tag?: string | null): string {
+  if (!tag) return '';
+  const normalized = tag.toLowerCase().trim().replace(/[\s-]+/g, '_');
+  return DIETARY_ALIAS_MAP[normalized] || normalized;
+}
+
+function getDietaryCountMap(req: QuoteRequest): Record<string, number> {
+  const counts: Record<string, number> = {};
+
+  if (Array.isArray(req.dietaryCounts) && req.dietaryCounts.length > 0) {
+    for (const entry of req.dietaryCounts) {
+      const key = normalizeDietaryTag(entry.tipo);
+      if (!key) continue;
+      counts[key] = (counts[key] || 0) + Math.max(0, Math.floor(entry.cantidad || 0));
+    }
+  }
+
+  if (Object.keys(counts).length === 0 && Array.isArray(req.dietaryRestrictions) && req.dietaryRestrictions.length > 0) {
+    for (const restriction of req.dietaryRestrictions) {
+      const key = normalizeDietaryTag(restriction);
+      if (!key) continue;
+      counts[key] = Math.max(counts[key] || 0, req.peopleCount || 0);
+    }
+  }
+
+  return counts;
+}
+
+function getActiveDietaryRestrictions(req: QuoteRequest): string[] {
+  return Object.entries(getDietaryCountMap(req))
+    .filter(([, count]) => count > 0)
+    .map(([restriction]) => restriction);
+}
+
+function getProductDietaryTags(product: Pick<DbProduct, 'dietary_tags'>): string[] {
+  return (product.dietary_tags || []).map((tag) => normalizeDietaryTag(tag)).filter(Boolean);
+}
+
+function productSupportsRestriction(product: Pick<DbProduct, 'dietary_tags'>, restriction: string): boolean {
+  const target = normalizeDietaryTag(restriction);
+  if (!target) return false;
+  return getProductDietaryTags(product).includes(target);
+}
+
+function productSupportsAnyRestriction(product: Pick<DbProduct, 'dietary_tags'>, restrictions: string[]): boolean {
+  return restrictions.some((restriction) => productSupportsRestriction(product, restriction));
+}
+
+function isBeverageCategory(category?: string | null): boolean {
+  return category === 'Bebidas';
+}
+
+function isGroupPricedProduct(product: Pick<DbProduct, 'nombre' | 'categoria' | 'precio' | 'precio_min' | 'pricing_model'>): boolean {
+  const price = product.precio ?? product.precio_min ?? 0;
+  return product.pricing_model === 'per_person'
+    && isBeverageCategory(product.categoria)
+    && (price >= 500 || /caf[eé]\s*\/\s*t[ée]/i.test(product.nombre));
+}
+
+function getDefaultQuantity(product: Pick<DbProduct, 'nombre' | 'categoria' | 'precio' | 'precio_min' | 'pricing_model' | 'serves_up_to'>, people: number): number {
+  if (product.pricing_model !== 'per_person') {
+    if (product.serves_up_to && product.serves_up_to > 0) {
+      return Math.max(1, Math.ceil(people / product.serves_up_to));
+    }
+    return 1;
+  }
+
+  if (isGroupPricedProduct(product)) {
+    return 1;
+  }
+
+  return people;
+}
+
+function getTierPriceCap(req: QuoteRequest, tier: 'esencial' | 'equilibrado' | 'experiencia'): number | null {
+  if (!req.budgetEnabled || !req.budgetPerPerson || req.budgetPerPerson <= 0) return null;
+  if (tier === 'esencial') return Math.round(req.budgetPerPerson * 0.85 * 100) / 100;
+  if (tier === 'equilibrado') return Math.round(req.budgetPerPerson * 100) / 100;
+  return Math.round(req.budgetPerPerson * 1.25 * 100) / 100;
+}
+
 // ═══ HEURISTIC SCORING ENGINE (FALLBACK) ═══
 function scoreProduct(
   product: DbProduct,
@@ -217,11 +319,11 @@ function composePackageHeuristic(
       : tier === 'equilibrado' ? Math.min(mainProducts.length - 1, Math.floor(mainProducts.length * 0.3))
       : 0;
     const main = mainProducts[pickIndex] || mainProducts[0];
-    const isPerPerson = main.pricing_model === 'per_person';
+    const qty = getDefaultQuantity(main, people);
     items.push({
       productId: main.id, parentProductId: main.parent_id, productName: main.nombre,
-      quantity: isPerPerson ? people : 1, unitPrice: main.effectivePrice,
-      computedPrice: main.effectivePrice * (isPerPerson ? people : 1),
+      quantity: qty, unitPrice: main.effectivePrice,
+      computedPrice: main.effectivePrice * qty,
       score: main.finalScore, recommendationReason: main.recommendationReason,
       imageUrl: main.resolvedImageUrl, imageSource: main.imageSource, imagePrompt: main.imagePrompt,
       sourceType: 'supabase', swapGroup: main.categoria, categoria: main.categoria,
@@ -233,11 +335,13 @@ function composePackageHeuristic(
     const beverages = products.filter(p => p.categoria === 'Bebidas' && !usedProducts.has(p.id)).sort((a, b) => b.finalScore - a.finalScore);
     if (beverages.length > 0) {
       const bev = tier === 'experiencia' ? beverages[0] : beverages[Math.min(1, beverages.length - 1)];
-      const isPerPerson = bev.pricing_model === 'per_person';
+      const qty = bev.pricing_model === 'per_person' && !isGroupPricedProduct(bev)
+        ? people
+        : getDefaultQuantity(bev, people);
       items.push({
         productId: bev.id, parentProductId: bev.parent_id, productName: bev.nombre,
-        quantity: isPerPerson ? people : Math.ceil(people / 12), unitPrice: bev.effectivePrice,
-        computedPrice: bev.effectivePrice * (isPerPerson ? people : Math.ceil(people / 12)),
+        quantity: qty, unitPrice: bev.effectivePrice,
+        computedPrice: bev.effectivePrice * qty,
         score: bev.finalScore, recommendationReason: 'Bebida incluida en el paquete',
         imageUrl: bev.resolvedImageUrl, imageSource: bev.imageSource, imagePrompt: bev.imagePrompt,
         sourceType: 'supabase', swapGroup: 'Bebidas', categoria: bev.categoria,
@@ -251,9 +355,10 @@ function composePackageHeuristic(
     const complementary = products.filter(p => !usedProducts.has(p.id) && p.categoria !== primaryCat)
       .sort((a, b) => b.finalScore - a.finalScore).slice(0, remaining);
     for (const comp of complementary) {
-      const isPerPerson = comp.pricing_model === 'per_person';
       const isSurtido = comp.nombre.toLowerCase().includes('surtido');
-      const qty = isPerPerson ? people : isSurtido ? Math.ceil(people / 7) : 1;
+      const qty = comp.pricing_model === 'per_person'
+        ? getDefaultQuantity(comp, people)
+        : isSurtido ? Math.ceil(people / 7) : 1;
       items.push({
         productId: comp.id, parentProductId: comp.parent_id, productName: comp.nombre,
         quantity: qty, unitPrice: comp.effectivePrice, computedPrice: comp.effectivePrice * qty,

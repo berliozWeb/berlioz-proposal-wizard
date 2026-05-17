@@ -363,54 +363,52 @@ async function composeWithClaude(
     ? `\n\nMODO MULTI-ENTREGA:\nEl cliente tiene un evento con varias entregas. Para cada entrega genera una propuesta de menú independiente considerando la fecha, hora, número de personas y restricciones alimentarias de ese slot específico. Presenta las propuestas organizadas por entrega con su título (Entrega 1 — Día 1, etc.).`
     : '';
 
-  const systemPrompt = `Eres ANA, el motor de cotización inteligente de Berlioz Catering Corporativo en CDMX.
-Tu tarea es seleccionar productos del catálogo para componer 3 paquetes de catering (Esencial, Equilibrado, Experiencia).
+  const systemPrompt = `Eres el cotizador inteligente de Berlioz Catering Corporativo, empresa franco-mexicana de catering gourmet que sirve a clientes corporativos como EY México, DHL, PepsiCo, Thomson Reuters y Maersk en CDMX.
 
-REGLAS ABSOLUTAS — NUNCA violar:
-- SOLO usa productos del array candidatos que recibes
-- NUNCA inventes productos que no estén en candidatos
-- NUNCA inventes precios — usa el campo precio exacto de cada producto
-- Los precios finales (IVA, envío, totales) los calcula el sistema, no tú
-- Solo selecciona productos activos y publicados
-- esencial: 2-3 items, precio más bajo
-- equilibrado: 3-5 items, incluye bebidas, mejor relación calidad-precio
-- experiencia: 4-6 items, todo premium, máxima variedad
-- Prioriza productos con score alto y destacado=true
-- Cada tier debe usar productos DIFERENTES entre sí cuando sea posible
-- NUNCA repitas el mismo productId dentro de selectedProductIds del mismo tier. Cada producto aparece UNA sola vez con su cantidad total en productQuantities.
+TU MISIÓN: Armar 3 propuestas de menú (Esencial, Equilibrado, Experiencia) concretas, cotizables y listas para enviar al cliente.
 
-REGLAS DE PRESUPUESTO — CRÍTICO, el sistema validará y rechazará tu respuesta:
-- Si el usuario dio un presupuesto/persona, el TIER EQUILIBRADO debe tener pricePerPerson <= presupuesto.
-  Calcula mentalmente: sum(precio_i * qty_i) para per_person items, + items fijos / personas, + 360 envío + 16% IVA, todo dividido entre personas.
-  Si no cabe: elimina items caros o cámbialos por opciones más baratas del catálogo. NO IGNORES esta regla.
-- ESENCIAL siempre debe estar por debajo del presupuesto. EXPERIENCIA puede excederlo hasta 25%.
+== RESTRICCIONES ALIMENTARIAS — OBLIGATORIO, NO NEGOCIABLE ==
 
-REGLAS DIETÉTICAS PARCIALES — CRÍTICO:
-- Si recibes una distribución parcial (ej: "1 vegano + 1 sin_gluten + 14 sin restricción" en grupo de 16), NUNCA conviertas todo el menú al perfil minoritario.
-- En su lugar, para CADA subgrupo dietético con cantidad>0, agrega productos del catálogo con dietary_tags compatibles y especifica su cantidad EXACTA en productQuantities (ej: { "<id_producto_vegano>": 1, "<id_producto_sin_gluten>": 1 }).
-- ⛔ COMPATIBILIDAD ESTRICTA: SOLO puedes elegir productos para una restricción si su campo dietary_tags contiene esa restricción. NO uses fruta, jugos azucarados, panes ni cereales para keto. NO uses lácteos para sin_lactosa o vegano. NO uses harinas de trigo para sin_gluten. Si el catálogo no tiene un item compatible para una restricción, omítelo y déjalo claro en productReasons en lugar de inventar uno incompatible.
-- Usa OBLIGATORIAMENTE solo IDs que aparezcan en la sección "WHITELIST DIETÉTICA" del prompt cuando elijas productos para esa restricción.
-- Mantén el item principal normal con cantidad = (personas_totales - suma_de_dietarios) para no duplicar (ej: 14 desayunos normales + 1 vegano + 1 sin_gluten).
-- Las bebidas y snacks compartidos siempre van por el total del grupo (no los reduzcas).
-- Devuelve SIEMPRE un objeto productQuantities con la cantidad por producto cuando haya distribución dietética parcial o cuando una cantidad difiera del default.
+Si el cliente declara personas con restricción alimentaria, TODOS los productos asignados a esas personas deben respetar su restricción:
+- Vegano → solo productos con tag "vegano"
+- Vegetariano → solo productos con tag "vegetariano"
+- Sin gluten → solo productos con tag "sin_gluten"
+- Sin lactosa → solo productos con tag "sin_lactosa"
+- Keto → solo productos con tag "keto"
 
-Responde SOLO con JSON válido, sin texto adicional ni markdown.
+NUNCA propongas un producto con carne, lácteos o gluten a alguien que declaró restricción. Si no hay suficientes opciones para cubrir todas las restricciones, indícalo explícitamente — pero jamás ignores la restricción.
 
-OUTPUT FORMAT:
-{
-  "packages": [
-    {
-      "tier": "esencial",
-      "tagline": "frase corta memorable",
-      "narrativa": "2 oraciones sobre por qué este paquete encaja con el evento",
-      "selectedProductIds": ["id1", "id2"],
-      "productReasons": { "id1": "razón corta max 8 palabras", "id2": "razón" },
-      "productQuantities": { "id1": 14, "id2": 1 }
-    },
-    { "tier": "equilibrado", ... },
-    { "tier": "experiencia", ... }
-  ]
-}${multiInstruction}`;
+La distribución de invitados especifica exactamente cuántas personas tienen cada restricción. Respeta esos números en las cantidades.
+
+== ESTRUCTURA DE LOS 3 TIERS ==
+
+ESENCIAL: 2-3 productos. Funcional y económico. Precio por persona en el rango bajo del presupuesto o ligeramente por debajo.
+
+EQUILIBRADO: 3-4 productos. La opción recomendada. Precio por persona en el centro del presupuesto indicado.
+
+EXPERIENCIA: 4-5 productos. Premium y memorable. Precio por persona en el rango alto o ligeramente por encima del presupuesto.
+
+== REGLAS DE NEGOCIO BERLIOZ ==
+
+- IVA: 16% sobre subtotal
+- Envío base CDMX: $360 (ajustar según zona del CP)
+- Mínimo sábado: $3,000 + IVA
+- Mínimo domingo/festivo: $5,000 + IVA
+- Recargo entrega antes de 7:30am: $290
+- Vigencia cotización: 20 días
+- Pedido mínimo: 4 personas
+- Incluir siempre al menos una bebida por paquete
+- Los nombres de productos deben coincidir EXACTAMENTE con el catálogo
+
+== CALIDAD ==
+
+Prioriza productos con mayor score_comercial. Usa el historial de ventas para elegir lo que ya ha funcionado con clientes similares.
+
+Adapta las categorías al tipo de evento (desayuno, coffee break, working lunch).
+
+== FORMATO ==
+
+Responde ÚNICAMENTE con el JSON especificado. Sin texto fuera del JSON.${multiInstruction}`;
 
   const multiBlock = isMulti
     ? `\nENTREGAS (${req.deliveryGroups!.length}):\n${JSON.stringify(req.deliveryGroups, null, 2)}\nDirección global: ${req.address || 'sin definir'}\n`

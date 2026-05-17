@@ -782,14 +782,14 @@ function sanitizePackageForRequest(
 
   const restrictionNames = activeRestrictions.map(([restriction]) => restriction);
   const categoryPriority = EVENT_TO_CATEGORIES[req.eventType] || [];
-  const assignableItems = pkg.items
-    .map((item) => ({ item, product: productMap.get(item.productId) }))
-    .filter(({ item, product }) => {
-      if (!product) return false;
-      if (isBeverageCategory(item.categoria)) return false;
+  const existingItemsByProductId = new Map(pkg.items.map((item) => [item.productId, item]));
+  const assignableItems = Array.from(productMap.values())
+    .filter((product) => {
+      if (isBeverageCategory(product.categoria)) return false;
       if (product.pricing_model !== 'per_person' || isGroupPricedProduct(product)) return false;
-      return true;
-    });
+      return product.effectivePrice > 0;
+    })
+    .map((product) => ({ item: existingItemsByProductId.get(product.id), product }));
 
   if (assignableItems.length === 0) return pkg;
 
@@ -799,7 +799,7 @@ function sanitizePackageForRequest(
     assignedQuantities.set(productId, (assignedQuantities.get(productId) || 0) + quantity);
   };
   const rankCandidate = (
-    candidate: { item: PackageItem; product: ScoredProduct },
+    candidate: { item?: PackageItem; product: ScoredProduct },
     restriction?: string,
   ) => {
     const { item, product } = candidate;
@@ -810,7 +810,7 @@ function sanitizePackageForRequest(
       + (restriction && productSupportsRestriction(product, restriction) ? 1000 : 0)
       + (!restriction && !productSupportsAnyRestriction(product, restrictionNames) ? 500 : 0)
       + (product.categoria === 'Vegano / Vegetariano' ? 60 : 0)
-      + Math.min(item.quantity, req.peopleCount)
+      + (item ? Math.min(item.quantity, req.peopleCount) + 120 : 0)
       + product.finalScore
       - supportsCount * 10;
   };
@@ -819,10 +819,10 @@ function sanitizePackageForRequest(
     const compatibleCandidates = assignableItems
       .filter(({ product }) => productSupportsRestriction(product, restriction))
       .sort((a, b) => rankCandidate(b, restriction) - rankCandidate(a, restriction));
-    const chosen = compatibleCandidates.find(({ item }) => !reservedProductIds.has(item.productId)) || compatibleCandidates[0];
+    const chosen = compatibleCandidates.find(({ product }) => !reservedProductIds.has(product.id)) || compatibleCandidates[0];
     if (!chosen) continue;
-    addAssignedQuantity(chosen.item.productId, requiredCount);
-    reservedProductIds.add(chosen.item.productId);
+    addAssignedQuantity(chosen.product.id, requiredCount);
+    reservedProductIds.add(chosen.product.id);
   }
 
   const totalRestricted = activeRestrictions.reduce((sum, [, count]) => sum + count, 0);
@@ -833,11 +833,11 @@ function sanitizePackageForRequest(
       .filter(({ product }) => !productSupportsAnyRestriction(product, restrictionNames))
       .sort((a, b) => rankCandidate(b) - rankCandidate(a));
     const fallbackNormalCandidates = assignableItems
-      .filter(({ item }) => !reservedProductIds.has(item.productId))
+      .filter(({ product }) => !reservedProductIds.has(product.id))
       .sort((a, b) => rankCandidate(b) - rankCandidate(a));
     const chosenNormal = preferredNormalCandidates[0] || fallbackNormalCandidates[0] || [...assignableItems].sort((a, b) => rankCandidate(b) - rankCandidate(a))[0];
     if (chosenNormal) {
-      addAssignedQuantity(chosenNormal.item.productId, normalCount);
+      addAssignedQuantity(chosenNormal.product.id, normalCount);
     }
   }
 

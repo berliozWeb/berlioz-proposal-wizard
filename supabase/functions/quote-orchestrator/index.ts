@@ -1283,7 +1283,11 @@ function buildHeuristicFallback(
     composePackageHeuristic('esencial', scoredByTier['esencial'], body),
     composePackageHeuristic('equilibrado', scoredByTier['equilibrado'], body),
     composePackageHeuristic('experiencia', scoredByTier['experiencia'], body),
-  ];
+  ].map((pkg) => sanitizePackageForRequest(
+    pkg,
+    body,
+    new Map(scoredByTier[pkg.tier].map((product) => [product.id, product])),
+  ));
   ensureDifferentiation(pkgs, peopleCount);
   return pkgs;
 }

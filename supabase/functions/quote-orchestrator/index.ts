@@ -742,6 +742,30 @@ function packageIncludesRequiredDietaryCoverage(
   });
 }
 
+function packageIncludesNormalCoverage(
+  pkg: Package,
+  req: QuoteRequest,
+  productMap: Map<string, ScoredProduct>,
+): boolean {
+  const activeRestrictions = Object.entries(getDietaryCountMap(req)).filter(([, count]) => count > 0);
+  if (activeRestrictions.length === 0) return true;
+
+  const normalRequired = Math.max(0, req.peopleCount - activeRestrictions.reduce((sum, [, count]) => sum + count, 0));
+  if (normalRequired === 0) return true;
+
+  const restrictionNames = activeRestrictions.map(([restriction]) => restriction);
+  const normalQty = pkg.items.reduce((sum, item) => {
+    if (isBeverageCategory(item.categoria)) return sum;
+    const product = productMap.get(item.productId);
+    if (!product) return sum;
+    if (product.pricing_model !== 'per_person' || isGroupPricedProduct(product)) return sum;
+    if (productSupportsAnyRestriction(product, restrictionNames)) return sum;
+    return sum + item.quantity;
+  }, 0);
+
+  return normalQty >= normalRequired;
+}
+
 function packageFitsTierBudget(pkg: Package, req: QuoteRequest): boolean {
   const cap = getTierPriceCap(req, pkg.tier);
   return cap === null || pkg.pricePerPerson <= cap + 0.01;
@@ -756,18 +780,97 @@ function sanitizePackageForRequest(
   const activeRestrictions = Object.entries(countMap).filter(([, count]) => count > 0);
   if (activeRestrictions.length === 0) return pkg;
 
-  for (const item of pkg.items) {
-    if (isBeverageCategory(item.categoria)) continue;
-    const product = productMap.get(item.productId);
-    if (!product) continue;
+  const restrictionNames = activeRestrictions.map(([restriction]) => restriction);
+  const categoryPriority = EVENT_TO_CATEGORIES[req.eventType] || [];
+  const assignableItems = pkg.items
+    .map((item) => ({ item, product: productMap.get(item.productId) }))
+    .filter(({ item, product }) => {
+      if (!product) return false;
+      if (isBeverageCategory(item.categoria)) return false;
+      if (product.pricing_model !== 'per_person' || isGroupPricedProduct(product)) return false;
+      return true;
+    });
 
-    const matched = activeRestrictions.filter(([restriction]) => productSupportsRestriction(product, restriction));
-    if (matched.length === 0) continue;
+  if (assignableItems.length === 0) return pkg;
 
-    const maxQtyForRestrictedItem = Math.max(...matched.map(([, count]) => count));
-    item.quantity = Math.min(item.quantity, maxQtyForRestrictedItem);
-    item.computedPrice = item.unitPrice * item.quantity;
+  const assignedQuantities = new Map<string, number>();
+  const reservedProductIds = new Set<string>();
+  const addAssignedQuantity = (productId: string, quantity: number) => {
+    assignedQuantities.set(productId, (assignedQuantities.get(productId) || 0) + quantity);
+  };
+  const rankCandidate = (
+    candidate: { item: PackageItem; product: ScoredProduct },
+    restriction?: string,
+  ) => {
+    const { item, product } = candidate;
+    const categoryIndex = categoryPriority.indexOf(product.categoria || '');
+    const categoryBoost = categoryIndex >= 0 ? (categoryPriority.length - categoryIndex) * 100 : 0;
+    const supportsCount = restrictionNames.filter((name) => productSupportsRestriction(product, name)).length;
+    return categoryBoost
+      + (restriction && productSupportsRestriction(product, restriction) ? 1000 : 0)
+      + (!restriction && !productSupportsAnyRestriction(product, restrictionNames) ? 500 : 0)
+      + (product.categoria === 'Vegano / Vegetariano' ? 60 : 0)
+      + Math.min(item.quantity, req.peopleCount)
+      + product.finalScore
+      - supportsCount * 10;
+  };
+
+  for (const [restriction, requiredCount] of activeRestrictions) {
+    const compatibleCandidates = assignableItems
+      .filter(({ product }) => productSupportsRestriction(product, restriction))
+      .sort((a, b) => rankCandidate(b, restriction) - rankCandidate(a, restriction));
+    const chosen = compatibleCandidates.find(({ item }) => !reservedProductIds.has(item.productId)) || compatibleCandidates[0];
+    if (!chosen) continue;
+    addAssignedQuantity(chosen.item.productId, requiredCount);
+    reservedProductIds.add(chosen.item.productId);
   }
+
+  const totalRestricted = activeRestrictions.reduce((sum, [, count]) => sum + count, 0);
+  const normalCount = Math.max(0, req.peopleCount - totalRestricted);
+
+  if (normalCount > 0) {
+    const preferredNormalCandidates = assignableItems
+      .filter(({ product }) => !productSupportsAnyRestriction(product, restrictionNames))
+      .sort((a, b) => rankCandidate(b) - rankCandidate(a));
+    const fallbackNormalCandidates = assignableItems
+      .filter(({ item }) => !reservedProductIds.has(item.productId))
+      .sort((a, b) => rankCandidate(b) - rankCandidate(a));
+    const chosenNormal = preferredNormalCandidates[0] || fallbackNormalCandidates[0] || [...assignableItems].sort((a, b) => rankCandidate(b) - rankCandidate(a))[0];
+    if (chosenNormal) {
+      addAssignedQuantity(chosenNormal.item.productId, normalCount);
+    }
+  }
+
+  pkg.items = pkg.items
+    .map((item) => {
+      const product = productMap.get(item.productId);
+      if (!product) return item;
+
+      const assignedQty = assignedQuantities.get(item.productId);
+      if (typeof assignedQty === 'number') {
+        return {
+          ...item,
+          quantity: assignedQty,
+          computedPrice: item.unitPrice * assignedQty,
+        };
+      }
+
+      if (
+        !isBeverageCategory(item.categoria)
+        && product.pricing_model === 'per_person'
+        && !isGroupPricedProduct(product)
+        && productSupportsAnyRestriction(product, restrictionNames)
+      ) {
+        return {
+          ...item,
+          quantity: 0,
+          computedPrice: 0,
+        };
+      }
+
+      return item;
+    })
+    .filter((item) => item.quantity > 0);
 
   recalc(pkg, req.peopleCount);
   return pkg;

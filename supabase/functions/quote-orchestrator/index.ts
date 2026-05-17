@@ -476,6 +476,7 @@ ${JSON.stringify(catalog)}
 Compón 3 paquetes: Esencial (económico), Equilibrado (balance), Experiencia (premium).`;
 
   try {
+    console.log('quote-orchestrator system prompt v2 activo');
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {

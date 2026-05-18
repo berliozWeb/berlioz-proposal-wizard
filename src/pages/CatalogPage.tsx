@@ -381,10 +381,9 @@ const CatalogPage = () => {
                   const galleryImgs = (product.imagenes_galeria && product.imagenes_galeria.length > 0)
                     ? product.imagenes_galeria
                     : (product.imagen_url ? [product.imagen_url] : []);
-                  const tagsForChips = [
-                    ...(product.dietary_tags ?? []),
-                    ...(product.destacado ? ['favorito'] : []),
-                  ];
+                  const tagsForChips = (product.dietary_tags ?? []).filter(
+                    (t) => t.toLowerCase() !== 'favorito' && t.toLowerCase() !== 'destacado',
+                  );
                   const hasRange = product.precio_max && product.precio && product.precio_max > product.precio;
                   const hasDiscount = product.precio_rebajado && product.precio && product.precio_rebajado < product.precio;
 
@@ -414,12 +413,12 @@ const CatalogPage = () => {
                         {/* Content */}
                         <div className="p-4 flex flex-col flex-1">
                           <Link to={`/producto/${product.id}`}>
-                            <h3 className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors mb-1">
-                              {toTitleCase(product.nombre)}
+                            <h3 className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors mb-1 uppercase tracking-wide">
+                              {product.nombre}
                             </h3>
                           </Link>
-                          {(product.descripcion_corta || product.descripcion) && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{(product.descripcion_corta || stripHtml(product.descripcion || '')).replace(/\s+/g, ' ').trim()}</p>
+                          {product.descripcion_corta && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{product.descripcion_corta.replace(/\s+/g, ' ').trim()}</p>
                           )}
                           <TagChips tags={tagsForChips} />
 

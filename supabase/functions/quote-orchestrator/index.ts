@@ -443,7 +443,13 @@ function composePackageHeuristic(
   }[tier];
 
   const primaryCat = mainCategories[0];
-  const mainProducts = products.filter(p => p.categoria === primaryCat).sort((a, b) => b.finalScore - a.finalScore);
+  const isBev = (p: ScoredProduct) => p.categoria === 'Bebida' || p.categoria === 'Bebidas';
+  const matchesPrimary = (p: ScoredProduct) =>
+    p.categoria === primaryCat || (p.menu_segunda_categoria || '') === primaryCat;
+  // Mains: pertenecen al evento, NO son Add-ons, NO son bebida.
+  const mainProducts = products
+    .filter(p => matchesPrimary(p) && !isBev(p) && p.is_addon !== true)
+    .sort((a, b) => b.finalScore - a.finalScore);
 
   const items: PackageItem[] = [];
   const usedProducts = new Set<string>();
@@ -466,7 +472,7 @@ function composePackageHeuristic(
   }
 
   if (tierConfig.includeBeverage) {
-    const beverages = products.filter(p => p.categoria === 'Bebidas' && !usedProducts.has(p.id)).sort((a, b) => b.finalScore - a.finalScore);
+    const beverages = products.filter(p => isBev(p) && !usedProducts.has(p.id)).sort((a, b) => b.finalScore - a.finalScore);
     if (beverages.length > 0) {
       const bev = tier === 'experiencia' ? beverages[0] : beverages[Math.min(1, beverages.length - 1)];
       const qty = bev.pricing_model === 'per_person' && !isGroupPricedProduct(bev)
@@ -486,13 +492,30 @@ function composePackageHeuristic(
 
   const remaining = tierConfig.maxItems - items.length;
   if (remaining > 0) {
-    const complementary = products.filter(p => !usedProducts.has(p.id) && p.categoria !== primaryCat)
-      .sort((a, b) => b.finalScore - a.finalScore).slice(0, remaining);
+    // Complementos: deben pertenecer al evento Y ser Add-on (preferido) o surtido grupal.
+    // Para grupos pequeños (<=20) sólo individuales.
+    const small = people <= 20;
+    const complementary = products
+      .filter(p =>
+        !usedProducts.has(p.id)
+        && matchesPrimary(p)
+        && !isBev(p)
+        && (p.is_addon === true || p.formato === 'grupal')
+        && (!small || p.formato !== 'grupal')
+      )
+      .sort((a, b) => {
+        // Prioriza add-ons explícitos, luego score
+        const aw = a.is_addon === true ? 1 : 0;
+        const bw = b.is_addon === true ? 1 : 0;
+        if (aw !== bw) return bw - aw;
+        return b.finalScore - a.finalScore;
+      })
+      .slice(0, remaining);
     for (const comp of complementary) {
-      const isSurtido = comp.nombre.toLowerCase().includes('surtido');
-      const qty = comp.pricing_model === 'per_person'
-        ? getDefaultQuantity(comp, people)
-        : isSurtido ? Math.ceil(people / 7) : 1;
+      const isGrupal = comp.formato === 'grupal';
+      const qty = isGrupal
+        ? Math.max(1, Math.ceil(people / 8))
+        : getDefaultQuantity(comp, people);
       items.push({
         productId: comp.id, parentProductId: comp.parent_id, productName: comp.nombre,
         quantity: qty, unitPrice: comp.effectivePrice, computedPrice: comp.effectivePrice * qty,

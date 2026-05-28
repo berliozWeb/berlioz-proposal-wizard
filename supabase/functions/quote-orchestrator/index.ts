@@ -65,21 +65,29 @@ const DESAYUNO: Record<string, { id:string; n:string; p:number; img:string; cat:
   esencial:     { id:"breakfast-bag-pavo",              n:"Breakfast Bag — Pavo",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
   equilibrado:  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma — Pan dulce",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
   experiencia:  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal — Con yogurt orgánico",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
-  keto:         { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco y fruta. Vegano y sin gluten." },
-  sin_gluten:   { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco y fruta. Sin gluten." },
-  vegano:       { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo. Vegano." },
-  vegetariano:  { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo del día." },
-  sin_lactosa:  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT — Pavo y yogurt",             p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayo de chipotle." },
+  // Healthy Breakfast = chía pudding, sin huevo, sin lácteos → vegano real ✓ keto ✓ sin_gluten ✓
+  keto:         { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. Vegano y sin gluten." },
+  sin_gluten:   { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. Sin gluten." },
+  vegano:       { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. 100% vegano." },
+  // Chilaquiles con huevo = lacto-ovo vegetariano ✓ (no carne), pero NO vegano (tiene huevo+crema+queso)
+  vegetariano:  { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo del día. Vegetariano." },
+  // Breakfast BLT: sin lácteos en ingredientes base (pavo, tocino, tomate, lechuga, mayo chipotle)
+  sin_lactosa:  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT — Pavo y yogurt",             p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayonesa de chipotle." },
 };
 
 const COMIDA: Record<string, { id:string; n:string; p:number; img:string; cat:string; desc:string }> = {
   esencial:     { id:"lunch-bag-pasta-pollo",           n:"Lunch Bag — Pasta con pollo",                p:250, img:IMG.lunch_bag,          cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
   equilibrado:  { id:"golden-box-ensalada",             n:"Golden Box — Con ensalada de frutas",        p:330, img:IMG.golden_box,          cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
   experiencia:  { id:"orzo-pasta-pollo",                n:"Orzo Pasta Salad Box — Con pollo",           p:390, img:IMG.orzo_pasta,          cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
-  keto:         { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto,            cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos." },
-  sin_gluten:   { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto,            cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos." },
-  vegano:       { id:"salad-box-vegana",                n:"Salad Box — Vegana con agua",                p:300, img:IMG.salad_box,           cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. 100% vegana." },
-  vegetariano:  { id:"salad-box-vegana",                n:"Salad Box — Vegana con agua",                p:300, img:IMG.salad_box,           cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. Vegetariana y vegana." },
+  // Keto y sin_gluten: Box Keto – Sin Gluten ✓ (proteína+vegetales, sin granos, sin harinas)
+  keto:         { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto,            cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos ni harinas." },
+  sin_gluten:   { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto,            cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin gluten." },
+  // Vegano: Salad Box Vegana ($300) — tofu, quinoa, aguacate, sin lácteos, sin huevo ✓
+  vegano:       { id:"salad-box-vegana",                n:"Salad Box — Vegana con agua",                p:300, img:IMG.salad_box,           cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. Sin lácteos ni huevo. 100% vegana." },
+  // Vegetariano: Box Vegetariana ($340) — ciabatta, verduras, queso crema, aguacate. Lacto-vegetariana ✓
+  // (tiene queso crema → NO vegana, pero sí vegetariana)
+  vegetariano:  { id:"box-vegetariana",                 n:"Box Vegetariana",                            p:340, img:IMG.box_vegetariana,     cat:"Comida", desc:"Ciabatta de verduras horneadas con queso crema, aguacate y jícama con toronja." },
+  // Sin lactosa: Box Oriental — salsa de soya, arroz, verduras. Sin lácteos ✓
   sin_lactosa:  { id:"box-oriental-pollo",              n:"Box Oriental — Pollo teriyaki",              p:300, img:IMG.box_oriental,        cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
 };
 

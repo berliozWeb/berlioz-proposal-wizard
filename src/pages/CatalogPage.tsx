@@ -13,6 +13,7 @@ import {
   type Variante,
   type DietaryFilter,
 } from "@/hooks/useMenuCotizador";
+import { useProductos } from "@/hooks/useProductos";
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   "Coffee Break": "☕",

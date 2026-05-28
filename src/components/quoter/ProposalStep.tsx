@@ -685,13 +685,11 @@ export default function ProposalStep(props: ProposalStepProps) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8);
       doc.setTextColor(...TEAL);
-      doc.setCharSpace(0.8);
       doc.text("#", margin + 4, y + 5.5);
-      doc.text("DESCRIPCIÓN", margin + 12, y + 5.5);
-      doc.text("CANT.", pageW - margin - 70, y + 5.5, { align: "right" });
-      doc.text("P. UNIT.", pageW - margin - 35, y + 5.5, { align: "right" });
-      doc.text("SUBTOTAL", pageW - margin - 2, y + 5.5, { align: "right" });
-      doc.setCharSpace(0);
+      doc.text("Descripción", margin + 12, y + 5.5);
+      doc.text("Cant.", pageW - margin - 70, y + 5.5, { align: "right" });
+      doc.text("P. Unit.", pageW - margin - 35, y + 5.5, { align: "right" });
+      doc.text("Subtotal", pageW - margin - 2, y + 5.5, { align: "right" });
       y += 11;
 
       // Rows

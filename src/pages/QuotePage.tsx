@@ -424,6 +424,32 @@ const QuotePage = () => {
       {step === 0 && (
         <div className="max-w-5xl mx-auto px-6 py-4 space-y-12">
 
+          {/* ── Natural-language intake ── */}
+          <section className="animate-slide-up max-w-3xl mx-auto w-full">
+            <div className="bg-[#EDD9C8]/40 border border-[#014D6F]/15 rounded-3xl p-6 md:p-8">
+              <h2 className="font-heading text-xl md:text-2xl text-[#014D6F] mb-1 tracking-tight">
+                Describe tu evento
+              </h2>
+              <p className="font-body text-sm text-[#014D6F]/70 mb-4">
+                Escribe en lenguaje natural y generamos tu propuesta al instante.
+              </p>
+              <textarea
+                value={naturalText}
+                onChange={(e) => setNaturalText(e.target.value)}
+                placeholder="Ej: Necesito una comida para 25 personas, 3 veganos y 1 sin gluten, presupuesto $250 por persona…"
+                rows={4}
+                className="w-full rounded-2xl border border-[#014D6F]/20 bg-white px-4 py-3 text-sm text-[#014D6F] placeholder-[#CEC1B9] focus:outline-none focus:ring-2 focus:ring-[#014D6F] resize-none"
+              />
+              <button
+                onClick={handleNaturalParse}
+                disabled={!naturalText.trim() || isParsing}
+                className="mt-3 w-full h-12 rounded-full bg-[#014D6F] text-white font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {isParsing ? "Procesando..." : "Generar propuesta →"}
+              </button>
+            </div>
+          </section>
+
           {/* ── Section A: Event mode (compact cards) ── */}
           <section className="animate-slide-up">
             <div className="text-center mb-6">

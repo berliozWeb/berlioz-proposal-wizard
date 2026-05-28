@@ -553,17 +553,30 @@ async function composeWithClaude(
     return null;
   }
 
-  const catalog = products.slice(0, 80).map(p => ({
-    id: p.id,
-    nombre: p.nombre,
-    precio: p.effectivePrice,
-    categoria: p.categoria,
-    descripcion: (p.descripcion || '').slice(0, 80),
-    pricing_model: p.pricing_model,
-    score: p.finalScore,
-    destacado: p.destacado,
-    dietary_tags: p.dietary_tags || [],
-  }));
+  // Heurística para detectar productos en formato GRUPAL (cajas/surtidos/paquetes que ya sirven a X personas).
+  // En tier EXPERIENCIA queremos preferir porciones INDIVIDUALES para no duplicar el rendimiento.
+  const BULK_REGEX = /\b(surtido|surtidos|caja|cajas|bandeja|bandejas|paquete|paquetes|box|combo|kit|charola|fuente|para\s*\d+|x\s*\d+|\d+\s*(pzas|piezas|personas|pax))\b/i;
+  const isBulkProduct = (p: { nombre: string; precio: number }) =>
+    BULK_REGEX.test(p.nombre) || p.precio >= 800;
+
+  // Restringimos el catálogo expuesto a Claude SOLO a la categoría primaria del evento + Bebidas.
+  // Esto evita que aparezcan "crudités de Working Lunch" en un Desayuno, etc.
+  const allowedCategoriesForLLM = new Set<string>([eventCategories[0], 'Bebidas', 'Bebida']);
+  const catalog = products
+    .filter(p => allowedCategoriesForLLM.has(p.categoria || ''))
+    .slice(0, 80)
+    .map(p => ({
+      id: p.id,
+      nombre: p.nombre,
+      precio: p.effectivePrice,
+      categoria: p.categoria,
+      descripcion: (p.descripcion || '').slice(0, 80),
+      pricing_model: p.pricing_model,
+      score: p.finalScore,
+      destacado: p.destacado,
+      dietary_tags: p.dietary_tags || [],
+      is_bulk: isBulkProduct({ nombre: p.nombre, precio: p.effectivePrice }),
+    }));
 
   // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items
   // (e.g. fruta etiquetada como vegano pero NO keto cuando piden keto).

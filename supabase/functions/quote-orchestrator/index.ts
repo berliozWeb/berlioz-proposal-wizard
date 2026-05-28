@@ -577,21 +577,32 @@ async function composeWithClaude(
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, categoria: p.categoria }));
   }
 
-  // Precompute la categoría PRIMARIA según el tipo de evento y los mejores candidatos PRINCIPALES
-  // para que Claude no proponga snacks o frutas antes que el plato fuerte (ej: chilaquiles en desayuno).
-  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Working Lunch', 'Bebidas'];
+  // Precompute la categoría PRIMARIA según el tipo de evento y los mejores candidatos PRINCIPALES.
+  // Para Desayuno/Comida exigimos que sean PLATO PRINCIPAL (variante.es_comida === "Sí" en el menú
+  // canónico), así Claude no propone frutas/yogurt/snacks como principal cuando hay chilaquiles.
+  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Comida', 'Bebida'];
   const primaryCategory = eventCategories[0];
   const secondaryCategories = eventCategories.slice(1);
-  const primaryCandidates = products
-    .filter(p => p.categoria === primaryCategory)
+  const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
+
+  const isMainFoodOK = (p: ScoredProduct) =>
+    !requireMainFood || p.es_comida_main === true || p.es_comida_main === undefined;
+
+  let primaryPool = products.filter(p => p.categoria === primaryCategory && isMainFoodOK(p));
+  if (primaryPool.length === 0) {
+    // Fallback: si nadie está marcado como principal, abre a toda la categoría
+    primaryPool = products.filter(p => p.categoria === primaryCategory);
+  }
+  const primaryCandidates = primaryPool
     .sort((a, b) => b.finalScore - a.finalScore)
     .slice(0, 12)
     .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, score: p.finalScore }));
+
   // Variantes principales que cubren cada restricción dietética (mismo nivel que el principal regular)
   const primaryDietaryCandidates: Record<string, { id: string; nombre: string; precio: number }[]> = {};
   for (const r of activeRestrictions) {
     primaryDietaryCandidates[r] = products
-      .filter(p => p.categoria === primaryCategory && productSupportsRestriction(p, normalizeDietaryTag(r)))
+      .filter(p => p.categoria === primaryCategory && isMainFoodOK(p) && productSupportsRestriction(p, normalizeDietaryTag(r)))
       .slice(0, 6)
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice }));
   }

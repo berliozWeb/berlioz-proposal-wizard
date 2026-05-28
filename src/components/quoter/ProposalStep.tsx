@@ -630,198 +630,204 @@ export default function ProposalStep(props: ProposalStepProps) {
       const tier = selectedTier || "equilibrado";
       const t = tierTotals[tier];
       const items = packages[tier].items;
-      const tierInfo = TIERS.find(ti => ti.id === tier);
-      const doc = new jsPDF();
 
-      const pageW = doc.internal.pageSize.getWidth();
-      const margin = PDF_MARGIN;
-      const contentW = pageW - margin * 2;
+      await ensureMontserrat();
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      registerMontserrat(doc);
 
-      // Pre-load all product images
-      const imagePromises = items.map(item => {
-        const url = buildProductImageUrl(item.imagen_url, item.imagen) || '';
-        return loadImageBase64(url);
-      });
-      const loadedImages = await Promise.all(imagePromises);
+      // Pre-load product images
+      const loadedImages = await Promise.all(items.map(item => {
+        const url = buildProductImageUrl(item.imagen_url, item.imagen) || "";
+        return loadImageBase64(url, { w: 320, h: 320 });
+      }));
 
-      // ═══ Header band + hero image ═══
-      drawTopBanner(doc);
-      await drawHero(doc, heroAssetForEvent(eventType));
+      // ── Header: logo + hero ──
+      let y = drawHeaderLogo(doc);
+      y = await drawHeroFull(doc, y, heroAssetForEvent(eventType));
+      y = drawQuoteId(doc, y + 4, quoteId);
 
-      // ═══ Quote ID bar ═══
-      let y = HEADER_H + HERO_H + 10;
-      drawQuoteIdBar(doc, y, quoteId);
-      y += 12;
-
-      // ═══ Two-column info (Cliente | Evento) ═══
-      y = drawInfoColumns(
-        doc,
-        y,
+      // ── Cliente + Detalles del evento ──
+      y = drawTwoColFields(doc, y + 8,
         {
           title: "Datos del cliente",
-          lines: [
-            ["Atención", `${clientName || "—"}${empresa ? " — " + empresa : ""}`],
+          fields: [
+            ["Atención", clientName || "—"],
             ["Empresa", empresa || "—"],
             ["Tipo", eventLabel],
           ],
         },
         {
           title: "Detalles del evento",
-          lines: [
+          fields: [
             ["Fecha", date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: es }) : "—"],
             ["Hora de entrega", deliveryTime || eventTime || "—"],
             ["Preparada por", "Equipo Ventas"],
           ],
-        },
-      );
+        });
 
-      // ═══ CONCEPTOS section ═══
-      y += 6;
-      drawSectionLabel(doc, "Conceptos", y);
-      doc.setDrawColor(...TEAL);
-      doc.setLineWidth(0.3);
-      doc.line(margin + 28, y - 1, pageW - margin, y - 1);
-      y += 4;
+      // ── CONCEPTOS ──
+      y += 16;
+      drawLabel(doc, "Conceptos", MARGIN_X, y);
+      y += 12;
+      y = drawTableHeader(doc, y);
 
-      // Table header (cream bar)
-      doc.setFillColor(...CREAM_SOFT);
-      doc.rect(margin, y, contentW, 8, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(...TEAL);
-      doc.text("#", margin + 4, y + 5.5);
-      doc.text("Descripción", margin + 12, y + 5.5);
-      doc.text("Cant.", pageW - margin - 70, y + 5.5, { align: "right" });
-      doc.text("P. Unit.", pageW - margin - 35, y + 5.5, { align: "right" });
-      doc.text("Subtotal", pageW - margin - 2, y + 5.5, { align: "right" });
-      y += 11;
+      const cols = colXs();
+      const padV = 16;
+      const safeBottom = PAGE_H - MARGIN_Y - 60; // leave room for footer
+      const newPageHeader = () => {
+        doc.addPage();
+        setFont(doc, "bold", 14);
+        doc.setTextColor(...NAVY);
+        doc.setCharSpace(3);
+        doc.text("BERLIOZ", PAGE_W / 2, MARGIN_Y + 20, { align: "center" });
+        doc.setCharSpace(0);
+        let ny = MARGIN_Y + 36;
+        drawLabel(doc, "Conceptos (continuación)", MARGIN_X, ny);
+        ny += 12;
+        return drawTableHeader(doc, ny);
+      };
 
-      // Rows
-      const imgSize = 18;
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const lineTotal = item.unitPrice * item.qty;
         const description = item.descripcion?.replace(/<[^>]+>/g, "").trim() || item.recommendationReason || "";
-        const descLines = description
-          ? doc.splitTextToSize(description, contentW - imgSize - 90)
-          : [];
-        const rowH = Math.max(imgSize + 6, 14 + descLines.length * 3.6);
+        setFont(doc, "regular", 11);
+        const descLines = description ? doc.splitTextToSize(description, cols.textWLimit) : [];
 
-        if (y + rowH > 248) {
-          doc.addPage();
-          drawTopBanner(doc);
-          y = HEADER_H + 10;
+        // Row height: image (56) + padding, or text height
+        const textBlockH = 4 + 14 + descLines.length * 14;
+        const rowH = Math.max(cols.imgSize + padV, textBlockH + padV);
+
+        if (y + rowH > safeBottom) {
+          y = newPageHeader();
         }
 
-        // Image
+        const rowTop = y;
+        const cy = rowTop + padV / 2;
+
+        // Image (80x80 in spec — 56pt ≈ 75px @96dpi, close enough)
         const imgData = loadedImages[i];
-        const imgX = margin + 12;
-        const imgY = y;
         if (imgData) {
-          try {
-            doc.addImage(imgData, "JPEG", imgX, imgY, imgSize, imgSize);
-          } catch {
-            doc.setFillColor(...CREAM_SOFT);
-            doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, "F");
+          try { doc.addImage(imgData, "JPEG", cols.imgX, cy, cols.imgSize, cols.imgSize); }
+          catch {
+            doc.setFillColor(...ROSE_PALE);
+            doc.roundedRect(cols.imgX, cy, cols.imgSize, cols.imgSize, 6, 6, "F");
           }
         } else {
-          doc.setFillColor(...CREAM_SOFT);
-          doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, "F");
+          doc.setFillColor(...ROSE_PALE);
+          doc.roundedRect(cols.imgX, cy, cols.imgSize, cols.imgSize, 6, 6, "F");
         }
 
         // # index
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(...TEXT_DARK);
-        doc.text(String(i + 1), margin + 4, y + 6);
+        setFont(doc, "regular", 11);
+        doc.setTextColor(...TEXT_MAIN);
+        doc.text(String(i + 1), cols.idx, cy + 14);
 
-        // Name + description
-        const textX = imgX + imgSize + 4;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10);
-        doc.setTextColor(...TEXT_DARK);
-        doc.text(item.productName, textX, y + 5);
+        // Name
+        setFont(doc, "bold", 13);
+        doc.setTextColor(...TEXT_MAIN);
+        doc.text(item.productName, cols.textX, cy + 14);
 
+        // Description
         if (descLines.length) {
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(8);
-          doc.setTextColor(...TEXT_MUTED);
-          doc.text(descLines.slice(0, 4), textX, y + 10);
+          setFont(doc, "regular", 11);
+          doc.setTextColor(...TEXT_SUB);
+          doc.text(descLines.slice(0, 5), cols.textX, cy + 30, { lineHeightFactor: 1.4 });
         }
 
-        // Right side: qty / unit / subtotal
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
-        doc.setTextColor(...TEXT_DARK);
-        doc.text(String(item.qty), pageW - margin - 70, y + 6, { align: "right" });
-        doc.setFont("helvetica", "normal");
-        doc.text(formatMXN(item.unitPrice), pageW - margin - 35, y + 6, { align: "right" });
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(...TEAL);
-        doc.text(formatMXN(lineTotal), pageW - margin - 2, y + 6, { align: "right" });
+        // Qty / Unit / Subtotal
+        setFont(doc, "semibold", 12);
+        doc.setTextColor(...TEXT_MAIN);
+        doc.text(String(item.qty), cols.qty, cy + 16, { align: "right" });
+        setFont(doc, "regular", 12);
+        doc.text(formatMXN(item.unitPrice), cols.unit, cy + 16, { align: "right" });
+        setFont(doc, "semibold", 12);
+        doc.setTextColor(...NAVY);
+        doc.text(formatMXN(lineTotal), cols.sub, cy + 16, { align: "right" });
 
-        // Hairline divider
-        doc.setDrawColor(...HAIRLINE);
-        doc.setLineWidth(0.2);
-        doc.line(margin, y + rowH, pageW - margin, y + rowH);
-
-        y += rowH + 2;
+        // Bottom hairline
+        y = rowTop + rowH;
+        doc.setDrawColor(...ROW_RULE);
+        doc.setLineWidth(0.6);
+        doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
       }
 
-      // ═══ Totals block (cream rounded box, right side) ═══
-      if (y + 36 > 248) {
+      // Envío row (no image)
+      if (t.shipping || t.early) {
+        const rowH = 38;
+        if (y + rowH > safeBottom) y = newPageHeader();
+        const cy = y + padV / 2;
+        setFont(doc, "bold", 13);
+        doc.setTextColor(...TEXT_MAIN);
+        doc.text("Envío", cols.textX, cy + 14);
+        if (t.early) {
+          setFont(doc, "regular", 11);
+          doc.setTextColor(...TEXT_SUB);
+          doc.text("Incluye recargo por entrega temprana", cols.textX, cy + 30);
+        }
+        setFont(doc, "regular", 12);
+        doc.setTextColor(...TEXT_MAIN);
+        doc.text("1", cols.qty, cy + 16, { align: "right" });
+        doc.text(formatMXN(t.shipping + t.early), cols.unit, cy + 16, { align: "right" });
+        setFont(doc, "semibold", 12);
+        doc.setTextColor(...NAVY);
+        doc.text(formatMXN(t.shipping + t.early), cols.sub, cy + 16, { align: "right" });
+        y += rowH;
+        doc.setDrawColor(...ROW_RULE);
+        doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
+      }
+
+      // ── Totals box (right) ──
+      y += 28;
+      const totalsW = 280;
+      const totalsX = PAGE_W - MARGIN_X - totalsW;
+      const totalsH = 110;
+      if (y + totalsH > safeBottom) y = newPageHeader();
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(224, 216, 210);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(totalsX, y, totalsW, totalsH, 8, 8, "FD");
+
+      const tx = totalsX + 20;
+      const trx = totalsX + totalsW - 20;
+      let ty = y + 28;
+      setFont(doc, "regular", 11);
+      doc.setTextColor(...TEXT_SUB);
+      doc.text("Subtotal", tx, ty);
+      setFont(doc, "semibold", 12);
+      doc.setTextColor(...TEXT_MAIN);
+      doc.text(formatMXN(t.subtotal + t.shipping + t.early), trx, ty, { align: "right" });
+      ty += 22;
+      setFont(doc, "regular", 11);
+      doc.setTextColor(...TEXT_SUB);
+      doc.text("IVA (16%)", tx, ty);
+      setFont(doc, "semibold", 12);
+      doc.setTextColor(...TEXT_MAIN);
+      doc.text(formatMXN(t.iva), trx, ty, { align: "right" });
+      ty += 12;
+      doc.setDrawColor(224, 216, 210);
+      doc.setLineWidth(0.6);
+      doc.line(tx, ty, trx, ty);
+      ty += 26;
+      setFont(doc, "bold", 13);
+      doc.setTextColor(...NAVY);
+      doc.text("TOTAL:", tx, ty);
+      setFont(doc, "bold", 24);
+      doc.setTextColor(...NAVY);
+      doc.text(formatMXN(t.total), trx, ty + 2, { align: "right" });
+
+      y += totalsH + 28;
+
+      // ── Notes + brand ──
+      const notesEstH = 200;
+      if (y + notesEstH > safeBottom) {
         doc.addPage();
-        drawTopBanner(doc);
-        y = HEADER_H + 10;
+        y = MARGIN_Y + 8;
       }
-      y += 4;
-      const totalsW = 88;
-      const totalsX = pageW - margin - totalsW;
-      const totalsH = 34;
-      doc.setFillColor(...CREAM_SOFT);
-      doc.setDrawColor(...CREAM_LINE);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(totalsX, y, totalsW, totalsH, 2, 2, "FD");
+      drawNotesBlock(doc, y, QUOTE_FOOTER_NOTES.slice(0, 10));
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...TEXT_DARK);
-      doc.text("Subtotal:", totalsX + 6, y + 8);
-      doc.setFont("helvetica", "bold");
-      doc.text(formatMXN(t.subtotal + t.shipping + t.early), totalsX + totalsW - 6, y + 8, { align: "right" });
-
-      doc.setFont("helvetica", "normal");
-      doc.text("IVA (16%):", totalsX + 6, y + 15);
-      doc.setFont("helvetica", "bold");
-      doc.text(formatMXN(t.iva), totalsX + totalsW - 6, y + 15, { align: "right" });
-
-      doc.setDrawColor(...TEAL);
-      doc.setLineWidth(0.4);
-      doc.line(totalsX + 6, y + 19, totalsX + totalsW - 6, y + 19);
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(...TEAL);
-      doc.text("TOTAL:", totalsX + 6, y + 28);
-      doc.setFontSize(15);
-      doc.text(formatMXN(t.total), totalsX + totalsW - 6, y + 28, { align: "right" });
-
-      y += totalsH + 8;
-
-      // ═══ Notes + brand block ═══
-      if (y + 50 > 260) {
-        doc.addPage();
-        drawTopBanner(doc);
-        y = HEADER_H + 10;
-      }
-      drawNotesAndBrand(doc, y, QUOTE_FOOTER_NOTES.slice(0, 10));
-
-      // ═══ Bottom band on every page ═══
-      const total = doc.getNumberOfPages();
-      for (let p = 1; p <= total; p++) {
-        doc.setPage(p);
-        drawBottomBand(doc);
-      }
+      // Footer on every page
+      applyFooterAllPages(doc);
 
       doc.save(`Berlioz-Cotizacion-${format(new Date(), "yyyyMMdd")}.pdf`);
       toast.success("Tu cotización en PDF se ha generado correctamente");

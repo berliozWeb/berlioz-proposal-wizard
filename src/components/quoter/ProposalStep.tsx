@@ -316,6 +316,30 @@ function TierCarousel({
                   {item.isBestseller && <Star className="w-3 h-3 inline text-amber-500 fill-current mr-1 mb-0.5" />}
                   {item.productName}
                 </p>
+                {item.recommendationReason && (
+                  <span style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "2px 8px",
+                    borderRadius: 99,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    marginBottom: 6,
+                    background: item.recommendationReason.includes("Keto") ? "#FEF3C7"
+                      : item.recommendationReason.includes("Vegano") || item.recommendationReason.includes("Vegetariano") ? "#DCFCE7"
+                      : item.recommendationReason.includes("Sin Gluten") ? "#FEF9C3"
+                      : item.recommendationReason.includes("Sin Lactosa") ? "#EDE9FE"
+                      : "#F0F9FF",
+                    color: item.recommendationReason.includes("Keto") ? "#92400E"
+                      : item.recommendationReason.includes("Vegano") || item.recommendationReason.includes("Vegetariano") ? "#166534"
+                      : item.recommendationReason.includes("Sin Gluten") ? "#713F12"
+                      : item.recommendationReason.includes("Sin Lactosa") ? "#5B21B6"
+                      : "#0369A1",
+                  }}>
+                    {item.recommendationReason}
+                  </span>
+                )}
                 {desc && (
                   <p className="font-body text-[11px] italic text-[#777] line-clamp-2 mb-2">
                     {desc}

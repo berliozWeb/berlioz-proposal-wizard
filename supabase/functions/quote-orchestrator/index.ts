@@ -553,17 +553,36 @@ async function composeWithClaude(
     return null;
   }
 
-  const catalog = products.slice(0, 80).map(p => ({
-    id: p.id,
-    nombre: p.nombre,
-    precio: p.effectivePrice,
-    categoria: p.categoria,
-    descripcion: (p.descripcion || '').slice(0, 80),
-    pricing_model: p.pricing_model,
-    score: p.finalScore,
-    destacado: p.destacado,
-    dietary_tags: p.dietary_tags || [],
-  }));
+  // Categoría primaria del evento (definida arriba para poder restringir el catálogo expuesto a Claude).
+  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Comida', 'Bebida'];
+  const primaryCategory = eventCategories[0];
+  const secondaryCategories = eventCategories.slice(1);
+  const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
+
+  // Heurística para detectar productos en formato GRUPAL (cajas/surtidos/paquetes que ya sirven a X personas).
+  // En tier EXPERIENCIA queremos preferir porciones INDIVIDUALES para no duplicar el rendimiento.
+  const BULK_REGEX = /\b(surtido|surtidos|caja|cajas|bandeja|bandejas|paquete|paquetes|box|combo|kit|charola|fuente|para\s*\d+|x\s*\d+|\d+\s*(pzas|piezas|personas|pax))\b/i;
+  const isBulkProduct = (p: { nombre: string; precio: number }) =>
+    BULK_REGEX.test(p.nombre) || p.precio >= 800;
+
+  // Restringimos el catálogo expuesto a Claude SOLO a la categoría primaria del evento + Bebidas.
+  // Esto evita que aparezcan "crudités de Working Lunch" en un Desayuno, etc.
+  const allowedCategoriesForLLM = new Set<string>([primaryCategory, 'Bebidas', 'Bebida']);
+  const catalog = products
+    .filter(p => allowedCategoriesForLLM.has(p.categoria || ''))
+    .slice(0, 80)
+    .map(p => ({
+      id: p.id,
+      nombre: p.nombre,
+      precio: p.effectivePrice,
+      categoria: p.categoria,
+      descripcion: (p.descripcion || '').slice(0, 80),
+      pricing_model: p.pricing_model,
+      score: p.finalScore,
+      destacado: p.destacado,
+      dietary_tags: p.dietary_tags || [],
+      is_bulk: isBulkProduct({ nombre: p.nombre, precio: p.effectivePrice }),
+    }));
 
   // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items
   // (e.g. fruta etiquetada como vegano pero NO keto cuando piden keto).
@@ -577,14 +596,9 @@ async function composeWithClaude(
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, categoria: p.categoria }));
   }
 
-  // Precompute la categoría PRIMARIA según el tipo de evento y los mejores candidatos PRINCIPALES.
-  // Para Desayuno/Comida exigimos que sean PLATO PRINCIPAL (variante.es_comida === "Sí" en el menú
-  // canónico), así Claude no propone frutas/yogurt/snacks como principal cuando hay chilaquiles.
-  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Comida', 'Bebida'];
-  const primaryCategory = eventCategories[0];
-  const secondaryCategories = eventCategories.slice(1);
-  const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
-
+  // Precompute los mejores candidatos PRINCIPALES. Para Desayuno/Comida exigimos que sean PLATO
+  // PRINCIPAL (variante.es_comida === "Sí" en el menú canónico), así Claude no propone frutas/
+  // yogurt/snacks como principal cuando hay chilaquiles.
   const isMainFoodOK = (p: ScoredProduct) =>
     !requireMainFood || p.es_comida_main === true || p.es_comida_main === undefined;
 
@@ -640,11 +654,14 @@ Componer cada tier sigue SIEMPRE este orden, sin excepción:
 4) ADD-ONS / COMPLEMENTOS (snacks, postres, surtidos, fruta):
    - SÓLO después de cumplir 1-3. Son la última prioridad y solo si el tier permite más items.
    - En ESENCIAL casi nunca van; en EQUILIBRADO máximo 1; en EXPERIENCIA hasta 2.
+   - 🚫 PROHIBIDO usar como complemento productos de OTRA categoría que no sea la primaria o "Bebidas". Ejemplos: NO agregues "Crudités con hummus" (Working Lunch) en un Desayuno; NO agregues snacks/surtidos de Coffee Break en una Comida si la primaria es Working Lunch. Si necesitas un add-on debe ser de la MISMA categoría primaria o una bebida.
+   - 🚫 PROHIBIDO en EXPERIENCIA usar productos en formato GRUPAL (is_bulk=true: surtidos, cajas, bandejas, paquetes "para 10", "x 12", combos, kits) cuando el grupo es pequeño (<= 20 personas). Para EXPERIENCIA con grupos chicos prefiere SIEMPRE porciones INDIVIDUALES (per_person=true, is_bulk=false) multiplicadas por personas. Un paquete diseñado para 10 personas + 10 individuales = duplicación de comida y se rechaza.
 
 EJEMPLO CORRECTO desayuno 8 personas (1 vegano):
   ✅ 7× Chilaquiles Verdes + 1× Chilaquiles Veganos + 8× Café Berlioz + (opcional) 1× Fruta de Temporada como add-on.
 EJEMPLO INCORRECTO (NUNCA hagas esto):
   ❌ 1× Ensalada de Frutas + 1× Yogurt + 8× Agua. Falta el principal de desayuno (chilaquiles/huevos).
+  ❌ Para 10 personas en EXPERIENCIA: 1× Surtido Premium (para 10) + 10× Sandwich individual. Es comida duplicada — elige solo individuales.
 
 == PRESUPUESTO — REGLA MÁS IMPORTANTE ==
 
@@ -683,6 +700,7 @@ ESENCIAL: 2-3 productos. Principal de la categoría primaria + bebida. Funcional
 EQUILIBRADO: 3-4 productos. Principal (con sus variantes dietéticas) + bebida + máximo 1 add-on. La opción recomendada.
 
 EXPERIENCIA: 4-5 productos. Principal (con variantes dietéticas) + bebida premium + hasta 2 add-ons (postre, snack o surtido). Premium.
+   ⚠️ Para EXPERIENCIA con grupos pequeños (<= 20 personas), los add-ons deben ser INDIVIDUALES (is_bulk=false). Nunca uses surtidos/cajas/paquetes "para N personas": elige postres, snacks o panes individuales y multiplica por personas.
 
 == REGLAS BERLIOZ ==
 

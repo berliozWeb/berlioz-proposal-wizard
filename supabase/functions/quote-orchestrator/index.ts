@@ -1130,27 +1130,18 @@ serve(async (req) => {
 
     if (qrError) console.error('Quote request insert error:', qrError);
 
-    // ── 2. Retrieve products ──
-    const categories = EVENT_TO_CATEGORIES[eventType] || ['Working Lunch', 'Bebidas'];
-    const allProducts: DbProduct[] = [];
-
-    for (const cat of categories) {
-      const { data, error } = await supabase.rpc('search_products_for_quote', {
-        p_categoria: cat,
-        p_dietary_tags: body.dietaryRestrictions || [],
-        p_budget_max: body.budgetEnabled && body.budgetPerPerson ? body.budgetPerPerson * 1.5 : null,
-        p_limit: 30,
-      });
-      if (!error && data) allProducts.push(...(data as DbProduct[]));
+    // ── 2. Retrieve canonical menu (get-menu-cotizador → flat variant catalog) ──
+    const categories = EVENT_TO_CATEGORIES[eventType] || ['Comida', 'Bebida'];
+    let menuAll: DbProduct[] = [];
+    try {
+      menuAll = await fetchMenuCotizador();
+    } catch (e) {
+      console.error('Menu cotizador fetch failed:', e);
+      menuAll = [];
     }
-
-    // Parent images
-    const parentIds = [...new Set(allProducts.filter(p => p.parent_id).map(p => p.parent_id!))];
-    const parentMap = new Map<string, DbProduct>();
-    if (parentIds.length > 0) {
-      const { data: parents } = await supabase.from('productos').select('id, nombre, imagen_url').in('id', parentIds);
-      if (parents) parents.forEach((p: any) => parentMap.set(p.id, p as DbProduct));
-    }
+    // Sólo las categorías relevantes al tipo de evento
+    const allProducts: DbProduct[] = menuAll.filter(p => categories.includes(p.categoria || ''));
+    const parentMap = new Map<string, DbProduct>(); // imágenes ya van resueltas en el flat
 
     // ── 3. Score & enrich all products ──
     const allScored: ScoredProduct[] = allProducts.map(p => {

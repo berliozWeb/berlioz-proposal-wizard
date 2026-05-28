@@ -1,53 +1,31 @@
 // ═══════════════════════════════════════════════════════════
-// Multi-delivery PDF — matches the official Berlioz template:
-// • Page 1: cream banner + hero + cliente/evento cards + ENTREGAS grid
-// • Continuation pages: compact header + remaining entregas
-// • Final summary: subtotal + envío + IVA + TOTAL block, NOTAS box
-// • Bottom cream band on every page
+// Multi-día PDF — faithful port of the Berlioz backoffice
+// generateMultiDayPDF: portada + 1 page per slot + summary.
 // ═══════════════════════════════════════════════════════════
 
 import { jsPDF } from "jspdf";
 import { format, parse as parseDate, isValid as isValidDate } from "date-fns";
 import { es } from "date-fns/locale";
-import { formatMXN } from "@/domain/value-objects/Money";
-import { buildProductImageUrl } from "@/lib/imageUtils";
 import {
   QUOTE_FOOTER_NOTES,
   QUOTE_VALIDITY_DAYS,
   generateQuoteId,
+  IVA_RATE,
+  BASE_SHIPPING_COST,
 } from "@/domain/entities/BerliozCatalog";
-import type { SlotProposal, ProposalPackage, ProposedProduct } from "@/domain/entities/SmartQuote";
+import type { SlotProposal, ProposedProduct } from "@/domain/entities/SmartQuote";
+import { buildProductImageUrl } from "@/lib/imageUtils";
 import {
-  ensureMontserrat,
-  registerMontserrat,
-  setFont,
-  drawHeaderLogo,
-  drawHeroFull,
-  drawQuoteId,
-  drawTwoColFields,
-  drawLabel,
-  drawNotesBlock,
-  applyFooterAllPages,
-  heroAssetForEvent,
-  loadImageBase64,
-  PAGE_W,
-  PAGE_H,
-  MARGIN_X,
-  MARGIN_Y,
-  NAVY,
-  ROSE_PALE,
-  BORDER_TAN,
-  ROW_RULE,
-  RULE_SOFT,
-  TEXT_MAIN,
-  TEXT_SUB,
+  ensureMontserrat, registerMontserrat, setFont,
+  loadImageAsDataURL, getImageFormat,
+  drawRosaHeader, drawRosaFooter, applyFooterAllPages,
+  drawHeroImage, drawSectionLabel, drawQuoteFolio,
+  drawProductRow, drawTotalsBox, drawNotesAndBrand,
+  ensureSpace,
+  PAGE_W, PAGE_H, MARGIN_X, MARGIN_BOTTOM, CONTENT_W, HEADER_H,
+  NAVY, ROSA, ROSA_SOFT, WHITE, TEXT, TEXT_SOFT, MUTED, MUTED_DARK,
+  BERLIOZ_LOGO_URL,
 } from "@/lib/pdfTemplate";
-
-const TIER_LABELS: Record<string, string> = {
-  esencial: "Esencial",
-  equilibrado: "Equilibrado",
-  experiencia: "Experiencia Completa",
-};
 
 export interface MultiPdfSlotInput {
   slot: SlotProposal;
@@ -63,19 +41,27 @@ export interface MultiPdfInput {
   eventLabel: string;
   postalCode: string;
   slots: MultiPdfSlotInput[];
-  /** Optional contact email for the cliente card. */
   email?: string;
-  /** Optional event type slug — used to pick the hero image. */
   eventType?: string;
+  /** Optional hero image override. Leave undefined to auto-pick from most expensive product. */
+  heroImageUrl?: string;
+  /** Optional notes override. */
+  notasCondiciones?: string[];
+  preparadaPor?: string;
 }
 
-// Layout for the slot cards (pt units)
-const CARD_GAP = 16;
-const SAFE_BOTTOM = PAGE_H - MARGIN_Y - 60; // leave room for footer band
+const fmtMXN = (n: number) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2 }).format(n);
 
-/* ── Formatting helpers ───────────────────────────────────────── */
+function fmtDateLong(raw: string): string {
+  if (!raw) return "Fecha por confirmar";
+  const d = parseDate(raw, "yyyy-MM-dd", new Date());
+  if (!isValidDate(d)) return raw;
+  const s = d.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
-function fmtDateLabel(raw: string): string {
+function fmtDateShort(raw: string): string {
   if (!raw) return "—";
   const d = parseDate(raw, "yyyy-MM-dd", new Date());
   if (!isValidDate(d)) return raw;
@@ -100,324 +86,315 @@ function stripHtml(s: string | null | undefined): string {
   return (s || "").replace(/<[^>]+>/g, "").trim();
 }
 
-/* ── Card drawing ─────────────────────────────────────────────── */
-
-interface SlotCardCtx {
-  doc: jsPDF;
-  x: number;
-  y: number;
-  w: number;
-  slotNumber: number;
-  input: MultiPdfSlotInput;
-  loadedImages: (string | null)[];
+function parseDayIndex(label: string): number {
+  const m = label.match(/D[ií]a\s+(\d+)/i);
+  return m ? parseInt(m[1], 10) : 1;
+}
+function parseDeliveryIndex(label: string, fallback: number): number {
+  const m = label.match(/Entrega\s+(\d+)/i);
+  return m ? parseInt(m[1], 10) : fallback;
 }
 
-/** Compute the rendered height of a slot card so we can grid-pack pages. */
-function measureSlotCard(
+/* ───────────── Pages ───────────── */
+
+function drawSlotPage(
   doc: jsPDF,
-  w: number,
-  input: MultiPdfSlotInput,
-): number {
-  const tier = input.slot.tiers.find((t) => t.tier === input.selectedTier);
-  const items: ProposedProduct[] = tier ? tier.items : [];
-  const pad = 16;
-  const imgSize = 40;
-  const textW = w - pad * 2 - imgSize - 10 - 80; // qty/price reserved 80
-
-  let h = pad + 32; // header (date + hour)
-  for (const it of items) {
-    const desc = stripHtml(it.descripcion);
-    setFont(doc, "regular", 9);
-    const descLines = desc ? doc.splitTextToSize(desc, textW) : [];
-    const itemH = Math.max(imgSize + 8, 18 + descLines.length * 11);
-    h += itemH;
-  }
-  h += 58; // totals block
-  return h;
-}
-
-function drawSlotCard(ctx: SlotCardCtx): void {
-  const { doc, x, y, w, slotNumber, input, loadedImages } = ctx;
+  p: {
+    input: MultiPdfSlotInput;
+    slotIndex: number;
+    slotTotal: number;
+    logoData: string | null;
+    imgs: (string | null)[];
+  },
+) {
+  const { input, slotIndex, slotTotal, logoData, imgs } = p;
   const tier = input.slot.tiers.find((t) => t.tier === input.selectedTier);
   if (!tier) return;
-  const items: ProposedProduct[] = tier.items;
-  const cardH = measureSlotCard(doc, w, input);
 
-  const pad = 16;
-  // Card background
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(...BORDER_TAN);
-  doc.setLineWidth(0.6);
-  doc.roundedRect(x, y, w, cardH, 8, 8, "FD");
+  // Navy header band
+  const headerH = 26;
+  doc.setFillColor(...NAVY);
+  doc.rect(0, 0, PAGE_W, headerH, "F");
+  if (logoData) {
+    try { doc.addImage(logoData, "PNG", MARGIN_X, 7, 22, 11, undefined, "FAST"); } catch { /* ignore */ }
+  }
+  setFont(doc, "bold", 14);
+  doc.setTextColor(...WHITE);
+  const dayIdx = parseDayIndex(input.slot.label);
+  const delIdx = parseDeliveryIndex(input.slot.label, slotIndex);
+  doc.text(`Entrega ${delIdx} · Día ${dayIdx}`, PAGE_W / 2, 13, { align: "center" });
+  setFont(doc, "regular", 9);
+  doc.text(`(${slotIndex} de ${slotTotal})`, PAGE_W / 2, 19, { align: "center" });
+  setFont(doc, "regular", 8);
+  doc.text(fmtDateLong(input.slot.date), PAGE_W - MARGIN_X, 13, { align: "right" });
+  doc.text(`${input.slot.time || "—"} hrs`, PAGE_W - MARGIN_X, 19, { align: "right" });
 
-  // Header
-  const dateLbl = fmtDateLabel(input.slot.date);
-  setFont(doc, "bold", 13);
+  let y = 38;
+
+  // Rosa info card — 3 columns
+  const cardH = 22;
+  doc.setFillColor(...ROSA);
+  doc.rect(MARGIN_X, y, CONTENT_W, cardH, "F");
+  const col1 = MARGIN_X + 6;
+  const col2 = MARGIN_X + CONTENT_W / 3 + 6;
+  const col3 = MARGIN_X + (CONTENT_W * 2) / 3 + 6;
+  setFont(doc, "bold", 8);
   doc.setTextColor(...NAVY);
-  doc.text(`${dateLbl} · Entrega ${slotNumber}`, x + w / 2, y + pad + 8, { align: "center" });
+  doc.text("FECHA", col1, y + 8);
+  doc.text("HORA", col2, y + 8);
+  doc.text("PERSONAS", col3, y + 8);
   setFont(doc, "regular", 10);
-  doc.setTextColor(...TEXT_SUB);
-  doc.text(`${input.slot.time || "—"} hrs`, x + w / 2, y + pad + 22, { align: "center" });
+  doc.setTextColor(...TEXT);
+  doc.text(fmtDateLong(input.slot.date), col1, y + 16);
+  doc.text(input.slot.time || "—", col2, y + 16);
+  doc.text(
+    `${input.slot.guests_count} ${input.slot.guests_count === 1 ? "persona" : "personas"}`,
+    col3, y + 16,
+  );
+  y += cardH + 10;
 
-  // Divider
-  doc.setDrawColor(...RULE_SOFT);
-  doc.setLineWidth(0.6);
-  doc.line(x + pad, y + pad + 32, x + w - pad, y + pad + 32);
+  drawSectionLabel(doc, "Menú de la entrega", y);
+  y += 6;
 
   // Items
-  const imgSize = 40;
-  const textX = x + pad + imgSize + 10;
-  const textW = w - pad * 2 - imgSize - 10 - 80;
-  let cy = y + pad + 42;
+  for (const it of tier.items) {
+    y = ensureSpace(doc, y, 24);
+    const idx = tier.items.indexOf(it);
+    y = drawProductRow(doc, y, {
+      name: it.productName,
+      description: stripHtml(it.descripcion),
+      qty: it.quantity,
+      unitPrice: it.unitPrice,
+      imgData: imgs[idx] || null,
+    });
+  }
 
-  items.forEach((it, idx) => {
-    const desc = stripHtml(it.descripcion);
-    setFont(doc, "regular", 9);
-    const descLines = desc ? doc.splitTextToSize(desc, textW) : [];
-    const itemH = Math.max(imgSize + 8, 18 + descLines.length * 11);
+  y += 6;
+  y = ensureSpace(doc, y, 40);
 
-    const imgData = loadedImages[idx];
-    if (imgData) {
-      try { doc.addImage(imgData, "JPEG", x + pad, cy, imgSize, imgSize); }
-      catch {
-        doc.setFillColor(...ROSE_PALE);
-        doc.roundedRect(x + pad, cy, imgSize, imgSize, 4, 4, "F");
-      }
-    } else {
-      doc.setFillColor(...ROSE_PALE);
-      doc.roundedRect(x + pad, cy, imgSize, imgSize, 4, 4, "F");
-    }
-
-    setFont(doc, "bold", 11);
-    doc.setTextColor(...TEXT_MAIN);
-    doc.text(it.productName, textX, cy + 12);
-
-    if (descLines.length) {
-      setFont(doc, "regular", 9);
-      doc.setTextColor(...TEXT_SUB);
-      doc.text(descLines.slice(0, 4), textX, cy + 24);
-    }
-
-    setFont(doc, "semibold", 10);
-    doc.setTextColor(...NAVY);
-    doc.text(`${it.quantity} × ${formatMXN(it.unitPrice)}`, x + w - pad, cy + 14, { align: "right" });
-
-    cy += itemH;
-  });
-
-  // Totals block
-  cy = y + cardH - 50;
-  doc.setDrawColor(...RULE_SOFT);
-  doc.setLineWidth(0.6);
-  doc.line(x + pad, cy, x + w - pad, cy);
-  cy += 14;
-
-  setFont(doc, "regular", 10);
-  doc.setTextColor(...TEXT_SUB);
-  doc.text("Subtotal productos", x + pad, cy);
-  setFont(doc, "semibold", 10);
-  doc.setTextColor(...TEXT_MAIN);
-  doc.text(formatMXN(tier.subtotal), x + w - pad, cy, { align: "right" });
-  cy += 14;
-  setFont(doc, "regular", 10);
-  doc.setTextColor(...TEXT_SUB);
-  doc.text("Envío", x + pad, cy);
-  setFont(doc, "semibold", 10);
-  doc.setTextColor(...TEXT_MAIN);
-  doc.text(formatMXN(tier.shipping), x + w - pad, cy, { align: "right" });
-  cy += 18;
-  setFont(doc, "bold", 11);
-  doc.setTextColor(...NAVY);
-  doc.text("TOTAL C/IVA", x + pad, cy);
-  setFont(doc, "bold", 13);
-  doc.text(formatMXN(tier.total), x + w - pad, cy, { align: "right" });
+  drawTotalsBox(
+    doc, y,
+    [
+      ["Subtotal productos", tier.subtotal],
+      ["Envío", tier.shipping],
+      [`IVA (${(IVA_RATE * 100).toFixed(0)}%)`, tier.iva],
+    ],
+    "TOTAL ENTREGA",
+    tier.total,
+  );
 }
 
-/* ── Grid packing across pages ────────────────────────────────── */
+function drawSummaryPage(
+  doc: jsPDF,
+  p: {
+    input: MultiPdfInput;
+    logoData: string | null;
+    quoteId: string;
+    validStr: string;
+    grandSubtotal: number;
+    grandShipping: number;
+    grandIva: number;
+    grandTotal: number;
+  },
+) {
+  const { input, logoData, quoteId, validStr, grandSubtotal, grandShipping, grandIva, grandTotal } = p;
 
-async function preloadSlotImages(input: MultiPdfInput): Promise<Map<string, (string | null)[]>> {
-  const map = new Map<string, (string | null)[]>();
+  drawRosaHeader(doc, logoData);
+  let y = 38;
+
+  // Folio
+  setFont(doc, "bold", 10);
+  doc.setTextColor(...NAVY);
+  doc.text(`Cotización ${quoteId}`, PAGE_W - MARGIN_X, y, { align: "right" });
+  y += 4;
+  doc.setDrawColor(...ROSA);
+  doc.setLineWidth(0.6);
+  doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
+  y += 8;
+
+  // Two-column cliente / evento
+  const colW = (CONTENT_W - 8) / 2;
+  const lx = MARGIN_X;
+  const rx = MARGIN_X + colW + 8;
+  setFont(doc, "bold", 8);
+  doc.setTextColor(...NAVY);
+  doc.text("DATOS DEL CLIENTE", lx, y);
+  doc.text("DETALLES DEL EVENTO", rx, y);
+  y += 6;
+
+  let yL = y, yR = y;
+  const drawKV = (x: number, yk: number, k: string, v: string) => {
+    setFont(doc, "bold", 10); doc.setTextColor(...TEXT);
+    doc.text(`${k}:`, x, yk);
+    setFont(doc, "regular", 10); doc.setTextColor(...TEXT_SOFT);
+    doc.text(v || "—", x + 26, yk);
+  };
+  drawKV(lx, yL, "Atención", `${input.clientName || "—"} — ${input.empresa || "—"}`); yL += 6;
+  if (input.email) { drawKV(lx, yL, "Email", input.email); yL += 6; }
+  drawKV(lx, yL, "Tipo", input.eventLabel); yL += 6;
+
+  drawKV(rx, yR, "Período", fmtPeriodLabel(input.slots)); yR += 6;
+  drawKV(rx, yR, "Entregas", String(input.slots.length)); yR += 6;
+  drawKV(rx, yR, "CP base", input.postalCode || "—"); yR += 6;
+  drawKV(rx, yR, "Preparada por", input.preparadaPor || "Equipo Ventas"); yR += 6;
+
+  y = Math.max(yL, yR) + 6;
+
+  drawSectionLabel(doc, "Resumen de entregas", y);
+  y += 6;
+
+  // Summary table — navy header
+  doc.setFillColor(...NAVY);
+  doc.rect(MARGIN_X, y, CONTENT_W, 8, "F");
+  setFont(doc, "bold", 8);
+  doc.setTextColor(...WHITE);
+  const cols = {
+    entrega: MARGIN_X + 3,
+    fecha:   MARGIN_X + 22,
+    hora:    MARGIN_X + 78,
+    pers:    MARGIN_X + 95,
+    sub:     MARGIN_X + 130,
+    iva:     MARGIN_X + 153,
+    tot:     MARGIN_X + CONTENT_W - 3,
+  };
+  doc.text("Entrega", cols.entrega, y + 5.5);
+  doc.text("Fecha", cols.fecha, y + 5.5);
+  doc.text("Hora", cols.hora, y + 5.5, { align: "center" });
+  doc.text("Pers.", cols.pers, y + 5.5, { align: "center" });
+  doc.text("Subtotal + Envío", cols.sub, y + 5.5, { align: "right" });
+  doc.text("IVA", cols.iva, y + 5.5, { align: "right" });
+  doc.text("Total", cols.tot, y + 5.5, { align: "right" });
+  y += 8;
+
+  let zebraIdx = 0;
   for (const s of input.slots) {
     const tier = s.slot.tiers.find((t) => t.tier === s.selectedTier);
     if (!tier) continue;
-    const imgs = await Promise.all(
-      tier.items.map((it) =>
-        loadImageBase64(buildProductImageUrl(it.imageUrl ?? null, null) || "", { w: 200, h: 200 }),
-      ),
+    y = ensureSpace(doc, y, 8);
+    if (zebraIdx % 2 !== 0) {
+      doc.setFillColor(...ROSA_SOFT);
+      doc.rect(MARGIN_X, y, CONTENT_W, 8, "F");
+    }
+    setFont(doc, "bold", 8);
+    doc.setTextColor(...TEXT);
+    doc.text(
+      `D${parseDayIndex(s.slot.label)} · E${parseDeliveryIndex(s.slot.label, zebraIdx + 1)}`,
+      cols.entrega, y + 5.5,
     );
-    map.set(s.slot.slot_id, imgs);
+    setFont(doc, "regular", 8);
+    doc.text(fmtDateLong(s.slot.date), cols.fecha, y + 5.5);
+    doc.text(s.slot.time || "—", cols.hora, y + 5.5, { align: "center" });
+    doc.text(String(s.slot.guests_count), cols.pers, y + 5.5, { align: "center" });
+    doc.text(fmtMXN(tier.subtotal + tier.shipping), cols.sub, y + 5.5, { align: "right" });
+    doc.text(fmtMXN(tier.iva), cols.iva, y + 5.5, { align: "right" });
+    setFont(doc, "bold", 8);
+    doc.text(fmtMXN(tier.total), cols.tot, y + 5.5, { align: "right" });
+    y += 8;
+    zebraIdx++;
   }
-  return map;
+
+  y += 8;
+
+  // Navy grand total bar
+  y = ensureSpace(doc, y, 22);
+  doc.setFillColor(...NAVY);
+  doc.rect(MARGIN_X, y, CONTENT_W, 18, "F");
+  setFont(doc, "bold", 12);
+  doc.setTextColor(...WHITE);
+  doc.text("TOTAL GENERAL DEL EVENTO", MARGIN_X + 6, y + 11);
+  setFont(doc, "bold", 16);
+  doc.text(`${fmtMXN(grandTotal)} MXN`, PAGE_W - MARGIN_X - 6, y + 11.5, { align: "right" });
+  y += 26;
+
+  // Notes + brand
+  const notes = input.notasCondiciones && input.notasCondiciones.length > 0
+    ? input.notasCondiciones
+    : QUOTE_FOOTER_NOTES;
+  drawNotesAndBrand(doc, y, notes, logoData);
 }
 
-/* ── Main entry ───────────────────────────────────────────────── */
+/* ───────────── Main entry ───────────── */
 
 export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<void> {
   await ensureMontserrat();
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   registerMontserrat(doc);
-  const contentW = PAGE_W - MARGIN_X * 2;
-  const colW = (contentW - CARD_GAP) / 2;
+
   const quoteId = generateQuoteId();
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + QUOTE_VALIDITY_DAYS);
+  const validStr = validUntil.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
 
-  const loadedImages = await preloadSlotImages(input);
+  // ── Load logo ──
+  const logoData = await loadImageAsDataURL(BERLIOZ_LOGO_URL);
 
-  // ═══ PAGE 1 ═══
-  let y = drawHeaderLogo(doc);
-  y = await drawHeroFull(doc, y, heroAssetForEvent(input.eventType || input.eventLabel));
-  y = drawQuoteId(doc, y + 4, quoteId);
+  // ── Pre-load product images per slot ──
+  const slotImgMap = new Map<string, (string | null)[]>();
+  for (const s of input.slots) {
+    const tier = s.slot.tiers.find((t) => t.tier === s.selectedTier);
+    if (!tier) { slotImgMap.set(s.slot.slot_id, []); continue; }
+    const imgs = await Promise.all(
+      tier.items.map((it) => {
+        const url = buildProductImageUrl(it.imageUrl ?? null, null) || "";
+        return url ? loadImageAsDataURL(url) : Promise.resolve(null);
+      }),
+    );
+    slotImgMap.set(s.slot.slot_id, imgs);
+  }
 
-  y = drawTwoColFields(doc, y + 8,
-    {
-      title: "Datos del cliente",
-      fields: [
-        ["Atención", input.clientName || "—"],
-        ["Empresa", input.empresa || "—"],
-        ...(input.email ? ([["Email", input.email]] as Array<[string, string]>) : []),
-        ["Tipo", input.eventLabel],
-      ],
-    },
-    {
-      title: "Detalles del evento",
-      fields: [
-        ["Período", fmtPeriodLabel(input.slots)],
-        ["Entregas", String(input.slots.length)],
-        ["CP base", input.postalCode || "—"],
-        ["Preparada por", "Equipo Ventas"],
-      ],
-    });
+  // ── Resolve hero (most expensive product if not provided) ──
+  let heroUrl = input.heroImageUrl;
+  if (!heroUrl) {
+    const allItems = input.slots.flatMap((s) => {
+      const t = s.slot.tiers.find((tt) => tt.tier === s.selectedTier);
+      return t ? t.items.map((it) => ({ price: it.unitPrice, url: buildProductImageUrl(it.imageUrl ?? null, null) })) : [];
+    }).filter((x) => !!x.url).sort((a, b) => b.price - a.price);
+    heroUrl = allItems[0]?.url || undefined;
+  }
+  const heroData = heroUrl ? await loadImageAsDataURL(heroUrl) : null;
 
-  y += 16;
-  drawLabel(doc, "Entregas", MARGIN_X, y);
-  y += 14;
+  // ── PAGE 1 — Portada (rosa header + hero) ──
+  drawRosaHeader(doc, logoData);
+  drawHeroImage(doc, 38, CONTENT_W / 3, heroData);
 
-  // ═══ Slot cards grid ═══
-  let col = 0;
-  let rowY = y;
-  let rowMax = 0;
-
-  const newContinuationPage = () => {
+  // ── Slot pages ──
+  const total = input.slots.length;
+  for (let i = 0; i < total; i++) {
     doc.addPage();
-    setFont(doc, "bold", 14);
-    doc.setTextColor(...NAVY);
-    doc.setCharSpace(3);
-    doc.text("BERLIOZ", PAGE_W / 2, MARGIN_Y + 20, { align: "center" });
-    doc.setCharSpace(0);
-    let ny = MARGIN_Y + 40;
-    drawLabel(doc, "Entregas (continuación)", MARGIN_X, ny);
-    return ny + 14;
-  };
-
-  for (let i = 0; i < input.slots.length; i++) {
-    const slot = input.slots[i];
-    const cardH = measureSlotCard(doc, colW, slot);
-    const imgs = loadedImages.get(slot.slot.slot_id) || [];
-
-    // Page break if doesn't fit
-    if (rowY + cardH > SAFE_BOTTOM) {
-      rowY = newContinuationPage();
-      col = 0;
-      rowMax = 0;
-    }
-
-    const cx = MARGIN_X + col * (colW + CARD_GAP);
-    drawSlotCard({
-      doc,
-      x: cx,
-      y: rowY,
-      w: colW,
-      slotNumber: i + 1,
-      input: slot,
-      loadedImages: imgs,
+    drawSlotPage(doc, {
+      input: input.slots[i],
+      slotIndex: i + 1,
+      slotTotal: total,
+      logoData,
+      imgs: slotImgMap.get(input.slots[i].slot.slot_id) || [],
     });
-
-    rowMax = Math.max(rowMax, cardH);
-    col += 1;
-    if (col >= 2) {
-      rowY += rowMax + CARD_GAP;
-      col = 0;
-      rowMax = 0;
-    }
-  }
-  // If last row was half-filled, advance Y
-  if (col === 1) {
-    rowY += rowMax + CARD_GAP;
   }
 
-  // ═══ Grand totals + Notes ═══
-  const grandSubtotalProducts = input.slots.reduce((s, x) => {
+  // ── Summary page ──
+  const grandSubtotal = input.slots.reduce((s, x) => {
     const t = x.slot.tiers.find((tt) => tt.tier === x.selectedTier);
     return s + (t?.subtotal || 0);
   }, 0);
   const grandShipping = input.slots.reduce((s, x) => {
     const t = x.slot.tiers.find((tt) => tt.tier === x.selectedTier);
-    return s + (t?.shipping || 0);
+    return s + (t?.shipping || BASE_SHIPPING_COST);
   }, 0);
   const grandIva = input.slots.reduce((s, x) => {
     const t = x.slot.tiers.find((tt) => tt.tier === x.selectedTier);
     return s + (t?.iva || 0);
   }, 0);
-  const grandTotal = input.slots.reduce((s, x) => s + x.total, 0);
+  const grandTotal = input.slots.reduce((s, x) => s + (x.total || 0), 0);
 
-  // Need ~ 260pt of room for totals + notes
-  if (rowY + 260 > SAFE_BOTTOM) {
-    rowY = newContinuationPage();
-  }
-
-  // Totals box (right, max 280pt)
-  const totalsW = 280;
-  const totalsX = PAGE_W - MARGIN_X - totalsW;
-  const totalsH = 130;
-  rowY += 12;
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(224, 216, 210);
-  doc.setLineWidth(0.8);
-  doc.roundedRect(totalsX, rowY, totalsW, totalsH, 8, 8, "FD");
-
-  const tx = totalsX + 20;
-  const trx = totalsX + totalsW - 20;
-  let ty = rowY + 28;
-  setFont(doc, "regular", 11);
-  doc.setTextColor(...TEXT_SUB);
-  doc.text("Subtotal productos", tx, ty);
-  setFont(doc, "semibold", 12);
-  doc.setTextColor(...TEXT_MAIN);
-  doc.text(formatMXN(grandSubtotalProducts), trx, ty, { align: "right" });
-  ty += 18;
-  setFont(doc, "regular", 11);
-  doc.setTextColor(...TEXT_SUB);
-  doc.text(`Envío (${input.slots.length} entregas)`, tx, ty);
-  setFont(doc, "semibold", 12);
-  doc.setTextColor(...TEXT_MAIN);
-  doc.text(formatMXN(grandShipping), trx, ty, { align: "right" });
-  ty += 18;
-  setFont(doc, "regular", 11);
-  doc.setTextColor(...TEXT_SUB);
-  doc.text("IVA (16%)", tx, ty);
-  setFont(doc, "semibold", 12);
-  doc.setTextColor(...TEXT_MAIN);
-  doc.text(formatMXN(grandIva), trx, ty, { align: "right" });
-  ty += 12;
-  doc.setDrawColor(224, 216, 210);
-  doc.setLineWidth(0.6);
-  doc.line(tx, ty, trx, ty);
-  ty += 24;
-  setFont(doc, "bold", 13);
-  doc.setTextColor(...NAVY);
-  doc.text("TOTAL:", tx, ty);
-  setFont(doc, "bold", 24);
-  doc.text(formatMXN(grandTotal), trx, ty + 2, { align: "right" });
-
-  rowY += totalsH + 24;
-  if (rowY + 200 > SAFE_BOTTOM) {
-    doc.addPage();
-    rowY = MARGIN_Y + 8;
-  }
-  drawNotesBlock(doc, rowY, QUOTE_FOOTER_NOTES.slice(0, 10));
+  doc.addPage();
+  drawSummaryPage(doc, {
+    input, logoData, quoteId, validStr,
+    grandSubtotal, grandShipping, grandIva, grandTotal,
+  });
 
   applyFooterAllPages(doc);
 
-  doc.save(`Berlioz-Multi-Entrega-${format(new Date(), "yyyyMMdd")}.pdf`);
+  const safeEmpresa = (input.empresa || input.clientName || "Cliente")
+    .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s-]/g, "")
+    .replace(/\s+/g, "_");
+  doc.save(`Berlioz_${safeEmpresa}_${quoteId}_multidia.pdf`);
 }

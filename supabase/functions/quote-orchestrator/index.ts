@@ -62,6 +62,10 @@ interface DbProduct {
   serves_up_to: number | null;
   destacado: boolean;
   variantes: string | null;
+  /** Only set when source is get-menu-cotizador. Variant-level flag from the canonical menu. */
+  es_comida_main?: boolean;
+  /** Short product description for the prompt */
+  descripcion_corta?: string | null;
 }
 
 interface ScoredProduct extends DbProduct {

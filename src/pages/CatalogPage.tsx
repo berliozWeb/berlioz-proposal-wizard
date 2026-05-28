@@ -201,7 +201,7 @@ const CatalogPage = () => {
   }, [productos]);
 
   const filtered = useMemo(() => {
-    let list = productos;
+    let list = productosConFavorito;
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -214,11 +214,13 @@ const CatalogPage = () => {
     const dietaryKeys: DietaryFilter[] = ["vegetariano", "vegano", "keto", "sin_gluten", "sin_lactosa"];
     if ((dietaryKeys as string[]).includes(filter)) {
       list = list.filter((p) => productoHasDietary(p, filter as DietaryFilter));
+    } else if (filter === "favoritos") {
+      list = list.filter((p) => p.isFavorito);
     } else if (filter !== "todos") {
       list = list.filter((p) => p.categoria === filter);
     }
     return list;
-  }, [productos, filter, search]);
+  }, [productosConFavorito, filter, search]);
 
   return (
     <BaseLayout>

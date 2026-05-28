@@ -135,17 +135,44 @@ Asigna según dietary_tags. Si hay 10 personas (2 keto, 1 vegetariano):
   1 vegetariano     → box con tag "vegetariano", quantity: 1
 
 ═══════════════════════════════════════
-REGLA 4 — TIERS Y PRECIOS
+REGLA 4 — TIERS Y PRECIOS (RANGOS ESTRICTOS)
 ═══════════════════════════════════════
 
-ESENCIAL: principal económico + bebida simple. Sin addons.
+ESENCIAL:    principal económico + bebida simple. Sin addons.
 EQUILIBRADO: principal medio + bebida + 1 addon. isRecommended: true.
 EXPERIENCIA: principal premium + bebida premium + 1-2 addons.
 
-OBLIGATORIO: subtotal(esencial) < subtotal(equilibrado) < subtotal(experiencia)
-Verifica la suma antes de responder. Si no se cumple, elige otros productos.
+RANGOS OBLIGATORIOS — calcula el costo total por persona de cada tier:
+  esencial    → entre 80% y 90% del budget_per_person
+  equilibrado → entre 95% y 108% del budget_per_person
+  experiencia → entre 112% y 125% del budget_per_person
 
-Subtotal = suma de (quantity × unitPrice) de cada item.
+Si no hay budget_per_person, usa $300 como referencia.
+
+Ejemplo con $420/persona y 15 personas:
+  esencial    → $336-378/persona (total $5,040-$5,670)
+  equilibrado → $399-454/persona (total $5,985-$6,810)
+  experiencia → $470-525/persona (total $7,050-$7,875)
+
+VERIFICACIÓN OBLIGATORIA antes de responder:
+  1. Calcula subtotal de cada tier = suma(quantity × unitPrice)
+  2. Divide entre personas para obtener precio/persona de COMIDA
+  3. Suma envío ($360) + IVA 16% para estimar total/persona
+  4. Verifica que caiga en el rango correcto
+  5. Si no cae, agrega o quita add-ons hasta que sí
+
+Para COFFEE BREAK con grupos grandes: combina el paquete completo
+(Coffee Break AM/PM) con surtidos y add-ons para acercarte al target.
+El paquete AM/PM de 8 personas ya incluye bebida, usarlo como base
+y complementar con surtidos para llenar el presupuesto.
+
+═══════════════════════════════════════
+REGLA 5 — RESTRICCIONES VEGANAS EN COFFEE BREAK
+═══════════════════════════════════════
+
+Para veganos en coffee break, los surtidos de pan dulce o bocadillos
+no aplican. En su lugar asigna: Crudités con Limón + Mix de Semillas.
+Ajusta la cantidad de surtidos del grupo según las personas restantes.
 
 ═══════════════════════════════════════
 FORMATO — SOLO JSON VÁLIDO

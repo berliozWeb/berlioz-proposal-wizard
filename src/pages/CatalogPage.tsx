@@ -267,20 +267,7 @@ const CatalogPage = () => {
                   className="h-12 pl-12 pr-6 rounded-2xl border border-border/60 bg-card/50 font-body text-sm w-full md:w-[400px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                 />
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-card/50 border border-border/60 px-4 h-12 rounded-2xl">
-                  <Filter className="w-4 h-4 text-muted-foreground" />
-                  <select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                    className="bg-transparent border-none font-body text-xs text-foreground focus:outline-none cursor-pointer pr-4"
-                  >
-                    {SORT_OPTIONS.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              <div className="flex items-center gap-3" />
             </div>
           </div>
         </div>

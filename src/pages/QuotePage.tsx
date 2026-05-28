@@ -363,7 +363,7 @@ const QuotePage = () => {
               <p className="font-body text-sm text-muted-foreground">Cuéntanos cuántas entregas necesitas</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto justify-items-center">
               {([
                 { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Evento de un momento' },
                 { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Varios días o entregas' },

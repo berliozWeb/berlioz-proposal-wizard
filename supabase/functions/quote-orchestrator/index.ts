@@ -62,6 +62,10 @@ interface DbProduct {
   serves_up_to: number | null;
   destacado: boolean;
   variantes: string | null;
+  /** Only set when source is get-menu-cotizador. Variant-level flag from the canonical menu. */
+  es_comida_main?: boolean;
+  /** Short product description for the prompt */
+  descripcion_corta?: string | null;
 }
 
 interface ScoredProduct extends DbProduct {
@@ -209,7 +213,104 @@ function productSupportsAnyRestriction(product: Pick<DbProduct, 'dietary_tags'>,
 }
 
 function isBeverageCategory(category?: string | null): boolean {
-  return category === 'Bebidas';
+  return category === 'Bebida' || category === 'Bebidas';
+}
+
+// ═══ CANONICAL MENU SOURCE — get-menu-cotizador (single source of truth) ═══
+const MENU_COTIZADOR_URL =
+  'https://rrfvdhegvgmejxmsdijn.supabase.co/functions/v1/get-menu-cotizador';
+
+function isYesFlag(v: unknown): boolean {
+  if (!v) return false;
+  const s = String(v).trim().toLowerCase();
+  return s === 'sí' || s === 'si';
+}
+
+interface RemoteVariante {
+  variante_id: string;
+  nombre_variante: string | null;
+  nombre_display?: string | null;
+  precio: number;
+  notas_precio?: string | null;
+  es_base?: boolean;
+  es_comida?: string | null;
+  vegetariano?: string | null;
+  vegano?: string | null;
+  keto?: string | null;
+  sin_gluten?: string | null;
+  sin_lactosa?: string | null;
+  img?: string | null;
+}
+
+interface RemoteProducto {
+  product_id: string;
+  nombre: string;
+  categoria: string;
+  segunda_categoria?: string | null;
+  subcategoria?: string | null;
+  tipo?: string;
+  desc_mini?: string | null;
+  desc_corta?: string | null;
+  img_principal?: string | null;
+  img_fallback?: string | null;
+  galeria?: string[];
+  variantes: RemoteVariante[];
+}
+
+/**
+ * Carga el menú canónico y aplana producto×variante a DbProduct[].
+ * Cada variante es un candidato independiente con sus propios flags dietéticos.
+ */
+async function fetchMenuCotizador(): Promise<DbProduct[]> {
+  const res = await fetch(MENU_COTIZADOR_URL, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    throw new Error(`get-menu-cotizador responded ${res.status}`);
+  }
+  const json = await res.json();
+  const productos: RemoteProducto[] = Array.isArray(json?.productos) ? json.productos : [];
+
+  const flat: DbProduct[] = [];
+  for (const p of productos) {
+    const variantes = Array.isArray(p.variantes) ? p.variantes : [];
+    const hasMany = variantes.length > 1;
+    for (const v of variantes) {
+      const tags: string[] = [];
+      if (isYesFlag(v.vegetariano)) tags.push('vegetariano');
+      if (isYesFlag(v.vegano)) tags.push('vegano');
+      if (isYesFlag(v.keto)) tags.push('keto');
+      if (isYesFlag(v.sin_gluten)) tags.push('sin_gluten');
+      if (isYesFlag(v.sin_lactosa)) tags.push('sin_lactosa');
+
+      const precio = Number(v.precio) || 0;
+      const nombre = v.nombre_display
+        || (v.nombre_variante ? `${p.nombre} — ${v.nombre_variante}` : p.nombre);
+
+      flat.push({
+        id: v.variante_id,
+        nombre,
+        descripcion: p.desc_corta || p.desc_mini || null,
+        descripcion_corta: p.desc_mini || null,
+        precio,
+        precio_min: precio,
+        precio_max: precio,
+        categoria: p.categoria,
+        tipo: 'simple',
+        imagen_url: v.img || p.img_principal || p.img_fallback || null,
+        parent_id: hasMany ? p.product_id : null,
+        dietary_tags: tags,
+        score_comercial: v.es_base ? 70 : 55,
+        score_visual: 60,
+        pricing_model: 'per_person',
+        serves_up_to: null,
+        destacado: !!v.es_base,
+        variantes: v.nombre_variante || null,
+        es_comida_main: isYesFlag(v.es_comida),
+      });
+    }
+  }
+  return flat;
 }
 
 function isGroupPricedProduct(product: Pick<DbProduct, 'nombre' | 'categoria' | 'precio' | 'precio_min' | 'pricing_model'>): boolean {
@@ -476,21 +577,32 @@ async function composeWithClaude(
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, categoria: p.categoria }));
   }
 
-  // Precompute la categoría PRIMARIA según el tipo de evento y los mejores candidatos PRINCIPALES
-  // para que Claude no proponga snacks o frutas antes que el plato fuerte (ej: chilaquiles en desayuno).
-  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Working Lunch', 'Bebidas'];
+  // Precompute la categoría PRIMARIA según el tipo de evento y los mejores candidatos PRINCIPALES.
+  // Para Desayuno/Comida exigimos que sean PLATO PRINCIPAL (variante.es_comida === "Sí" en el menú
+  // canónico), así Claude no propone frutas/yogurt/snacks como principal cuando hay chilaquiles.
+  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Comida', 'Bebida'];
   const primaryCategory = eventCategories[0];
   const secondaryCategories = eventCategories.slice(1);
-  const primaryCandidates = products
-    .filter(p => p.categoria === primaryCategory)
+  const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
+
+  const isMainFoodOK = (p: ScoredProduct) =>
+    !requireMainFood || p.es_comida_main === true || p.es_comida_main === undefined;
+
+  let primaryPool = products.filter(p => p.categoria === primaryCategory && isMainFoodOK(p));
+  if (primaryPool.length === 0) {
+    // Fallback: si nadie está marcado como principal, abre a toda la categoría
+    primaryPool = products.filter(p => p.categoria === primaryCategory);
+  }
+  const primaryCandidates = primaryPool
     .sort((a, b) => b.finalScore - a.finalScore)
     .slice(0, 12)
     .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, score: p.finalScore }));
+
   // Variantes principales que cubren cada restricción dietética (mismo nivel que el principal regular)
   const primaryDietaryCandidates: Record<string, { id: string; nombre: string; precio: number }[]> = {};
   for (const r of activeRestrictions) {
     primaryDietaryCandidates[r] = products
-      .filter(p => p.categoria === primaryCategory && productSupportsRestriction(p, normalizeDietaryTag(r)))
+      .filter(p => p.categoria === primaryCategory && isMainFoodOK(p) && productSupportsRestriction(p, normalizeDietaryTag(r)))
       .slice(0, 6)
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice }));
   }
@@ -1029,27 +1141,18 @@ serve(async (req) => {
 
     if (qrError) console.error('Quote request insert error:', qrError);
 
-    // ── 2. Retrieve products ──
-    const categories = EVENT_TO_CATEGORIES[eventType] || ['Working Lunch', 'Bebidas'];
-    const allProducts: DbProduct[] = [];
-
-    for (const cat of categories) {
-      const { data, error } = await supabase.rpc('search_products_for_quote', {
-        p_categoria: cat,
-        p_dietary_tags: body.dietaryRestrictions || [],
-        p_budget_max: body.budgetEnabled && body.budgetPerPerson ? body.budgetPerPerson * 1.5 : null,
-        p_limit: 30,
-      });
-      if (!error && data) allProducts.push(...(data as DbProduct[]));
+    // ── 2. Retrieve canonical menu (get-menu-cotizador → flat variant catalog) ──
+    const categories = EVENT_TO_CATEGORIES[eventType] || ['Comida', 'Bebida'];
+    let menuAll: DbProduct[] = [];
+    try {
+      menuAll = await fetchMenuCotizador();
+    } catch (e) {
+      console.error('Menu cotizador fetch failed:', e);
+      menuAll = [];
     }
-
-    // Parent images
-    const parentIds = [...new Set(allProducts.filter(p => p.parent_id).map(p => p.parent_id!))];
-    const parentMap = new Map<string, DbProduct>();
-    if (parentIds.length > 0) {
-      const { data: parents } = await supabase.from('productos').select('id, nombre, imagen_url').in('id', parentIds);
-      if (parents) parents.forEach((p: any) => parentMap.set(p.id, p as DbProduct));
-    }
+    // Sólo las categorías relevantes al tipo de evento
+    const allProducts: DbProduct[] = menuAll.filter(p => categories.includes(p.categoria || ''));
+    const parentMap = new Map<string, DbProduct>(); // imágenes ya van resueltas en el flat
 
     // ── 3. Score & enrich all products ──
     const allScored: ScoredProduct[] = allProducts.map(p => {

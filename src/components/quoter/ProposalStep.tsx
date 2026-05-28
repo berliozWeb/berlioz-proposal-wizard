@@ -631,22 +631,33 @@ export default function ProposalStep(props: ProposalStepProps) {
       const items = packages[tier].items;
 
       await ensureMontserrat();
-      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       registerMontserrat(doc);
 
-      // Pre-load product images
-      const loadedImages = await Promise.all(items.map(item => {
+      // Load logo + product images + hero (most expensive product)
+      const logoData = await loadImageAsDataURL(BERLIOZ_LOGO_URL);
+      const productImgs = await Promise.all(items.map((item) => {
         const url = buildProductImageUrl(item.imagen_url, item.imagen) || "";
-        return loadImageBase64(url, { w: 320, h: 320 });
+        return url ? loadImageAsDataURL(url) : Promise.resolve(null);
       }));
+      const sortedByPrice = items
+        .map((it, i) => ({ url: buildProductImageUrl(it.imagen_url, it.imagen) || "", price: it.unitPrice, data: productImgs[i] }))
+        .filter((x) => !!x.data)
+        .sort((a, b) => b.price - a.price);
+      const heroData =
+        sortedByPrice[0]?.data ||
+        (await loadImageAsDataURL(heroAssetForEvent(eventType)));
 
-      // ── Header: logo + hero ──
-      let y = drawHeaderLogo(doc);
-      y = await drawHeroFull(doc, y, heroAssetForEvent(eventType));
-      y = drawQuoteId(doc, y + 4, quoteId);
+      // ── Page 1 ──
+      drawRosaHeader(doc, logoData);
+      const heroY = 38;
+      const heroH = CONTENT_W / 3;
+      drawHeroImage(doc, heroY, heroH, heroData);
 
-      // ── Cliente + Detalles del evento ──
-      y = drawTwoColFields(doc, y + 8,
+      let y = heroY + heroH + 8;
+      y = drawQuoteFolio(doc, y, quoteId);
+
+      y = drawTwoColFields(doc, y,
         {
           title: "Datos del cliente",
           fields: [
@@ -659,176 +670,50 @@ export default function ProposalStep(props: ProposalStepProps) {
           title: "Detalles del evento",
           fields: [
             ["Fecha", date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: es }) : "—"],
-            ["Hora de entrega", deliveryTime || eventTime || "—"],
-            ["Preparada por", "Equipo Ventas"],
+            ["Hora", deliveryTime || eventTime || "—"],
+            ["CP", postalCode || "—"],
           ],
         });
 
-      // ── CONCEPTOS ──
-      y += 16;
-      drawLabel(doc, "Conceptos", MARGIN_X, y);
-      y += 12;
-      y = drawTableHeader(doc, y);
-
-      const cols = colXs();
-      const padV = 10; // vertical row padding (reduced to keep totals + notes on same page)
-      const safeBottom = PAGE_H - MARGIN_Y - 60; // leave room for footer
-      const newPageHeader = () => {
-        doc.addPage();
-        setFont(doc, "bold", 14);
-        doc.setTextColor(...NAVY);
-        doc.setCharSpace(3);
-        doc.text("BERLIOZ", PAGE_W / 2, MARGIN_Y + 20, { align: "center" });
-        doc.setCharSpace(0);
-        // No "CONCEPTOS (CONTINUACIÓN)" label — just repeat the navy table header.
-        const ny = MARGIN_Y + 36;
-        return drawTableHeader(doc, ny);
-      };
+      y += 6;
+      drawSectionLabel(doc, "Conceptos", y);
+      y += 6;
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        const lineTotal = item.unitPrice * item.qty;
         const description = item.descripcion?.replace(/<[^>]+>/g, "").trim() || item.recommendationReason || "";
-        setFont(doc, "regular", 11);
-        const descLines = description ? doc.splitTextToSize(description, cols.textWLimit) : [];
-
-        // Row height: image (56) + padding, or text height
-        const textBlockH = 4 + 14 + descLines.length * 14;
-        const rowH = Math.max(cols.imgSize + padV, textBlockH + padV);
-
-        if (y + rowH > safeBottom) {
-          y = newPageHeader();
-        }
-
-        const rowTop = y;
-        const cy = rowTop + padV / 2;
-
-        // Image (80x80 in spec — 56pt ≈ 75px @96dpi, close enough)
-        const imgData = loadedImages[i];
-        if (imgData) {
-          try { doc.addImage(imgData, "JPEG", cols.imgX, cy, cols.imgSize, cols.imgSize); }
-          catch {
-            doc.setFillColor(...ROSE_PALE);
-            doc.roundedRect(cols.imgX, cy, cols.imgSize, cols.imgSize, 6, 6, "F");
-          }
-        } else {
-          doc.setFillColor(...ROSE_PALE);
-          doc.roundedRect(cols.imgX, cy, cols.imgSize, cols.imgSize, 6, 6, "F");
-        }
-
-        // # index
-        setFont(doc, "regular", 11);
-        doc.setTextColor(...TEXT_MAIN);
-        doc.text(String(i + 1), cols.idx, cy + 14);
-
-        // Name
-        setFont(doc, "bold", 13);
-        doc.setTextColor(...TEXT_MAIN);
-        doc.text(item.productName, cols.textX, cy + 14);
-
-        // Description
-        if (descLines.length) {
-          setFont(doc, "regular", 11);
-          doc.setTextColor(...TEXT_SUB);
-          doc.text(descLines.slice(0, 5), cols.textX, cy + 30, { lineHeightFactor: 1.4 });
-        }
-
-        // Qty / Unit / Subtotal
-        setFont(doc, "semibold", 12);
-        doc.setTextColor(...TEXT_MAIN);
-        doc.text(String(item.qty), cols.qty, cy + 16, { align: "right" });
-        setFont(doc, "regular", 12);
-        doc.text(formatMXN(item.unitPrice), cols.unit, cy + 16, { align: "right" });
-        setFont(doc, "semibold", 12);
-        doc.setTextColor(...NAVY);
-        doc.text(formatMXN(lineTotal), cols.sub, cy + 16, { align: "right" });
-
-        // Bottom hairline
-        y = rowTop + rowH;
-        doc.setDrawColor(...ROW_RULE);
-        doc.setLineWidth(0.6);
-        doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
+        y = ensureSpace(doc, y, 24);
+        y = drawProductRow(doc, y, {
+          name: item.productName,
+          description,
+          qty: item.qty,
+          unitPrice: item.unitPrice,
+          imgData: productImgs[i],
+        });
       }
 
-      // Envío row (no image)
-      if (t.shipping || t.early) {
-        const rowH = 38;
-        if (y + rowH > safeBottom) y = newPageHeader();
-        const cy = y + padV / 2;
-        setFont(doc, "bold", 13);
-        doc.setTextColor(...TEXT_MAIN);
-        doc.text("Envío", cols.textX, cy + 14);
-        if (t.early) {
-          setFont(doc, "regular", 11);
-          doc.setTextColor(...TEXT_SUB);
-          doc.text("Incluye recargo por entrega temprana", cols.textX, cy + 30);
-        }
-        setFont(doc, "regular", 12);
-        doc.setTextColor(...TEXT_MAIN);
-        doc.text("1", cols.qty, cy + 16, { align: "right" });
-        doc.text(formatMXN(t.shipping + t.early), cols.unit, cy + 16, { align: "right" });
-        setFont(doc, "semibold", 12);
-        doc.setTextColor(...NAVY);
-        doc.text(formatMXN(t.shipping + t.early), cols.sub, cy + 16, { align: "right" });
-        y += rowH;
-        doc.setDrawColor(...ROW_RULE);
-        doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
-      }
+      y += 6;
+      const totalsRows: Array<[string, number]> = [
+        ["Subtotal productos", t.subtotal],
+        ["Envío", t.shipping + t.early],
+        [`IVA (${(IVA_RATE * 100).toFixed(0)}%)`, t.iva],
+      ];
+      const needed = 8 + totalsRows.length * 6 + 14;
+      y = ensureSpace(doc, y, needed + 50);
+      y = drawTotalsBox(doc, y, totalsRows, "TOTAL ENTREGA", t.total);
 
-      // ── Totals box + Notes (kept together: page-break-inside: avoid) ──
-      y += 18; // gap between table and totals (reduced from 28)
-      const totalsW = 280;
-      const totalsX = PAGE_W - MARGIN_X - totalsW;
-      const totalsH = 110;
-      const notesEstH = 200;
-      const gapAfterTotals = 18; // reduced from 28
-      // Ensure totals + notes fit on the SAME page; otherwise start a fresh page.
-      if (y + totalsH + gapAfterTotals + notesEstH > safeBottom) {
-        doc.addPage();
-        y = MARGIN_Y + 8;
-      }
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(224, 216, 210);
-      doc.setLineWidth(0.8);
-      doc.roundedRect(totalsX, y, totalsW, totalsH, 8, 8, "FD");
+      y += 6;
+      const notes = QUOTE_FOOTER_NOTES.slice(0, 10);
+      const estNotesH = Math.max(38, 12 + notes.length * 5 + 6);
+      y = ensureSpace(doc, y, estNotesH);
+      drawNotesAndBrand(doc, y, notes, logoData);
 
-      const tx = totalsX + 20;
-      const trx = totalsX + totalsW - 20;
-      let ty = y + 28;
-      setFont(doc, "regular", 11);
-      doc.setTextColor(...TEXT_SUB);
-      doc.text("Subtotal", tx, ty);
-      setFont(doc, "semibold", 12);
-      doc.setTextColor(...TEXT_MAIN);
-      doc.text(formatMXN(t.subtotal + t.shipping + t.early), trx, ty, { align: "right" });
-      ty += 22;
-      setFont(doc, "regular", 11);
-      doc.setTextColor(...TEXT_SUB);
-      doc.text("IVA (16%)", tx, ty);
-      setFont(doc, "semibold", 12);
-      doc.setTextColor(...TEXT_MAIN);
-      doc.text(formatMXN(t.iva), trx, ty, { align: "right" });
-      ty += 12;
-      doc.setDrawColor(224, 216, 210);
-      doc.setLineWidth(0.6);
-      doc.line(tx, ty, trx, ty);
-      ty += 26;
-      setFont(doc, "bold", 13);
-      doc.setTextColor(...NAVY);
-      doc.text("TOTAL:", tx, ty);
-      setFont(doc, "bold", 24);
-      doc.setTextColor(...NAVY);
-      doc.text(formatMXN(t.total), trx, ty + 2, { align: "right" });
-
-      y += totalsH + gapAfterTotals;
-
-      // ── Notes + brand (same page as totals) ──
-      drawNotesBlock(doc, y, QUOTE_FOOTER_NOTES.slice(0, 10));
-
-      // Footer on every page
       applyFooterAllPages(doc);
 
-      doc.save(`Berlioz-Cotizacion-${format(new Date(), "yyyyMMdd")}.pdf`);
+      const safeEmpresa = (empresa || clientName || "Cliente")
+        .replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s-]/g, "")
+        .replace(/\s+/g, "_");
+      doc.save(`Berlioz_${safeEmpresa}_${quoteId}.pdf`);
       toast.success("Tu cotización en PDF se ha generado correctamente");
     } catch (error) {
       console.error("PDF Export Error:", error);

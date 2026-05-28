@@ -553,6 +553,12 @@ async function composeWithClaude(
     return null;
   }
 
+  // Categoría primaria del evento (definida arriba para poder restringir el catálogo expuesto a Claude).
+  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Comida', 'Bebida'];
+  const primaryCategory = eventCategories[0];
+  const secondaryCategories = eventCategories.slice(1);
+  const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
+
   // Heurística para detectar productos en formato GRUPAL (cajas/surtidos/paquetes que ya sirven a X personas).
   // En tier EXPERIENCIA queremos preferir porciones INDIVIDUALES para no duplicar el rendimiento.
   const BULK_REGEX = /\b(surtido|surtidos|caja|cajas|bandeja|bandejas|paquete|paquetes|box|combo|kit|charola|fuente|para\s*\d+|x\s*\d+|\d+\s*(pzas|piezas|personas|pax))\b/i;
@@ -561,7 +567,7 @@ async function composeWithClaude(
 
   // Restringimos el catálogo expuesto a Claude SOLO a la categoría primaria del evento + Bebidas.
   // Esto evita que aparezcan "crudités de Working Lunch" en un Desayuno, etc.
-  const allowedCategoriesForLLM = new Set<string>([eventCategories[0], 'Bebidas', 'Bebida']);
+  const allowedCategoriesForLLM = new Set<string>([primaryCategory, 'Bebidas', 'Bebida']);
   const catalog = products
     .filter(p => allowedCategoriesForLLM.has(p.categoria || ''))
     .slice(0, 80)
@@ -590,14 +596,9 @@ async function composeWithClaude(
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, categoria: p.categoria }));
   }
 
-  // Precompute la categoría PRIMARIA según el tipo de evento y los mejores candidatos PRINCIPALES.
-  // Para Desayuno/Comida exigimos que sean PLATO PRINCIPAL (variante.es_comida === "Sí" en el menú
-  // canónico), así Claude no propone frutas/yogurt/snacks como principal cuando hay chilaquiles.
-  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Comida', 'Bebida'];
-  const primaryCategory = eventCategories[0];
-  const secondaryCategories = eventCategories.slice(1);
-  const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
-
+  // Precompute los mejores candidatos PRINCIPALES. Para Desayuno/Comida exigimos que sean PLATO
+  // PRINCIPAL (variante.es_comida === "Sí" en el menú canónico), así Claude no propone frutas/
+  // yogurt/snacks como principal cuando hay chilaquiles.
   const isMainFoodOK = (p: ScoredProduct) =>
     !requireMainFood || p.es_comida_main === true || p.es_comida_main === undefined;
 

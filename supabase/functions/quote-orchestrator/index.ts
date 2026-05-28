@@ -828,7 +828,17 @@ Solo JSON válido. Sin markdown, sin texto fuera del JSON.
     "highlights": ["frase 1", "frase 2", "frase 3"],
     "narrativa": "..."
   }
-}`;
+}
+
+REGLA FINAL INAPELABLE SOBRE PRECIOS:
+Calcula el subtotal de cada tier ANTES de responder.
+Si esencial > equilibrado, o equilibrado > experiencia, rehaz la selección.
+El orden de precio debe ser siempre: esencial < equilibrado < experiencia.
+
+REGLA FINAL INAPELABLE SOBRE GRUPALES:
+Cualquier producto cuyo nombre contenga "— X personas" o "X piezas"
+tiene quantity = 1 sin excepción. Su precio ya cubre al grupo.
+Coffee Break AM — 10 personas: quantity=1, total=$3,250. NO $32,500.`;
 
   const multiBlock = isMulti
     ? `\nENTREGAS (${req.deliveryGroups!.length}):\n${JSON.stringify(req.deliveryGroups, null, 2)}\nDirección global: ${req.address || 'sin definir'}\n`
@@ -913,8 +923,19 @@ ${activeRestrictions.map(r => {
   return `• ${r} (${list.length} opciones): ${list.map(p => `${p.id}=${p.nombre} ($${p.precio})`).join(' | ')}`;
 }).join('\n')}\n` : ''}
 ${feedbackSummary ? `HISTORIAL DE PREFERENCIAS:\n${feedbackSummary}\n` : ''}
-CANDIDATOS DEL CATÁLOGO (${catalog.length} productos):
-${JSON.stringify(catalog)}
+${(() => {
+    const principales = catalog.filter(p =>
+      p.es_complemento !== true &&
+      p.categoria !== 'Bebida' && p.categoria !== 'Bebidas' &&
+      (p.categoria === primaryCategory || p.segunda_categoria === primaryCategory)
+    );
+    const complementos = catalog.filter(p => !principales.includes(p));
+    return `== PRODUCTOS PRINCIPALES PARA ESTE EVENTO (solo estos como plato principal) ==
+${JSON.stringify(principales)}
+
+== COMPLEMENTOS Y BEBIDAS (nunca como plato principal) ==
+${JSON.stringify(complementos)}`;
+  })()}
 
 Compón 3 paquetes: Esencial (económico), Equilibrado (balance), Experiencia (premium).`;
 

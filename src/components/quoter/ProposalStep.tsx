@@ -14,6 +14,27 @@ import { formatMXN } from "@/domain/value-objects/Money";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/berlioz-logo.png";
+import {
+  drawTopBanner,
+  drawHero,
+  drawQuoteIdBar,
+  drawInfoColumns,
+  drawSectionLabel,
+  drawNotesAndBrand,
+  drawBottomBand,
+  heroAssetForEvent,
+  loadImageBase64,
+  MARGIN as PDF_MARGIN,
+  HEADER_H,
+  HERO_H,
+  TEAL,
+  CREAM_SOFT,
+  CREAM_LINE,
+  CREAM_BANNER,
+  TEXT_DARK,
+  TEXT_MUTED,
+  HAIRLINE,
+} from "@/lib/pdfTemplate";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";
@@ -608,39 +629,9 @@ export default function ProposalStep(props: ProposalStepProps) {
       const tierInfo = TIERS.find(ti => ti.id === tier);
       const doc = new jsPDF();
 
-      const primary: [number, number, number] = [1, 77, 111];
-      const gold: [number, number, number] = [190, 155, 123];
-      const gray: [number, number, number] = [100, 100, 100];
-      const lightBg: [number, number, number] = [248, 246, 243];
       const pageW = doc.internal.pageSize.getWidth();
-      const margin = 14;
+      const margin = PDF_MARGIN;
       const contentW = pageW - margin * 2;
-
-      // Helper to load image as base64
-      const loadImageBase64 = (url: string): Promise<string | null> => {
-        return new Promise(resolve => {
-          if (!url) return resolve(null);
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas');
-              canvas.width = 120;
-              canvas.height = 120;
-              const ctx = canvas.getContext('2d');
-              if (!ctx) return resolve(null);
-              // Cover-fit
-              const s = Math.min(img.width, img.height);
-              const sx = (img.width - s) / 2;
-              const sy = (img.height - s) / 2;
-              ctx.drawImage(img, sx, sy, s, s, 0, 0, 120, 120);
-              resolve(canvas.toDataURL('image/jpeg', 0.75));
-            } catch { resolve(null); }
-          };
-          img.onerror = () => resolve(null);
-          img.src = url;
-        });
-      };
 
       // Pre-load all product images
       const imagePromises = items.map(item => {
@@ -649,164 +640,184 @@ export default function ProposalStep(props: ProposalStepProps) {
       });
       const loadedImages = await Promise.all(imagePromises);
 
-      // ══════ HEADER ══════
-      try {
-        doc.addImage(logoImg, "PNG", margin, 12, 30, 8);
-      } catch {
-        doc.setFontSize(20); doc.setTextColor(...primary);
-        doc.text("BERLIOZ", margin, 18);
-      }
+      // ═══ Header band + hero image ═══
+      drawTopBanner(doc);
+      await drawHero(doc, heroAssetForEvent(eventType));
 
-      doc.setFontSize(9); doc.setTextColor(...gray);
-      doc.text("L'art de recevoir — Cotización Gourmet", margin, 27);
+      // ═══ Quote ID bar ═══
+      let y = HEADER_H + HERO_H + 10;
+      drawQuoteIdBar(doc, y, quoteId);
+      y += 12;
 
-      // Gold accent line
-      doc.setDrawColor(...gold); doc.setLineWidth(0.8);
-      doc.line(margin, 31, pageW - margin, 31);
+      // ═══ Two-column info (Cliente | Evento) ═══
+      y = drawInfoColumns(
+        doc,
+        y,
+        {
+          title: "Datos del cliente",
+          lines: [
+            ["Atención", `${clientName || "—"}${empresa ? " — " + empresa : ""}`],
+            ["Empresa", empresa || "—"],
+            ["Tipo", eventLabel],
+          ],
+        },
+        {
+          title: "Detalles del evento",
+          lines: [
+            ["Fecha", date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: es }) : "—"],
+            ["Hora de entrega", deliveryTime || eventTime || "—"],
+            ["Preparada por", "Equipo Ventas"],
+          ],
+        },
+      );
 
-      // ══════ CLIENT INFO (2-col) ══════
-      let y = 40;
-      doc.setFontSize(8); doc.setTextColor(...primary); doc.setFont("helvetica", "bold");
-      doc.text("RECEPTOR", margin, y);
-      doc.text("DETALLES LOGÍSTICOS", 110, y);
-      doc.setFont("helvetica", "normal"); doc.setTextColor(0, 0, 0);
-      y += 5;
-      doc.text(`Atención: ${clientName || "—"}`, margin, y);
-      doc.text(`ID: ${quoteId}`, 110, y);
-      y += 4.5;
-      doc.text(`Empresa: ${empresa || "—"}`, margin, y);
-      doc.text(`Fecha: ${date ? format(date, "d/MM/yyyy") : "—"}`, 110, y);
-      y += 4.5;
-      doc.text(`Evento: ${eventLabel}`, margin, y);
-      doc.text(`Entrega: ${deliveryTime || "—"}`, 110, y);
-      y += 4.5;
-      doc.text(`CP: ${postalCode || "—"}`, margin, y);
-      doc.text(`Personas: ${people} · Duración: ${duration || "—"}`, 110, y);
+      // ═══ CONCEPTOS section ═══
+      y += 6;
+      drawSectionLabel(doc, "Conceptos", y);
+      doc.setDrawColor(...TEAL);
+      doc.setLineWidth(0.3);
+      doc.line(margin + 28, y - 1, pageW - margin, y - 1);
+      y += 4;
 
-      // ══════ TIER BADGE ══════
-      y += 10;
-      doc.setFillColor(...primary);
-      doc.roundedRect(margin, y, contentW, 12, 2, 2, 'F');
-      doc.setFontSize(12); doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-      doc.text(`Paquete ${tierInfo?.title || tier}`, margin + 6, y + 8);
-      doc.setFontSize(8); doc.setFont("helvetica", "normal");
-      doc.text(tierInfo?.subtitle || '', pageW - margin - 4, y + 8, { align: 'right' });
+      // Table header (cream bar)
+      doc.setFillColor(...CREAM_SOFT);
+      doc.rect(margin, y, contentW, 8, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(...TEAL);
+      doc.text("#", margin + 4, y + 5.5);
+      doc.text("Descripción", margin + 12, y + 5.5);
+      doc.text("Cant.", pageW - margin - 70, y + 5.5, { align: "right" });
+      doc.text("P. Unit.", pageW - margin - 35, y + 5.5, { align: "right" });
+      doc.text("Subtotal", pageW - margin - 2, y + 5.5, { align: "right" });
+      y += 11;
 
-      // ══════ PRODUCT CARDS (with images) ══════
-      y += 18;
-      const cardH = 22;
-      const imgSize = 16;
-      const cardPad = 3;
-
+      // Rows
+      const imgSize = 18;
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const lineTotal = item.unitPrice * item.qty;
+        const description = item.descripcion?.replace(/<[^>]+>/g, "").trim() || item.recommendationReason || "";
+        const descLines = description
+          ? doc.splitTextToSize(description, contentW - imgSize - 90)
+          : [];
+        const rowH = Math.max(imgSize + 6, 14 + descLines.length * 3.6);
 
-        // Check page break
-        if (y + cardH + 4 > 270) {
+        if (y + rowH > 248) {
           doc.addPage();
-          y = 20;
+          drawTopBanner(doc);
+          y = HEADER_H + 10;
         }
 
-        // Alternating row background
-        if (i % 2 === 0) {
-          doc.setFillColor(...lightBg);
-          doc.roundedRect(margin, y - 1, contentW, cardH, 1.5, 1.5, 'F');
-        }
-
-        // Product thumbnail
+        // Image
         const imgData = loadedImages[i];
-        const imgX = margin + cardPad;
-        const imgY = y + (cardH - imgSize) / 2;
+        const imgX = margin + 12;
+        const imgY = y;
         if (imgData) {
           try {
-            doc.addImage(imgData, 'JPEG', imgX, imgY, imgSize, imgSize);
+            doc.addImage(imgData, "JPEG", imgX, imgY, imgSize, imgSize);
           } catch {
-            // Draw placeholder
-            doc.setFillColor(230, 230, 230);
-            doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, 'F');
+            doc.setFillColor(...CREAM_SOFT);
+            doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, "F");
           }
         } else {
-          doc.setFillColor(230, 230, 230);
-          doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, 'F');
-          doc.setFontSize(6); doc.setTextColor(180, 180, 180);
-          doc.text('📷', imgX + 5, imgY + 9);
+          doc.setFillColor(...CREAM_SOFT);
+          doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, "F");
         }
 
-        // Product name
+        // # index
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(...TEXT_DARK);
+        doc.text(String(i + 1), margin + 4, y + 6);
+
+        // Name + description
         const textX = imgX + imgSize + 4;
-        doc.setFontSize(9); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "bold");
-        doc.text(item.productName, textX, y + 8);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(...TEXT_DARK);
+        doc.text(item.productName, textX, y + 5);
 
-        // Recommendation reason (small)
-        if (item.recommendationReason) {
-          doc.setFontSize(6); doc.setTextColor(...gray); doc.setFont("helvetica", "italic");
-          const reason = item.recommendationReason.length > 60
-            ? item.recommendationReason.slice(0, 57) + '...'
-            : item.recommendationReason;
-          doc.text(`💡 ${reason}`, textX, y + 13);
+        if (descLines.length) {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8);
+          doc.setTextColor(...TEXT_MUTED);
+          doc.text(descLines.slice(0, 4), textX, y + 10);
         }
 
-        // Qty + price (right-aligned)
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...gray);
-        doc.text(`${item.qty} × ${formatMXN(item.unitPrice)}`, pageW - margin - 40, y + 8);
-        doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
-        doc.text(formatMXN(lineTotal), pageW - margin - 2, y + 8, { align: 'right' });
+        // Right side: qty / unit / subtotal
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(...TEXT_DARK);
+        doc.text(String(item.qty), pageW - margin - 70, y + 6, { align: "right" });
+        doc.setFont("helvetica", "normal");
+        doc.text(formatMXN(item.unitPrice), pageW - margin - 35, y + 6, { align: "right" });
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...TEAL);
+        doc.text(formatMXN(lineTotal), pageW - margin - 2, y + 6, { align: "right" });
 
-        y += cardH + 2;
+        // Hairline divider
+        doc.setDrawColor(...HAIRLINE);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y + rowH, pageW - margin, y + rowH);
+
+        y += rowH + 2;
       }
 
-      // ══════ TOTALS BOX ══════
-      if (y + 50 > 270) { doc.addPage(); y = 20; }
+      // ═══ Totals block (cream rounded box, right side) ═══
+      if (y + 36 > 248) {
+        doc.addPage();
+        drawTopBanner(doc);
+        y = HEADER_H + 10;
+      }
       y += 4;
-      doc.setDrawColor(...gold); doc.setLineWidth(0.5);
-      doc.line(margin, y, pageW - margin, y);
-      y += 6;
+      const totalsW = 88;
+      const totalsX = pageW - margin - totalsW;
+      const totalsH = 34;
+      doc.setFillColor(...CREAM_SOFT);
+      doc.setDrawColor(...CREAM_LINE);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(totalsX, y, totalsW, totalsH, 2, 2, "FD");
 
-      const totalsX = 140;
-      doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-      doc.text("Subtotal:", totalsX, y); doc.text(formatMXN(t.subtotal), pageW - margin, y, { align: 'right' });
-      y += 5;
-      doc.text("Logística y Envío:", totalsX, y); doc.text(formatMXN(t.shipping + t.early), pageW - margin, y, { align: 'right' });
-      y += 5;
-      doc.text("IVA (16%):", totalsX, y); doc.text(formatMXN(t.iva), pageW - margin, y, { align: 'right' });
-      y += 7;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...TEXT_DARK);
+      doc.text("Subtotal:", totalsX + 6, y + 8);
+      doc.setFont("helvetica", "bold");
+      doc.text(formatMXN(t.subtotal + t.shipping + t.early), totalsX + totalsW - 6, y + 8, { align: "right" });
 
-      // Grand total highlight
-      doc.setFillColor(...primary);
-      doc.roundedRect(totalsX - 4, y - 5, pageW - margin - totalsX + 8, 12, 2, 2, 'F');
-      doc.setFontSize(13); doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold");
-      doc.text("TOTAL:", totalsX, y + 3);
-      doc.text(formatMXN(t.total), pageW - margin, y + 3, { align: 'right' });
+      doc.setFont("helvetica", "normal");
+      doc.text("IVA (16%):", totalsX + 6, y + 15);
+      doc.setFont("helvetica", "bold");
+      doc.text(formatMXN(t.iva), totalsX + totalsW - 6, y + 15, { align: "right" });
 
-      // Per person
-      y += 14;
-      doc.setFontSize(8); doc.setTextColor(...gray); doc.setFont("helvetica", "normal");
-      doc.text(`${formatMXN(Math.round(t.total / Math.max(1, people)))}/persona`, pageW - margin, y, { align: 'right' });
+      doc.setDrawColor(...TEAL);
+      doc.setLineWidth(0.4);
+      doc.line(totalsX + 6, y + 19, totalsX + totalsW - 6, y + 19);
 
-      // ══════ FOOTER NOTES ══════
-      y += 8;
-      if (y + 40 > 270) { doc.addPage(); y = 20; }
-      doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
-      doc.line(margin, y, pageW - margin, y);
-      y += 5;
-      doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.setTextColor(...primary);
-      doc.text("NOTAS IMPORTANTES", margin, y);
-      doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-      y += 4;
-      QUOTE_FOOTER_NOTES.slice(0, 8).forEach(note => {
-        doc.text(`• ${note}`, margin, y);
-        y += 3.5;
-      });
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...TEAL);
+      doc.text("TOTAL:", totalsX + 6, y + 28);
+      doc.setFontSize(15);
+      doc.text(formatMXN(t.total), totalsX + totalsW - 6, y + 28, { align: "right" });
 
-      // ══════ BRAND FOOTER ══════
-      const footerY = doc.internal.pageSize.getHeight() - 12;
-      doc.setDrawColor(...gold); doc.setLineWidth(0.5);
-      doc.line(margin, footerY - 3, pageW - margin, footerY - 3);
-      doc.setFontSize(8); doc.setTextColor(...primary); doc.setFont("helvetica", "bold");
-      doc.text("Anne Seguy | hola@berlioz.mx | 55 8237 5469", margin, footerY);
-      doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-      doc.text(`Válida hasta: ${format(validUntil, "dd/MM/yyyy")} | ID: ${quoteId}`, margin, footerY + 4);
+      y += totalsH + 8;
+
+      // ═══ Notes + brand block ═══
+      if (y + 50 > 260) {
+        doc.addPage();
+        drawTopBanner(doc);
+        y = HEADER_H + 10;
+      }
+      drawNotesAndBrand(doc, y, QUOTE_FOOTER_NOTES.slice(0, 10));
+
+      // ═══ Bottom band on every page ═══
+      const total = doc.getNumberOfPages();
+      for (let p = 1; p <= total; p++) {
+        doc.setPage(p);
+        drawBottomBand(doc);
+      }
 
       doc.save(`Berlioz-Cotizacion-${format(new Date(), "yyyyMMdd")}.pdf`);
       toast.success("Tu cotización en PDF se ha generado correctamente");

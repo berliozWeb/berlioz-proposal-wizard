@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════════
-// Multi-delivery PDF generator
-// Reuses the same visual language as ProposalStep.handleExportPDF
-// but writes one section per slot + a final summary table.
-// Single-delivery flow is untouched; this file is only for multi.
+// Multi-delivery PDF — matches the official Berlioz template:
+// • Page 1: cream banner + hero + cliente/evento cards + ENTREGAS grid
+// • Continuation pages: compact header + remaining entregas
+// • Final summary: subtotal + envío + IVA + TOTAL block, NOTAS box
+// • Bottom cream band on every page
 // ═══════════════════════════════════════════════════════════
 
 import { jsPDF } from "jspdf";
-import { format } from "date-fns";
-import logoImg from "@/assets/berlioz-logo.png";
+import { format, parse as parseDate, isValid as isValidDate } from "date-fns";
+import { es } from "date-fns/locale";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { buildProductImageUrl } from "@/lib/imageUtils";
 import {
@@ -16,14 +17,28 @@ import {
   generateQuoteId,
 } from "@/domain/entities/BerliozCatalog";
 import type { SlotProposal, ProposalPackage, ProposedProduct } from "@/domain/entities/SmartQuote";
+import {
+  drawTopBanner,
+  drawHero,
+  drawQuoteIdBar,
+  drawInfoColumns,
+  drawSectionLabel,
+  drawCompactHeader,
+  drawBottomBand,
+  drawNotesBox,
+  heroAssetForEvent,
+  loadImageBase64,
+  MARGIN,
+  HEADER_H,
+  HERO_H,
+  TEAL,
+  CREAM_SOFT,
+  CREAM_LINE,
+  TEXT_DARK,
+  TEXT_MUTED,
+  HAIRLINE,
+} from "@/lib/pdfTemplate";
 
-// Brand palette (matches single-delivery PDF)
-const PRIMARY: [number, number, number] = [1, 77, 111];
-const GOLD: [number, number, number] = [190, 155, 123];
-const GRAY: [number, number, number] = [100, 100, 100];
-const LIGHT_BG: [number, number, number] = [248, 246, 243];
-
-// Tier display labels
 const TIER_LABELS: Record<string, string> = {
   esencial: "Esencial",
   equilibrado: "Equilibrado",
@@ -44,461 +59,372 @@ export interface MultiPdfInput {
   eventLabel: string;
   postalCode: string;
   slots: MultiPdfSlotInput[];
+  /** Optional contact email for the cliente card. */
+  email?: string;
+  /** Optional event type slug — used to pick the hero image. */
+  eventType?: string;
 }
 
-/** Load remote image as base64 (square-cropped 120×120) */
-function loadImageBase64(url: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    if (!url) return resolve(null);
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = 120;
-        canvas.height = 120;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return resolve(null);
-        const s = Math.min(img.width, img.height);
-        const sx = (img.width - s) / 2;
-        const sy = (img.height - s) / 2;
-        ctx.drawImage(img, sx, sy, s, s, 0, 0, 120, 120);
-        resolve(canvas.toDataURL("image/jpeg", 0.75));
-      } catch {
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
+// Layout for the slot cards
+const CARD_GAP = 6;
+const SAFE_BOTTOM = 260; // leave room for footer band
+
+/* ── Formatting helpers ───────────────────────────────────────── */
+
+function fmtDateLabel(raw: string): string {
+  if (!raw) return "—";
+  const d = parseDate(raw, "yyyy-MM-dd", new Date());
+  if (!isValidDate(d)) return raw;
+  return format(d, "dd/MM/yyyy");
 }
 
-/** Computes totals consistently with the on-screen summary (uses backend tier.total/subtotal). */
-function packageTotals(pkg: ProposalPackage) {
-  return {
-    subtotal: pkg.subtotal,
-    iva: pkg.iva,
-    shipping: pkg.shipping,
-    total: pkg.total,
-  };
-}
-
-function drawHeader(doc: jsPDF, margin: number, pageW: number) {
-  try {
-    doc.addImage(logoImg, "PNG", margin, 12, 30, 8);
-  } catch {
-    doc.setFontSize(20);
-    doc.setTextColor(...PRIMARY);
-    doc.text("BERLIOZ", margin, 18);
+function fmtPeriodLabel(slots: MultiPdfSlotInput[]): string {
+  const dates = slots
+    .map((s) => parseDate(s.slot.date, "yyyy-MM-dd", new Date()))
+    .filter((d) => isValidDate(d))
+    .sort((a, b) => a.getTime() - b.getTime());
+  if (!dates.length) return "—";
+  const first = dates[0];
+  const last = dates[dates.length - 1];
+  if (first.getTime() === last.getTime()) {
+    return format(first, "d 'de' MMMM 'de' yyyy", { locale: es });
   }
-  doc.setFontSize(9);
-  doc.setTextColor(...GRAY);
-  doc.text("L'art de recevoir — Cotización Gourmet", margin, 27);
-  doc.setDrawColor(...GOLD);
-  doc.setLineWidth(0.8);
-  doc.line(margin, 31, pageW - margin, 31);
+  return `${format(first, "d MMM", { locale: es })} al ${format(last, "d MMM yyyy", { locale: es })}`;
 }
 
-function drawBrandFooter(doc: jsPDF, margin: number, pageW: number, quoteId: string, validUntil: Date) {
-  const footerY = doc.internal.pageSize.getHeight() - 12;
-  doc.setDrawColor(...GOLD);
-  doc.setLineWidth(0.5);
-  doc.line(margin, footerY - 3, pageW - margin, footerY - 3);
-  doc.setFontSize(8);
-  doc.setTextColor(...PRIMARY);
-  doc.setFont("helvetica", "bold");
-  doc.text("Anne Seguy | hola@berlioz.mx | 55 8237 5469", margin, footerY);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...GRAY);
-  doc.text(`Válida hasta: ${format(validUntil, "dd/MM/yyyy")} | ID: ${quoteId}`, margin, footerY + 4);
+function stripHtml(s: string | null | undefined): string {
+  return (s || "").replace(/<[^>]+>/g, "").trim();
 }
 
-/**
- * Draws one slot section (header, products, totals).
- * Adds a new page first (so each entrega starts on its own page).
- */
-async function drawSlotSection(
+/* ── Card drawing ─────────────────────────────────────────────── */
+
+interface SlotCardCtx {
+  doc: jsPDF;
+  x: number;
+  y: number;
+  w: number;
+  slotNumber: number;
+  input: MultiPdfSlotInput;
+  loadedImages: (string | null)[];
+}
+
+/** Compute the rendered height of a slot card so we can grid-pack pages. */
+function measureSlotCard(
   doc: jsPDF,
+  w: number,
   input: MultiPdfSlotInput,
-  context: { margin: number; pageW: number; clientName: string; empresa: string; eventLabel: string; postalCode: string; slotNumber: number; totalSlots: number; quoteId: string; validUntil: Date },
-) {
-  const { margin, pageW, clientName, empresa, eventLabel, postalCode, slotNumber, totalSlots, quoteId, validUntil } = context;
-  const contentW = pageW - margin * 2;
+): number {
+  const tier = input.slot.tiers.find((t) => t.tier === input.selectedTier);
+  const items: ProposedProduct[] = tier ? tier.items : [];
+  const innerW = w - 12; // inner padding 6 on each side
+  const imgSize = 14;
+  const textW = innerW - imgSize - 4 - 30; // 30 reserved for right-side qty/price
 
-  doc.addPage();
-  drawHeader(doc, margin, pageW);
+  let h = 26; // header (date + hour)
+  for (const it of items) {
+    const desc = stripHtml(it.descripcion);
+    doc.setFontSize(8);
+    const descLines = desc ? doc.splitTextToSize(desc, textW) : [];
+    const itemH = Math.max(imgSize + 4, 8 + descLines.length * 3.4);
+    h += itemH + 2;
+  }
+  h += 22; // totals block
+  return h;
+}
 
-  const slot = input.slot;
+function drawSlotCard(ctx: SlotCardCtx): void {
+  const { doc, x, y, w, slotNumber, input, loadedImages } = ctx;
   const tier = input.slot.tiers.find((t) => t.tier === input.selectedTier);
   if (!tier) return;
-  const totals = packageTotals(tier);
   const items: ProposedProduct[] = tier.items;
+  const cardH = measureSlotCard(doc, w, input);
 
-  // Pre-load images
-  const loadedImages = await Promise.all(
-    items.map((it) => loadImageBase64(buildProductImageUrl(it.imageUrl ?? null, null) || "")),
-  );
+  // Card background
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...CREAM_LINE);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(x, y, w, cardH, 2.5, 2.5, "FD");
 
-  // ── Slot title bar ──
-  let y = 40;
-  doc.setFillColor(...PRIMARY);
-  doc.roundedRect(margin, y, contentW, 14, 2, 2, "F");
-  doc.setFontSize(13);
-  doc.setTextColor(255, 255, 255);
+  // Header (centered date + Entrega N, then hh:mm hrs)
+  const dateLbl = fmtDateLabel(input.slot.date);
   doc.setFont("helvetica", "bold");
-  doc.text(`${slot.label || `Entrega ${slotNumber}`} — ${TIER_LABELS[input.selectedTier] || input.tierLabel}`, margin + 6, y + 9);
-  doc.setFontSize(8);
+  doc.setFontSize(10);
+  doc.setTextColor(...TEAL);
+  doc.text(`${dateLbl} · Entrega ${slotNumber}`, x + w / 2, y + 8, { align: "center" });
+  doc.setFontSize(9);
+  doc.setTextColor(...TEXT_MUTED);
   doc.setFont("helvetica", "normal");
-  doc.text(`Slot ${slotNumber} de ${totalSlots}`, pageW - margin - 4, y + 9, { align: "right" });
+  doc.text(`${input.slot.time || "—"} hrs`, x + w / 2, y + 14, { align: "center" });
 
-  // ── Slot meta (2 columns) ──
-  y += 22;
-  doc.setFontSize(8);
-  doc.setTextColor(...PRIMARY);
-  doc.setFont("helvetica", "bold");
-  doc.text("RECEPTOR", margin, y);
-  doc.text("DETALLES DE LA ENTREGA", 110, y);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
-  y += 5;
-  doc.text(`Atención: ${clientName || "—"}`, margin, y);
-  doc.text(`Fecha: ${slot.date || "—"}`, 110, y);
-  y += 4.5;
-  doc.text(`Empresa: ${empresa || "—"}`, margin, y);
-  doc.text(`Hora: ${slot.time || "—"}`, 110, y);
-  y += 4.5;
-  doc.text(`Evento: ${eventLabel}`, margin, y);
-  doc.text(`Personas: ${slot.guests_count}`, 110, y);
-  y += 4.5;
-  doc.text(`CP: ${postalCode || "—"}`, margin, y);
-  doc.text(`Tier elegido: ${TIER_LABELS[input.selectedTier] || input.tierLabel}`, 110, y);
+  // Divider
+  doc.setDrawColor(...HAIRLINE);
+  doc.setLineWidth(0.2);
+  doc.line(x + 6, y + 19, x + w - 6, y + 19);
 
-  // ── Product cards ──
-  y += 10;
-  const cardH = 22;
-  const imgSize = 16;
-  const cardPad = 3;
+  // Items
+  const imgSize = 14;
+  const innerW = w - 12;
+  const textX = x + 6 + imgSize + 4;
+  const textW = innerW - imgSize - 4 - 30;
+  let cy = y + 24;
 
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const lineTotal = item.unitPrice * item.quantity;
+  items.forEach((it, idx) => {
+    const desc = stripHtml(it.descripcion);
+    const descLines = desc ? doc.splitTextToSize(desc, textW) : [];
+    const itemH = Math.max(imgSize + 4, 8 + descLines.length * 3.4);
 
-    if (y + cardH + 4 > 270) {
-      doc.addPage();
-      drawHeader(doc, margin, pageW);
-      y = 40;
-    }
-
-    if (i % 2 === 0) {
-      doc.setFillColor(...LIGHT_BG);
-      doc.roundedRect(margin, y - 1, contentW, cardH, 1.5, 1.5, "F");
-    }
-
-    const imgData = loadedImages[i];
-    const imgX = margin + cardPad;
-    const imgY = y + (cardH - imgSize) / 2;
+    // Image
+    const imgData = loadedImages[idx];
     if (imgData) {
       try {
-        doc.addImage(imgData, "JPEG", imgX, imgY, imgSize, imgSize);
+        doc.addImage(imgData, "JPEG", x + 6, cy, imgSize, imgSize);
       } catch {
-        doc.setFillColor(230, 230, 230);
-        doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, "F");
+        doc.setFillColor(...CREAM_SOFT);
+        doc.roundedRect(x + 6, cy, imgSize, imgSize, 1, 1, "F");
       }
     } else {
-      doc.setFillColor(230, 230, 230);
-      doc.roundedRect(imgX, imgY, imgSize, imgSize, 1, 1, "F");
+      doc.setFillColor(...CREAM_SOFT);
+      doc.roundedRect(x + 6, cy, imgSize, imgSize, 1, 1, "F");
     }
 
-    const textX = imgX + imgSize + 4;
+    // Name
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "bold");
-    doc.text(item.productName, textX, y + 8);
+    doc.setTextColor(...TEXT_DARK);
+    doc.text(it.productName, textX, cy + 4);
 
-    if (item.recommendationReason) {
-      doc.setFontSize(6);
-      doc.setTextColor(...GRAY);
-      doc.setFont("helvetica", "italic");
-      const reason = item.recommendationReason.length > 60
-        ? item.recommendationReason.slice(0, 57) + "..."
-        : item.recommendationReason;
-      doc.text(`💡 ${reason}`, textX, y + 13);
+    // Description
+    if (descLines.length) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...TEXT_MUTED);
+      doc.text(descLines.slice(0, 5), textX, cy + 8);
     }
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    doc.text(`${item.quantity} × ${formatMXN(item.unitPrice)}`, pageW - margin - 40, y + 8);
+    // Right side: qty × price
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(0, 0, 0);
-    doc.text(formatMXN(lineTotal), pageW - margin - 2, y + 8, { align: "right" });
+    doc.setFontSize(9);
+    doc.setTextColor(...TEAL);
+    doc.text(`${it.quantity} × ${formatMXN(it.unitPrice)}`, x + w - 6, cy + 6, { align: "right" });
 
-    y += cardH + 2;
-  }
-
-  // ── Slot totals ──
-  if (y + 50 > 270) {
-    doc.addPage();
-    drawHeader(doc, margin, pageW);
-    y = 40;
-  }
-  y += 4;
-  doc.setDrawColor(...GOLD);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
-
-  const totalsX = 140;
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...GRAY);
-  doc.text("Subtotal:", totalsX, y);
-  doc.text(formatMXN(totals.subtotal), pageW - margin, y, { align: "right" });
-  y += 5;
-  doc.text("Logística y Envío:", totalsX, y);
-  doc.text(formatMXN(totals.shipping), pageW - margin, y, { align: "right" });
-  y += 5;
-  doc.text("IVA (16%):", totalsX, y);
-  doc.text(formatMXN(totals.iva), pageW - margin, y, { align: "right" });
-  y += 7;
-
-  doc.setFillColor(...PRIMARY);
-  doc.roundedRect(totalsX - 4, y - 5, pageW - margin - totalsX + 8, 12, 2, 2, "F");
-  doc.setFontSize(13);
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.text("SUBTOTAL ENTREGA:", totalsX, y + 3);
-  doc.text(formatMXN(totals.total), pageW - margin, y + 3, { align: "right" });
-
-  y += 14;
-  doc.setFontSize(8);
-  doc.setTextColor(...GRAY);
-  doc.setFont("helvetica", "normal");
-  const perPerson = Math.round(totals.total / Math.max(1, slot.guests_count));
-  doc.text(`${formatMXN(perPerson)}/persona`, pageW - margin, y, { align: "right" });
-
-  drawBrandFooter(doc, margin, pageW, quoteId, validUntil);
-}
-
-/** Cover page: client + grand total */
-function drawCover(
-  doc: jsPDF,
-  ctx: { margin: number; pageW: number; clientName: string; empresa: string; eventLabel: string; postalCode: string; slotsCount: number; grandTotal: number; quoteId: string; validUntil: Date },
-) {
-  const { margin, pageW, clientName, empresa, eventLabel, postalCode, slotsCount, grandTotal, quoteId, validUntil } = ctx;
-  const contentW = pageW - margin * 2;
-
-  drawHeader(doc, margin, pageW);
-
-  let y = 50;
-  doc.setFontSize(10);
-  doc.setTextColor(...PRIMARY);
-  doc.setFont("helvetica", "bold");
-  doc.text("PROPUESTA MULTI-ENTREGA", margin, y);
-  y += 8;
-  doc.setFontSize(22);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`${empresa || "Tu Evento"}`, margin, y);
-  y += 8;
-  doc.setFontSize(14);
-  doc.setTextColor(...PRIMARY);
-  doc.setFont("helvetica", "normal");
-  doc.text(eventLabel, margin, y);
-
-  // Client info card
-  y += 16;
-  doc.setFillColor(...LIGHT_BG);
-  doc.roundedRect(margin, y, contentW, 36, 2, 2, "F");
-  doc.setFontSize(9);
-  doc.setTextColor(...PRIMARY);
-  doc.setFont("helvetica", "bold");
-  doc.text("CLIENTE", margin + 6, y + 8);
-  doc.text("EVENTO", 110, y + 8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(9);
-  doc.text(`Atención: ${clientName || "—"}`, margin + 6, y + 16);
-  doc.text(`CP: ${postalCode || "—"}`, margin + 6, y + 22);
-  doc.text(`Empresa: ${empresa || "—"}`, margin + 6, y + 28);
-  doc.text(`Tipo: ${eventLabel}`, 110, y + 16);
-  doc.text(`Entregas: ${slotsCount}`, 110, y + 22);
-  doc.text(`Generado: ${format(new Date(), "dd/MM/yyyy")}`, 110, y + 28);
-
-  // Grand total banner
-  y += 50;
-  doc.setFillColor(...PRIMARY);
-  doc.roundedRect(margin, y, contentW, 30, 3, 3, "F");
-  doc.setFontSize(10);
-  doc.setTextColor(...GOLD);
-  doc.setFont("helvetica", "bold");
-  doc.text("TOTAL GENERAL DEL EVENTO", margin + 8, y + 11);
-  doc.setFontSize(24);
-  doc.setTextColor(255, 255, 255);
-  doc.text(formatMXN(grandTotal), pageW - margin - 8, y + 21, { align: "right" });
-
-  // Intro
-  y += 42;
-  doc.setFontSize(9);
-  doc.setTextColor(...GRAY);
-  doc.setFont("helvetica", "normal");
-  const intro = `Estimado/a ${clientName || "cliente"}, en Berlioz nos entusiasma preparar esta propuesta gastronómica multi-entrega para ${empresa || "su empresa"}. A continuación encontrará el detalle de cada entrega con su menú, productos y subtotal. Al final del documento se incluye un resumen consolidado del evento.`;
-  const lines = doc.splitTextToSize(intro, contentW);
-  doc.text(lines, margin, y);
-
-  drawBrandFooter(doc, margin, pageW, quoteId, validUntil);
-}
-
-/** Final summary page: table of all slots + grand total + notes */
-function drawSummary(
-  doc: jsPDF,
-  ctx: { margin: number; pageW: number; slots: MultiPdfSlotInput[]; grandTotal: number; quoteId: string; validUntil: Date },
-) {
-  const { margin, pageW, slots, grandTotal, quoteId, validUntil } = ctx;
-  const contentW = pageW - margin * 2;
-
-  doc.addPage();
-  drawHeader(doc, margin, pageW);
-
-  let y = 44;
-  doc.setFontSize(14);
-  doc.setTextColor(...PRIMARY);
-  doc.setFont("helvetica", "bold");
-  doc.text("Resumen del evento", margin, y);
-  y += 8;
-
-  // Table header
-  const colX = {
-    entrega: margin,
-    fecha: margin + 50,
-    hora: margin + 80,
-    pax: margin + 100,
-    tier: margin + 118,
-    sub: pageW - margin,
-  };
-
-  doc.setFillColor(...PRIMARY);
-  doc.rect(margin, y, contentW, 8, "F");
-  doc.setFontSize(8);
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.text("ENTREGA", colX.entrega + 2, y + 5.5);
-  doc.text("FECHA", colX.fecha, y + 5.5);
-  doc.text("HORA", colX.hora, y + 5.5);
-  doc.text("PAX", colX.pax, y + 5.5);
-  doc.text("TIER", colX.tier, y + 5.5);
-  doc.text("SUBTOTAL", colX.sub - 2, y + 5.5, { align: "right" });
-  y += 8;
-
-  // Rows
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(9);
-  slots.forEach((s, idx) => {
-    if (y + 10 > 260) {
-      doc.addPage();
-      drawHeader(doc, margin, pageW);
-      y = 44;
-    }
-    if (idx % 2 === 0) {
-      doc.setFillColor(...LIGHT_BG);
-      doc.rect(margin, y, contentW, 9, "F");
-    }
-    const label = s.slot.label || `Entrega ${idx + 1}`;
-    doc.setFont("helvetica", "bold");
-    doc.text(label.length > 28 ? label.slice(0, 26) + "…" : label, colX.entrega + 2, y + 6);
-    doc.setFont("helvetica", "normal");
-    doc.text(s.slot.date || "—", colX.fecha, y + 6);
-    doc.text(s.slot.time || "—", colX.hora, y + 6);
-    doc.text(String(s.slot.guests_count), colX.pax, y + 6);
-    doc.text(TIER_LABELS[s.selectedTier] || s.tierLabel, colX.tier, y + 6);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...PRIMARY);
-    doc.text(formatMXN(s.total), colX.sub - 2, y + 6, { align: "right" });
-    doc.setTextColor(0, 0, 0);
-    y += 9;
+    cy += itemH + 2;
   });
 
-  // Grand total row
-  y += 2;
-  doc.setFillColor(...PRIMARY);
-  doc.roundedRect(margin, y, contentW, 14, 2, 2, "F");
-  doc.setFontSize(12);
-  doc.setTextColor(...GOLD);
-  doc.setFont("helvetica", "bold");
-  doc.text("TOTAL GENERAL", margin + 4, y + 9);
-  doc.setFontSize(14);
-  doc.setTextColor(255, 255, 255);
-  doc.text(formatMXN(grandTotal), pageW - margin - 4, y + 9, { align: "right" });
+  // Totals block
+  cy = y + cardH - 18;
+  doc.setDrawColor(...HAIRLINE);
+  doc.setLineWidth(0.2);
+  doc.line(x + 6, cy, x + w - 6, cy);
+  cy += 5;
 
-  // Notes
-  y += 22;
-  if (y + 40 > 270) {
-    doc.addPage();
-    drawHeader(doc, margin, pageW);
-    y = 44;
-  }
-  doc.setDrawColor(220, 220, 220);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, pageW - margin, y);
-  y += 5;
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...PRIMARY);
-  doc.text("NOTAS IMPORTANTES", margin, y);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...GRAY);
-  y += 4;
-  QUOTE_FOOTER_NOTES.slice(0, 8).forEach((note) => {
-    doc.text(`• ${note}`, margin, y);
-    y += 3.5;
-  });
-
-  drawBrandFooter(doc, margin, pageW, quoteId, validUntil);
+  doc.setFontSize(8.5);
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text("Subtotal productos", x + 6, cy);
+  doc.setTextColor(...TEXT_DARK);
+  doc.text(formatMXN(tier.subtotal), x + w - 6, cy, { align: "right" });
+  cy += 4.5;
+  doc.setTextColor(...TEXT_MUTED);
+  doc.text("Envío", x + 6, cy);
+  doc.setTextColor(...TEXT_DARK);
+  doc.text(formatMXN(tier.shipping), x + w - 6, cy, { align: "right" });
+  cy += 6;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...TEXT_DARK);
+  doc.text("TOTAL C/IVA", x + 6, cy);
+  doc.setTextColor(...TEAL);
+  doc.text(formatMXN(tier.total), x + w - 6, cy, { align: "right" });
 }
 
-/** Public entry point — generates and downloads the multi-delivery PDF */
+/* ── Grid packing across pages ────────────────────────────────── */
+
+async function preloadSlotImages(input: MultiPdfInput): Promise<Map<string, (string | null)[]>> {
+  const map = new Map<string, (string | null)[]>();
+  for (const s of input.slots) {
+    const tier = s.slot.tiers.find((t) => t.tier === s.selectedTier);
+    if (!tier) continue;
+    const imgs = await Promise.all(
+      tier.items.map((it) =>
+        loadImageBase64(buildProductImageUrl(it.imageUrl ?? null, null) || ""),
+      ),
+    );
+    map.set(s.slot.slot_id, imgs);
+  }
+  return map;
+}
+
+/* ── Main entry ───────────────────────────────────────────────── */
+
 export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<void> {
   const doc = new jsPDF();
-  const margin = 14;
   const pageW = doc.internal.pageSize.getWidth();
+  const contentW = pageW - MARGIN * 2;
+  const colW = (contentW - CARD_GAP) / 2;
   const quoteId = generateQuoteId();
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + QUOTE_VALIDITY_DAYS);
 
-  const grandTotal = input.slots.reduce((s, x) => s + x.total, 0);
+  const loadedImages = await preloadSlotImages(input);
 
-  // Cover (page 1)
-  drawCover(doc, {
-    margin,
-    pageW,
-    clientName: input.clientName,
-    empresa: input.empresa,
-    eventLabel: input.eventLabel,
-    postalCode: input.postalCode,
-    slotsCount: input.slots.length,
-    grandTotal,
-    quoteId,
-    validUntil,
-  });
+  // ═══ PAGE 1 ═══
+  drawTopBanner(doc);
+  await drawHero(doc, heroAssetForEvent(input.eventType || input.eventLabel));
 
-  // One section per slot
+  let y = HEADER_H + HERO_H + 10;
+  drawQuoteIdBar(doc, y, quoteId);
+  y += 12;
+
+  // Cliente / Evento (boxed)
+  y = drawInfoColumns(
+    doc,
+    y,
+    {
+      title: "Datos del cliente",
+      lines: [
+        ["Atención", input.clientName || "—"],
+        ["Empresa", input.empresa || "—"],
+        ...(input.email ? ([["Email", input.email]] as Array<[string, string]>) : []),
+        ["Tipo", input.eventLabel],
+      ],
+    },
+    {
+      title: "Detalles del evento",
+      lines: [
+        ["Período", fmtPeriodLabel(input.slots)],
+        ["Entregas", String(input.slots.length)],
+        ["CP base", input.postalCode || "—"],
+        ["Preparada por", "Equipo Ventas"],
+      ],
+    },
+    { boxed: true },
+  );
+
+  y += 8;
+  drawSectionLabel(doc, "Entregas", y);
+  y += 6;
+
+  // ═══ Slot cards grid ═══
+  let col = 0;
+  let rowY = y;
+  let rowMax = 0;
+
   for (let i = 0; i < input.slots.length; i++) {
-    await drawSlotSection(doc, input.slots[i], {
-      margin,
-      pageW,
-      clientName: input.clientName,
-      empresa: input.empresa,
-      eventLabel: input.eventLabel,
-      postalCode: input.postalCode,
+    const slot = input.slots[i];
+    const cardH = measureSlotCard(doc, colW, slot);
+    const imgs = loadedImages.get(slot.slot.slot_id) || [];
+
+    // Page break if doesn't fit
+    if (rowY + cardH > SAFE_BOTTOM) {
+      doc.addPage();
+      drawCompactHeader(doc, `Cotización ${quoteId}${input.empresa ? "  ·  " + input.empresa : ""}`);
+      rowY = 30;
+      drawSectionLabel(doc, "Entregas (continuación)", rowY);
+      rowY += 6;
+      col = 0;
+      rowMax = 0;
+    }
+
+    const cx = MARGIN + col * (colW + CARD_GAP);
+    drawSlotCard({
+      doc,
+      x: cx,
+      y: rowY,
+      w: colW,
       slotNumber: i + 1,
-      totalSlots: input.slots.length,
-      quoteId,
-      validUntil,
+      input: slot,
+      loadedImages: imgs,
     });
+
+    rowMax = Math.max(rowMax, cardH);
+    col += 1;
+    if (col >= 2) {
+      rowY += rowMax + CARD_GAP;
+      col = 0;
+      rowMax = 0;
+    }
+  }
+  // If last row was half-filled, advance Y
+  if (col === 1) {
+    rowY += rowMax + CARD_GAP;
   }
 
-  // Final summary
-  drawSummary(doc, { margin, pageW, slots: input.slots, grandTotal, quoteId, validUntil });
+  // ═══ Grand totals + Notes ═══
+  const grandSubtotalProducts = input.slots.reduce((s, x) => {
+    const t = x.slot.tiers.find((tt) => tt.tier === x.selectedTier);
+    return s + (t?.subtotal || 0);
+  }, 0);
+  const grandShipping = input.slots.reduce((s, x) => {
+    const t = x.slot.tiers.find((tt) => tt.tier === x.selectedTier);
+    return s + (t?.shipping || 0);
+  }, 0);
+  const grandIva = input.slots.reduce((s, x) => {
+    const t = x.slot.tiers.find((tt) => tt.tier === x.selectedTier);
+    return s + (t?.iva || 0);
+  }, 0);
+  const grandTotal = input.slots.reduce((s, x) => s + x.total, 0);
+
+  // Need ~ 80mm of room for totals + notes
+  if (rowY + 90 > SAFE_BOTTOM + 5) {
+    doc.addPage();
+    drawCompactHeader(doc, `Cotización ${quoteId}${input.empresa ? "  ·  " + input.empresa : ""}`);
+    rowY = 32;
+  }
+
+  // Totals (right-aligned)
+  const totalsW = 100;
+  const totalsX = pageW - MARGIN - totalsW;
+  let ty = rowY + 4;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...TEXT_DARK);
+  const rowGap = 6;
+
+  doc.text("Subtotal productos", totalsX, ty);
+  doc.setFont("helvetica", "bold");
+  doc.text(formatMXN(grandSubtotalProducts), pageW - MARGIN, ty, { align: "right" });
+  ty += rowGap;
+  doc.setFont("helvetica", "normal");
+  doc.text(`Envío (${input.slots.length} entregas)`, totalsX, ty);
+  doc.setFont("helvetica", "bold");
+  doc.text(formatMXN(grandShipping), pageW - MARGIN, ty, { align: "right" });
+  ty += rowGap;
+
+  doc.setDrawColor(...HAIRLINE);
+  doc.setLineWidth(0.2);
+  doc.line(totalsX, ty - 2, pageW - MARGIN, ty - 2);
+
+  doc.setFont("helvetica", "normal");
+  doc.text("Subtotal", totalsX, ty + 2);
+  doc.setFont("helvetica", "bold");
+  doc.text(formatMXN(grandSubtotalProducts + grandShipping), pageW - MARGIN, ty + 2, { align: "right" });
+  ty += rowGap + 2;
+  doc.setFont("helvetica", "normal");
+  doc.text("IVA (16%)", totalsX, ty);
+  doc.setFont("helvetica", "bold");
+  doc.text(formatMXN(grandIva), pageW - MARGIN, ty, { align: "right" });
+  ty += rowGap + 2;
+
+  // TOTAL bar
+  doc.setFillColor(...TEAL);
+  doc.rect(totalsX - 4, ty - 5, totalsW + 4, 12, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text("TOTAL", totalsX, ty + 3);
+  doc.setFontSize(13);
+  doc.text(`${formatMXN(grandTotal)} MXN`, pageW - MARGIN, ty + 3, { align: "right" });
+
+  // Notes box (full width, below totals)
+  const notesY = ty + 16;
+  drawNotesBox(doc, notesY, QUOTE_FOOTER_NOTES.slice(0, 10));
+
+  // ═══ Bottom band on every page ═══
+  const total = doc.getNumberOfPages();
+  for (let p = 1; p <= total; p++) {
+    doc.setPage(p);
+    drawBottomBand(doc);
+  }
 
   doc.save(`Berlioz-Multi-Entrega-${format(new Date(), "yyyyMMdd")}.pdf`);
 }

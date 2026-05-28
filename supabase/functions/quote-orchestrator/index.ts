@@ -476,6 +476,25 @@ async function composeWithClaude(
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, categoria: p.categoria }));
   }
 
+  // Precompute la categoría PRIMARIA según el tipo de evento y los mejores candidatos PRINCIPALES
+  // para que Claude no proponga snacks o frutas antes que el plato fuerte (ej: chilaquiles en desayuno).
+  const eventCategories = EVENT_TO_CATEGORIES[req.eventType] || ['Working Lunch', 'Bebidas'];
+  const primaryCategory = eventCategories[0];
+  const secondaryCategories = eventCategories.slice(1);
+  const primaryCandidates = products
+    .filter(p => p.categoria === primaryCategory)
+    .sort((a, b) => b.finalScore - a.finalScore)
+    .slice(0, 12)
+    .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, score: p.finalScore }));
+  // Variantes principales que cubren cada restricción dietética (mismo nivel que el principal regular)
+  const primaryDietaryCandidates: Record<string, { id: string; nombre: string; precio: number }[]> = {};
+  for (const r of activeRestrictions) {
+    primaryDietaryCandidates[r] = products
+      .filter(p => p.categoria === primaryCategory && productSupportsRestriction(p, normalizeDietaryTag(r)))
+      .slice(0, 6)
+      .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice }));
+  }
+
   const isMulti = req.mode === 'multi' && Array.isArray(req.deliveryGroups) && req.deliveryGroups.length > 0;
 
   const multiInstruction = isMulti
@@ -483,6 +502,37 @@ async function composeWithClaude(
     : '';
 
   const systemPrompt = `Eres el cotizador de Berlioz Catering Corporativo, empresa franco-mexicana de catering gourmet para clientes corporativos en CDMX (EY México, DHL, PepsiCo, Thomson Reuters, Maersk).
+
+== ORDEN DE SELECCIÓN — OBLIGATORIO Y ESTRICTO ==
+
+Componer cada tier sigue SIEMPRE este orden, sin excepción:
+
+1) PLATO PRINCIPAL según el tipo de evento (esto es lo PRIMERO que eliges):
+   - DESAYUNO    → categoria "Desayuno"     (ej: Chilaquiles, Breakfast in Roma, huevos, omelettes, molletes). NUNCA arranques con fruta o yogurt como principal.
+   - COFFEE BREAK→ categoria "Coffee Break" (ej: surtidos, panes, snacks gourmet).
+   - COMIDA / WORKING LUNCH → categoria "Working Lunch" (ej: bowls, sándwiches, ensaladas con proteína, boxes).
+   - CAPACITACIÓN→ Working Lunch como principal + Desayuno o Coffee Break como secundario.
+   - REUNIÓN EJECUTIVA / FILMACIÓN → Working Lunch como principal.
+
+   El principal SIEMPRE debe pertenecer a la categoría primaria del evento. La selección se hace del bloque "TOP CANDIDATOS PRINCIPALES" que recibes en el user prompt — esos son los que tienen mejor score_comercial y son los que el cliente espera ver. Prefiere los primeros de esa lista antes que cualquier otro.
+
+2) DISTRIBUCIÓN POR RESTRICCIONES DIETÉTICAS sobre el plato principal:
+   - Si hay 8 personas y 1 vegano + 1 keto, entonces NO son "8 vegetarianos". Son 6 normales + 1 vegano + 1 keto.
+   - El item principal regular va con qty = (personas - personas con restricción).
+   - Para cada restricción, agrega su VARIANTE PRINCIPAL equivalente (también de la categoría primaria) con qty = personas con esa restricción. Usa el bloque "VARIANTES PRINCIPALES POR RESTRICCIÓN" del user prompt.
+   - Sólo si NO existe una variante principal dietética, recurre a la WHITELIST dietética general.
+
+3) BEBIDA del evento:
+   - Agua, café o jugo según el tipo. Cantidad = total de personas (compartido).
+
+4) ADD-ONS / COMPLEMENTOS (snacks, postres, surtidos, fruta):
+   - SÓLO después de cumplir 1-3. Son la última prioridad y solo si el tier permite más items.
+   - En ESENCIAL casi nunca van; en EQUILIBRADO máximo 1; en EXPERIENCIA hasta 2.
+
+EJEMPLO CORRECTO desayuno 8 personas (1 vegano):
+  ✅ 7× Chilaquiles Verdes + 1× Chilaquiles Veganos + 8× Café Berlioz + (opcional) 1× Fruta de Temporada como add-on.
+EJEMPLO INCORRECTO (NUNCA hagas esto):
+  ❌ 1× Ensalada de Frutas + 1× Yogurt + 8× Agua. Falta el principal de desayuno (chilaquiles/huevos).
 
 == PRESUPUESTO — REGLA MÁS IMPORTANTE ==
 
@@ -516,11 +566,11 @@ NUNCA incluyas un producto con carne, lácteos o gluten para personas con restri
 
 == ESTRUCTURA DE LOS 3 TIERS ==
 
-ESENCIAL: 2-3 productos. Funcional y económico.
+ESENCIAL: 2-3 productos. Principal de la categoría primaria + bebida. Funcional y económico. Sin add-ons.
 
-EQUILIBRADO: 3-4 productos. La opción recomendada. 
+EQUILIBRADO: 3-4 productos. Principal (con sus variantes dietéticas) + bebida + máximo 1 add-on. La opción recomendada.
 
-EXPERIENCIA: 4-5 productos. Premium. Incluye siempre una bebida.
+EXPERIENCIA: 4-5 productos. Principal (con variantes dietéticas) + bebida premium + hasta 2 add-ons (postre, snack o surtido). Premium.
 
 == REGLAS BERLIOZ ==
 
@@ -542,7 +592,7 @@ EXPERIENCIA: 4-5 productos. Premium. Incluye siempre una bebida.
 
 == CALIDAD ==
 
-Prioriza productos con mayor score_comercial. Adapta las categorías al tipo de evento (desayuno, coffee break, working lunch).
+Prioriza productos con mayor score_comercial DENTRO de la categoría primaria. NUNCA propongas un item de otra categoría antes que un principal disponible. Respeta literalmente las respuestas del formulario (tipo de evento, distribución dietética, hora, presupuesto).
 
 Responde ÚNICAMENTE con el JSON especificado. Sin texto fuera del JSON.`;
 
@@ -571,7 +621,26 @@ Los dietary_tags de cada producto están incluidos en el catálogo que recibes a
 
 `;
 
-  const userPrompt = contextoPedido + `EVENTO:
+  const primaryBlock = `\n=== CATEGORÍA PRIMARIA DEL EVENTO ===
+Tipo de evento: ${EVENT_LABEL[req.eventType] || req.eventType}
+Categoría primaria OBLIGATORIA para el plato principal: "${primaryCategory}"
+Categorías secundarias permitidas (sólo como complemento): ${secondaryCategories.map(c => `"${c}"`).join(', ') || '(ninguna)'}
+
+TOP CANDIDATOS PRINCIPALES (categoria="${primaryCategory}", ordenados por score_comercial — elige el principal de aquí):
+${primaryCandidates.length > 0
+    ? primaryCandidates.map((p, i) => `  ${i + 1}. ${p.id} = ${p.nombre} ($${p.precio}, score ${p.score})`).join('\n')
+    : '  ⚠️ No hay candidatos principales de esta categoría; usa la mejor alternativa secundaria y anótalo.'}
+${activeRestrictions.length > 0 ? `
+VARIANTES PRINCIPALES POR RESTRICCIÓN (mismo principal, versión dietética — preferir antes que sustitutos de otras categorías):
+${activeRestrictions.map(r => {
+  const list = primaryDietaryCandidates[r] || [];
+  if (list.length === 0) return `  • ${r}: (sin variante principal — usa la WHITELIST dietética general más abajo)`;
+  return `  • ${r}: ${list.map(p => `${p.id}=${p.nombre} ($${p.precio})`).join(' | ')}`;
+}).join('\n')}` : ''}
+=== FIN CATEGORÍA PRIMARIA ===
+`;
+
+  const userPrompt = contextoPedido + primaryBlock + `EVENTO:
 - Tipo: ${req.eventType}
 - Personas: ${req.peopleCount}
 - Fecha: ${req.eventDate || 'sin definir'}

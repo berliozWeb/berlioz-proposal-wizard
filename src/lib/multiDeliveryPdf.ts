@@ -7,7 +7,7 @@
 
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
-import logoImg from "@/assets/berlioz-logo.png";
+import { es } from "date-fns/locale";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { buildProductImageUrl } from "@/lib/imageUtils";
 import {
@@ -16,14 +16,28 @@ import {
   generateQuoteId,
 } from "@/domain/entities/BerliozCatalog";
 import type { SlotProposal, ProposalPackage, ProposedProduct } from "@/domain/entities/SmartQuote";
+import {
+  drawTopBanner,
+  drawHero,
+  drawQuoteIdBar,
+  drawInfoColumns,
+  drawSectionLabel,
+  drawCompactHeader,
+  drawBottomBand,
+  drawNotesBox,
+  heroAssetForEvent,
+  loadImageBase64,
+  MARGIN,
+  HEADER_H,
+  HERO_H,
+  TEAL,
+  CREAM_SOFT,
+  CREAM_LINE,
+  TEXT_DARK,
+  TEXT_MUTED,
+  HAIRLINE,
+} from "@/lib/pdfTemplate";
 
-// Brand palette (matches single-delivery PDF)
-const PRIMARY: [number, number, number] = [1, 77, 111];
-const GOLD: [number, number, number] = [190, 155, 123];
-const GRAY: [number, number, number] = [100, 100, 100];
-const LIGHT_BG: [number, number, number] = [248, 246, 243];
-
-// Tier display labels
 const TIER_LABELS: Record<string, string> = {
   esencial: "Esencial",
   equilibrado: "Equilibrado",

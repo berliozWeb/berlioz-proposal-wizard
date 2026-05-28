@@ -1251,7 +1251,15 @@ serve(async (req) => {
       menuAll = [];
     }
     // Sólo las categorías relevantes al tipo de evento
-    const allProducts: DbProduct[] = menuAll.filter(p => categories.includes(p.categoria || ''));
+    // Acepta match por categoria primaria del producto, por su segunda_categoria,
+    // y normaliza Bebidas↔Bebida (el catálogo usa "Bebida" en singular).
+    const wanted = new Set<string>(categories);
+    if (wanted.has('Bebidas')) wanted.add('Bebida');
+    if (wanted.has('Bebida')) wanted.add('Bebidas');
+    const allProducts: DbProduct[] = menuAll.filter(p =>
+      wanted.has(p.categoria || '')
+      || wanted.has(p.menu_segunda_categoria || ''),
+    );
     const parentMap = new Map<string, DbProduct>(); // imágenes ya van resueltas en el flat
 
     // ── 3. Score & enrich all products ──

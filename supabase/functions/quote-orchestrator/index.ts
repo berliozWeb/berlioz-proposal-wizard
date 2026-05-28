@@ -817,7 +817,7 @@ Categorías secundarias permitidas (sólo como complemento): ${secondaryCategori
 
 TOP CANDIDATOS PRINCIPALES (categoria="${primaryCategory}", ordenados por score_comercial — elige el principal de aquí):
 ${primaryCandidates.length > 0
-    ? primaryCandidates.map((p, i) => `  ${i + 1}. ${p.id} = ${p.nombre} ($${p.precio}, score ${p.score})`).join('\n')
+    ? primaryCandidates.map((p, i) => `  ${i + 1}. ${p.id} = ${p.nombre} ($${p.precio}, score ${p.score}, formato=${p.formato || 'n/a'})`).join('\n')
     : '  ⚠️ No hay candidatos principales de esta categoría; usa la mejor alternativa secundaria y anótalo.'}
 ${activeRestrictions.length > 0 ? `
 VARIANTES PRINCIPALES POR RESTRICCIÓN (mismo principal, versión dietética — preferir antes que sustitutos de otras categorías):

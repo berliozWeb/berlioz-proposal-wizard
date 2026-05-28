@@ -13,6 +13,7 @@ import {
   type Variante,
   type DietaryFilter,
 } from "@/hooks/useMenuCotizador";
+import { useProductos } from "@/hooks/useProductos";
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   "Coffee Break": "☕",
@@ -21,7 +22,7 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   "Bebida": "🥤",
   "Torta Piropo": "🥖",
 };
-const STATIC_FILTERS = [{ value: "todos", label: "Todos", emoji: "🍽️" }];
+const FAVORITOS_FILTER = { value: "favoritos", label: "Favoritos", emoji: "★" };
 const TAG_FILTERS: { value: DietaryFilter; label: string; emoji: string }[] = [
   { value: "vegetariano", label: "Vegetariano", emoji: "🌿" },
   { value: "vegano", label: "Vegano", emoji: "🌱" },
@@ -176,23 +177,31 @@ const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const { itemCount } = useCart();
   const { data: productos = [], isLoading: loading, error, refetch } = useMenuCotizador();
-  const [filter, setFilter] = useState(searchParams.get("categoria") || "todos");
+  const { productos: catalogProductos } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
+  const favoritoIds = useMemo(() => {
+    return new Set(catalogProductos.filter((p) => p.destacado).map((p) => p.id));
+  }, [catalogProductos]);
+  const productosConFavorito = useMemo(() => {
+    return productos.map((p) => ({ ...p, isFavorito: favoritoIds.has(p.product_id) }));
+  }, [productos, favoritoIds]);
+
+  const [filter, setFilter] = useState(searchParams.get("categoria") || "favoritos");
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
-  // Category tabs (fixed order) + Todos + dietary
+  // Category tabs: Favoritos first, then categories, then dietary
   const categoryFilters = useMemo(() => {
     const present = new Set(productos.map((p) => p.categoria));
     const cats = CATEGORIAS_COTIZADOR.filter((c) => present.has(c));
     return [
-      ...STATIC_FILTERS,
+      FAVORITOS_FILTER,
       ...cats.map((c) => ({ value: c, label: c, emoji: CATEGORY_EMOJIS[c] ?? "🍽️" })),
       ...TAG_FILTERS,
     ];
   }, [productos]);
 
   const filtered = useMemo(() => {
-    let list = productos;
+    let list = productosConFavorito;
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -205,11 +214,13 @@ const CatalogPage = () => {
     const dietaryKeys: DietaryFilter[] = ["vegetariano", "vegano", "keto", "sin_gluten", "sin_lactosa"];
     if ((dietaryKeys as string[]).includes(filter)) {
       list = list.filter((p) => productoHasDietary(p, filter as DietaryFilter));
+    } else if (filter === "favoritos") {
+      list = list.filter((p) => p.isFavorito);
     } else if (filter !== "todos") {
       list = list.filter((p) => p.categoria === filter);
     }
     return list;
-  }, [productos, filter, search]);
+  }, [productosConFavorito, filter, search]);
 
   return (
     <BaseLayout>
@@ -310,10 +321,10 @@ const CatalogPage = () => {
                 <h3 className="font-heading text-2xl text-foreground mb-2">No encontramos resultados</h3>
                 <p className="font-body text-muted-foreground mb-8 max-w-sm">Prueba ajustando tus filtros.</p>
                 <button
-                  onClick={() => { setFilter("todos"); setSearch(""); }}
+                  onClick={() => { setFilter("favoritos"); setSearch(""); }}
                   className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                 >
-                  <ArrowRight className="w-4 h-4" /> Ver todo el catálogo
+                  <ArrowRight className="w-4 h-4" /> Ver favoritos
                 </button>
               </div>
             ) : (

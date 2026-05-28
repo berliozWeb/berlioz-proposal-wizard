@@ -66,6 +66,14 @@ interface DbProduct {
   es_comida_main?: boolean;
   /** Short product description for the prompt */
   descripcion_corta?: string | null;
+  /** Canonical menu metadata (from get-menu-cotizador) */
+  menu_segunda_categoria?: string | null;
+  menu_subcategoria?: string | null;
+  menu_tipo?: string | null; // "Paquete" | "Add-on" | "Simple" | "Variable (con variantes)"
+  /** Derived: true cuando tipo === "Add-on" (complemento, no plato principal) */
+  is_addon?: boolean;
+  /** Derived: "individual" | "grupal" | null — formato de la porción */
+  formato?: 'individual' | 'grupal' | null;
 }
 
 interface ScoredProduct extends DbProduct {

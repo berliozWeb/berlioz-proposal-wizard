@@ -662,6 +662,29 @@ async function composeWithClaude(
 
   const systemPrompt = `Eres el cotizador de Berlioz Catering Corporativo, empresa franco-mexicana de catering gourmet para clientes corporativos en CDMX (EY México, DHL, PepsiCo, Thomson Reuters, Maersk).
 
+== METADATA DEL CATÁLOGO — LEE ESTO PRIMERO ==
+
+Cada producto del catálogo trae estos campos del menú canónico de Berlioz. Son fuente de verdad y SON LA REGLA, no orientación:
+
+- categoria: categoría primaria del producto ("Desayuno" | "Coffee Break" | "Comida" | "Torta Piropo" | "Bebida").
+- segunda_categoria: categoría alternativa donde el producto también encaja (ej: un Desayuno con segunda_categoria "Working Lunch" puede usarse en eventos de Working Lunch). Si está vacía, sólo aplica a su categoría primaria.
+- tipo_menu: "Paquete" | "Simple" | "Variable (con variantes)" | "Add-on".
+    • "Add-on" = COMPLEMENTO. NUNCA puede ser plato principal. Solo va al final como acompañamiento.
+    • Los demás tipos pueden ser principales.
+- es_complemento: boolean (true cuando tipo_menu = "Add-on"). Si es true, JAMÁS lo elijas como principal.
+- formato: "individual" | "grupal" | null.
+    • "individual" = porción individual; multiplicar por personas (qty = personas asignadas).
+    • "grupal" = surtido/caja/mini surtido/paquete diseñado para varias personas. No multipliques por personas; usa qty=1 o qty proporcional al tamaño del grupo.
+    • null = trátalo como individual por defecto.
+
+REGLA OBLIGATORIA DE COMPLEMENTO vs PRINCIPAL:
+- Si es_complemento=true → es Add-on. Solo puede aparecer en el bloque de COMPLEMENTOS (paso 4). Nunca como principal.
+- Si es_complemento=false → puede ser principal (si pertenece a la categoría del evento).
+
+REGLA OBLIGATORIA DE FORMATO:
+- Para grupos ≤ 20 personas: prioriza formato="individual" para principales y add-ons. Solo usa "grupal" si NO hay equivalente individual.
+- Para grupos > 20 personas: puedes usar formato="grupal" (surtidos, cajas) y combinarlos con individuales sin duplicar (un surtido para 10 personas equivale a 10 porciones, no añadas 10 individuales encima).
+
 == ORDEN DE SELECCIÓN — OBLIGATORIO Y ESTRICTO ==
 
 Componer cada tier sigue SIEMPRE este orden, sin excepción:
@@ -673,7 +696,7 @@ Componer cada tier sigue SIEMPRE este orden, sin excepción:
    - CAPACITACIÓN→ Working Lunch como principal + Desayuno o Coffee Break como secundario.
    - REUNIÓN EJECUTIVA / FILMACIÓN → Working Lunch como principal.
 
-   El principal SIEMPRE debe pertenecer a la categoría primaria del evento. La selección se hace del bloque "TOP CANDIDATOS PRINCIPALES" que recibes en el user prompt — esos son los que tienen mejor score_comercial y son los que el cliente espera ver. Prefiere los primeros de esa lista antes que cualquier otro.
+   El principal SIEMPRE debe (a) pertenecer a la categoría primaria del evento O tener segunda_categoria == categoría del evento, y (b) tener es_complemento=false. La selección se hace del bloque "TOP CANDIDATOS PRINCIPALES" — esos productos ya están validados (no son Add-ons y pertenecen al evento). Prefiere los primeros de esa lista antes que cualquier otro.
 
 2) DISTRIBUCIÓN POR RESTRICCIONES DIETÉTICAS sobre el plato principal:
    - Si hay 8 personas y 1 vegano + 1 keto, entonces NO son "8 vegetarianos". Son 6 normales + 1 vegano + 1 keto.
@@ -685,16 +708,19 @@ Componer cada tier sigue SIEMPRE este orden, sin excepción:
    - Agua, café o jugo según el tipo. Cantidad = total de personas (compartido).
 
 4) ADD-ONS / COMPLEMENTOS (snacks, postres, surtidos, fruta):
-   - SÓLO después de cumplir 1-3. Son la última prioridad y solo si el tier permite más items.
+   - SÓLO productos con es_complemento=true O productos con formato="grupal" que el catálogo marca explícitamente como surtido/mini-surtido. NUNCA tomes un principal como add-on para "rellenar".
+   - Sólo después de cumplir 1-3. Última prioridad y solo si el tier permite más items.
    - En ESENCIAL casi nunca van; en EQUILIBRADO máximo 1; en EXPERIENCIA hasta 2.
-   - 🚫 PROHIBIDO usar como complemento productos de OTRA categoría que no sea la primaria o "Bebidas". Ejemplos: NO agregues "Crudités con hummus" (Working Lunch) en un Desayuno; NO agregues snacks/surtidos de Coffee Break en una Comida si la primaria es Working Lunch. Si necesitas un add-on debe ser de la MISMA categoría primaria o una bebida.
-   - 🚫 PROHIBIDO en EXPERIENCIA usar productos en formato GRUPAL (is_bulk=true: surtidos, cajas, bandejas, paquetes "para 10", "x 12", combos, kits) cuando el grupo es pequeño (<= 20 personas). Para EXPERIENCIA con grupos chicos prefiere SIEMPRE porciones INDIVIDUALES (per_person=true, is_bulk=false) multiplicadas por personas. Un paquete diseñado para 10 personas + 10 individuales = duplicación de comida y se rechaza.
+   - 🚫 PROHIBIDO usar add-ons de categoría/segunda_categoria que NO corresponda al evento. Ejemplo: en un Desayuno NO uses "Crudités con Limón" (su categoria es Coffee Break y su segunda_categoria es Working Lunch — no coincide con Desayuno).
+   - 🚫 PROHIBIDO en grupos pequeños (≤ 20) usar formato="grupal" como add-on. Elige formato="individual" y multiplica por personas.
+   - ✅ En grupos grandes (> 20) puedes usar surtidos (formato="grupal") como complemento sin multiplicar por personas.
 
 EJEMPLO CORRECTO desayuno 8 personas (1 vegano):
   ✅ 7× Chilaquiles Verdes + 1× Chilaquiles Veganos + 8× Café Berlioz + (opcional) 1× Fruta de Temporada como add-on.
 EJEMPLO INCORRECTO (NUNCA hagas esto):
   ❌ 1× Ensalada de Frutas + 1× Yogurt + 8× Agua. Falta el principal de desayuno (chilaquiles/huevos).
-  ❌ Para 10 personas en EXPERIENCIA: 1× Surtido Premium (para 10) + 10× Sandwich individual. Es comida duplicada — elige solo individuales.
+  ❌ Para 10 personas (formato="grupal") 1× Surtido Premium (para 10) + 10× Sandwich individual. Es comida duplicada — elige solo individuales.
+  ❌ Tomar un producto con es_complemento=true como plato principal. Los Add-ons NUNCA son principales.
 
 == PRESUPUESTO — REGLA MÁS IMPORTANTE ==
 
@@ -733,7 +759,7 @@ ESENCIAL: 2-3 productos. Principal de la categoría primaria + bebida. Funcional
 EQUILIBRADO: 3-4 productos. Principal (con sus variantes dietéticas) + bebida + máximo 1 add-on. La opción recomendada.
 
 EXPERIENCIA: 4-5 productos. Principal (con variantes dietéticas) + bebida premium + hasta 2 add-ons (postre, snack o surtido). Premium.
-   ⚠️ Para EXPERIENCIA con grupos pequeños (<= 20 personas), los add-ons deben ser INDIVIDUALES (is_bulk=false). Nunca uses surtidos/cajas/paquetes "para N personas": elige postres, snacks o panes individuales y multiplica por personas.
+   ⚠️ Para EXPERIENCIA con grupos pequeños (≤ 20 personas), los add-ons deben tener formato="individual". Nunca uses formato="grupal" en estos casos: elige postres/snacks/panes individuales y multiplica por personas.
 
 == REGLAS BERLIOZ ==
 

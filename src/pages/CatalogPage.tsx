@@ -321,10 +321,10 @@ const CatalogPage = () => {
                 <h3 className="font-heading text-2xl text-foreground mb-2">No encontramos resultados</h3>
                 <p className="font-body text-muted-foreground mb-8 max-w-sm">Prueba ajustando tus filtros.</p>
                 <button
-                  onClick={() => { setFilter("todos"); setSearch(""); }}
+                  onClick={() => { setFilter("favoritos"); setSearch(""); }}
                   className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                 >
-                  <ArrowRight className="w-4 h-4" /> Ver todo el catálogo
+                  <ArrowRight className="w-4 h-4" /> Ver favoritos
                 </button>
               </div>
             ) : (

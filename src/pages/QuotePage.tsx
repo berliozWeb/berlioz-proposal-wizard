@@ -363,7 +363,7 @@ const QuotePage = () => {
               <p className="font-body text-sm text-muted-foreground">Cuéntanos cuántas entregas necesitas</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto justify-items-center">
+            <div className="grid grid-cols-2 gap-3 max-w-xl mx-auto">
               {([
                 { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Evento de un momento' },
                 { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Varios días o entregas' },
@@ -377,7 +377,7 @@ const QuotePage = () => {
                       if (mode === 'single') setDeliveryGroups(buildSingleDeliveryGroup());
                     }}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left min-h-[88px]",
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left min-h-[88px]",
                       selected
                         ? "border-primary bg-primary/5 shadow-sm"
                         : "border-border bg-card hover:border-primary/40",

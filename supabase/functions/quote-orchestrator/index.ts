@@ -654,11 +654,14 @@ Componer cada tier sigue SIEMPRE este orden, sin excepción:
 4) ADD-ONS / COMPLEMENTOS (snacks, postres, surtidos, fruta):
    - SÓLO después de cumplir 1-3. Son la última prioridad y solo si el tier permite más items.
    - En ESENCIAL casi nunca van; en EQUILIBRADO máximo 1; en EXPERIENCIA hasta 2.
+   - 🚫 PROHIBIDO usar como complemento productos de OTRA categoría que no sea la primaria o "Bebidas". Ejemplos: NO agregues "Crudités con hummus" (Working Lunch) en un Desayuno; NO agregues snacks/surtidos de Coffee Break en una Comida si la primaria es Working Lunch. Si necesitas un add-on debe ser de la MISMA categoría primaria o una bebida.
+   - 🚫 PROHIBIDO en EXPERIENCIA usar productos en formato GRUPAL (is_bulk=true: surtidos, cajas, bandejas, paquetes "para 10", "x 12", combos, kits) cuando el grupo es pequeño (<= 20 personas). Para EXPERIENCIA con grupos chicos prefiere SIEMPRE porciones INDIVIDUALES (per_person=true, is_bulk=false) multiplicadas por personas. Un paquete diseñado para 10 personas + 10 individuales = duplicación de comida y se rechaza.
 
 EJEMPLO CORRECTO desayuno 8 personas (1 vegano):
   ✅ 7× Chilaquiles Verdes + 1× Chilaquiles Veganos + 8× Café Berlioz + (opcional) 1× Fruta de Temporada como add-on.
 EJEMPLO INCORRECTO (NUNCA hagas esto):
   ❌ 1× Ensalada de Frutas + 1× Yogurt + 8× Agua. Falta el principal de desayuno (chilaquiles/huevos).
+  ❌ Para 10 personas en EXPERIENCIA: 1× Surtido Premium (para 10) + 10× Sandwich individual. Es comida duplicada — elige solo individuales.
 
 == PRESUPUESTO — REGLA MÁS IMPORTANTE ==
 

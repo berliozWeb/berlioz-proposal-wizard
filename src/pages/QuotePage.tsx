@@ -24,6 +24,7 @@ import {
 } from "@/domain/entities/DeliveryGroup";
 import { generateMultiDeliveryPdf } from "@/lib/multiDeliveryPdf";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Images
 // Premium Images from src/assets/imagenes_menu

@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { jsPDF } from "jspdf";
-import logoImg from "@/assets/berlioz-logo.png";
 import {
   ensureMontserrat,
   registerMontserrat,

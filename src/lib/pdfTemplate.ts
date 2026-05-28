@@ -285,16 +285,20 @@ export function colXs() {
   const left = MARGIN_X;
   const right = PAGE_W - MARGIN_X;
   const W = right - left;
+  // Column widths (% of content width):
+  //  #: 5%  ·  Descripción: 60%  ·  Cant.: 8%  ·  P. Unit.: 13%  ·  Subtotal: 14%
+  // Minimum right-padding of 8pt prevents numeric columns from touching.
+  const PAD = 8;
   return {
-    idx:    left + W * 0.025,
-    desc:   left + W * 0.06,
-    qty:    left + W * 0.78,
-    unit:   left + W * 0.88,
-    sub:    right - 12,
-    imgX:   left + W * 0.06,
+    idx:    left + W * 0.025,                 // center of 5% col
+    desc:   left + W * 0.05,                  // left edge of descripción col
+    qty:    left + W * 0.73 - PAD,            // right-aligned within 65–73%
+    unit:   left + W * 0.86 - PAD,            // right-aligned within 73–86%
+    sub:    right - PAD,                      // right-aligned within 86–100%
+    imgX:   left + W * 0.05,
     imgSize: 56,
-    textX:  left + W * 0.06 + 56 + 14,
-    textWLimit: W * 0.65 - 70,
+    textX:  left + W * 0.05 + 56 + 14,
+    textWLimit: W * 0.60 - 78,                // descripción col minus thumb + gap
   };
 }
 

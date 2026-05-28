@@ -671,7 +671,7 @@ export default function ProposalStep(props: ProposalStepProps) {
       y = drawTableHeader(doc, y);
 
       const cols = colXs();
-      const padV = 16;
+      const padV = 10; // vertical row padding (reduced to keep totals + notes on same page)
       const safeBottom = PAGE_H - MARGIN_Y - 60; // leave room for footer
       const newPageHeader = () => {
         doc.addPage();
@@ -680,9 +680,8 @@ export default function ProposalStep(props: ProposalStepProps) {
         doc.setCharSpace(3);
         doc.text("BERLIOZ", PAGE_W / 2, MARGIN_Y + 20, { align: "center" });
         doc.setCharSpace(0);
-        let ny = MARGIN_Y + 36;
-        drawLabel(doc, "Conceptos (continuación)", MARGIN_X, ny);
-        ny += 12;
+        // No "CONCEPTOS (CONTINUACIÓN)" label — just repeat the navy table header.
+        const ny = MARGIN_Y + 36;
         return drawTableHeader(doc, ny);
       };
 
@@ -776,12 +775,18 @@ export default function ProposalStep(props: ProposalStepProps) {
         doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
       }
 
-      // ── Totals box (right) ──
-      y += 28;
+      // ── Totals box + Notes (kept together: page-break-inside: avoid) ──
+      y += 18; // gap between table and totals (reduced from 28)
       const totalsW = 280;
       const totalsX = PAGE_W - MARGIN_X - totalsW;
       const totalsH = 110;
-      if (y + totalsH > safeBottom) y = newPageHeader();
+      const notesEstH = 200;
+      const gapAfterTotals = 18; // reduced from 28
+      // Ensure totals + notes fit on the SAME page; otherwise start a fresh page.
+      if (y + totalsH + gapAfterTotals + notesEstH > safeBottom) {
+        doc.addPage();
+        y = MARGIN_Y + 8;
+      }
       doc.setFillColor(255, 255, 255);
       doc.setDrawColor(224, 216, 210);
       doc.setLineWidth(0.8);
@@ -815,14 +820,9 @@ export default function ProposalStep(props: ProposalStepProps) {
       doc.setTextColor(...NAVY);
       doc.text(formatMXN(t.total), trx, ty + 2, { align: "right" });
 
-      y += totalsH + 28;
+      y += totalsH + gapAfterTotals;
 
-      // ── Notes + brand ──
-      const notesEstH = 200;
-      if (y + notesEstH > safeBottom) {
-        doc.addPage();
-        y = MARGIN_Y + 8;
-      }
+      // ── Notes + brand (same page as totals) ──
       drawNotesBlock(doc, y, QUOTE_FOOTER_NOTES.slice(0, 10));
 
       // Footer on every page

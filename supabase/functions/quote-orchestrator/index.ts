@@ -283,6 +283,12 @@ async function fetchMenuCotizador(): Promise<DbProduct[]> {
   for (const p of productos) {
     const variantes = Array.isArray(p.variantes) ? p.variantes : [];
     const hasMany = variantes.length > 1;
+    const menuTipo = (p.tipo || '').trim();
+    const isAddon = /add-?on/i.test(menuTipo);
+    const sub = (p.subcategoria || '').trim().toLowerCase();
+    let formato: 'individual' | 'grupal' | null = null;
+    if (sub === 'individual') formato = 'individual';
+    else if (sub === 'surtido' || sub === 'mini surtido' || sub === 'paquete') formato = 'grupal';
     for (const v of variantes) {
       const tags: string[] = [];
       if (isYesFlag(v.vegetariano)) tags.push('vegetariano');
@@ -315,6 +321,11 @@ async function fetchMenuCotizador(): Promise<DbProduct[]> {
         destacado: !!v.es_base,
         variantes: v.nombre_variante || null,
         es_comida_main: isYesFlag(v.es_comida),
+        menu_segunda_categoria: p.segunda_categoria || null,
+        menu_subcategoria: p.subcategoria || null,
+        menu_tipo: menuTipo || null,
+        is_addon: isAddon,
+        formato,
       });
     }
   }

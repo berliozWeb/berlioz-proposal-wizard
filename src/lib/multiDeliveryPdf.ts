@@ -18,25 +18,29 @@ import {
 } from "@/domain/entities/BerliozCatalog";
 import type { SlotProposal, ProposalPackage, ProposedProduct } from "@/domain/entities/SmartQuote";
 import {
-  drawTopBanner,
-  drawHero,
-  drawQuoteIdBar,
-  drawInfoColumns,
-  drawSectionLabel,
-  drawCompactHeader,
-  drawBottomBand,
-  drawNotesBox,
+  ensureMontserrat,
+  registerMontserrat,
+  setFont,
+  drawHeaderLogo,
+  drawHeroFull,
+  drawQuoteId,
+  drawTwoColFields,
+  drawLabel,
+  drawNotesBlock,
+  applyFooterAllPages,
   heroAssetForEvent,
   loadImageBase64,
-  MARGIN,
-  HEADER_H,
-  HERO_H,
-  TEAL,
-  CREAM_SOFT,
-  CREAM_LINE,
-  TEXT_DARK,
-  TEXT_MUTED,
-  HAIRLINE,
+  PAGE_W,
+  PAGE_H,
+  MARGIN_X,
+  MARGIN_Y,
+  NAVY,
+  ROSE_PALE,
+  BORDER_TAN,
+  ROW_RULE,
+  RULE_SOFT,
+  TEXT_MAIN,
+  TEXT_SUB,
 } from "@/lib/pdfTemplate";
 
 const TIER_LABELS: Record<string, string> = {
@@ -65,9 +69,9 @@ export interface MultiPdfInput {
   eventType?: string;
 }
 
-// Layout for the slot cards
-const CARD_GAP = 6;
-const SAFE_BOTTOM = 260; // leave room for footer band
+// Layout for the slot cards (pt units)
+const CARD_GAP = 16;
+const SAFE_BOTTOM = PAGE_H - MARGIN_Y - 60; // leave room for footer band
 
 /* ── Formatting helpers ───────────────────────────────────────── */
 
@@ -116,19 +120,19 @@ function measureSlotCard(
 ): number {
   const tier = input.slot.tiers.find((t) => t.tier === input.selectedTier);
   const items: ProposedProduct[] = tier ? tier.items : [];
-  const innerW = w - 12; // inner padding 6 on each side
-  const imgSize = 14;
-  const textW = innerW - imgSize - 4 - 30; // 30 reserved for right-side qty/price
+  const pad = 16;
+  const imgSize = 40;
+  const textW = w - pad * 2 - imgSize - 10 - 80; // qty/price reserved 80
 
-  let h = 26; // header (date + hour)
+  let h = pad + 32; // header (date + hour)
   for (const it of items) {
     const desc = stripHtml(it.descripcion);
-    doc.setFontSize(8);
+    setFont(doc, "regular", 9);
     const descLines = desc ? doc.splitTextToSize(desc, textW) : [];
-    const itemH = Math.max(imgSize + 4, 8 + descLines.length * 3.4);
-    h += itemH + 2;
+    const itemH = Math.max(imgSize + 8, 18 + descLines.length * 11);
+    h += itemH;
   }
-  h += 22; // totals block
+  h += 58; // totals block
   return h;
 }
 
@@ -139,102 +143,94 @@ function drawSlotCard(ctx: SlotCardCtx): void {
   const items: ProposedProduct[] = tier.items;
   const cardH = measureSlotCard(doc, w, input);
 
+  const pad = 16;
   // Card background
   doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(...CREAM_LINE);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(x, y, w, cardH, 2.5, 2.5, "FD");
+  doc.setDrawColor(...BORDER_TAN);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(x, y, w, cardH, 8, 8, "FD");
 
-  // Header (centered date + Entrega N, then hh:mm hrs)
+  // Header
   const dateLbl = fmtDateLabel(input.slot.date);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(...TEAL);
-  doc.text(`${dateLbl} · Entrega ${slotNumber}`, x + w / 2, y + 8, { align: "center" });
-  doc.setFontSize(9);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.setFont("helvetica", "normal");
-  doc.text(`${input.slot.time || "—"} hrs`, x + w / 2, y + 14, { align: "center" });
+  setFont(doc, "bold", 13);
+  doc.setTextColor(...NAVY);
+  doc.text(`${dateLbl} · Entrega ${slotNumber}`, x + w / 2, y + pad + 8, { align: "center" });
+  setFont(doc, "regular", 10);
+  doc.setTextColor(...TEXT_SUB);
+  doc.text(`${input.slot.time || "—"} hrs`, x + w / 2, y + pad + 22, { align: "center" });
 
   // Divider
-  doc.setDrawColor(...HAIRLINE);
-  doc.setLineWidth(0.2);
-  doc.line(x + 6, y + 19, x + w - 6, y + 19);
+  doc.setDrawColor(...RULE_SOFT);
+  doc.setLineWidth(0.6);
+  doc.line(x + pad, y + pad + 32, x + w - pad, y + pad + 32);
 
   // Items
-  const imgSize = 14;
-  const innerW = w - 12;
-  const textX = x + 6 + imgSize + 4;
-  const textW = innerW - imgSize - 4 - 30;
-  let cy = y + 24;
+  const imgSize = 40;
+  const textX = x + pad + imgSize + 10;
+  const textW = w - pad * 2 - imgSize - 10 - 80;
+  let cy = y + pad + 42;
 
   items.forEach((it, idx) => {
     const desc = stripHtml(it.descripcion);
+    setFont(doc, "regular", 9);
     const descLines = desc ? doc.splitTextToSize(desc, textW) : [];
-    const itemH = Math.max(imgSize + 4, 8 + descLines.length * 3.4);
+    const itemH = Math.max(imgSize + 8, 18 + descLines.length * 11);
 
-    // Image
     const imgData = loadedImages[idx];
     if (imgData) {
-      try {
-        doc.addImage(imgData, "JPEG", x + 6, cy, imgSize, imgSize);
-      } catch {
-        doc.setFillColor(...CREAM_SOFT);
-        doc.roundedRect(x + 6, cy, imgSize, imgSize, 1, 1, "F");
+      try { doc.addImage(imgData, "JPEG", x + pad, cy, imgSize, imgSize); }
+      catch {
+        doc.setFillColor(...ROSE_PALE);
+        doc.roundedRect(x + pad, cy, imgSize, imgSize, 4, 4, "F");
       }
     } else {
-      doc.setFillColor(...CREAM_SOFT);
-      doc.roundedRect(x + 6, cy, imgSize, imgSize, 1, 1, "F");
+      doc.setFillColor(...ROSE_PALE);
+      doc.roundedRect(x + pad, cy, imgSize, imgSize, 4, 4, "F");
     }
 
-    // Name
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...TEXT_DARK);
-    doc.text(it.productName, textX, cy + 4);
+    setFont(doc, "bold", 11);
+    doc.setTextColor(...TEXT_MAIN);
+    doc.text(it.productName, textX, cy + 12);
 
-    // Description
     if (descLines.length) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(...TEXT_MUTED);
-      doc.text(descLines.slice(0, 5), textX, cy + 8);
+      setFont(doc, "regular", 9);
+      doc.setTextColor(...TEXT_SUB);
+      doc.text(descLines.slice(0, 4), textX, cy + 24);
     }
 
-    // Right side: qty × price
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.setTextColor(...TEAL);
-    doc.text(`${it.quantity} × ${formatMXN(it.unitPrice)}`, x + w - 6, cy + 6, { align: "right" });
+    setFont(doc, "semibold", 10);
+    doc.setTextColor(...NAVY);
+    doc.text(`${it.quantity} × ${formatMXN(it.unitPrice)}`, x + w - pad, cy + 14, { align: "right" });
 
-    cy += itemH + 2;
+    cy += itemH;
   });
 
   // Totals block
-  cy = y + cardH - 18;
-  doc.setDrawColor(...HAIRLINE);
-  doc.setLineWidth(0.2);
-  doc.line(x + 6, cy, x + w - 6, cy);
-  cy += 5;
+  cy = y + cardH - 50;
+  doc.setDrawColor(...RULE_SOFT);
+  doc.setLineWidth(0.6);
+  doc.line(x + pad, cy, x + w - pad, cy);
+  cy += 14;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text("Subtotal productos", x + 6, cy);
-  doc.setTextColor(...TEXT_DARK);
-  doc.text(formatMXN(tier.subtotal), x + w - 6, cy, { align: "right" });
-  cy += 4.5;
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text("Envío", x + 6, cy);
-  doc.setTextColor(...TEXT_DARK);
-  doc.text(formatMXN(tier.shipping), x + w - 6, cy, { align: "right" });
-  cy += 6;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(...TEXT_DARK);
-  doc.text("TOTAL C/IVA", x + 6, cy);
-  doc.setTextColor(...TEAL);
-  doc.text(formatMXN(tier.total), x + w - 6, cy, { align: "right" });
+  setFont(doc, "regular", 10);
+  doc.setTextColor(...TEXT_SUB);
+  doc.text("Subtotal productos", x + pad, cy);
+  setFont(doc, "semibold", 10);
+  doc.setTextColor(...TEXT_MAIN);
+  doc.text(formatMXN(tier.subtotal), x + w - pad, cy, { align: "right" });
+  cy += 14;
+  setFont(doc, "regular", 10);
+  doc.setTextColor(...TEXT_SUB);
+  doc.text("Envío", x + pad, cy);
+  setFont(doc, "semibold", 10);
+  doc.setTextColor(...TEXT_MAIN);
+  doc.text(formatMXN(tier.shipping), x + w - pad, cy, { align: "right" });
+  cy += 18;
+  setFont(doc, "bold", 11);
+  doc.setTextColor(...NAVY);
+  doc.text("TOTAL C/IVA", x + pad, cy);
+  setFont(doc, "bold", 13);
+  doc.text(formatMXN(tier.total), x + w - pad, cy, { align: "right" });
 }
 
 /* ── Grid packing across pages ────────────────────────────────── */
@@ -246,7 +242,7 @@ async function preloadSlotImages(input: MultiPdfInput): Promise<Map<string, (str
     if (!tier) continue;
     const imgs = await Promise.all(
       tier.items.map((it) =>
-        loadImageBase64(buildProductImageUrl(it.imageUrl ?? null, null) || ""),
+        loadImageBase64(buildProductImageUrl(it.imageUrl ?? null, null) || "", { w: 200, h: 200 }),
       ),
     );
     map.set(s.slot.slot_id, imgs);
@@ -257,9 +253,10 @@ async function preloadSlotImages(input: MultiPdfInput): Promise<Map<string, (str
 /* ── Main entry ───────────────────────────────────────────────── */
 
 export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<void> {
-  const doc = new jsPDF();
-  const pageW = doc.internal.pageSize.getWidth();
-  const contentW = pageW - MARGIN * 2;
+  await ensureMontserrat();
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  registerMontserrat(doc);
+  const contentW = PAGE_W - MARGIN_X * 2;
   const colW = (contentW - CARD_GAP) / 2;
   const quoteId = generateQuoteId();
   const validUntil = new Date();
@@ -268,20 +265,14 @@ export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<vo
   const loadedImages = await preloadSlotImages(input);
 
   // ═══ PAGE 1 ═══
-  drawTopBanner(doc);
-  await drawHero(doc, heroAssetForEvent(input.eventType || input.eventLabel));
+  let y = drawHeaderLogo(doc);
+  y = await drawHeroFull(doc, y, heroAssetForEvent(input.eventType || input.eventLabel));
+  y = drawQuoteId(doc, y + 4, quoteId);
 
-  let y = HEADER_H + HERO_H + 10;
-  drawQuoteIdBar(doc, y, quoteId);
-  y += 12;
-
-  // Cliente / Evento (boxed)
-  y = drawInfoColumns(
-    doc,
-    y,
+  y = drawTwoColFields(doc, y + 8,
     {
       title: "Datos del cliente",
-      lines: [
+      fields: [
         ["Atención", input.clientName || "—"],
         ["Empresa", input.empresa || "—"],
         ...(input.email ? ([["Email", input.email]] as Array<[string, string]>) : []),
@@ -290,24 +281,34 @@ export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<vo
     },
     {
       title: "Detalles del evento",
-      lines: [
+      fields: [
         ["Período", fmtPeriodLabel(input.slots)],
         ["Entregas", String(input.slots.length)],
         ["CP base", input.postalCode || "—"],
         ["Preparada por", "Equipo Ventas"],
       ],
-    },
-    { boxed: true },
-  );
+    });
 
-  y += 8;
-  drawSectionLabel(doc, "Entregas", y);
-  y += 6;
+  y += 16;
+  drawLabel(doc, "Entregas", MARGIN_X, y);
+  y += 14;
 
   // ═══ Slot cards grid ═══
   let col = 0;
   let rowY = y;
   let rowMax = 0;
+
+  const newContinuationPage = () => {
+    doc.addPage();
+    setFont(doc, "bold", 14);
+    doc.setTextColor(...NAVY);
+    doc.setCharSpace(3);
+    doc.text("BERLIOZ", PAGE_W / 2, MARGIN_Y + 20, { align: "center" });
+    doc.setCharSpace(0);
+    let ny = MARGIN_Y + 40;
+    drawLabel(doc, "Entregas (continuación)", MARGIN_X, ny);
+    return ny + 14;
+  };
 
   for (let i = 0; i < input.slots.length; i++) {
     const slot = input.slots[i];
@@ -316,16 +317,12 @@ export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<vo
 
     // Page break if doesn't fit
     if (rowY + cardH > SAFE_BOTTOM) {
-      doc.addPage();
-      drawCompactHeader(doc, `Cotización ${quoteId}${input.empresa ? "  ·  " + input.empresa : ""}`);
-      rowY = 30;
-      drawSectionLabel(doc, "Entregas (continuación)", rowY);
-      rowY += 6;
+      rowY = newContinuationPage();
       col = 0;
       rowMax = 0;
     }
 
-    const cx = MARGIN + col * (colW + CARD_GAP);
+    const cx = MARGIN_X + col * (colW + CARD_GAP);
     drawSlotCard({
       doc,
       x: cx,
@@ -364,67 +361,63 @@ export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<vo
   }, 0);
   const grandTotal = input.slots.reduce((s, x) => s + x.total, 0);
 
-  // Need ~ 80mm of room for totals + notes
-  if (rowY + 90 > SAFE_BOTTOM + 5) {
+  // Need ~ 260pt of room for totals + notes
+  if (rowY + 260 > SAFE_BOTTOM) {
+    rowY = newContinuationPage();
+  }
+
+  // Totals box (right, max 280pt)
+  const totalsW = 280;
+  const totalsX = PAGE_W - MARGIN_X - totalsW;
+  const totalsH = 130;
+  rowY += 12;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(224, 216, 210);
+  doc.setLineWidth(0.8);
+  doc.roundedRect(totalsX, rowY, totalsW, totalsH, 8, 8, "FD");
+
+  const tx = totalsX + 20;
+  const trx = totalsX + totalsW - 20;
+  let ty = rowY + 28;
+  setFont(doc, "regular", 11);
+  doc.setTextColor(...TEXT_SUB);
+  doc.text("Subtotal productos", tx, ty);
+  setFont(doc, "semibold", 12);
+  doc.setTextColor(...TEXT_MAIN);
+  doc.text(formatMXN(grandSubtotalProducts), trx, ty, { align: "right" });
+  ty += 18;
+  setFont(doc, "regular", 11);
+  doc.setTextColor(...TEXT_SUB);
+  doc.text(`Envío (${input.slots.length} entregas)`, tx, ty);
+  setFont(doc, "semibold", 12);
+  doc.setTextColor(...TEXT_MAIN);
+  doc.text(formatMXN(grandShipping), trx, ty, { align: "right" });
+  ty += 18;
+  setFont(doc, "regular", 11);
+  doc.setTextColor(...TEXT_SUB);
+  doc.text("IVA (16%)", tx, ty);
+  setFont(doc, "semibold", 12);
+  doc.setTextColor(...TEXT_MAIN);
+  doc.text(formatMXN(grandIva), trx, ty, { align: "right" });
+  ty += 12;
+  doc.setDrawColor(224, 216, 210);
+  doc.setLineWidth(0.6);
+  doc.line(tx, ty, trx, ty);
+  ty += 24;
+  setFont(doc, "bold", 13);
+  doc.setTextColor(...NAVY);
+  doc.text("TOTAL:", tx, ty);
+  setFont(doc, "bold", 24);
+  doc.text(formatMXN(grandTotal), trx, ty + 2, { align: "right" });
+
+  rowY += totalsH + 24;
+  if (rowY + 200 > SAFE_BOTTOM) {
     doc.addPage();
-    drawCompactHeader(doc, `Cotización ${quoteId}${input.empresa ? "  ·  " + input.empresa : ""}`);
-    rowY = 32;
+    rowY = MARGIN_Y + 8;
   }
+  drawNotesBlock(doc, rowY, QUOTE_FOOTER_NOTES.slice(0, 10));
 
-  // Totals (right-aligned)
-  const totalsW = 100;
-  const totalsX = pageW - MARGIN - totalsW;
-  let ty = rowY + 4;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(...TEXT_DARK);
-  const rowGap = 6;
-
-  doc.text("Subtotal productos", totalsX, ty);
-  doc.setFont("helvetica", "bold");
-  doc.text(formatMXN(grandSubtotalProducts), pageW - MARGIN, ty, { align: "right" });
-  ty += rowGap;
-  doc.setFont("helvetica", "normal");
-  doc.text(`Envío (${input.slots.length} entregas)`, totalsX, ty);
-  doc.setFont("helvetica", "bold");
-  doc.text(formatMXN(grandShipping), pageW - MARGIN, ty, { align: "right" });
-  ty += rowGap;
-
-  doc.setDrawColor(...HAIRLINE);
-  doc.setLineWidth(0.2);
-  doc.line(totalsX, ty - 2, pageW - MARGIN, ty - 2);
-
-  doc.setFont("helvetica", "normal");
-  doc.text("Subtotal", totalsX, ty + 2);
-  doc.setFont("helvetica", "bold");
-  doc.text(formatMXN(grandSubtotalProducts + grandShipping), pageW - MARGIN, ty + 2, { align: "right" });
-  ty += rowGap + 2;
-  doc.setFont("helvetica", "normal");
-  doc.text("IVA (16%)", totalsX, ty);
-  doc.setFont("helvetica", "bold");
-  doc.text(formatMXN(grandIva), pageW - MARGIN, ty, { align: "right" });
-  ty += rowGap + 2;
-
-  // TOTAL bar
-  doc.setFillColor(...TEAL);
-  doc.rect(totalsX - 4, ty - 5, totalsW + 4, 12, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text("TOTAL", totalsX, ty + 3);
-  doc.setFontSize(13);
-  doc.text(`${formatMXN(grandTotal)} MXN`, pageW - MARGIN, ty + 3, { align: "right" });
-
-  // Notes box (full width, below totals)
-  const notesY = ty + 16;
-  drawNotesBox(doc, notesY, QUOTE_FOOTER_NOTES.slice(0, 10));
-
-  // ═══ Bottom band on every page ═══
-  const total = doc.getNumberOfPages();
-  for (let p = 1; p <= total; p++) {
-    doc.setPage(p);
-    drawBottomBand(doc);
-  }
+  applyFooterAllPages(doc);
 
   doc.save(`Berlioz-Multi-Entrega-${format(new Date(), "yyyyMMdd")}.pdf`);
 }

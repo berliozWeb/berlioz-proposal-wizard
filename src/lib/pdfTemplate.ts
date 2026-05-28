@@ -10,7 +10,7 @@ import heroCoffee from "@/assets/food-berlioz2.png";
 import heroBreakfast from "@/assets/food-breakfast.jpg";
 import heroLunch from "@/assets/food-boxlunch.jpg";
 import heroSalad from "@/assets/food-salad.jpg";
-import heroDefault from "@/assets/heroCoti.JPG";
+import heroDefault from "@/assets/hero-catering.jpg";
 
 // ── Palette (RGB tuples — match the reference PDFs) ──
 export const TEAL: [number, number, number] = [1, 77, 111];

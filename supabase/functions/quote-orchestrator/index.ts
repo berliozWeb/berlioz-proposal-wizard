@@ -116,13 +116,27 @@ const BASE_SHIPPING = 360;
 const IVA_RATE = 0.16;
 
 // ═══ CATEGORY MAPPING ═══
+// First item = PRIMARY category (the "plato fuerte" of la propuesta).
+// El resto son COMPLEMENTOS opcionales que sólo se agregan después del principal.
 const EVENT_TO_CATEGORIES: Record<string, string[]> = {
-  'desayuno': ['Desayuno', 'Coffee Break', 'Bebidas'],
+  'desayuno': ['Desayuno', 'Bebidas', 'Coffee Break'],
   'coffee-break': ['Coffee Break', 'Bebidas'],
-  'working-lunch': ['Working Lunch', 'Vegano / Vegetariano', 'Bebidas', 'Coffee Break'],
-  'capacitacion': ['Desayuno', 'Working Lunch', 'Coffee Break', 'Bebidas', 'Vegano / Vegetariano'],
-  'reunion-ejecutiva': ['Working Lunch', 'Coffee Break', 'Bebidas', 'Vegano / Vegetariano'],
+  'working-lunch': ['Working Lunch', 'Bebidas', 'Coffee Break'],
+  'comida': ['Working Lunch', 'Bebidas', 'Coffee Break'],
+  'capacitacion': ['Working Lunch', 'Desayuno', 'Coffee Break', 'Bebidas'],
+  'reunion-ejecutiva': ['Working Lunch', 'Bebidas', 'Coffee Break'],
   'filmacion': ['Working Lunch', 'Coffee Break', 'Bebidas'],
+};
+
+// Etiqueta legible para el prompt
+const EVENT_LABEL: Record<string, string> = {
+  'desayuno': 'DESAYUNO (mañana)',
+  'coffee-break': 'COFFEE BREAK',
+  'working-lunch': 'COMIDA / WORKING LUNCH',
+  'comida': 'COMIDA / WORKING LUNCH',
+  'capacitacion': 'CAPACITACIÓN (jornada larga)',
+  'reunion-ejecutiva': 'REUNIÓN EJECUTIVA',
+  'filmacion': 'FILMACIÓN',
 };
 
 const DIETARY_ALIAS_MAP: Record<string, string> = {

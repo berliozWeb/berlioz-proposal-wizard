@@ -1,23 +1,23 @@
-## Plan: Actualizar system prompt de Claude en quote-orchestrator
+## Plan: Caja de texto libre con IA en el cotizador
 
-### Cambio único
-Reemplazar el `systemPrompt` actual (líneas 366-413) en `supabase/functions/quote-orchestrator/index.ts` por el texto exacto proporcionado por el usuario.
+### 1. Crear edge function `parse-quote-request`
+Crear `supabase/functions/parse-quote-request/index.ts` con el contenido exacto que pasaste (Anthropic Claude Haiku, extrae JSON con `eventType`, `peopleCount`, `budgetEnabled`, `budgetPerPerson`, `dietaryCounts`, `contactName`, `companyName`). El secret `ANTHROPIC_API_KEY` ya está configurado. Desplegar la función.
 
-### El nuevo prompt incluye mejoras en:
-- **Identidad de marca**: cotizador inteligente de Berlioz Catering Corporativo, franco-mexicana, clientes como EY México, DHL, PepsiCo, Thomson Reuters y Maersk.
-- **Restricciones alimentarias**: reglas obligatorias y no negociables por tipo (vegano, vegetariano, sin gluten, sin lactosa, keto) con énfasis en respetar la distribución exacta de invitados.
-- **Estructura de 3 tiers**: definición clara de Esencial (2-3 productos), Equilibrado (3-4 productos, recomendado), Experiencia (4-5 productos, premium).
-- **Reglas de negocio**: IVA 16%, envío base $360, mínimos sábado/domingo, recargo temprano $290, vigencia 20 días, mínimo 4 personas, siempre incluir bebida, nombres exactos del catálogo.
-- **Calidad**: priorizar score_comercial y historial de ventas.
-- **Formato**: respuesta únicamente JSON, sin texto fuera del JSON.
+### 2. Modificar `src/pages/QuotePage.tsx`
+- Agregar states `naturalText` y `isParsing` junto a los demás del componente.
+- Agregar función `handleNaturalParse` que llama a `supabase.functions.invoke('parse-quote-request', { body: { text: naturalText } })` y mapea la respuesta a los states existentes:
+  - `eventType` → setEventType (mapeando `comida` → `working-lunch` si aplica)
+  - `peopleCount` → setPeople
+  - `budgetEnabled` → setHasBudget, `budgetPerPerson` → setBudget
+  - `dietaryCounts[]` → setDietaryDistribution + setHasDietary
+  - `contactName` → setClientName, `companyName` → setEmpresa
+  - Avanzar a `setStep(1)` al terminar
+- Insertar el bloque JSX (textarea + botón "Generar propuesta →") en step 0, exactamente como lo especificaste.
 
-### No se toca
-- Lógica de fallback heurística
-- RPC a la base de datos
-- INSERTs en tablas
-- Frontend
-- userPrompt
-- Cualquier otra lógica de la edge function
+### 3. No tocar nada más
+No modifico lógica de negocio, validaciones, otros steps, ni componentes no mencionados.
 
-### Despliegue
-Tras el cambio, se desplegará la edge function actualizada.
+### Notas técnicas
+- Mapeo `eventType`: el cotizador usa `"working-lunch"` pero el prompt devuelve `"comida"` — normalizo en el handler.
+- `coffee-break` ya coincide.
+- Manejo de errores: toast si la función falla.

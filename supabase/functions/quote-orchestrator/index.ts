@@ -549,20 +549,12 @@ function composePackageHeuristic(
 }
 
 // ═══ PRICE DIFFERENTIATION ═══
-function ensureDifferentiation(packages: Package[], people: number) {
-  const [esencial, equilibrado, experiencia] = packages;
-  if (!esencial || !equilibrado || !experiencia) return;
-
-  if (esencial.total >= equilibrado.total * 0.85) {
-    const scale = (equilibrado.total * 0.65) / esencial.total;
-    esencial.items.forEach(i => { i.computedPrice = Math.round(i.computedPrice * scale); i.unitPrice = Math.round(i.unitPrice * scale); });
-    recalc(esencial, people);
-  }
-  if (experiencia.total <= equilibrado.total * 1.15) {
-    const scale = (equilibrado.total * 1.35) / experiencia.total;
-    experiencia.items.forEach(i => { i.computedPrice = Math.round(i.computedPrice * scale); i.unitPrice = Math.round(i.unitPrice * scale); });
-    recalc(experiencia, people);
-  }
+function ensureDifferentiation(_packages: Package[], _people: number) {
+  // NO-OP a propósito.
+  // Antes esta función escalaba unitPrice × 0.65 / × 1.35 para forzar separación entre tiers,
+  // lo cual hacía que el MISMO producto apareciera con precios distintos en cada paquete.
+  // Los precios deben venir SIEMPRE del catálogo. La diferenciación entre tiers
+  // se logra por composición (distintos productos / cantidades), no manipulando precios.
 }
 
 function recalc(pkg: Package, people: number) {

@@ -1222,6 +1222,7 @@ const QuotePage = () => {
                             empresa,
                             eventLabel: EVENT_TYPES.find(e => e.value === eventType)?.label ?? eventType,
                             postalCode,
+                            eventType,
                             slots: smartData.proposals.map(slot => {
                               const sel = slotSelections[slot.slot_id];
                               return {

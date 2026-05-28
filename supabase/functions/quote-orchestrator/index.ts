@@ -61,30 +61,26 @@ const IMG = {
 //   si restricción = "keto"        → usar caja KETO (también sin_gluten)
 // ================================================================
 
-const DESAYUNO: Record<string, { id:string; n:string; p:number; img:string }> = {
-  esencial:     { id:"breakfast-bag-pavo",              n:"Breakfast Bag — Pavo",                       p:250, img:IMG.breakfast_bag },
-  equilibrado:  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma — Pan dulce",              p:290, img:IMG.breakfast_roma },
-  experiencia:  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal — Con yogurt orgánico",p:410, img:IMG.breakfast_montreal },
-  // Restricciones — vegano = también sirve para vegetariano
-  keto:         { id:"salmon-box",                      n:"Salmon Box",                                 p:410, img:IMG.salmon_box },
-  sin_gluten:   { id:"salmon-box",                      n:"Salmon Box",                                 p:410, img:IMG.salmon_box },
-  // Chilaquiles verdes con huevo = vegetariano Y vegano ✓
-  vegano:       { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",          p:310, img:IMG.chilaquiles },
-  vegetariano:  { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",          p:310, img:IMG.chilaquiles },
-  sin_lactosa:  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT — Pavo y yogurt",              p:330, img:IMG.breakfast_blt },
+const DESAYUNO: Record<string, { id:string; n:string; p:number; img:string; cat:string; desc:string }> = {
+  esencial:     { id:"breakfast-bag-pavo",              n:"Breakfast Bag — Pavo",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
+  equilibrado:  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma — Pan dulce",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
+  experiencia:  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal — Con yogurt orgánico",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
+  keto:         { id:"salmon-box",                      n:"Salmon Box",                                 p:410, img:IMG.salmon_box,         cat:"Desayuno", desc:"Sándwich de salmón ahumado, ensalada César y cookies. Sin gluten." },
+  sin_gluten:   { id:"salmon-box",                      n:"Salmon Box",                                 p:410, img:IMG.salmon_box,         cat:"Desayuno", desc:"Sándwich de salmón ahumado, ensalada César y cookies. Sin gluten." },
+  vegano:       { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo. Vegano." },
+  vegetariano:  { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo del día." },
+  sin_lactosa:  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT — Pavo y yogurt",             p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayo de chipotle." },
 };
 
-const COMIDA: Record<string, { id:string; n:string; p:number; img:string }> = {
-  esencial:     { id:"lunch-bag-pasta-pollo",           n:"Lunch Bag — Pasta con pollo",                p:250, img:IMG.lunch_bag },
-  equilibrado:  { id:"golden-box-ensalada",             n:"Golden Box — Con ensalada de frutas",        p:330, img:IMG.golden_box },
-  experiencia:  { id:"orzo-pasta-pollo",                n:"Orzo Pasta Salad Box — Con pollo",           p:390, img:IMG.orzo_pasta },
-  // Restricciones
-  keto:         { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto },
-  sin_gluten:   { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto },
-  // Salad Box Vegana = también sirve para vegetariano ✓
-  vegano:       { id:"salad-box-vegana",                n:"Salad Box — Vegana con agua",                p:300, img:IMG.salad_box },
-  vegetariano:  { id:"salad-box-vegana",                n:"Salad Box — Vegana con agua",                p:300, img:IMG.salad_box },
-  sin_lactosa:  { id:"box-oriental-pollo",              n:"Box Oriental — Pollo teriyaki",              p:300, img:IMG.box_oriental },
+const COMIDA: Record<string, { id:string; n:string; p:number; img:string; cat:string; desc:string }> = {
+  esencial:     { id:"lunch-bag-pasta-pollo",           n:"Lunch Bag — Pasta con pollo",                p:250, img:IMG.lunch_bag,          cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
+  equilibrado:  { id:"golden-box-ensalada",             n:"Golden Box — Con ensalada de frutas",        p:330, img:IMG.golden_box,          cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
+  experiencia:  { id:"orzo-pasta-pollo",                n:"Orzo Pasta Salad Box — Con pollo",           p:390, img:IMG.orzo_pasta,          cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
+  keto:         { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto,            cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos." },
+  sin_gluten:   { id:"box-keto-sin-gluten",             n:"Box Keto – Sin Gluten",                      p:370, img:IMG.box_keto,            cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos." },
+  vegano:       { id:"salad-box-vegana",                n:"Salad Box — Vegana con agua",                p:300, img:IMG.salad_box,           cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. 100% vegana." },
+  vegetariano:  { id:"salad-box-vegana",                n:"Salad Box — Vegana con agua",                p:300, img:IMG.salad_box,           cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. Vegetariana y vegana." },
+  sin_lactosa:  { id:"box-oriental-pollo",              n:"Box Oriental — Pollo teriyaki",              p:300, img:IMG.box_oriental,        cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
 };
 
 // Surtidos para coffee break por precio unitario
@@ -103,7 +99,7 @@ const ADDON_CRUDITES  = { id:"crudites-con-limon", n:"Crudités con Limón",    
 const ADDON_SEMILLAS  = { id:"mix-de-semillas",    n:"Mix de Semillas Naturales", p:60,  img:IMG.mix_semillas };
 
 // ── Tipo de item interno ──────────────────────────────────────
-interface RawItem { id:string; n:string; p:number; qty:number; img:string; reason:string }
+interface RawItem { id:string; n:string; p:number; qty:number; img:string; reason:string; cat:string; desc:string }
 
 function calcSubtotal(items: RawItem[]): number {
   return items.reduce((s, i) => s + i.p * i.qty, 0);
@@ -123,17 +119,17 @@ function getCoffeeItems(people: number, dietaryCounts: {tipo:string;cantidad:num
       if (s.p * Math.ceil(sinR / s.qg) <= subDisponible) surtido = s;
     }
     const qty = Math.ceil(sinR / surtido.qg);
-    items.push({ id:surtido.id, n:surtido.n, p:surtido.p, qty, img:surtido.img, reason:`Para ${sinR} personas` });
+    items.push({ id:surtido.id, n:surtido.n, p:surtido.p, qty, img:surtido.img, reason:`Para ${sinR} personas`, cat:"Coffee Break", desc:"Pan y bocadillos gourmet para compartir." });
   }
 
   // Café (siempre 1 termo mínimo)
   const cafeQty = Math.max(1, Math.ceil(people / BEV_CAFE.qg));
-  items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:cafeQty, img:BEV_CAFE.img, reason:"Bebida del evento" });
+  items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:cafeQty, img:BEV_CAFE.img, reason:"Bebida del evento", cat:"Bebida", desc:"Café o té para 12 tazas en termo. Se mantiene caliente 3 horas." });
 
   // Extras para veganos/sin_gluten (no pueden comer pan dulce)
   if (veganos > 0) {
-    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:veganos, img:ADDON_CRUDITES.img, reason:`Para ${veganos} personas ${dietaryCounts.filter(d=>d.tipo==="vegano").length>0?"veganas":"sin gluten"}` });
-    items.push({ id:ADDON_SEMILLAS.id, n:ADDON_SEMILLAS.n, p:ADDON_SEMILLAS.p, qty:veganos, img:ADDON_SEMILLAS.img, reason:`Snack apto para restricción` });
+    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:veganos, img:ADDON_CRUDITES.img, reason:`Para ${veganos} personas ${dietaryCounts.filter(d=>d.tipo==="vegano").length>0?"veganas":"sin gluten"}`, cat:"Snack", desc:"Jícama, zanahoria, pepino y apio frescos con limón y chile. Vegano." });
+    items.push({ id:ADDON_SEMILLAS.id, n:ADDON_SEMILLAS.n, p:ADDON_SEMILLAS.p, qty:veganos, img:ADDON_SEMILLAS.img, reason:"Snack apto para restricción", cat:"Snack", desc:"Mix artesanal de semillas tostadas. Vegano, keto y sin gluten." });
   }
 
   return items;
@@ -141,44 +137,58 @@ function getCoffeeItems(people: number, dietaryCounts: {tipo:string;cantidad:num
 
 // ── Selector Desayuno / Comida ────────────────────────────────
 function getBoxItems(
-  tabla: Record<string, {id:string;n:string;p:number;img:string}>,
+  tabla: Record<string, {id:string;n:string;p:number;img:string;cat:string;desc:string}>,
   tier: string,
   people: number,
   dietaryCounts: {tipo:string;cantidad:number}[],
   targetSub: number
 ): RawItem[] {
-  const items: RawItem[] = [];
   const sinR = Math.max(0, people - dietaryCounts.reduce((s,d)=>s+d.cantidad, 0));
   const mainBox = tabla[tier];
 
+  // Acumular por producto — si vegano+vegetariano mapean al mismo id, fusionar
+  const merged = new Map<string, RawItem>();
+
+  const addItem = (box: {id:string;n:string;p:number;img:string;cat:string;desc:string}, q: number, reason: string) => {
+    if (merged.has(box.id)) {
+      const existing = merged.get(box.id)!;
+      existing.qty += q;
+      // Combinar labels si son diferentes
+      if (!existing.reason.includes(reason)) {
+        existing.reason = existing.reason + " + " + reason;
+      }
+    } else {
+      merged.set(box.id, { id:box.id, n:box.n, p:box.p, qty:q, img:box.img, reason, cat:box.cat, desc:box.desc });
+    }
+  };
+
   // Box para sin restricción
   if (sinR > 0) {
-    items.push({ id:mainBox.id, n:mainBox.n, p:mainBox.p, qty:sinR, img:mainBox.img,
-      reason: sinR === people ? `Para ${sinR} personas` : `Para ${sinR} personas sin restricción` });
+    addItem(mainBox, sinR, sinR === people ? `Para ${sinR} personas` : `Para ${sinR} personas sin restricción`);
   }
 
   // Box para cada restricción dietética
   for (const dc of dietaryCounts) {
     if (dc.cantidad <= 0) continue;
-    const dietBox = tabla[dc.tipo] ?? mainBox;
-    const label = dc.tipo === "keto" ? "🔥 Keto"
-      : dc.tipo === "vegetariano" ? "🥗 Vegetariano"
-      : dc.tipo === "vegano"      ? "🌱 Vegano"
-      : dc.tipo === "sin_gluten"  ? "🌾 Sin Gluten"
-      : dc.tipo === "sin_lactosa" ? "🥛 Sin Lactosa"
-      : dc.tipo;
-    items.push({ id:dietBox.id, n:dietBox.n, p:dietBox.p, qty:dc.cantidad, img:dietBox.img,
-      reason:`${label} — ${dc.cantidad} persona${dc.cantidad>1?"s":""}` });
+    const dietBox = (tabla[dc.tipo] as typeof mainBox | undefined) ?? mainBox;
+    const label = dc.tipo === "keto" ? `🔥 Keto — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
+      : dc.tipo === "vegetariano" ? `🥗 Vegetariano — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
+      : dc.tipo === "vegano"      ? `🌱 Vegano — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
+      : dc.tipo === "sin_gluten"  ? `🌾 Sin Gluten — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
+      : dc.tipo === "sin_lactosa" ? `🥛 Sin Lactosa — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
+      : `${dc.tipo} — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`;
+    addItem(dietBox, dc.cantidad, label);
   }
+
+  const items: RawItem[] = Array.from(merged.values());
 
   // Bebida
   const sub = calcSubtotal(items);
   const left = targetSub - sub;
   if (left >= 480) {
-    // Alcanza para termo de café
-    items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:1, img:BEV_CAFE.img, reason:"Bebida caliente del evento" });
+    items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:1, img:BEV_CAFE.img, reason:"Bebida caliente del evento", cat:"Bebida", desc:"Café o té para 12 tazas en termo. Se mantiene caliente 3 horas." });
   } else if (left >= 40 * people) {
-    items.push({ id:BEV_AGUA.id, n:BEV_AGUA.n, p:BEV_AGUA.p, qty:people, img:BEV_AGUA.img, reason:"Bebida del evento" });
+    items.push({ id:BEV_AGUA.id, n:BEV_AGUA.n, p:BEV_AGUA.p, qty:people, img:BEV_AGUA.img, reason:"Bebida del evento", cat:"Bebida", desc:"Agua fresca artesanal preparada el mismo día. Sin conservadores." });
   }
 
   return items;
@@ -295,11 +305,13 @@ EXPERIENCIA: ${tierItems.experiencia.map(i=>`${i.n} ×${i.qty}`).join(", ")}`;
           productName: i.n,
           quantity: i.qty, unitPrice: i.p, computedPrice: i.p * i.qty,
           score: 80,
-          recommendationReason: i.reason,   // ← etiqueta dietética aquí
-          imageUrl: i.img,                   // ← imagen directa del catálogo
+          recommendationReason: i.reason,   // etiqueta dietética (badge de color)
+          imageUrl: i.img,                   // imagen directa del catálogo
           imageSource: "catalog" as const,
           imagePrompt: null, sourceType: "supabase" as const,
-          swapGroup: eventType, categoria: eventType,
+          swapGroup: i.cat,                  // categoría real del producto
+          categoria: i.cat,                  // para el sidebar de cambio
+          descripcion: i.desc,               // descripción corta visible en la card
         })),
         subtotal: sub, shipping: ENVIO_CALC, iva, total,
         pricePerPerson: Math.round((total / Math.max(1, peopleCount)) * 100) / 100,

@@ -6,42 +6,54 @@
 // ═══════════════════════════════════════════════════════════
 
 import { jsPDF } from "jspdf";
-import heroCoffee from "@/assets/food-berlioz2.png";
+import berliozLogo from "@/assets/berlioz-logo.png";
+import heroDefault from "@/assets/hero-catering.jpg";
 import heroBreakfast from "@/assets/food-breakfast.jpg";
+import heroCoffee from "@/assets/food-berlioz2.png";
 import heroLunch from "@/assets/food-boxlunch.jpg";
 import heroSalad from "@/assets/food-salad.jpg";
-import heroDefault from "@/assets/hero-catering.jpg";
 
-// ── Brand palette (per spec) ───────────────────────────────
-export const NAVY: [number, number, number] = [1, 77, 111];      // #014D6F
-export const CREAM_BG: [number, number, number] = [253, 250, 247]; // #FDFAF7
-export const ROSE_PALE: [number, number, number] = [247, 232, 223]; // #F7E8DF
-export const BORDER_TAN: [number, number, number] = [206, 193, 185]; // #CEC1B9
-export const RULE_SOFT: [number, number, number] = [224, 216, 210];  // #E0D8D2
-export const ROW_RULE: [number, number, number] = [240, 234, 229];   // #F0EAE5
-export const TEXT_MAIN: [number, number, number] = [26, 26, 26];     // #1A1A1A
-export const TEXT_SUB: [number, number, number] = [85, 85, 85];      // #555
-export const TEXT_MUTED_HEX: [number, number, number] = [153, 153, 153]; // #999
+// ── Berlioz palette (matches backoffice spec exactly) ──────
+export const NAVY: [number, number, number] = [0, 86, 107];        // #00566B
+export const ROSA: [number, number, number] = [242, 221, 213];     // #F2DDD5
+export const ROSA_SOFT: [number, number, number] = [249, 250, 251]; // #F9FAFB
+export const TEXT: [number, number, number] = [34, 34, 34];         // #222
+export const TEXT_SOFT: [number, number, number] = [68, 68, 68];    // #444
+export const MUTED: [number, number, number] = [119, 119, 119];     // #777
+export const MUTED_DARK: [number, number, number] = [102, 102, 102];// #666
+export const HAIRLINE: [number, number, number] = [229, 231, 235];  // #E5E7EB
+export const WHITE: [number, number, number] = [255, 255, 255];
 
-// Back-compat aliases (kept so other imports still resolve)
+// Back-compat aliases — keep so any legacy import still resolves
 export const TEAL = NAVY;
-export const CREAM_BANNER = ROSE_PALE;
-export const CREAM_SOFT = ROSE_PALE;
-export const CREAM_LINE = BORDER_TAN;
-export const TEXT_DARK = TEXT_MAIN;
-export const TEXT_MUTED = TEXT_SUB;
-export const HAIRLINE = RULE_SOFT;
+export const CREAM_BG = ROSA;
+export const ROSE_PALE = ROSA;
+export const CREAM_BANNER = ROSA;
+export const CREAM_SOFT = ROSA_SOFT;
+export const CREAM_LINE = ROSA;
+export const BORDER_TAN = HAIRLINE;
+export const RULE_SOFT = HAIRLINE;
+export const ROW_RULE = ROSA;
+export const TEXT_MAIN = TEXT;
+export const TEXT_SUB = TEXT_SOFT;
+export const TEXT_MUTED = MUTED;
+export const TEXT_MUTED_HEX = MUTED;
+export const TEXT_DARK = TEXT;
 
-// ── Layout constants (A4, pt) ──────────────────────────────
-export const PAGE_W = 595.28;
-export const PAGE_H = 841.89;
-export const MARGIN_X = 40;
-export const MARGIN_Y = 32;
-export const HERO_H = 220;
+// ── Layout (A4, mm) ────────────────────────────────────────
+export const PAGE_W = 210;
+export const PAGE_H = 297;
+export const MARGIN_X = 16;
+export const MARGIN_BOTTOM = 18;
+export const CONTENT_W = PAGE_W - MARGIN_X * 2;
 
-// Legacy exports (mm-based) — left as 0 to avoid accidental use
+// Legacy aliases kept (some callers still reference these names)
+export const MARGIN_Y = MARGIN_X;
 export const MARGIN = MARGIN_X;
-export const HEADER_H = MARGIN_Y;
+export const HEADER_H = 28;
+export const HERO_H = CONTENT_W / 3;
+
+export const BERLIOZ_LOGO_URL = berliozLogo;
 
 // ── Montserrat loader (TTF embedded into jsPDF) ────────────
 const FONT_URLS = {
@@ -108,7 +120,37 @@ export function setFont(
   }
 }
 
-// ── Image loader (works for remote + bundled assets) ──
+/** Load an image and return a data URL (no cropping). */
+export function loadImageAsDataURL(src: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    if (!src) return resolve(null);
+    if (src.startsWith("data:")) return resolve(src);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(null);
+        ctx.drawImage(img, 0, 0);
+        const isPng = src.toLowerCase().includes(".png") || src.startsWith("data:image/png");
+        resolve(canvas.toDataURL(isPng ? "image/png" : "image/jpeg", 0.85));
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+export function getImageFormat(dataUrl: string): "JPEG" | "PNG" | "WEBP" {
+  if (dataUrl.startsWith("data:image/png")) return "PNG";
+  if (dataUrl.startsWith("data:image/webp")) return "WEBP";
+  return "JPEG";
+}
+
+// ── Image loader with optional cover-crop (used for thumbnails / hero) ──
 export function loadImageBase64(
   url: string,
   targetSize?: { w: number; h: number },
@@ -164,266 +206,339 @@ export function heroAssetForEvent(eventType: string | undefined | null): string 
 }
 
 /* ═══════════════════════════════════════════════════════════
- * High-level layout primitives (pt units)
+ * High-level layout primitives (mm units)
+ * Mirrors the backoffice generateMultiDayPDF / PDFPreviewContent
  * ═══════════════════════════════════════════════════════════ */
 
-/** Top BERLIOZ wordmark centered. Returns the next y position. */
-export function drawHeaderLogo(doc: jsPDF): number {
-  setFont(doc, "bold", 28);
+/** Rosa banner header (28mm) with centered Berlioz logo. */
+export function drawRosaHeader(doc: jsPDF, logoData: string | null) {
+  const h = HEADER_H;
+  doc.setFillColor(...ROSA);
+  doc.rect(0, 0, PAGE_W, h, "F");
+  if (logoData) {
+    const w = 30, lh = 16;
+    try { doc.addImage(logoData, "PNG", (PAGE_W - w) / 2, (h - lh) / 2, w, lh, undefined, "FAST"); return; }
+    catch { /* fall through */ }
+  }
+  setFont(doc, "bold", 16);
   doc.setTextColor(...NAVY);
-  doc.setCharSpace(8.4); // ~0.3em at 28pt ≈ 8.4pt
-  doc.text("BERLIOZ", PAGE_W / 2, MARGIN_Y + 24, { align: "center" });
-  doc.setCharSpace(0);
-  return MARGIN_Y + 28 + 16; // logo bottom + 16pt margin
+  doc.text("BERLIOZ", PAGE_W / 2, 18, { align: "center" });
 }
 
-/** Full-bleed hero image. Returns the next y position. */
-export async function drawHeroFull(doc: jsPDF, yTop: number, assetUrl: string): Promise<number> {
-  const data = await loadImageBase64(assetUrl, { w: 1200, h: 420 });
-  if (data) {
+/** Rosa footer band (14mm) — call once per page. */
+export function drawRosaFooter(doc: jsPDF) {
+  const fh = 14;
+  const fy = PAGE_H - fh;
+  doc.setFillColor(...ROSA);
+  doc.rect(0, fy, PAGE_W, fh, "F");
+  setFont(doc, "regular", 7);
+  doc.setTextColor(...NAVY);
+  doc.text(
+    "BERLIOZ · Comida Fantástica · CDMX desde 2015 · berlioz.mx · hola@berlioz.mx · 55 8237 5469",
+    PAGE_W / 2, fy + 8.5, { align: "center" },
+  );
+}
+
+/** Apply rosa footer to every page in the document. */
+export function applyFooterAllPages(doc: jsPDF) {
+  const n = doc.getNumberOfPages();
+  for (let p = 1; p <= n; p++) {
+    doc.setPage(p);
+    drawRosaFooter(doc);
+  }
+}
+
+/** Hero image inside the content margins (3:1). Placeholder if none. */
+export function drawHeroImage(doc: jsPDF, y: number, h: number, imgData: string | null) {
+  if (imgData) {
     try {
-      doc.addImage(data, "JPEG", 0, yTop, PAGE_W, HERO_H);
-      return yTop + HERO_H;
+      doc.addImage(imgData, getImageFormat(imgData), MARGIN_X, y, CONTENT_W, h, undefined, "FAST");
+      return;
     } catch { /* fall through */ }
   }
-  // Cream→rose gradient placeholder (faked with two bands)
-  doc.setFillColor(...CREAM_BG);
-  doc.rect(0, yTop, PAGE_W, HERO_H / 2, "F");
-  doc.setFillColor(...ROSE_PALE);
-  doc.rect(0, yTop + HERO_H / 2, PAGE_W, HERO_H / 2, "F");
-  return yTop + HERO_H;
+  doc.setFillColor(...ROSA);
+  doc.rect(MARGIN_X, y, CONTENT_W, h, "F");
+  doc.setTextColor(...NAVY);
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(14);
+  doc.text("L'art de recevoir", PAGE_W / 2, y + h / 2 + 2, { align: "center" });
 }
 
-/** Right-aligned quote id under the hero. */
-export function drawQuoteId(doc: jsPDF, y: number, quoteId: string): number {
+/** Section label (uppercase navy small caps) with rosa rule. */
+export function drawSectionLabel(doc: jsPDF, label: string, y: number) {
+  setFont(doc, "bold", 9);
+  doc.setTextColor(...NAVY);
+  doc.text(label.toUpperCase(), MARGIN_X, y);
+  const labelW = doc.getTextWidth(label.toUpperCase());
+  doc.setDrawColor(...ROSA);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN_X + labelW + 4, y - 1.5, PAGE_W - MARGIN_X, y - 1.5);
+}
+
+/** Right-aligned cotización folio + rosa separator. Returns next y. */
+export function drawQuoteFolio(doc: jsPDF, y: number, quoteId: string): number {
+  setFont(doc, "bold", 10);
+  doc.setTextColor(...NAVY);
+  doc.text(`Cotización ${quoteId}`, PAGE_W - MARGIN_X, y, { align: "right" });
+  doc.setDrawColor(...ROSA);
+  doc.setLineWidth(0.6);
+  doc.line(MARGIN_X, y + 4, PAGE_W - MARGIN_X, y + 4);
+  return y + 12;
+}
+
+/** Placeholder square (rosa with "B"). */
+export function drawProductPlaceholder(doc: jsPDF, x: number, y: number, size: number) {
+  doc.setFillColor(...ROSA);
+  doc.rect(x, y, size, size, "F");
+  setFont(doc, "bold", 9);
+  doc.setTextColor(...NAVY);
+  doc.text("B", x + size / 2, y + size / 2 + 1.5, { align: "center" });
+}
+
+/** Single product row (image + name + desc + qty×unit + subtotal). Returns new y. */
+export function drawProductRow(
+  doc: jsPDF,
+  y: number,
+  opts: { name: string; description?: string; qty: number; unitPrice: number; imgData: string | null },
+): number {
+  const ROW_H = 22;
+  const IMG_SIZE = 18;
+  const fmt = formatMXNmm;
+  const imgX = MARGIN_X;
+  const imgY = y + 1;
+  if (opts.imgData) {
+    try { doc.addImage(opts.imgData, getImageFormat(opts.imgData), imgX, imgY, IMG_SIZE, IMG_SIZE, undefined, "FAST"); }
+    catch { drawProductPlaceholder(doc, imgX, imgY, IMG_SIZE); }
+  } else {
+    drawProductPlaceholder(doc, imgX, imgY, IMG_SIZE);
+  }
+
+  const textX = imgX + IMG_SIZE + 6;
+  const rightColW = 50;
+  const centerW = CONTENT_W - IMG_SIZE - 6 - rightColW - 4;
+  setFont(doc, "bold", 11);
+  doc.setTextColor(...TEXT);
+  const nameLines = doc.splitTextToSize(opts.name, centerW);
+  doc.text(nameLines[0], textX, y + 6);
+
+  if (opts.description) {
+    setFont(doc, "regular", 8);
+    doc.setTextColor(...MUTED);
+    const descLines = doc.splitTextToSize(opts.description, centerW);
+    doc.text(descLines.slice(0, 2), textX, y + 11);
+  }
+
+  const rightX = PAGE_W - MARGIN_X;
+  const sub = opts.qty * opts.unitPrice;
+  setFont(doc, "regular", 9);
+  doc.setTextColor(...MUTED_DARK);
+  doc.text(`${opts.qty} × ${fmt(opts.unitPrice)}`, rightX, y + 6, { align: "right" });
+  setFont(doc, "bold", 12);
+  doc.setTextColor(...TEXT);
+  doc.text(fmt(sub), rightX, y + 14, { align: "right" });
+
+  const newY = y + ROW_H;
+  doc.setDrawColor(...ROSA);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN_X, newY, PAGE_W - MARGIN_X, newY);
+  return newY + 2;
+}
+
+/** Right-aligned totals block (90mm wide). Returns new y after rosa bar. */
+export function drawTotalsBox(
+  doc: jsPDF,
+  y: number,
+  rows: Array<[string, number]>,
+  totalLabel: string,
+  totalValue: number,
+): number {
+  const fmt = formatMXNmm;
+  const w = 90;
+  const x = PAGE_W - MARGIN_X - w;
+  let cy = y;
+  for (const [label, value] of rows) {
+    setFont(doc, "regular", 9);
+    doc.setTextColor(...MUTED_DARK);
+    doc.text(label, x, cy + 4);
+    setFont(doc, "bold", 9);
+    doc.setTextColor(...TEXT);
+    doc.text(fmt(value), x + w - 2, cy + 4, { align: "right" });
+    cy += 6;
+  }
+  cy += 2;
+  doc.setFillColor(...ROSA);
+  doc.rect(x, cy, w, 12, "F");
   setFont(doc, "bold", 11);
   doc.setTextColor(...NAVY);
-  doc.text(`Cotización ${quoteId}`, PAGE_W - MARGIN_X, y + 14, { align: "right" });
-  return y + 22;
+  doc.text(totalLabel, x + 4, cy + 8);
+  doc.text(fmt(totalValue), x + w - 4, cy + 8, { align: "right" });
+  return cy + 14;
 }
 
-/** Thin tan horizontal rule across the content width. */
+/** Notes + brand card (rosa, two columns). Returns new y. */
+export function drawNotesAndBrand(
+  doc: jsPDF,
+  y: number,
+  notes: string[],
+  logoData: string | null,
+): number {
+  const notesH = Math.max(38, 12 + notes.length * 5 + 6);
+  doc.setFillColor(...ROSA);
+  doc.roundedRect(MARGIN_X, y, CONTENT_W, notesH, 2.5, 2.5, "F");
+
+  const notesColW = CONTENT_W * 0.62;
+  const brandColX = MARGIN_X + notesColW + 8;
+  const brandColW = CONTENT_W * 0.38;
+
+  setFont(doc, "bold", 8);
+  doc.setTextColor(...NAVY);
+  doc.text("NOTAS Y CONDICIONES", MARGIN_X + 6, y + 8);
+  setFont(doc, "regular", 8);
+  doc.setTextColor(...TEXT_SOFT);
+  let ny = y + 14;
+  for (const n of notes) {
+    const lines = doc.splitTextToSize(`◆  ${n}`, notesColW - 12);
+    doc.text(lines, MARGIN_X + 6, ny);
+    ny += lines.length * 4 + 1;
+  }
+
+  const brandCx = brandColX + brandColW / 2 - 4;
+  if (logoData) {
+    const lw = 22, lh = 11;
+    try { doc.addImage(logoData, "PNG", brandCx - lw / 2, y + 8, lw, lh, undefined, "FAST"); }
+    catch { /* skip */ }
+  }
+  setFont(doc, "bold", 8);
+  doc.setTextColor(...NAVY);
+  doc.text("Berlioz Catering Gourmet", brandCx, y + 24, { align: "center" });
+  setFont(doc, "regular", 8);
+  doc.setTextColor(...MUTED_DARK);
+  doc.text("hola@berlioz.mx", brandCx, y + 29, { align: "center" });
+  doc.text("55 8237 5469", brandCx, y + 33, { align: "center" });
+
+  return y + notesH;
+}
+
+/** Guard: add a new page (with rosa footer) when content overflows. */
+export function ensureSpace(doc: jsPDF, y: number, needed: number, headerFn?: (doc: jsPDF) => number): number {
+  if (y + needed > PAGE_H - MARGIN_BOTTOM - 4) {
+    doc.addPage();
+    return headerFn ? headerFn(doc) : 20;
+  }
+  return y;
+}
+
+/** MXN formatter used inside helpers (avoids React import here). */
+function formatMXNmm(n: number): string {
+  return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2 }).format(n);
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * Back-compat shims for callers still using the old API.
+ * They forward to the new mm-based primitives.
+ * ═══════════════════════════════════════════════════════════ */
+
+export function drawHeaderLogo(doc: jsPDF): number {
+  drawRosaHeader(doc, null);
+  return HEADER_H + 4;
+}
+export async function drawHeroFull(doc: jsPDF, yTop: number, assetUrl: string): Promise<number> {
+  const data = await loadImageAsDataURL(assetUrl);
+  const h = HERO_H;
+  drawHeroImage(doc, yTop, h, data);
+  return yTop + h;
+}
+export async function drawHero(doc: jsPDF, asset: string) {
+  await drawHeroFull(doc, HEADER_H + 4, asset);
+}
+export function drawQuoteId(doc: jsPDF, y: number, quoteId: string): number {
+  return drawQuoteFolio(doc, y + 4, quoteId);
+}
+export function drawQuoteIdBar(doc: jsPDF, y: number, quoteId: string): number {
+  return drawQuoteFolio(doc, y, quoteId);
+}
 export function drawRule(doc: jsPDF, y: number) {
-  doc.setDrawColor(...RULE_SOFT);
-  doc.setLineWidth(0.6);
+  doc.setDrawColor(...ROSA);
+  doc.setLineWidth(0.5);
   doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
 }
-
-/** Section label (uppercase navy small caps). */
-export function drawLabel(doc: jsPDF, label: string, x: number, y: number) {
-  setFont(doc, "semibold", 9);
-  doc.setTextColor(...NAVY);
-  doc.setCharSpace(1.35); // ~0.15em at 9pt
-  doc.text(label.toUpperCase(), x, y);
-  doc.setCharSpace(0);
+export function drawLabel(doc: jsPDF, label: string, _x: number, y: number) {
+  drawSectionLabel(doc, label, y);
 }
-
-/** Two-column field block. Each "field" is [label, value]. */
 export function drawTwoColFields(
   doc: jsPDF,
   y: number,
   left: { title: string; fields: Array<[string, string]> },
   right: { title: string; fields: Array<[string, string]> },
 ): number {
-  const gap = 60;
-  const colW = (PAGE_W - MARGIN_X * 2 - gap) / 2;
-  const rightX = MARGIN_X + colW + gap;
-
-  drawRule(doc, y);
-  let cy = y + 22;
-
-  drawLabel(doc, left.title, MARGIN_X, cy);
-  drawLabel(doc, right.title, rightX, cy);
-  cy += 16;
-
-  const rows = Math.max(left.fields.length, right.fields.length);
-  const lineH = 16;
-  for (let i = 0; i < rows; i++) {
-    const l = left.fields[i];
-    const r = right.fields[i];
-    if (l) drawField(doc, MARGIN_X, cy, l[0], l[1], colW);
-    if (r) drawField(doc, rightX, cy, r[0], r[1], colW);
-    cy += lineH;
-  }
-  cy += 8;
-  drawRule(doc, cy);
-  return cy + 12;
-}
-
-function drawField(doc: jsPDF, x: number, y: number, label: string, value: string, maxW: number) {
-  setFont(doc, "bold", 11);
-  doc.setTextColor(...TEXT_MAIN);
-  const lbl = `${label}:`;
-  doc.text(lbl, x, y);
-  const lblW = doc.getTextWidth(lbl + " ");
-  setFont(doc, "regular", 11);
-  doc.setTextColor(51, 51, 51); // #333
-  const v = doc.splitTextToSize(value || "—", Math.max(40, maxW - lblW))[0];
-  doc.text(v, x + lblW, y);
-}
-
-/** Concepts table header (navy bar with white text). */
-export function drawTableHeader(doc: jsPDF, y: number): number {
-  const contentW = PAGE_W - MARGIN_X * 2;
-  const h = 28;
-  doc.setFillColor(...NAVY);
-  doc.rect(MARGIN_X, y, contentW, h, "F");
-  setFont(doc, "semibold", 10);
-  doc.setTextColor(255, 255, 255);
-  doc.setCharSpace(1.0);
-  const cols = colXs();
-  doc.text("#",          cols.idx,   y + 18);
-  doc.text("DESCRIPCIÓN", cols.desc,  y + 18);
-  doc.text("CANT.",      cols.qty,   y + 18, { align: "right" });
-  doc.text("P. UNIT.",   cols.unit,  y + 18, { align: "right" });
-  doc.text("SUBTOTAL",   cols.sub,   y + 18, { align: "right" });
-  doc.setCharSpace(0);
-  return y + h;
-}
-
-export function colXs() {
-  const left = MARGIN_X;
-  const right = PAGE_W - MARGIN_X;
-  const W = right - left;
-  // Column widths (% of content width):
-  //  #: 5%  ·  Descripción: 60%  ·  Cant.: 8%  ·  P. Unit.: 13%  ·  Subtotal: 14%
-  // Minimum right-padding of 8pt prevents numeric columns from touching.
-  const PAD = 8;
-  return {
-    idx:    left + W * 0.025,                 // center of 5% col
-    desc:   left + W * 0.05,                  // left edge of descripción col
-    qty:    left + W * 0.73 - PAD,            // right-aligned within 65–73%
-    unit:   left + W * 0.86 - PAD,            // right-aligned within 73–86%
-    sub:    right - PAD,                      // right-aligned within 86–100%
-    imgX:   left + W * 0.05,
-    imgSize: 56,
-    textX:  left + W * 0.05 + 56 + 14,
-    textWLimit: W * 0.60 - 78,                // descripción col minus thumb + gap
-  };
-}
-
-/** Bottom footer line. */
-export function drawBottomFooter(doc: jsPDF) {
-  const y = PAGE_H - MARGIN_Y - 12;
-  doc.setDrawColor(...RULE_SOFT);
-  doc.setLineWidth(0.6);
-  doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
-  setFont(doc, "regular", 9);
-  doc.setTextColor(...TEXT_MUTED_HEX);
-  doc.text(
-    "BERLIOZ  ·  Comida Fantástica  ·  CDMX desde 2015  ·  berlioz.mx  ·  hola@berlioz.mx  ·  55 8237 5469",
-    PAGE_W / 2,
-    y + 16,
-    { align: "center" },
-  );
-}
-
-/** Apply the bottom footer to every page. */
-export function applyFooterAllPages(doc: jsPDF) {
-  const n = doc.getNumberOfPages();
-  for (let p = 1; p <= n; p++) {
-    doc.setPage(p);
-    drawBottomFooter(doc);
-  }
-}
-
-// ── Back-compat shims (so legacy callers don't crash) ──
-export function drawTopBanner(doc: jsPDF) {
-  drawHeaderLogo(doc);
-}
-export async function drawHero(doc: jsPDF, asset: string) {
-  await drawHeroFull(doc, MARGIN_Y + 60, asset);
-}
-export function drawQuoteIdBar(doc: jsPDF, y: number, quoteId: string): number {
-  return drawQuoteId(doc, y, quoteId);
-}
-export function drawSectionLabel(doc: jsPDF, label: string, y: number) {
-  drawLabel(doc, label, MARGIN_X, y);
-}
-export function drawCompactHeader(doc: jsPDF, rightText: string) {
-  setFont(doc, "bold", 14);
+  const colW = (CONTENT_W - 8) / 2;
+  const lx = MARGIN_X;
+  const rx = MARGIN_X + colW + 8;
+  setFont(doc, "bold", 8);
   doc.setTextColor(...NAVY);
-  doc.setCharSpace(3);
-  doc.text("BERLIOZ", MARGIN_X, MARGIN_Y + 14);
-  doc.setCharSpace(0);
-  setFont(doc, "bold", 9);
-  doc.text(rightText, PAGE_W - MARGIN_X, MARGIN_Y + 14, { align: "right" });
-  doc.setDrawColor(...RULE_SOFT);
-  doc.setLineWidth(0.6);
-  doc.line(MARGIN_X, MARGIN_Y + 22, PAGE_W - MARGIN_X, MARGIN_Y + 22);
+  doc.text(left.title.toUpperCase(), lx, y);
+  doc.text(right.title.toUpperCase(), rx, y);
+  let yL = y + 6, yR = y + 6;
+  for (const [k, v] of left.fields) {
+    setFont(doc, "bold", 10); doc.setTextColor(...TEXT);
+    doc.text(`${k}:`, lx, yL);
+    setFont(doc, "regular", 10); doc.setTextColor(...TEXT_SOFT);
+    doc.text(v || "—", lx + 22, yL);
+    yL += 6;
+  }
+  for (const [k, v] of right.fields) {
+    setFont(doc, "bold", 10); doc.setTextColor(...TEXT);
+    doc.text(`${k}:`, rx, yR);
+    setFont(doc, "regular", 10); doc.setTextColor(...TEXT_SOFT);
+    doc.text(v || "—", rx + 22, yR);
+    yR += 6;
+  }
+  return Math.max(yL, yR) + 4;
 }
-export function drawBottomBand(doc: jsPDF) { drawBottomFooter(doc); }
 export function drawInfoColumns(
-  doc: jsPDF,
-  y: number,
+  doc: jsPDF, y: number,
   left: { title: string; lines: Array<[string, string]> },
   right: { title: string; lines: Array<[string, string]> },
-  _opts?: { boxed?: boolean },
 ): number {
   return drawTwoColFields(doc, y,
     { title: left.title, fields: left.lines },
     { title: right.title, fields: right.lines });
 }
-export function drawNotesAndBrand(doc: jsPDF, y: number, notes: string[]): number {
-  return drawNotesBlock(doc, y, notes);
+export function drawNotesBlock(doc: jsPDF, y: number, notes: string[]): number {
+  return drawNotesAndBrand(doc, y, notes, null);
 }
 export function drawNotesBox(doc: jsPDF, y: number, notes: string[]): number {
-  return drawNotesBlock(doc, y, notes);
+  return drawNotesAndBrand(doc, y, notes, null);
 }
-
-/* ═══ Notes + Brand block (pink, 2-col) ═══ */
-export function drawNotesBlock(doc: jsPDF, y: number, notes: string[]): number {
-  const contentW = PAGE_W - MARGIN_X * 2;
-  const padding = 24;
-  const leftW = contentW * 0.65 - padding;
-  const rightW = contentW * 0.35 - padding;
-  const leftX = MARGIN_X + padding;
-  const rightX = MARGIN_X + contentW * 0.65 + padding;
-
-  // Compute height
-  const lineH = 14; // 10pt * 1.4
-  const titleH = 22;
-  setFont(doc, "regular", 10);
-  let bulletLines = 0;
-  const wrapped: string[][] = [];
-  for (const n of notes) {
-    const lines = doc.splitTextToSize(`•  ${n}`, leftW);
-    wrapped.push(lines);
-    bulletLines += lines.length;
-  }
-  const leftBlockH = titleH + bulletLines * lineH + 8;
-  const rightBlockH = 22 + 30 + 16 + 16 + 16; // logo + name + email + tel
-  const blockH = Math.max(leftBlockH, rightBlockH) + padding;
-
-  doc.setFillColor(...ROSE_PALE);
-  doc.roundedRect(MARGIN_X, y, contentW, blockH, 8, 8, "F");
-
-  // Left title + bullets
-  drawLabel(doc, "Notas y condiciones", leftX, y + padding);
-  setFont(doc, "regular", 10);
-  doc.setTextColor(...TEXT_MAIN);
-  let cy = y + padding + 22;
-  for (const lines of wrapped) {
-    doc.text(lines, leftX, cy);
-    cy += lines.length * lineH;
-  }
-
-  // Right: brand card
-  const rCenterX = rightX + rightW / 2;
-  let ry = y + padding + 8;
-  setFont(doc, "bold", 22);
+export function drawTableHeader(doc: jsPDF, y: number): number {
+  // Kept for legacy callers — not used by the new layouts.
+  doc.setFillColor(...NAVY);
+  doc.rect(MARGIN_X, y, CONTENT_W, 8, "F");
+  return y + 8;
+}
+export function colXs() {
+  return {
+    idx: MARGIN_X + 4,
+    desc: MARGIN_X + 12,
+    qty: MARGIN_X + CONTENT_W * 0.73,
+    unit: MARGIN_X + CONTENT_W * 0.86,
+    sub: PAGE_W - MARGIN_X - 2,
+    imgX: MARGIN_X,
+    imgSize: 18,
+    textX: MARGIN_X + 24,
+    textWLimit: CONTENT_W - 80,
+  };
+}
+export function drawBottomFooter(doc: jsPDF) { drawRosaFooter(doc); }
+export function drawBottomBand(doc: jsPDF) { drawRosaFooter(doc); }
+export function drawTopBanner(doc: jsPDF) { drawRosaHeader(doc, null); }
+export function drawCompactHeader(doc: jsPDF, rightText: string) {
+  setFont(doc, "bold", 12);
   doc.setTextColor(...NAVY);
-  doc.setCharSpace(5);
-  doc.text("BERLIOZ", rCenterX, ry + 18, { align: "center" });
-  doc.setCharSpace(0);
-  ry += 36;
-  setFont(doc, "regular", 11);
-  doc.setTextColor(51, 51, 51);
-  doc.text("Berlioz Catering Gourmet", rCenterX, ry, { align: "center" });
-  ry += 16;
-  doc.text("hola@berlioz.mx", rCenterX, ry, { align: "center" });
-  ry += 16;
-  doc.text("55 8237 5469", rCenterX, ry, { align: "center" });
-
-  return y + blockH;
+  doc.text("BERLIOZ", MARGIN_X, 12);
+  setFont(doc, "bold", 9);
+  doc.text(rightText, PAGE_W - MARGIN_X, 12, { align: "right" });
+  doc.setDrawColor(...ROSA);
+  doc.setLineWidth(0.6);
+  doc.line(MARGIN_X, 16, PAGE_W - MARGIN_X, 16);
 }

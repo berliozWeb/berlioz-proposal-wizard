@@ -1,215 +1,189 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-
-/** Strip HTML tags and decode entities for plain text display */
-function stripHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  return doc.body.textContent || '';
-}
-
-/** Normalize product name to Title Case */
-function toTitleCase(str: string): string {
-  const MINOR = new Set(['de', 'del', 'con', 'y', 'a', 'la', 'el', 'en', 'al', 'por', 'para', 'e', 'o', 'u']);
-  return str
-    .toLowerCase()
-    .split(/\s+/)
-    .map((w, i) => (i === 0 || !MINOR.has(w) || w.length <= 1) ? w.charAt(0).toUpperCase() + w.slice(1) : w)
-    .join(' ');
-}
-import { Search, ShoppingBag, ChevronRight, Filter, ArrowRight, Check } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Search, ShoppingBag, ArrowRight, Check, Minus, Plus, ChevronRight } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
-import CartSidebar from "@/components/ui/CartSidebar";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
-import { useProductos, type Producto } from "@/hooks/useProductos";
-import { getCategoryFallback } from "@/hooks/useCatalogoCotizador";
-
-/* ── Tag chips ── */
-const TAG_STYLES: Record<string, { label: string; emoji: string; className: string }> = {
-  vegetariano: { label: 'Vegetariano', emoji: '🌿', className: 'bg-green-100 text-green-800 border-green-200' },
-  vegano:      { label: 'Vegano',      emoji: '🌿', className: 'bg-green-100 text-green-800 border-green-200' },
-  keto:        { label: 'Keto',        emoji: '🥑', className: 'bg-amber-100 text-amber-800 border-amber-200' },
-  sin_gluten:  { label: 'Sin Gluten',  emoji: '🌾', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  'sin gluten':{ label: 'Sin Gluten',  emoji: '🌾', className: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  favorito:    { label: 'Favorito',    emoji: '⭐', className: 'bg-primary/10 text-primary border-primary/20' },
-};
-
-function TagChips({ tags }: { tags: string[] }) {
-  const styled = tags
-    .map((t) => TAG_STYLES[t.toLowerCase().trim()])
-    .filter(Boolean) as { label: string; emoji: string; className: string }[];
-  if (styled.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1.5 mb-2">
-      {styled.map((s, i) => (
-        <span
-          key={i}
-          className={cn(
-            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold",
-            s.className
-          )}
-        >
-          <span>{s.emoji}</span> {s.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/* ── Image carousel with dots ── */
-function ProductImageCarousel({
-  images,
-  alt,
-  fallback,
-}: {
-  images: string[];
-  alt: string;
-  fallback: string;
-}) {
-  const [idx, setIdx] = useState(0);
-  const list = images.length > 0 ? images : [fallback];
-  const showDots = list.length >= 2;
-  return (
-    <div className="relative w-full h-full">
-      <img
-        src={list[idx]}
-        alt={alt}
-        loading="lazy"
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
-      />
-      {showDots && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-          {list.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIdx(i); }}
-              className={cn(
-                "w-1.5 h-1.5 rounded-full transition-all",
-                idx === i ? "bg-white w-4" : "bg-white/60 hover:bg-white/80"
-              )}
-              aria-label={`Imagen ${i + 1}`}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import {
+  useMenuCotizador,
+  CATEGORIAS_COTIZADOR,
+  productoHasDietary,
+  type ProductoCotizador,
+  type Variante,
+  type DietaryFilter,
+} from "@/hooks/useMenuCotizador";
 
 const CATEGORY_EMOJIS: Record<string, string> = {
   "Coffee Break": "☕",
-  "Working Lunch": "🍱",
+  "Comida": "🍱",
   "Desayuno": "🍳",
-  "Bebidas": "🥤",
-  "Snacks": "🍪",
-  "Surtidos": "🥐",
-  "Tortas Piropo": "🥖",
-  "Piropo": "🎂",
-  "Entrega Especial": "🎁",
-  "Otros": "🍽️",
+  "Bebida": "🥤",
+  "Torta Piropo": "🥖",
 };
-const STATIC_FILTERS = [
-  { value: "favoritos", label: "Favoritos", emoji: "⭐" },
-  { value: "todos", label: "Todos", emoji: "🍽️" },
-];
-const TAG_FILTERS = [
-  { value: "vegano", label: "Vegano/Vegetariano", emoji: "🌱" },
+const STATIC_FILTERS = [{ value: "todos", label: "Todos", emoji: "🍽️" }];
+const TAG_FILTERS: { value: DietaryFilter; label: string; emoji: string }[] = [
+  { value: "vegetariano", label: "Vegetariano", emoji: "🌿" },
+  { value: "vegano", label: "Vegano", emoji: "🌱" },
   { value: "keto", label: "Keto", emoji: "🥑" },
   { value: "sin_gluten", label: "Sin Gluten", emoji: "🌾" },
   { value: "sin_lactosa", label: "Sin Lactosa", emoji: "🥛" },
 ];
 
-const SORT_OPTIONS = [
-  { value: "orden", label: "Recomendados" },
-  { value: "price_asc", label: "Precio: Menor a Mayor" },
-  { value: "price_desc", label: "Precio: Mayor a Menor" },
-  { value: "name_asc", label: "A → Z" },
-];
+/* ── Per-product card with variant selector + guests counter ── */
+function ProductoCard({ product }: { product: ProductoCotizador }) {
+  const { addItem, isInCart } = useCart();
+  const variantes = product.variantes;
+  const hasMany = variantes.length > 1;
+  const defaultVariante =
+    variantes.find((v) => v.es_base) ?? variantes[0];
+  const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
+  const [invitados, setInvitados] = useState<number>(10);
 
-function getDisplayPrice(p: Producto): number {
-  return p.precio ?? p.precio_min ?? p.precio_rebajado ?? 0;
+  const selected: Variante | undefined =
+    variantes.find((v) => v.variante_id === selectedId) ?? defaultVariante;
+
+  if (!selected) return null;
+
+  const img = selected.img || product.img_principal || product.img_fallback || "";
+  const fallback = product.img_fallback || product.img_principal || "";
+  const inCart = isInCart(selected.variante_id);
+  const totalPrecio = (selected.precio || 0) * Math.max(1, invitados);
+
+  const handleAdd = () => {
+    addItem({
+      id: selected.variante_id,
+      name: selected.nombre_display || product.nombre,
+      price: selected.precio || 0,
+      quantity: Math.max(1, invitados),
+      image: img || undefined,
+      category: product.categoria,
+      isPerPerson: true,
+    });
+  };
+
+  return (
+    <div className="group flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      {/* Image */}
+      <div className="relative aspect-square overflow-hidden bg-muted">
+        <img
+          src={img}
+          alt={product.nombre}
+          loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          onError={(e) => {
+            const el = e.target as HTMLImageElement;
+            if (fallback && el.src !== fallback) el.src = fallback;
+          }}
+        />
+        {product.categoria && (
+          <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
+            {product.categoria}
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="text-sm font-semibold text-foreground leading-tight mb-1 uppercase tracking-wide">
+          {product.nombre}
+        </h3>
+        {product.desc_mini && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+            {product.desc_mini}
+          </p>
+        )}
+
+        {/* Variante selector */}
+        {hasMany && (
+          <div className="mb-3">
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+              Elige tu opción
+            </label>
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
+            >
+              {variantes.map((v) => (
+                <option key={v.variante_id} value={v.variante_id}>
+                  {v.nombre_variante || v.nombre_display || "Opción"} — ${v.precio.toLocaleString("es-MX")}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Invitados */}
+        <div className="mb-3">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+            Invitados
+          </label>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setInvitados((n) => Math.max(1, n - 1))}
+              className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+              aria-label="Restar invitado"
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </button>
+            <input
+              type="number"
+              min={1}
+              value={invitados}
+              onChange={(e) => setInvitados(Math.max(1, parseInt(e.target.value || "1", 10)))}
+              className="h-9 w-16 rounded-lg border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button
+              type="button"
+              onClick={() => setInvitados((n) => n + 1)}
+              className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+              aria-label="Sumar invitado"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-[10px] text-muted-foreground ml-1">× ${selected.precio.toLocaleString("es-MX")}</span>
+          </div>
+        </div>
+
+        {/* Add button */}
+        <div className="mt-auto">
+          {inCart ? (
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-green-600 text-white hover:bg-green-700"
+            >
+              <Check className="w-3.5 h-3.5" /> En el carrito — Agregar más
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Agregar — ${totalPrecio.toLocaleString("es-MX")}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const CatalogPage = () => {
   const [searchParams] = useSearchParams();
-  const { addItem, itemCount, isInCart, items: cartItems } = useCart();
-  const { productos, loading, error, reload } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
-  const [filter, setFilter] = useState(searchParams.get("categoria") || "favoritos");
-  const [sort, setSort] = useState("orden");
+  const { itemCount } = useCart();
+  const { data: productos = [], isLoading: loading, error, refetch } = useMenuCotizador();
+  const [filter, setFilter] = useState(searchParams.get("categoria") || "todos");
   const [search, setSearch] = useState("");
-  const [cartOpen, setCartOpen] = useState(false);
   const navigate = useNavigate();
 
-  /** After adding, fetch quick cross-sell suggestions and show as toast chips */
-  const fetchAndShowSuggestions = useCallback(
-    async (justAdded: { name: string; category?: string; price: number }) => {
-      try {
-        const payload = {
-          cartItems: [
-            ...cartItems.map((i) => ({ name: i.name, category: i.category, price: i.price, qty: i.quantity })),
-            { name: justAdded.name, category: justAdded.category, price: justAdded.price, qty: 1 },
-          ],
-          cartTotal:
-            cartItems.reduce((s, i) => s + i.price * i.quantity, 0) + justAdded.price,
-        };
-        const { data, error } = await supabase.functions.invoke("cart-recommendations", { body: payload });
-        if (error || !data?.recommendations) return;
-        const recs = (data.recommendations as { productName: string; reason?: string }[]).slice(0, 3);
-
-        // Match each rec to an actual product (case-insensitive contains)
-        const matched = recs
-          .map((r) => {
-            const norm = r.productName.toLowerCase();
-            const prod =
-              productos.find((p) => p.nombre.toLowerCase() === norm) ||
-              productos.find((p) => p.nombre.toLowerCase().includes(norm) || norm.includes(p.nombre.toLowerCase()));
-            return prod ? { prod, reason: r.reason } : null;
-          })
-          .filter(Boolean) as { prod: Producto; reason?: string }[];
-
-        if (matched.length === 0) return;
-
-        toast(`También llevan con "${justAdded.name}"`, {
-          duration: 8000,
-          description: (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {matched.map(({ prod }) => (
-                <button
-                  key={prod.id}
-                  onClick={() => {
-                    addItem({
-                      id: prod.id,
-                      name: prod.nombre,
-                      price: getDisplayPrice(prod),
-                      image: prod.imagen_url || undefined,
-                      category: prod.categoria || undefined,
-                      isPerPerson: true,
-                    });
-                    toast.success(`${prod.nombre} añadido`);
-                  }}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold hover:bg-primary/20 transition-colors border border-primary/20"
-                >
-                  + {prod.nombre}
-                </button>
-              ))}
-            </div>
-          ) as any,
-        });
-      } catch {
-        /* silent */
-      }
-    },
-    [cartItems, productos, addItem]
-  );
-
-  // Build category chips from actual data
+  // Category tabs (fixed order) + Todos + dietary
   const categoryFilters = useMemo(() => {
-    const cats = Array.from(new Set(productos.map((p) => p.categoria).filter(Boolean) as string[])).sort();
+    const present = new Set(productos.map((p) => p.categoria));
+    const cats = CATEGORIAS_COTIZADOR.filter((c) => present.has(c));
     return [
       ...STATIC_FILTERS,
       ...cats.map((c) => ({ value: c, label: c, emoji: CATEGORY_EMOJIS[c] ?? "🍽️" })),
@@ -218,38 +192,24 @@ const CatalogPage = () => {
   }, [productos]);
 
   const filtered = useMemo(() => {
-    let list = [...productos];
+    let list = productos;
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || p.descripcion_corta?.toLowerCase().includes(q) || p.descripcion?.toLowerCase().includes(q));
+      list = list.filter(
+        (p) =>
+          p.nombre.toLowerCase().includes(q) ||
+          p.desc_mini?.toLowerCase().includes(q) ||
+          p.desc_corta?.toLowerCase().includes(q),
+      );
     }
-    if (filter === "favoritos") {
-      list = list.filter((p) => p.destacado);
-      list.sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999));
-    } else if (filter === "vegano") {
-      list = list.filter((p) => p.dietary_tags?.some(t => ['vegano', 'vegetariano'].includes(t.toLowerCase())));
-    } else if (filter === "keto") {
-      list = list.filter((p) => p.dietary_tags?.some(t => t.toLowerCase() === 'keto'));
-    } else if (filter === "sin_gluten") {
-      list = list.filter((p) => p.dietary_tags?.some(t => {
-        const n = t.toLowerCase().replace(/[\s-]/g, '_');
-        return n === 'sin_gluten' || n === 'gluten_free' || n === 'libre_de_gluten';
-      }));
-    } else if (filter === "sin_lactosa") {
-      list = list.filter((p) => p.dietary_tags?.some(t => {
-        const n = t.toLowerCase().replace(/[\s-]/g, '_');
-        return n === 'sin_lactosa' || n === 'lactose_free' || n === 'libre_de_lactosa' || n === 'sin_lacteos';
-      }));
+    const dietaryKeys: DietaryFilter[] = ["vegetariano", "vegano", "keto", "sin_gluten", "sin_lactosa"];
+    if ((dietaryKeys as string[]).includes(filter)) {
+      list = list.filter((p) => productoHasDietary(p, filter as DietaryFilter));
     } else if (filter !== "todos") {
       list = list.filter((p) => p.categoria === filter);
     }
-    if (filter !== "favoritos") {
-      if (sort === "price_asc") list.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
-      else if (sort === "price_desc") list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
-      else if (sort === "name_asc") list.sort((a, b) => a.nombre.localeCompare(b.nombre));
-    }
     return list;
-  }, [productos, filter, sort, search]);
+  }, [productos, filter, search]);
 
   return (
     <BaseLayout>
@@ -334,9 +294,9 @@ const CatalogPage = () => {
                   <ShoppingBag className="w-10 h-10 text-destructive/70" />
                 </div>
                 <h3 className="font-heading text-2xl text-foreground mb-2">No pudimos cargar el catálogo</h3>
-                <p className="font-body text-muted-foreground mb-8 max-w-sm">{error}</p>
+                <p className="font-body text-muted-foreground mb-8 max-w-sm">{(error as Error)?.message ?? "Intenta de nuevo."}</p>
                 <button
-                  onClick={reload}
+                  onClick={() => refetch()}
                   className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                 >
                   Reintentar
@@ -371,110 +331,11 @@ const CatalogPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filtered.map((product, i) => {
-                  const price = getDisplayPrice(product);
-                  const inCart = isInCart(product.id);
-                  const fallbackImg = product.imagen_url
-                    || (product.imagen
-                      ? `https://ktyupdpzgmzzfkskkvpn.supabase.co/storage/v1/object/public/Berlioz-images/${product.imagen}`
-                      : getCategoryFallback(product.categoria));
-                  const galleryImgs = (product.imagenes_galeria && product.imagenes_galeria.length > 0)
-                    ? product.imagenes_galeria
-                    : (product.imagen_url ? [product.imagen_url] : []);
-                  const tagsForChips = (product.dietary_tags ?? []).filter(
-                    (t) => t.toLowerCase() !== 'favorito' && t.toLowerCase() !== 'destacado',
-                  );
-                  const hasRange = product.precio_max && product.precio && product.precio_max > product.precio;
-                  const hasDiscount = product.precio_rebajado && product.precio && product.precio_rebajado < product.precio;
-
-                  return (
-                    <RevealOnScroll key={product.id} delay={i % 3 * 100}>
-                      <div className="group relative flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        {/* Image */}
-                        <Link to={`/producto/${product.id}`} className="relative aspect-square overflow-hidden bg-muted block">
-                          <ProductImageCarousel
-                            images={galleryImgs}
-                            alt={product.nombre}
-                            fallback={fallbackImg}
-                          />
-                          {/* Category badge */}
-                          {product.categoria && (
-                            <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
-                              {product.categoria}
-                            </span>
-                          )}
-                          {product.destacado && (
-                            <span className="absolute top-3 right-3 px-3 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider backdrop-blur-md shadow-lg">
-                              Destacado
-                            </span>
-                          )}
-                        </Link>
-
-                        {/* Content */}
-                        <div className="p-4 flex flex-col flex-1">
-                          <Link to={`/producto/${product.id}`}>
-                            <h3 className="text-sm font-semibold text-foreground leading-tight group-hover:text-primary transition-colors mb-1 uppercase tracking-wide">
-                              {product.nombre}
-                            </h3>
-                          </Link>
-                          {product.descripcion_corta && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{product.descripcion_corta.replace(/\s+/g, ' ').trim()}</p>
-                          )}
-                          <TagChips tags={tagsForChips} />
-
-                          <div className="mt-auto flex items-center justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              {hasDiscount ? (
-                                <div className="flex items-baseline gap-1.5">
-                                  <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>${product.precio_rebajado}</span>
-                                  <span className="text-sm text-muted-foreground line-through">${product.precio?.toLocaleString('es-MX')}</span>
-                                </div>
-                              ) : hasRange ? (
-                                <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>
-                                  ${product.precio?.toLocaleString('es-MX')} — ${product.precio_max?.toLocaleString('es-MX')}
-                                </span>
-                              ) : price > 0 ? (
-                                <span className="text-lg font-bold" style={{ color: '#2D6A4F' }}>${price.toLocaleString("es-MX")}</span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground italic truncate block">Cotizar</span>
-                              )}
-                            </div>
-
-                            {inCart ? (
-                              <Link
-                                to="/carrito"
-                                className="h-10 px-4 rounded-xl font-body text-xs font-semibold flex items-center gap-1.5 transition-all bg-green-600 text-white hover:bg-green-700"
-                              >
-                                <Check className="w-3.5 h-3.5" /> En el carrito
-                              </Link>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  addItem({
-                                    id: product.id,
-                                    name: product.nombre,
-                                    price,
-                                    image: product.imagen_url || undefined,
-                                    category: product.categoria || undefined,
-                                    isPerPerson: true,
-                                  });
-                                  fetchAndShowSuggestions({
-                                    name: product.nombre,
-                                    category: product.categoria || undefined,
-                                    price,
-                                  });
-                                }}
-                                className="h-10 px-4 rounded-xl font-body text-xs font-semibold flex items-center gap-1.5 transition-all bg-primary text-primary-foreground hover:bg-primary/90"
-                              >
-                                Añadir al carrito
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </RevealOnScroll>
-                  );
-                })}
+                {filtered.map((product, i) => (
+                  <RevealOnScroll key={product.product_id} delay={(i % 3) * 100}>
+                    <ProductoCard product={product} />
+                  </RevealOnScroll>
+                ))}
               </div>
             )}
           </div>
@@ -519,7 +380,6 @@ const CatalogPage = () => {
         </button>
       )}
 
-      <CartSidebar open={cartOpen} onClose={() => setCartOpen(false)} />
     </BaseLayout>
   );
 };

@@ -305,7 +305,6 @@ export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<vo
   y += 6;
 
   // ═══ Slot cards grid ═══
-  let isFirstCardPage = true;
   let col = 0;
   let rowY = y;
   let rowMax = 0;
@@ -324,7 +323,6 @@ export async function generateMultiDeliveryPdf(input: MultiPdfInput): Promise<vo
       rowY += 6;
       col = 0;
       rowMax = 0;
-      isFirstCardPage = false;
     }
 
     const cx = MARGIN + col * (colW + CARD_GAP);

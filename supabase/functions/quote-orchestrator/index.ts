@@ -578,29 +578,40 @@ async function composeWithClaude(
   const secondaryCategories = eventCategories.slice(1);
   const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
 
-  // Heurística para detectar productos en formato GRUPAL (cajas/surtidos/paquetes que ya sirven a X personas).
-  // En tier EXPERIENCIA queremos preferir porciones INDIVIDUALES para no duplicar el rendimiento.
-  const BULK_REGEX = /\b(surtido|surtidos|caja|cajas|bandeja|bandejas|paquete|paquetes|box|combo|kit|charola|fuente|para\s*\d+|x\s*\d+|\d+\s*(pzas|piezas|personas|pax))\b/i;
-  const isBulkProduct = (p: { nombre: string; precio: number }) =>
-    BULK_REGEX.test(p.nombre) || p.precio >= 800;
+  // Un producto pertenece al evento cuando categoria == primary O segunda_categoria == primary
+  // (segunda_categoria es la marca del cliente en el catálogo: "este item también funciona como X").
+  // Bebidas siempre se incluyen.
+  const matchesEvent = (p: ScoredProduct) => {
+    const cat = p.categoria || '';
+    if (cat === 'Bebida' || cat === 'Bebidas') return true;
+    if (cat === primaryCategory) return true;
+    if ((p.menu_segunda_categoria || '') === primaryCategory) return true;
+    return false;
+  };
 
-  // Restringimos el catálogo expuesto a Claude SOLO a la categoría primaria del evento + Bebidas.
-  // Esto evita que aparezcan "crudités de Working Lunch" en un Desayuno, etc.
-  const allowedCategoriesForLLM = new Set<string>([primaryCategory, 'Bebidas', 'Bebida']);
+  // Fallback: si el grupo es pequeño (<= 20) preferimos formato INDIVIDUAL.
+  // Si el formato no está marcado (null) lo tratamos como individual por defecto para no excluirlo.
+  const isIndividual = (p: ScoredProduct) => p.formato !== 'grupal';
+
+  // Catálogo expuesto al LLM filtrado por categoría/segunda_categoría del evento.
   const catalog = products
-    .filter(p => allowedCategoriesForLLM.has(p.categoria || ''))
-    .slice(0, 80)
+    .filter(matchesEvent)
+    .slice(0, 90)
     .map(p => ({
       id: p.id,
       nombre: p.nombre,
       precio: p.effectivePrice,
       categoria: p.categoria,
+      segunda_categoria: p.menu_segunda_categoria || null,
+      subcategoria: p.menu_subcategoria || null,
+      tipo_menu: p.menu_tipo || null,          // "Add-on" | "Paquete" | "Simple" | "Variable (con variantes)"
+      es_complemento: p.is_addon === true,     // true = NUNCA puede ser plato principal
+      formato: p.formato || null,              // "individual" | "grupal" | null
       descripcion: (p.descripcion || '').slice(0, 80),
       pricing_model: p.pricing_model,
       score: p.finalScore,
       destacado: p.destacado,
       dietary_tags: p.dietary_tags || [],
-      is_bulk: isBulkProduct({ nombre: p.nombre, precio: p.effectivePrice }),
     }));
 
   // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items
@@ -618,24 +629,27 @@ async function composeWithClaude(
   // Precompute los mejores candidatos PRINCIPALES. Para Desayuno/Comida exigimos que sean PLATO
   // PRINCIPAL (variante.es_comida === "Sí" en el menú canónico), así Claude no propone frutas/
   // yogurt/snacks como principal cuando hay chilaquiles.
+  // Un plato principal NUNCA es un Add-on (tipo=Add-on) y debe pertenecer al evento.
+  // Para Desayuno/Comida exige es_comida_main (variante.es_comida === "Sí").
   const isMainFoodOK = (p: ScoredProduct) =>
     !requireMainFood || p.es_comida_main === true || p.es_comida_main === undefined;
+  const isMainCandidate = (p: ScoredProduct) =>
+    p.is_addon !== true && matchesEvent(p) && (p.categoria !== 'Bebida' && p.categoria !== 'Bebidas') && isMainFoodOK(p);
 
-  let primaryPool = products.filter(p => p.categoria === primaryCategory && isMainFoodOK(p));
+  let primaryPool = products.filter(isMainCandidate);
   if (primaryPool.length === 0) {
-    // Fallback: si nadie está marcado como principal, abre a toda la categoría
-    primaryPool = products.filter(p => p.categoria === primaryCategory);
+    primaryPool = products.filter(p => matchesEvent(p) && p.categoria !== 'Bebida' && p.is_addon !== true);
   }
   const primaryCandidates = primaryPool
     .sort((a, b) => b.finalScore - a.finalScore)
     .slice(0, 12)
-    .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, score: p.finalScore }));
+    .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, score: p.finalScore, formato: p.formato || null }));
 
   // Variantes principales que cubren cada restricción dietética (mismo nivel que el principal regular)
   const primaryDietaryCandidates: Record<string, { id: string; nombre: string; precio: number }[]> = {};
   for (const r of activeRestrictions) {
     primaryDietaryCandidates[r] = products
-      .filter(p => p.categoria === primaryCategory && isMainFoodOK(p) && productSupportsRestriction(p, normalizeDietaryTag(r)))
+      .filter(p => isMainCandidate(p) && productSupportsRestriction(p, normalizeDietaryTag(r)))
       .slice(0, 6)
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice }));
   }

@@ -161,7 +161,6 @@ function getBoxItems(
     if (merged.has(box.id)) {
       const existing = merged.get(box.id)!;
       existing.qty += q;
-      // Combinar labels si son diferentes
       if (!existing.reason.includes(reason)) {
         existing.reason = existing.reason + " + " + reason;
       }
@@ -170,9 +169,21 @@ function getBoxItems(
     }
   };
 
-  // Box para sin restricción
+  // Calcular costo mínimo de las restricciones para saber cuánto queda para sin restricción
+  const costoRestricciones = dietaryCounts.reduce((sum, dc) => {
+    const dietBox = (tabla[dc.tipo] as typeof mainBox | undefined) ?? mainBox;
+    return sum + dietBox.p * dc.cantidad;
+  }, 0);
+  const presupuestoRestante = targetSub - costoRestricciones;
+  const ppRestante = sinR > 0 ? presupuestoRestante / sinR : 0;
+
+  // Box para sin restricción: si presupuesto es justo, usar el más barato disponible
   if (sinR > 0) {
-    addItem(mainBox, sinR, sinR === people ? `Para ${sinR} personas` : `Para ${sinR} personas sin restricción`);
+    // Si el presupuesto por persona para sin_restriccion es menor que el mainBox, bajar al más barato
+    const boxSinR = ppRestante < mainBox.p && ppRestante > 0
+      ? (tabla["esencial"] ?? mainBox)   // usar el más barato de ese tipo de evento
+      : mainBox;
+    addItem(boxSinR, sinR, sinR === people ? `Para ${sinR} personas` : `Para ${sinR} personas sin restricción`);
   }
 
   // Box para cada restricción dietética

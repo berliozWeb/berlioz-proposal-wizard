@@ -66,6 +66,14 @@ interface DbProduct {
   es_comida_main?: boolean;
   /** Short product description for the prompt */
   descripcion_corta?: string | null;
+  /** Canonical menu metadata (from get-menu-cotizador) */
+  menu_segunda_categoria?: string | null;
+  menu_subcategoria?: string | null;
+  menu_tipo?: string | null; // "Paquete" | "Add-on" | "Simple" | "Variable (con variantes)"
+  /** Derived: true cuando tipo === "Add-on" (complemento, no plato principal) */
+  is_addon?: boolean;
+  /** Derived: "individual" | "grupal" | null — formato de la porción */
+  formato?: 'individual' | 'grupal' | null;
 }
 
 interface ScoredProduct extends DbProduct {
@@ -275,6 +283,12 @@ async function fetchMenuCotizador(): Promise<DbProduct[]> {
   for (const p of productos) {
     const variantes = Array.isArray(p.variantes) ? p.variantes : [];
     const hasMany = variantes.length > 1;
+    const menuTipo = (p.tipo || '').trim();
+    const isAddon = /add-?on/i.test(menuTipo);
+    const sub = (p.subcategoria || '').trim().toLowerCase();
+    let formato: 'individual' | 'grupal' | null = null;
+    if (sub === 'individual') formato = 'individual';
+    else if (sub === 'surtido' || sub === 'mini surtido' || sub === 'paquete') formato = 'grupal';
     for (const v of variantes) {
       const tags: string[] = [];
       if (isYesFlag(v.vegetariano)) tags.push('vegetariano');
@@ -307,6 +321,11 @@ async function fetchMenuCotizador(): Promise<DbProduct[]> {
         destacado: !!v.es_base,
         variantes: v.nombre_variante || null,
         es_comida_main: isYesFlag(v.es_comida),
+        menu_segunda_categoria: p.segunda_categoria || null,
+        menu_subcategoria: p.subcategoria || null,
+        menu_tipo: menuTipo || null,
+        is_addon: isAddon,
+        formato,
       });
     }
   }
@@ -424,7 +443,13 @@ function composePackageHeuristic(
   }[tier];
 
   const primaryCat = mainCategories[0];
-  const mainProducts = products.filter(p => p.categoria === primaryCat).sort((a, b) => b.finalScore - a.finalScore);
+  const isBev = (p: ScoredProduct) => p.categoria === 'Bebida' || p.categoria === 'Bebidas';
+  const matchesPrimary = (p: ScoredProduct) =>
+    p.categoria === primaryCat || (p.menu_segunda_categoria || '') === primaryCat;
+  // Mains: pertenecen al evento, NO son Add-ons, NO son bebida.
+  const mainProducts = products
+    .filter(p => matchesPrimary(p) && !isBev(p) && p.is_addon !== true)
+    .sort((a, b) => b.finalScore - a.finalScore);
 
   const items: PackageItem[] = [];
   const usedProducts = new Set<string>();
@@ -447,7 +472,7 @@ function composePackageHeuristic(
   }
 
   if (tierConfig.includeBeverage) {
-    const beverages = products.filter(p => p.categoria === 'Bebidas' && !usedProducts.has(p.id)).sort((a, b) => b.finalScore - a.finalScore);
+    const beverages = products.filter(p => isBev(p) && !usedProducts.has(p.id)).sort((a, b) => b.finalScore - a.finalScore);
     if (beverages.length > 0) {
       const bev = tier === 'experiencia' ? beverages[0] : beverages[Math.min(1, beverages.length - 1)];
       const qty = bev.pricing_model === 'per_person' && !isGroupPricedProduct(bev)
@@ -467,13 +492,30 @@ function composePackageHeuristic(
 
   const remaining = tierConfig.maxItems - items.length;
   if (remaining > 0) {
-    const complementary = products.filter(p => !usedProducts.has(p.id) && p.categoria !== primaryCat)
-      .sort((a, b) => b.finalScore - a.finalScore).slice(0, remaining);
+    // Complementos: deben pertenecer al evento Y ser Add-on (preferido) o surtido grupal.
+    // Para grupos pequeños (<=20) sólo individuales.
+    const small = people <= 20;
+    const complementary = products
+      .filter(p =>
+        !usedProducts.has(p.id)
+        && matchesPrimary(p)
+        && !isBev(p)
+        && (p.is_addon === true || p.formato === 'grupal')
+        && (!small || p.formato !== 'grupal')
+      )
+      .sort((a, b) => {
+        // Prioriza add-ons explícitos, luego score
+        const aw = a.is_addon === true ? 1 : 0;
+        const bw = b.is_addon === true ? 1 : 0;
+        if (aw !== bw) return bw - aw;
+        return b.finalScore - a.finalScore;
+      })
+      .slice(0, remaining);
     for (const comp of complementary) {
-      const isSurtido = comp.nombre.toLowerCase().includes('surtido');
-      const qty = comp.pricing_model === 'per_person'
-        ? getDefaultQuantity(comp, people)
-        : isSurtido ? Math.ceil(people / 7) : 1;
+      const isGrupal = comp.formato === 'grupal';
+      const qty = isGrupal
+        ? Math.max(1, Math.ceil(people / 8))
+        : getDefaultQuantity(comp, people);
       items.push({
         productId: comp.id, parentProductId: comp.parent_id, productName: comp.nombre,
         quantity: qty, unitPrice: comp.effectivePrice, computedPrice: comp.effectivePrice * qty,
@@ -559,29 +601,40 @@ async function composeWithClaude(
   const secondaryCategories = eventCategories.slice(1);
   const requireMainFood = primaryCategory === 'Desayuno' || primaryCategory === 'Comida' || primaryCategory === 'Working Lunch';
 
-  // Heurística para detectar productos en formato GRUPAL (cajas/surtidos/paquetes que ya sirven a X personas).
-  // En tier EXPERIENCIA queremos preferir porciones INDIVIDUALES para no duplicar el rendimiento.
-  const BULK_REGEX = /\b(surtido|surtidos|caja|cajas|bandeja|bandejas|paquete|paquetes|box|combo|kit|charola|fuente|para\s*\d+|x\s*\d+|\d+\s*(pzas|piezas|personas|pax))\b/i;
-  const isBulkProduct = (p: { nombre: string; precio: number }) =>
-    BULK_REGEX.test(p.nombre) || p.precio >= 800;
+  // Un producto pertenece al evento cuando categoria == primary O segunda_categoria == primary
+  // (segunda_categoria es la marca del cliente en el catálogo: "este item también funciona como X").
+  // Bebidas siempre se incluyen.
+  const matchesEvent = (p: ScoredProduct) => {
+    const cat = p.categoria || '';
+    if (cat === 'Bebida' || cat === 'Bebidas') return true;
+    if (cat === primaryCategory) return true;
+    if ((p.menu_segunda_categoria || '') === primaryCategory) return true;
+    return false;
+  };
 
-  // Restringimos el catálogo expuesto a Claude SOLO a la categoría primaria del evento + Bebidas.
-  // Esto evita que aparezcan "crudités de Working Lunch" en un Desayuno, etc.
-  const allowedCategoriesForLLM = new Set<string>([primaryCategory, 'Bebidas', 'Bebida']);
+  // Fallback: si el grupo es pequeño (<= 20) preferimos formato INDIVIDUAL.
+  // Si el formato no está marcado (null) lo tratamos como individual por defecto para no excluirlo.
+  const isIndividual = (p: ScoredProduct) => p.formato !== 'grupal';
+
+  // Catálogo expuesto al LLM filtrado por categoría/segunda_categoría del evento.
   const catalog = products
-    .filter(p => allowedCategoriesForLLM.has(p.categoria || ''))
-    .slice(0, 80)
+    .filter(matchesEvent)
+    .slice(0, 90)
     .map(p => ({
       id: p.id,
       nombre: p.nombre,
       precio: p.effectivePrice,
       categoria: p.categoria,
+      segunda_categoria: p.menu_segunda_categoria || null,
+      subcategoria: p.menu_subcategoria || null,
+      tipo_menu: p.menu_tipo || null,          // "Add-on" | "Paquete" | "Simple" | "Variable (con variantes)"
+      es_complemento: p.is_addon === true,     // true = NUNCA puede ser plato principal
+      formato: p.formato || null,              // "individual" | "grupal" | null
       descripcion: (p.descripcion || '').slice(0, 80),
       pricing_model: p.pricing_model,
       score: p.finalScore,
       destacado: p.destacado,
       dietary_tags: p.dietary_tags || [],
-      is_bulk: isBulkProduct({ nombre: p.nombre, precio: p.effectivePrice }),
     }));
 
   // Precompute compatible products per dietary restriction so Claude doesn't pick incompatible items
@@ -599,24 +652,27 @@ async function composeWithClaude(
   // Precompute los mejores candidatos PRINCIPALES. Para Desayuno/Comida exigimos que sean PLATO
   // PRINCIPAL (variante.es_comida === "Sí" en el menú canónico), así Claude no propone frutas/
   // yogurt/snacks como principal cuando hay chilaquiles.
+  // Un plato principal NUNCA es un Add-on (tipo=Add-on) y debe pertenecer al evento.
+  // Para Desayuno/Comida exige es_comida_main (variante.es_comida === "Sí").
   const isMainFoodOK = (p: ScoredProduct) =>
     !requireMainFood || p.es_comida_main === true || p.es_comida_main === undefined;
+  const isMainCandidate = (p: ScoredProduct) =>
+    p.is_addon !== true && matchesEvent(p) && (p.categoria !== 'Bebida' && p.categoria !== 'Bebidas') && isMainFoodOK(p);
 
-  let primaryPool = products.filter(p => p.categoria === primaryCategory && isMainFoodOK(p));
+  let primaryPool = products.filter(isMainCandidate);
   if (primaryPool.length === 0) {
-    // Fallback: si nadie está marcado como principal, abre a toda la categoría
-    primaryPool = products.filter(p => p.categoria === primaryCategory);
+    primaryPool = products.filter(p => matchesEvent(p) && p.categoria !== 'Bebida' && p.is_addon !== true);
   }
   const primaryCandidates = primaryPool
     .sort((a, b) => b.finalScore - a.finalScore)
     .slice(0, 12)
-    .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, score: p.finalScore }));
+    .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice, score: p.finalScore, formato: p.formato || null }));
 
   // Variantes principales que cubren cada restricción dietética (mismo nivel que el principal regular)
   const primaryDietaryCandidates: Record<string, { id: string; nombre: string; precio: number }[]> = {};
   for (const r of activeRestrictions) {
     primaryDietaryCandidates[r] = products
-      .filter(p => p.categoria === primaryCategory && isMainFoodOK(p) && productSupportsRestriction(p, normalizeDietaryTag(r)))
+      .filter(p => isMainCandidate(p) && productSupportsRestriction(p, normalizeDietaryTag(r)))
       .slice(0, 6)
       .map(p => ({ id: p.id, nombre: p.nombre, precio: p.effectivePrice }));
   }
@@ -629,6 +685,29 @@ async function composeWithClaude(
 
   const systemPrompt = `Eres el cotizador de Berlioz Catering Corporativo, empresa franco-mexicana de catering gourmet para clientes corporativos en CDMX (EY México, DHL, PepsiCo, Thomson Reuters, Maersk).
 
+== METADATA DEL CATÁLOGO — LEE ESTO PRIMERO ==
+
+Cada producto del catálogo trae estos campos del menú canónico de Berlioz. Son fuente de verdad y SON LA REGLA, no orientación:
+
+- categoria: categoría primaria del producto ("Desayuno" | "Coffee Break" | "Comida" | "Torta Piropo" | "Bebida").
+- segunda_categoria: categoría alternativa donde el producto también encaja (ej: un Desayuno con segunda_categoria "Working Lunch" puede usarse en eventos de Working Lunch). Si está vacía, sólo aplica a su categoría primaria.
+- tipo_menu: "Paquete" | "Simple" | "Variable (con variantes)" | "Add-on".
+    • "Add-on" = COMPLEMENTO. NUNCA puede ser plato principal. Solo va al final como acompañamiento.
+    • Los demás tipos pueden ser principales.
+- es_complemento: boolean (true cuando tipo_menu = "Add-on"). Si es true, JAMÁS lo elijas como principal.
+- formato: "individual" | "grupal" | null.
+    • "individual" = porción individual; multiplicar por personas (qty = personas asignadas).
+    • "grupal" = surtido/caja/mini surtido/paquete diseñado para varias personas. No multipliques por personas; usa qty=1 o qty proporcional al tamaño del grupo.
+    • null = trátalo como individual por defecto.
+
+REGLA OBLIGATORIA DE COMPLEMENTO vs PRINCIPAL:
+- Si es_complemento=true → es Add-on. Solo puede aparecer en el bloque de COMPLEMENTOS (paso 4). Nunca como principal.
+- Si es_complemento=false → puede ser principal (si pertenece a la categoría del evento).
+
+REGLA OBLIGATORIA DE FORMATO:
+- Para grupos ≤ 20 personas: prioriza formato="individual" para principales y add-ons. Solo usa "grupal" si NO hay equivalente individual.
+- Para grupos > 20 personas: puedes usar formato="grupal" (surtidos, cajas) y combinarlos con individuales sin duplicar (un surtido para 10 personas equivale a 10 porciones, no añadas 10 individuales encima).
+
 == ORDEN DE SELECCIÓN — OBLIGATORIO Y ESTRICTO ==
 
 Componer cada tier sigue SIEMPRE este orden, sin excepción:
@@ -640,7 +719,7 @@ Componer cada tier sigue SIEMPRE este orden, sin excepción:
    - CAPACITACIÓN→ Working Lunch como principal + Desayuno o Coffee Break como secundario.
    - REUNIÓN EJECUTIVA / FILMACIÓN → Working Lunch como principal.
 
-   El principal SIEMPRE debe pertenecer a la categoría primaria del evento. La selección se hace del bloque "TOP CANDIDATOS PRINCIPALES" que recibes en el user prompt — esos son los que tienen mejor score_comercial y son los que el cliente espera ver. Prefiere los primeros de esa lista antes que cualquier otro.
+   El principal SIEMPRE debe (a) pertenecer a la categoría primaria del evento O tener segunda_categoria == categoría del evento, y (b) tener es_complemento=false. La selección se hace del bloque "TOP CANDIDATOS PRINCIPALES" — esos productos ya están validados (no son Add-ons y pertenecen al evento). Prefiere los primeros de esa lista antes que cualquier otro.
 
 2) DISTRIBUCIÓN POR RESTRICCIONES DIETÉTICAS sobre el plato principal:
    - Si hay 8 personas y 1 vegano + 1 keto, entonces NO son "8 vegetarianos". Son 6 normales + 1 vegano + 1 keto.
@@ -652,16 +731,19 @@ Componer cada tier sigue SIEMPRE este orden, sin excepción:
    - Agua, café o jugo según el tipo. Cantidad = total de personas (compartido).
 
 4) ADD-ONS / COMPLEMENTOS (snacks, postres, surtidos, fruta):
-   - SÓLO después de cumplir 1-3. Son la última prioridad y solo si el tier permite más items.
+   - SÓLO productos con es_complemento=true O productos con formato="grupal" que el catálogo marca explícitamente como surtido/mini-surtido. NUNCA tomes un principal como add-on para "rellenar".
+   - Sólo después de cumplir 1-3. Última prioridad y solo si el tier permite más items.
    - En ESENCIAL casi nunca van; en EQUILIBRADO máximo 1; en EXPERIENCIA hasta 2.
-   - 🚫 PROHIBIDO usar como complemento productos de OTRA categoría que no sea la primaria o "Bebidas". Ejemplos: NO agregues "Crudités con hummus" (Working Lunch) en un Desayuno; NO agregues snacks/surtidos de Coffee Break en una Comida si la primaria es Working Lunch. Si necesitas un add-on debe ser de la MISMA categoría primaria o una bebida.
-   - 🚫 PROHIBIDO en EXPERIENCIA usar productos en formato GRUPAL (is_bulk=true: surtidos, cajas, bandejas, paquetes "para 10", "x 12", combos, kits) cuando el grupo es pequeño (<= 20 personas). Para EXPERIENCIA con grupos chicos prefiere SIEMPRE porciones INDIVIDUALES (per_person=true, is_bulk=false) multiplicadas por personas. Un paquete diseñado para 10 personas + 10 individuales = duplicación de comida y se rechaza.
+   - 🚫 PROHIBIDO usar add-ons de categoría/segunda_categoria que NO corresponda al evento. Ejemplo: en un Desayuno NO uses "Crudités con Limón" (su categoria es Coffee Break y su segunda_categoria es Working Lunch — no coincide con Desayuno).
+   - 🚫 PROHIBIDO en grupos pequeños (≤ 20) usar formato="grupal" como add-on. Elige formato="individual" y multiplica por personas.
+   - ✅ En grupos grandes (> 20) puedes usar surtidos (formato="grupal") como complemento sin multiplicar por personas.
 
 EJEMPLO CORRECTO desayuno 8 personas (1 vegano):
   ✅ 7× Chilaquiles Verdes + 1× Chilaquiles Veganos + 8× Café Berlioz + (opcional) 1× Fruta de Temporada como add-on.
 EJEMPLO INCORRECTO (NUNCA hagas esto):
   ❌ 1× Ensalada de Frutas + 1× Yogurt + 8× Agua. Falta el principal de desayuno (chilaquiles/huevos).
-  ❌ Para 10 personas en EXPERIENCIA: 1× Surtido Premium (para 10) + 10× Sandwich individual. Es comida duplicada — elige solo individuales.
+  ❌ Para 10 personas (formato="grupal") 1× Surtido Premium (para 10) + 10× Sandwich individual. Es comida duplicada — elige solo individuales.
+  ❌ Tomar un producto con es_complemento=true como plato principal. Los Add-ons NUNCA son principales.
 
 == PRESUPUESTO — REGLA MÁS IMPORTANTE ==
 
@@ -700,7 +782,7 @@ ESENCIAL: 2-3 productos. Principal de la categoría primaria + bebida. Funcional
 EQUILIBRADO: 3-4 productos. Principal (con sus variantes dietéticas) + bebida + máximo 1 add-on. La opción recomendada.
 
 EXPERIENCIA: 4-5 productos. Principal (con variantes dietéticas) + bebida premium + hasta 2 add-ons (postre, snack o surtido). Premium.
-   ⚠️ Para EXPERIENCIA con grupos pequeños (<= 20 personas), los add-ons deben ser INDIVIDUALES (is_bulk=false). Nunca uses surtidos/cajas/paquetes "para N personas": elige postres, snacks o panes individuales y multiplica por personas.
+   ⚠️ Para EXPERIENCIA con grupos pequeños (≤ 20 personas), los add-ons deben tener formato="individual". Nunca uses formato="grupal" en estos casos: elige postres/snacks/panes individuales y multiplica por personas.
 
 == REGLAS BERLIOZ ==
 
@@ -758,7 +840,7 @@ Categorías secundarias permitidas (sólo como complemento): ${secondaryCategori
 
 TOP CANDIDATOS PRINCIPALES (categoria="${primaryCategory}", ordenados por score_comercial — elige el principal de aquí):
 ${primaryCandidates.length > 0
-    ? primaryCandidates.map((p, i) => `  ${i + 1}. ${p.id} = ${p.nombre} ($${p.precio}, score ${p.score})`).join('\n')
+    ? primaryCandidates.map((p, i) => `  ${i + 1}. ${p.id} = ${p.nombre} ($${p.precio}, score ${p.score}, formato=${p.formato || 'n/a'})`).join('\n')
     : '  ⚠️ No hay candidatos principales de esta categoría; usa la mejor alternativa secundaria y anótalo.'}
 ${activeRestrictions.length > 0 ? `
 VARIANTES PRINCIPALES POR RESTRICCIÓN (mismo principal, versión dietética — preferir antes que sustitutos de otras categorías):
@@ -1169,7 +1251,15 @@ serve(async (req) => {
       menuAll = [];
     }
     // Sólo las categorías relevantes al tipo de evento
-    const allProducts: DbProduct[] = menuAll.filter(p => categories.includes(p.categoria || ''));
+    // Acepta match por categoria primaria del producto, por su segunda_categoria,
+    // y normaliza Bebidas↔Bebida (el catálogo usa "Bebida" en singular).
+    const wanted = new Set<string>(categories);
+    if (wanted.has('Bebidas')) wanted.add('Bebida');
+    if (wanted.has('Bebida')) wanted.add('Bebidas');
+    const allProducts: DbProduct[] = menuAll.filter(p =>
+      wanted.has(p.categoria || '')
+      || wanted.has(p.menu_segunda_categoria || ''),
+    );
     const parentMap = new Map<string, DbProduct>(); // imágenes ya van resueltas en el flat
 
     // ── 3. Score & enrich all products ──

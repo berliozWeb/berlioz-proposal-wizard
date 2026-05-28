@@ -177,16 +177,24 @@ const CatalogPage = () => {
   const [searchParams] = useSearchParams();
   const { itemCount } = useCart();
   const { data: productos = [], isLoading: loading, error, refetch } = useMenuCotizador();
-  const [filter, setFilter] = useState(searchParams.get("categoria") || "todos");
+  const { productos: catalogProductos } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
+  const favoritoIds = useMemo(() => {
+    return new Set(catalogProductos.filter((p) => p.destacado).map((p) => p.id));
+  }, [catalogProductos]);
+  const productosConFavorito = useMemo(() => {
+    return productos.map((p) => ({ ...p, isFavorito: favoritoIds.has(p.product_id) }));
+  }, [productos, favoritoIds]);
+
+  const [filter, setFilter] = useState(searchParams.get("categoria") || "favoritos");
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
-  // Category tabs (fixed order) + Todos + dietary
+  // Category tabs: Favoritos first, then categories, then dietary
   const categoryFilters = useMemo(() => {
     const present = new Set(productos.map((p) => p.categoria));
     const cats = CATEGORIAS_COTIZADOR.filter((c) => present.has(c));
     return [
-      ...STATIC_FILTERS,
+      FAVORITOS_FILTER,
       ...cats.map((c) => ({ value: c, label: c, emoji: CATEGORY_EMOJIS[c] ?? "🍽️" })),
       ...TAG_FILTERS,
     ];

@@ -213,7 +213,104 @@ function productSupportsAnyRestriction(product: Pick<DbProduct, 'dietary_tags'>,
 }
 
 function isBeverageCategory(category?: string | null): boolean {
-  return category === 'Bebidas';
+  return category === 'Bebida' || category === 'Bebidas';
+}
+
+// ═══ CANONICAL MENU SOURCE — get-menu-cotizador (single source of truth) ═══
+const MENU_COTIZADOR_URL =
+  'https://rrfvdhegvgmejxmsdijn.supabase.co/functions/v1/get-menu-cotizador';
+
+function isYesFlag(v: unknown): boolean {
+  if (!v) return false;
+  const s = String(v).trim().toLowerCase();
+  return s === 'sí' || s === 'si';
+}
+
+interface RemoteVariante {
+  variante_id: string;
+  nombre_variante: string | null;
+  nombre_display?: string | null;
+  precio: number;
+  notas_precio?: string | null;
+  es_base?: boolean;
+  es_comida?: string | null;
+  vegetariano?: string | null;
+  vegano?: string | null;
+  keto?: string | null;
+  sin_gluten?: string | null;
+  sin_lactosa?: string | null;
+  img?: string | null;
+}
+
+interface RemoteProducto {
+  product_id: string;
+  nombre: string;
+  categoria: string;
+  segunda_categoria?: string | null;
+  subcategoria?: string | null;
+  tipo?: string;
+  desc_mini?: string | null;
+  desc_corta?: string | null;
+  img_principal?: string | null;
+  img_fallback?: string | null;
+  galeria?: string[];
+  variantes: RemoteVariante[];
+}
+
+/**
+ * Carga el menú canónico y aplana producto×variante a DbProduct[].
+ * Cada variante es un candidato independiente con sus propios flags dietéticos.
+ */
+async function fetchMenuCotizador(): Promise<DbProduct[]> {
+  const res = await fetch(MENU_COTIZADOR_URL, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) {
+    throw new Error(`get-menu-cotizador responded ${res.status}`);
+  }
+  const json = await res.json();
+  const productos: RemoteProducto[] = Array.isArray(json?.productos) ? json.productos : [];
+
+  const flat: DbProduct[] = [];
+  for (const p of productos) {
+    const variantes = Array.isArray(p.variantes) ? p.variantes : [];
+    const hasMany = variantes.length > 1;
+    for (const v of variantes) {
+      const tags: string[] = [];
+      if (isYesFlag(v.vegetariano)) tags.push('vegetariano');
+      if (isYesFlag(v.vegano)) tags.push('vegano');
+      if (isYesFlag(v.keto)) tags.push('keto');
+      if (isYesFlag(v.sin_gluten)) tags.push('sin_gluten');
+      if (isYesFlag(v.sin_lactosa)) tags.push('sin_lactosa');
+
+      const precio = Number(v.precio) || 0;
+      const nombre = v.nombre_display
+        || (v.nombre_variante ? `${p.nombre} — ${v.nombre_variante}` : p.nombre);
+
+      flat.push({
+        id: v.variante_id,
+        nombre,
+        descripcion: p.desc_corta || p.desc_mini || null,
+        descripcion_corta: p.desc_mini || null,
+        precio,
+        precio_min: precio,
+        precio_max: precio,
+        categoria: p.categoria,
+        tipo: 'simple',
+        imagen_url: v.img || p.img_principal || p.img_fallback || null,
+        parent_id: hasMany ? p.product_id : null,
+        dietary_tags: tags,
+        score_comercial: v.es_base ? 70 : 55,
+        score_visual: 60,
+        pricing_model: 'per_person',
+        serves_up_to: null,
+        destacado: !!v.es_base,
+        variantes: v.nombre_variante || null,
+        es_comida_main: isYesFlag(v.es_comida),
+      });
+    }
+  }
+  return flat;
 }
 
 function isGroupPricedProduct(product: Pick<DbProduct, 'nombre' | 'categoria' | 'precio' | 'precio_min' | 'pricing_model'>): boolean {

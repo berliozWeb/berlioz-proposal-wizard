@@ -114,30 +114,82 @@ function calcSubtotal(items: RawItem[]): number {
 }
 
 // ── Selector Coffee Break ────────────────────────────────────
-function getCoffeeItems(people: number, dietaryCounts: {tipo:string;cantidad:number}[], targetSub: number): RawItem[] {
+// tier: "esencial" | "equilibrado" | "experiencia"
+function getCoffeeItems(
+  people: number,
+  dietaryCounts: {tipo:string;cantidad:number}[],
+  targetSub: number,
+  tier: "esencial"|"equilibrado"|"experiencia"
+): RawItem[] {
   const items: RawItem[] = [];
-  const sinR = Math.max(0, people - dietaryCounts.reduce((s,d) => s+d.cantidad, 0));
-  const veganos = dietaryCounts.filter(d => d.tipo==="vegano"||d.tipo==="sin_gluten").reduce((s,d)=>s+d.cantidad,0);
 
-  // Elegir surtido para sinRestriccion
-  if (sinR > 0) {
-    const subDisponible = targetSub * 0.75; // reserva 25% para café y extras
-    let surtido = SURTIDOS[0];
-    for (const s of SURTIDOS) {
-      if (s.p * Math.ceil(sinR / s.qg) <= subDisponible) surtido = s;
+  // Personas que SÍ pueden comer surtidos (sin restricción + vegetariano)
+  const keto    = dietaryCounts.filter(d=>d.tipo==="keto").reduce((s,d)=>s+d.cantidad,0);
+  const vegano  = dietaryCounts.filter(d=>d.tipo==="vegano").reduce((s,d)=>s+d.cantidad,0);
+  const sg      = dietaryCounts.filter(d=>d.tipo==="sin_gluten").reduce((s,d)=>s+d.cantidad,0);
+  const sinLac  = dietaryCounts.filter(d=>d.tipo==="sin_lactosa").reduce((s,d)=>s+d.cantidad,0);
+  const veg     = dietaryCounts.filter(d=>d.tipo==="vegetariano").reduce((s,d)=>s+d.cantidad,0);
+
+  // Personas que no pueden comer pan/bocadillos del surtido (keto, vegano, sin_gluten)
+  const noSurtido = keto + vegano + sg;
+  const conSurtido = Math.max(0, people - noSurtido); // sin restricción + vegetariano + sin lactosa
+
+  // ── Surtido según tier y cuántas personas lo pueden comer ──
+  if (conSurtido > 0) {
+    // Surtido diferente por tier
+    let surtido;
+    if (tier === "esencial") {
+      // Mini surtidos económicos
+      surtido = Math.ceil(conSurtido / 4) <= 2
+        ? { id:"mini-surtido-colette", n:"Mini Surtido Colette (10 panes franceses)", p:290, qg:4, img:IMG.surtido_colette }
+        : { id:"surtido-balzac", n:"Surtido Balzac (25 pastelitos)", p:400, qg:8, img:IMG.surtido_balzac };
+    } else if (tier === "equilibrado") {
+      // Surtidos estándar
+      surtido = conSurtido <= 6
+        ? { id:"surtido-colette", n:"Surtido Colette (25 panes franceses)", p:450, qg:9, img:IMG.surtido_colette }
+        : { id:"surtido-voltaire", n:"Surtido Voltaire (15 bocadillos variados)", p:750, qg:6, img:IMG.surtido_voltaire };
+    } else {
+      // Premium: bocadillos gourmet
+      surtido = { id:"surtido-camille", n:"Surtido Camille (15 bocadillos salados)", p:700, qg:6, img:IMG.surtido_camille };
     }
-    const qty = Math.ceil(sinR / surtido.qg);
-    items.push({ id:surtido.id, n:surtido.n, p:surtido.p, qty, img:surtido.img, reason:`Para ${sinR} personas`, cat:"Coffee Break", desc:"Pan y bocadillos gourmet para compartir." });
+    const qty = Math.ceil(conSurtido / surtido.qg);
+    const reason = veg > 0
+      ? `Para ${conSurtido - veg} personas + ${veg} vegetariano${veg>1?"s":""}`
+      : `Para ${conSurtido} personas`;
+    items.push({ id:surtido.id, n:surtido.n, p:surtido.p, qty, img:surtido.img, reason, cat:"Coffee Break", desc:"Selección gourmet de bocadillos y panes para compartir." });
   }
 
-  // Café (siempre 1 termo mínimo)
+  // ── Café (siempre, para todos) ──
   const cafeQty = Math.max(1, Math.ceil(people / BEV_CAFE.qg));
-  items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:cafeQty, img:BEV_CAFE.img, reason:"Bebida del evento", cat:"Bebida", desc:"Café o té para 12 tazas en termo. Se mantiene caliente 3 horas." });
+  items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:cafeQty, img:BEV_CAFE.img,
+    reason:"Bebida caliente para todos", cat:"Bebida", desc:"Café o té en termo para 12 tazas. Se mantiene caliente 3 horas." });
 
-  // Extras para veganos/sin_gluten (no pueden comer pan dulce)
-  if (veganos > 0) {
-    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:veganos, img:ADDON_CRUDITES.img, reason:`Para ${veganos} personas ${dietaryCounts.filter(d=>d.tipo==="vegano").length>0?"veganas":"sin gluten"}`, cat:"Snack", desc:"Jícama, zanahoria, pepino y apio frescos con limón y chile. Vegano." });
-    items.push({ id:ADDON_SEMILLAS.id, n:ADDON_SEMILLAS.n, p:ADDON_SEMILLAS.p, qty:veganos, img:ADDON_SEMILLAS.img, reason:"Snack apto para restricción", cat:"Snack", desc:"Mix artesanal de semillas tostadas. Vegano, keto y sin gluten." });
+  // ── Opciones para personas con restricciones dietéticas ──
+  // Veganos: crudités + semillas (vegano, sin gluten, sin lactosa)
+  if (vegano > 0) {
+    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:vegano,
+      img:ADDON_CRUDITES.img, reason:`🌱 Vegano — ${vegano} persona${vegano>1?"s":""}`,
+      cat:"Snack", desc:"Jícama, zanahoria, pepino y apio frescos con limón y chile. 100% vegano." });
+    items.push({ id:ADDON_SEMILLAS.id, n:ADDON_SEMILLAS.n, p:ADDON_SEMILLAS.p, qty:vegano,
+      img:ADDON_SEMILLAS.img, reason:`🌱 Vegano — complemento`,
+      cat:"Snack", desc:"Mix artesanal de semillas tostadas. Vegano, keto y sin gluten." });
+  }
+
+  // Keto: crudités + semillas (no pan, no azúcar)
+  if (keto > 0) {
+    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:keto,
+      img:ADDON_CRUDITES.img, reason:`🔥 Keto — ${keto} persona${keto>1?"s":""}`,
+      cat:"Snack", desc:"Jícama, zanahoria, pepino y apio frescos. Sin carbohidratos." });
+    items.push({ id:ADDON_SEMILLAS.id, n:ADDON_SEMILLAS.n, p:ADDON_SEMILLAS.p, qty:keto,
+      img:ADDON_SEMILLAS.img, reason:`🔥 Keto — complemento`,
+      cat:"Snack", desc:"Mix de semillas naturales. Keto, vegano y sin gluten." });
+  }
+
+  // Sin gluten (si no es también keto o vegano, ya cubiertos arriba)
+  if (sg > 0) {
+    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:sg,
+      img:ADDON_CRUDITES.img, reason:`🌾 Sin Gluten — ${sg} persona${sg>1?"s":""}`,
+      cat:"Snack", desc:"Crudités frescos. Sin gluten, sin lácteos." });
   }
 
   return items;
@@ -237,9 +289,9 @@ function buildAllTiers(
 
   if (ev === "coffee") {
     return {
-      esencial:    getCoffeeItems(people, dietaryCounts, targets.esencial),
-      equilibrado: getCoffeeItems(people, dietaryCounts, targets.equilibrado),
-      experiencia: getCoffeeItems(people, dietaryCounts, targets.experiencia),
+      esencial:    getCoffeeItems(people, dietaryCounts, targets.esencial,    "esencial"),
+      equilibrado: getCoffeeItems(people, dietaryCounts, targets.equilibrado, "equilibrado"),
+      experiencia: getCoffeeItems(people, dietaryCounts, targets.experiencia, "experiencia"),
     };
   }
 

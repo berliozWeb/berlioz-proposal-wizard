@@ -700,6 +700,7 @@ ESENCIAL: 2-3 productos. Principal de la categoría primaria + bebida. Funcional
 EQUILIBRADO: 3-4 productos. Principal (con sus variantes dietéticas) + bebida + máximo 1 add-on. La opción recomendada.
 
 EXPERIENCIA: 4-5 productos. Principal (con variantes dietéticas) + bebida premium + hasta 2 add-ons (postre, snack o surtido). Premium.
+   ⚠️ Para EXPERIENCIA con grupos pequeños (<= 20 personas), los add-ons deben ser INDIVIDUALES (is_bulk=false). Nunca uses surtidos/cajas/paquetes "para N personas": elige postres, snacks o panes individuales y multiplica por personas.
 
 == REGLAS BERLIOZ ==
 

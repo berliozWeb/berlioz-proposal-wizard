@@ -12,28 +12,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMXN } from "@/domain/value-objects/Money";
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/berlioz-logo.png";
 import {
-  drawTopBanner,
-  drawHero,
-  drawQuoteIdBar,
-  drawInfoColumns,
-  drawSectionLabel,
-  drawNotesAndBrand,
-  drawBottomBand,
+  ensureMontserrat,
+  registerMontserrat,
+  setFont,
+  drawHeaderLogo,
+  drawHeroFull,
+  drawQuoteId,
+  drawTwoColFields,
+  drawLabel,
+  drawTableHeader,
+  drawNotesBlock,
+  applyFooterAllPages,
   heroAssetForEvent,
   loadImageBase64,
-  MARGIN as PDF_MARGIN,
-  HEADER_H,
+  colXs,
+  PAGE_W,
+  PAGE_H,
+  MARGIN_X,
+  MARGIN_Y,
   HERO_H,
-  TEAL,
-  CREAM_SOFT,
-  CREAM_LINE,
-  CREAM_BANNER,
-  TEXT_DARK,
-  TEXT_MUTED,
-  HAIRLINE,
+  NAVY,
+  ROSE_PALE,
+  ROW_RULE,
+  TEXT_MAIN,
+  TEXT_SUB,
 } from "@/lib/pdfTemplate";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import { ProductCollage } from "@/components/ProductCollage";

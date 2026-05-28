@@ -153,9 +153,9 @@ function buildAllTiers(
   const subtotalMax = (totalBudget - ENVIO_CALC) / (1 + IVA);
 
   const targets = {
-    esencial:    subtotalMax * 0.75,
+    esencial:    subtotalMax * 0.82,
     equilibrado: subtotalMax * 1.00,
-    experiencia: subtotalMax * 1.20,
+    experiencia: subtotalMax * 1.22,
   };
 
   const ev = eventType.toLowerCase().includes("coffee") ? "coffee"

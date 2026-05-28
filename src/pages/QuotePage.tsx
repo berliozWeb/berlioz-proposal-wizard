@@ -24,6 +24,7 @@ import {
 } from "@/domain/entities/DeliveryGroup";
 import { generateMultiDeliveryPdf } from "@/lib/multiDeliveryPdf";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Images
 // Premium Images from src/assets/imagenes_menu
@@ -144,6 +145,76 @@ const QuotePage = () => {
   const [dietaryDistribution, setDietaryDistribution] = useState<Record<string, number>>({
     vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0,
   });
+
+  // Natural-language quote intake
+  const [naturalText, setNaturalText] = useState("");
+  const [isParsing, setIsParsing] = useState(false);
+
+  const handleNaturalParse = async () => {
+    if (!naturalText.trim() || isParsing) return;
+    setIsParsing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-quote-request", {
+        body: { text: naturalText },
+      });
+      if (error || !data || (data as any).error) {
+        toast.error((data as any)?.error || "No pude entender la descripción.");
+        return;
+      }
+      const p = data as {
+        eventType?: string;
+        peopleCount?: number;
+        budgetEnabled?: boolean;
+        budgetPerPerson?: number | null;
+        dietaryCounts?: { tipo: string; cantidad: number }[];
+        contactName?: string | null;
+        companyName?: string | null;
+      };
+
+      // Map eventType ("comida" → "working-lunch")
+      const etMap: Record<string, string> = {
+        comida: "working-lunch",
+        desayuno: "desayuno",
+        "coffee-break": "coffee-break",
+        otro: "otro",
+      };
+      if (p.eventType && etMap[p.eventType]) {
+        setEventType(etMap[p.eventType]);
+      }
+
+      if (typeof p.peopleCount === "number") setPeople(p.peopleCount);
+
+      if (typeof p.budgetEnabled === "boolean") {
+        setHasBudget(p.budgetEnabled);
+        if (p.budgetEnabled && typeof p.budgetPerPerson === "number" && p.budgetPerPerson > 0) {
+          setBudget(p.budgetPerPerson);
+        }
+      }
+
+      if (Array.isArray(p.dietaryCounts) && p.dietaryCounts.length > 0) {
+        const dist: Record<string, number> = { vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0 };
+        for (const d of p.dietaryCounts) {
+          if (d.tipo in dist) dist[d.tipo] = Math.max(0, Number(d.cantidad) || 0);
+        }
+        setDietaryDistribution(dist);
+        setHasDietary(true);
+      } else if (typeof p.dietaryCounts !== "undefined") {
+        setHasDietary(false);
+      }
+
+      if (p.contactName) setClientName(p.contactName);
+      if (p.companyName) setEmpresa(p.companyName);
+
+      // Default event mode to single if not chosen so the flow can advance
+      setEventMode((prev) => prev ?? "single");
+      setStep(1);
+    } catch (e) {
+      console.error(e);
+      toast.error("No pude entender la descripción.");
+    } finally {
+      setIsParsing(false);
+    }
+  };
 
   // Ref para smooth scroll al formulario de detalles
   const detailsRef = useRef<HTMLDivElement>(null);
@@ -352,6 +423,32 @@ const QuotePage = () => {
       {/* ═══ STEP 0 — SINGLE PAGE, CONTINUOUS SCROLL ═══ */}
       {step === 0 && (
         <div className="max-w-5xl mx-auto px-6 py-4 space-y-12">
+
+          {/* ── Natural-language intake ── */}
+          <section className="animate-slide-up max-w-3xl mx-auto w-full">
+            <div className="bg-[#EDD9C8]/40 border border-[#014D6F]/15 rounded-3xl p-6 md:p-8">
+              <h2 className="font-heading text-xl md:text-2xl text-[#014D6F] mb-1 tracking-tight">
+                Describe tu evento
+              </h2>
+              <p className="font-body text-sm text-[#014D6F]/70 mb-4">
+                Escribe en lenguaje natural y generamos tu propuesta al instante.
+              </p>
+              <textarea
+                value={naturalText}
+                onChange={(e) => setNaturalText(e.target.value)}
+                placeholder="Ej: Necesito una comida para 25 personas, 3 veganos y 1 sin gluten, presupuesto $250 por persona…"
+                rows={4}
+                className="w-full rounded-2xl border border-[#014D6F]/20 bg-white px-4 py-3 text-sm text-[#014D6F] placeholder-[#CEC1B9] focus:outline-none focus:ring-2 focus:ring-[#014D6F] resize-none"
+              />
+              <button
+                onClick={handleNaturalParse}
+                disabled={!naturalText.trim() || isParsing}
+                className="mt-3 w-full h-12 rounded-full bg-[#014D6F] text-white font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {isParsing ? "Procesando..." : "Generar propuesta →"}
+              </button>
+            </div>
+          </section>
 
           {/* ── Section A: Event mode (compact cards) ── */}
           <section className="animate-slide-up">

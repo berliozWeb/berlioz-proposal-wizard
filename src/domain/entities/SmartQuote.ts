@@ -17,6 +17,7 @@ export interface ProposedProduct {
   sourceType: 'supabase' | 'deterministic-fallback';
   swapGroup: string | null;
   categoria: string | null;
+  descripcion?: string | null;
 }
 
 export interface ProposalPackage {

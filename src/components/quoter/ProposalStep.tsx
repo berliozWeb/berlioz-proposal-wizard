@@ -14,6 +14,27 @@ import { formatMXN } from "@/domain/value-objects/Money";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "@/assets/berlioz-logo.png";
+import {
+  drawTopBanner,
+  drawHero,
+  drawQuoteIdBar,
+  drawInfoColumns,
+  drawSectionLabel,
+  drawNotesAndBrand,
+  drawBottomBand,
+  heroAssetForEvent,
+  loadImageBase64,
+  MARGIN as PDF_MARGIN,
+  HEADER_H,
+  HERO_H,
+  TEAL,
+  CREAM_SOFT,
+  CREAM_LINE,
+  CREAM_BANNER,
+  TEXT_DARK,
+  TEXT_MUTED,
+  HAIRLINE,
+} from "@/lib/pdfTemplate";
 import type { SmartQuoteResponse, ProposalPackage } from "@/domain/entities/SmartQuote";
 import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";

@@ -146,6 +146,76 @@ const QuotePage = () => {
     vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0,
   });
 
+  // Natural-language quote intake
+  const [naturalText, setNaturalText] = useState("");
+  const [isParsing, setIsParsing] = useState(false);
+
+  const handleNaturalParse = async () => {
+    if (!naturalText.trim() || isParsing) return;
+    setIsParsing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-quote-request", {
+        body: { text: naturalText },
+      });
+      if (error || !data || (data as any).error) {
+        toast.error((data as any)?.error || "No pude entender la descripción.");
+        return;
+      }
+      const p = data as {
+        eventType?: string;
+        peopleCount?: number;
+        budgetEnabled?: boolean;
+        budgetPerPerson?: number | null;
+        dietaryCounts?: { tipo: string; cantidad: number }[];
+        contactName?: string | null;
+        companyName?: string | null;
+      };
+
+      // Map eventType ("comida" → "working-lunch")
+      const etMap: Record<string, string> = {
+        comida: "working-lunch",
+        desayuno: "desayuno",
+        "coffee-break": "coffee-break",
+        otro: "otro",
+      };
+      if (p.eventType && etMap[p.eventType]) {
+        setEventType(etMap[p.eventType]);
+      }
+
+      if (typeof p.peopleCount === "number") setPeople(p.peopleCount);
+
+      if (typeof p.budgetEnabled === "boolean") {
+        setHasBudget(p.budgetEnabled);
+        if (p.budgetEnabled && typeof p.budgetPerPerson === "number" && p.budgetPerPerson > 0) {
+          setBudget(p.budgetPerPerson);
+        }
+      }
+
+      if (Array.isArray(p.dietaryCounts) && p.dietaryCounts.length > 0) {
+        const dist: Record<string, number> = { vegano: 0, vegetariano: 0, sin_gluten: 0, sin_lactosa: 0, keto: 0 };
+        for (const d of p.dietaryCounts) {
+          if (d.tipo in dist) dist[d.tipo] = Math.max(0, Number(d.cantidad) || 0);
+        }
+        setDietaryDistribution(dist);
+        setHasDietary(true);
+      } else if (typeof p.dietaryCounts !== "undefined") {
+        setHasDietary(false);
+      }
+
+      if (p.contactName) setClientName(p.contactName);
+      if (p.companyName) setEmpresa(p.companyName);
+
+      // Default event mode to single if not chosen so the flow can advance
+      setEventMode((prev) => prev ?? "single");
+      setStep(1);
+    } catch (e) {
+      console.error(e);
+      toast.error("No pude entender la descripción.");
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
   // Ref para smooth scroll al formulario de detalles
   const detailsRef = useRef<HTMLDivElement>(null);
 

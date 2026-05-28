@@ -22,7 +22,7 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   "Bebida": "🥤",
   "Torta Piropo": "🥖",
 };
-const STATIC_FILTERS = [{ value: "todos", label: "Todos", emoji: "🍽️" }];
+const FAVORITOS_FILTER = { value: "favoritos", label: "Favoritos", emoji: "★" };
 const TAG_FILTERS: { value: DietaryFilter; label: string; emoji: string }[] = [
   { value: "vegetariano", label: "Vegetariano", emoji: "🌿" },
   { value: "vegano", label: "Vegano", emoji: "🌱" },

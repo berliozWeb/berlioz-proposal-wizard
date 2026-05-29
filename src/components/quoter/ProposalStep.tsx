@@ -43,6 +43,7 @@ import { ProductCollage } from "@/components/ProductCollage";
 import { buildProductImageUrl } from "@/lib/imageUtils";
 import { useCatalogoCotizador, getCategoryFallback, QUOTER_SIDEBAR_CATEGORIES } from "@/hooks/useCatalogoCotizador";
 import AdminFeedbackPanel from "@/components/proposal/AdminFeedbackPanel";
+import UpsellModal, { type UpsellRecommendation } from "@/components/quoter/UpsellModal";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -456,6 +457,7 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [swapTarget, setSwapTarget] = useState<{ tier: PackageTier; instanceId: string } | null>(null);
   const [selectedTier, setSelectedTier] = useState<PackageTier | null>(null);
   const [hasReceivedSmartData, setHasReceivedSmartData] = useState(!!smartQuoteData);
+  const [upsellOpen, setUpsellOpen] = useState(false);
 
   // When smartQuoteData arrives after initial render, rebuild packages
   useEffect(() => {
@@ -598,6 +600,11 @@ export default function ProposalStep(props: ProposalStepProps) {
 
   const handleConfirmOrder = () => {
     if (!selectedTier) return;
+    setUpsellOpen(true);
+  };
+
+  const finalizeOrder = (extras: UpsellRecommendation[] = []) => {
+    if (!selectedTier) return;
     // Send feedback: user accepted this proposal
     const proposalId = smartQuoteData?.proposalId;
     if (proposalId && onSubmitFeedback) {
@@ -606,6 +613,10 @@ export default function ProposalStep(props: ProposalStepProps) {
     clearCart();
     packages[selectedTier].items.forEach((item, i) => {
       addItem({ id: `quote-${selectedTier}-${i}`, name: item.productName, price: item.unitPrice, quantity: item.qty });
+    });
+    extras.forEach((ex, i) => {
+      const qty = ex.unit?.toLowerCase().includes("grupal") ? 1 : people;
+      addItem({ id: `upsell-${ex.id}-${i}`, name: ex.name, price: ex.price, quantity: qty });
     });
     navigate("/checkout");
   };
@@ -1120,6 +1131,29 @@ export default function ProposalStep(props: ProposalStepProps) {
           </div>
         </>
       )}
+      <UpsellModal
+        open={upsellOpen}
+        tierItems={(selectedTier ? packages[selectedTier].items : []).map((it) => ({
+          productName: it.productName,
+          quantity: it.qty,
+          unitPrice: it.unitPrice,
+        }))}
+        eventType={eventType}
+        peopleCount={people}
+        dietaryCounts={Object.entries(dietaryDistribution ?? {})
+          .filter(([, v]) => (v as number) > 0)
+          .map(([tipo, cantidad]) => ({ tipo, cantidad: cantidad as number }))}
+        month={date ? date.getMonth() + 1 : undefined}
+        onConfirm={(extras) => {
+          setUpsellOpen(false);
+          finalizeOrder(extras);
+        }}
+        onSkip={() => {
+          setUpsellOpen(false);
+          finalizeOrder([]);
+        }}
+        onClose={() => setUpsellOpen(false)}
+      />
     </div>
   );
 }

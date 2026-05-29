@@ -1131,6 +1131,30 @@ export default function ProposalStep(props: ProposalStepProps) {
           </div>
         </>
       )}
+      <UpsellModal
+        open={upsellOpen}
+        tierItems={(selectedTier ? packages[selectedTier].items : []).map((it) => ({
+          productName: it.productName,
+          quantity: it.qty,
+          unitPrice: it.unitPrice,
+        }))}
+        eventType={eventType}
+        peopleCount={people}
+        dietaryCounts={(dietaryDistribution ?? []).map((d: any) => ({
+          tipo: d.tipo ?? d.type ?? "",
+          cantidad: d.cantidad ?? d.count ?? 0,
+        }))}
+        month={date ? date.getMonth() + 1 : undefined}
+        onConfirm={(extras) => {
+          setUpsellOpen(false);
+          finalizeOrder(extras);
+        }}
+        onSkip={() => {
+          setUpsellOpen(false);
+          finalizeOrder([]);
+        }}
+        onClose={() => setUpsellOpen(false)}
+      />
     </div>
   );
 }

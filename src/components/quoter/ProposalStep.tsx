@@ -44,6 +44,7 @@ import { buildProductImageUrl } from "@/lib/imageUtils";
 import { useCatalogoCotizador, getCategoryFallback, QUOTER_SIDEBAR_CATEGORIES } from "@/hooks/useCatalogoCotizador";
 import AdminFeedbackPanel from "@/components/proposal/AdminFeedbackPanel";
 import UpsellModal, { type UpsellRecommendation } from "@/components/quoter/UpsellModal";
+import InlineUpsell from "@/components/quoter/InlineUpsell";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,
@@ -458,6 +459,7 @@ export default function ProposalStep(props: ProposalStepProps) {
   const [selectedTier, setSelectedTier] = useState<PackageTier | null>(null);
   const [hasReceivedSmartData, setHasReceivedSmartData] = useState(!!smartQuoteData);
   const [upsellOpen, setUpsellOpen] = useState(false);
+  const [tierExtras, setTierExtras] = useState<Record<string, UpsellRecommendation[]>>({});
 
   // When smartQuoteData arrives after initial render, rebuild packages
   useEffect(() => {
@@ -600,7 +602,7 @@ export default function ProposalStep(props: ProposalStepProps) {
 
   const handleConfirmOrder = () => {
     if (!selectedTier) return;
-    setUpsellOpen(true);
+    finalizeOrder(tierExtras[selectedTier] ?? []);
   };
 
   const finalizeOrder = (extras: UpsellRecommendation[] = []) => {
@@ -867,11 +869,11 @@ export default function ProposalStep(props: ProposalStepProps) {
                         {pkg.tagline || tier.subtitle}
                       </p>
                       {(() => {
-                        const ppp = t.total / Math.max(1, people);
+                        const ppp = t.subtotal / Math.max(1, people);
                         return (
                           <span
                             className="font-heading text-[12px] font-semibold text-[#014D6F]/80 whitespace-nowrap"
-                            title={budgetPerPerson ? `Presupuesto: $${budgetPerPerson}/persona` : 'Precio por persona (incluye IVA y envío)'}
+                            title={budgetPerPerson ? `Presupuesto: $${budgetPerPerson}/persona` : 'Precio por persona (solo productos, sin IVA ni envío)'}
                           >
                             {formatMXN(ppp)}/persona
                           </span>
@@ -938,6 +940,25 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </p>
                   </div>
                 </div>
+                {isSelected && (
+                  <InlineUpsell
+                    tierItems={pkg.items.map((it) => ({
+                      productName: it.productName,
+                      quantity: it.qty,
+                      unitPrice: it.unitPrice,
+                    }))}
+                    eventType={eventType}
+                    peopleCount={people}
+                    dietaryCounts={Object.entries(dietaryDistribution ?? {})
+                      .filter(([, v]) => (v as number) > 0)
+                      .map(([tipo, cantidad]) => ({ tipo, cantidad: cantidad as number }))}
+                    month={date ? date.getMonth() + 1 : undefined}
+                    selectedIds={(tierExtras[tier.id] ?? []).map((e) => e.id)}
+                    onSelectionChange={(extras) =>
+                      setTierExtras((prev) => ({ ...prev, [tier.id]: extras }))
+                    }
+                  />
+                )}
                 <AdminFeedbackPanel
                   proposalId={smartQuoteData?.proposalId || null}
                   packageTier={tier.id}

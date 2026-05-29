@@ -146,9 +146,30 @@ function selectSinRProducts(
   const sorted = [...products].sort((a, b) => a.p - b.p);
   const maxP = sorted[sorted.length - 1].p;
 
-  // Si el target supera al producto más caro → usar el más caro para todos
+  const mostExpensive = sorted[sorted.length - 1];
+  const secondMost    = sorted.length >= 2 ? sorted[sorted.length - 2] : mostExpensive;
+
+  // Si el target supera al producto más caro → variar con rotIdx entre cotizaciones
   if (targetPP >= maxP * 0.95) {
-    return [{ box: sorted[sorted.length - 1], qty: sinR }];
+    if (sinR <= 3 || rotIdx === 0) {
+      // Todo al más caro
+      return [{ box: mostExpensive, qty: sinR }];
+    } else if (rotIdx === 1 && secondMost.id !== mostExpensive.id) {
+      // 50/50 entre los dos más caros
+      const a = Math.ceil(sinR / 2), b = sinR - a;
+      return [
+        { box: mostExpensive, qty: a },
+        { box: secondMost, qty: b },
+      ];
+    } else {
+      // Rotar: 1/3 del segundo más caro, resto al más caro
+      const b = Math.ceil(sinR / 3);
+      const a = sinR - b;
+      return [
+        { box: mostExpensive, qty: a },
+        ...(secondMost.id !== mostExpensive.id && b > 0 ? [{ box: secondMost, qty: b }] : []),
+      ];
+    }
   }
 
   // Banda de ±15% alrededor del targetPP
@@ -353,10 +374,11 @@ function distribuirFormatos(
 function getBoxItems(
   tabla: Record<string, BoxDef>,
   tier: string,
+  ev: string,                // "desayuno" | "comida" para elegir add-ons correctos
   people: number,
   dietaryCounts: {tipo:string;cantidad:number}[],
   targetSub: number,
-  sinRProducts?: BoxDef[],  // pool de productos para personas sin restricción
+  sinRProducts?: BoxDef[],
   rotIdx = 0
 ): RawItem[] {
   const sinR = Math.max(0, people - dietaryCounts.reduce((s,d)=>s+d.cantidad, 0));
@@ -417,11 +439,34 @@ function getBoxItems(
 
   // Bebida
   const sub = calcSubtotal(items);
-  const left = targetSub - sub;
+  let left = targetSub - sub;
   if (left >= 480) {
     items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:1, img:BEV_CAFE.img, reason:"Bebida caliente del evento", cat:"Bebida", desc:"Café o té para 12 tazas en termo. Se mantiene caliente 3 horas." });
+    left -= BEV_CAFE.p;
   } else if (left >= 40 * people) {
     items.push({ id:BEV_AGUA.id, n:BEV_AGUA.n, p:BEV_AGUA.p, qty:people, img:BEV_AGUA.img, reason:"Bebida del evento", cat:"Bebida", desc:"Agua fresca artesanal preparada el mismo día. Sin conservadores." });
+    left -= BEV_AGUA.p * people;
+  }
+
+  // Experiencia: complemento contextual según tipo de evento
+  // Diferencia la experiencia del equilibrado cuando el catálogo toca el techo
+  if (tier === "experiencia" && sinR > 0 && left >= 45 * sinR) {
+    // Desayuno y working lunch → fruta fresca o yogurt
+    // Comida → crudités o mix de semillas (snack ligero post-comida)
+    const esDesayuno = ev === "desayuno";
+    const addons = esDesayuno
+      ? [
+          { id:"ensalada-de-fruta",  n:"Ensalada de Fruta",           p:50, img:"https://berlioz.mx/wp-content/uploads/2022/06/berlioz_fabian-51.jpg",   reason:"Complemento gourmet del desayuno", cat:"Add-on", desc:"Fruta fresca de temporada. Ligero y refrescante." },
+          { id:"yogurt-organico",    n:"Yogurt Orgánico con granola",  p:50, img:"https://berlioz.mx/wp-content/uploads/2023/03/breakfast-bag.webp",      reason:"Complemento gourmet del desayuno", cat:"Add-on", desc:"Yogurt orgánico con granola artesanal. Vegetariano." },
+          { id:"jugo-de-naranja",    n:"Jugo de Naranja (Jus)",        p:60, img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", reason:"Refrescante con el desayuno", cat:"Bebida", desc:"Jugo natural exprimido, 355 ml por persona." },
+        ]
+      : [
+          { id:"crudites-con-limon", n:"Crudités con Limón",           p:50, img:"https://berlioz.mx/wp-content/uploads/2024/04/crudite.jpg",             reason:"Snack ligero post-comida", cat:"Add-on", desc:"Jícama, zanahoria, pepino y apio. Vegano y keto." },
+          { id:"mix-de-semillas",    n:"Mix de Semillas Naturales",    p:60, img:"https://berlioz.mx/wp-content/uploads/2020/03/berlioz_fabian-03-scaled.jpg", reason:"Snack energético de cierre", cat:"Add-on", desc:"Mix artesanal tostado. Vegano, keto y sin gluten." },
+          { id:"aguas-frescas",      n:"Agua Fresca — Jamaica",        p:45, img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", reason:"Bebida fresca de temporada", cat:"Bebida", desc:"Agua fresca artesanal, preparada el mismo día." },
+        ];
+    const addon = addons[rotIdx % addons.length];
+    items.push({ ...addon, qty: sinR });
   }
 
   return items;
@@ -466,19 +511,17 @@ function buildAllTiers(
   }
 
   if (ev === "desayuno") {
-    // DESAYUNO_SINR es el pool completo — selectSinRProducts elige según targetPP real
     return {
-      esencial:    getBoxItems(DESAYUNO, "esencial",    people, dietaryCounts, targets.esencial,    DESAYUNO_SINR, rotIdx),
-      equilibrado: getBoxItems(DESAYUNO, "equilibrado", people, dietaryCounts, targets.equilibrado, DESAYUNO_SINR, rotIdx),
-      experiencia: getBoxItems(DESAYUNO, "experiencia", people, dietaryCounts, targets.experiencia, DESAYUNO_SINR, rotIdx),
+      esencial:    getBoxItems(DESAYUNO, "esencial",    ev, people, dietaryCounts, targets.esencial,    DESAYUNO_SINR, rotIdx),
+      equilibrado: getBoxItems(DESAYUNO, "equilibrado", ev, people, dietaryCounts, targets.equilibrado, DESAYUNO_SINR, rotIdx),
+      experiencia: getBoxItems(DESAYUNO, "experiencia", ev, people, dietaryCounts, targets.experiencia, DESAYUNO_SINR, rotIdx),
     };
   }
 
-  // COMIDA_SINR es el pool completo — selectSinRProducts elige según targetPP real
   return {
-    esencial:    getBoxItems(COMIDA, "esencial",    people, dietaryCounts, targets.esencial,    COMIDA_SINR, rotIdx),
-    equilibrado: getBoxItems(COMIDA, "equilibrado", people, dietaryCounts, targets.equilibrado, COMIDA_SINR, rotIdx),
-    experiencia: getBoxItems(COMIDA, "experiencia", people, dietaryCounts, targets.experiencia, COMIDA_SINR, rotIdx),
+    esencial:    getBoxItems(COMIDA, "esencial",    ev, people, dietaryCounts, targets.esencial,    COMIDA_SINR, rotIdx),
+    equilibrado: getBoxItems(COMIDA, "equilibrado", ev, people, dietaryCounts, targets.equilibrado, COMIDA_SINR, rotIdx),
+    experiencia: getBoxItems(COMIDA, "experiencia", ev, people, dietaryCounts, targets.experiencia, COMIDA_SINR, rotIdx),
   };
 }
 

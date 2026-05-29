@@ -137,7 +137,7 @@ const DESAYUNO_TIERS: Record<string, BoxDef[]> = {
   ],
 };
 
-// por precio unitario
+ por precio unitario
 const SURTIDOS = [
   { id:"mini-surtido-balzac",    n:"Mini Surtido Balzac",              p:220,  qg:4, img:IMG.surtido_balzac },
   { id:"surtido-balzac",         n:"Surtido Balzac (25 pastelitos)",   p:400,  qg:8, img:IMG.surtido_balzac },

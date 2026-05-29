@@ -940,6 +940,25 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </p>
                   </div>
                 </div>
+                {isSelected && (
+                  <InlineUpsell
+                    tierItems={pkg.items.map((it) => ({
+                      productName: it.productName,
+                      quantity: it.qty,
+                      unitPrice: it.unitPrice,
+                    }))}
+                    eventType={eventType}
+                    peopleCount={people}
+                    dietaryCounts={Object.entries(dietaryDistribution ?? {})
+                      .filter(([, v]) => (v as number) > 0)
+                      .map(([tipo, cantidad]) => ({ tipo, cantidad: cantidad as number }))}
+                    month={date ? date.getMonth() + 1 : undefined}
+                    selectedIds={(tierExtras[tier.id] ?? []).map((e) => e.id)}
+                    onSelectionChange={(extras) =>
+                      setTierExtras((prev) => ({ ...prev, [tier.id]: extras }))
+                    }
+                  />
+                )}
                 <AdminFeedbackPanel
                   proposalId={smartQuoteData?.proposalId || null}
                   packageTier={tier.id}

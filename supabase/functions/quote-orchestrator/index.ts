@@ -137,7 +137,7 @@ const DESAYUNO_TIERS: Record<string, BoxDef[]> = {
   ],
 };
 
- // por precio unitario
+// por precio unitario
 const SURTIDOS = [
   { id:"mini-surtido-balzac",    n:"Mini Surtido Balzac",              p:220,  qg:4, img:IMG.surtido_balzac },
   { id:"surtido-balzac",         n:"Surtido Balzac (25 pastelitos)",   p:400,  qg:8, img:IMG.surtido_balzac },
@@ -243,8 +243,10 @@ function getCoffeeItems(
 }
 
 // ── Distribución de sin restricción entre formatos ───────────
-// 1-5 personas → 50/50 (2 formatos)
-// 6+  personas → 33/33/33 (3 formatos)
+// Si todos los formatos son el mismo producto → sin split (1 sola card limpia)
+// Si hay productos distintos:
+//   1-5 personas → 50/50 (2 formatos)
+//   6+  personas → 33/33/33 (3 formatos)
 // rotIdx rota el orden para que cada cotización sea diferente
 function distribuirFormatos(
   sinR: number,
@@ -253,30 +255,41 @@ function distribuirFormatos(
 ): { box: BoxDef; qty: number }[] {
   if (sinR <= 0 || formatos.length === 0) return [];
 
-  // Rotar formatos según rotIdx
-  const rot = (i: number) => formatos[i % formatos.length];
-  const f0 = rot(rotIdx);
-  const f1 = rot(rotIdx + 1);
-  const f2 = rot(rotIdx + 2);
+  // Desduplicar formatos por id para saber cuántos son realmente distintos
+  const uniqueFormats: BoxDef[] = [];
+  const seenIds = new Set<string>();
+  for (let i = 0; i < formatos.length; i++) {
+    const f = formatos[(i + rotIdx) % formatos.length];
+    if (!seenIds.has(f.id)) { uniqueFormats.push(f); seenIds.add(f.id); }
+  }
 
-  if (sinR <= 5) {
-    // 50/50
+  // Si solo hay 1 producto único → todo al mismo, sin split
+  if (uniqueFormats.length === 1) {
+    return [{ box: uniqueFormats[0], qty: sinR }];
+  }
+
+  const f0 = uniqueFormats[0];
+  const f1 = uniqueFormats[1];
+  const f2 = uniqueFormats[2];
+
+  if (sinR <= 5 || uniqueFormats.length < 3) {
+    // 50/50 entre los 2 primeros únicos
     const a = Math.ceil(sinR / 2);
     const b = sinR - a;
-    const result = [{ box: f0, qty: a }];
-    if (b > 0 && f1.id !== f0.id) result.push({ box: f1, qty: b });
-    else result[0].qty = sinR; // si son iguales, todo al primero
+    const result: { box: BoxDef; qty: number }[] = [{ box: f0, qty: a }];
+    if (b > 0) result.push({ box: f1, qty: b });
     return result;
   }
 
-  // 33/33/33
-  const third = Math.ceil(sinR / 3);
-  const a = third;
-  const b = third;
+  // 33/33/33 entre los 3 formatos únicos
+  const a = Math.ceil(sinR / 3);
+  const b = Math.ceil(sinR / 3);
   const c = sinR - a - b;
-  const result = [{ box: f0, qty: a }, { box: f1, qty: b }];
-  if (c > 0 && f2.id !== f0.id && f2.id !== f1.id) result.push({ box: f2, qty: c });
-  else result[1].qty += c; // si hay duplicado, el resto al segundo
+  const result: { box: BoxDef; qty: number }[] = [
+    { box: f0, qty: a },
+    { box: f1, qty: b },
+  ];
+  if (c > 0 && f2) result.push({ box: f2, qty: c });
   return result;
 }
 
@@ -322,7 +335,9 @@ function getBoxItems(
       // Usar split 50/50 o 33/33/33 con los formatos disponibles
       const splits = distribuirFormatos(sinR, formatos, rotIdx);
       for (const s of splits) {
-        const label = sinR === people ? `Para ${s.qty} personas` : `Para ${s.qty} personas sin restricción`;
+        const label = sinR === people
+          ? (s.qty === sinR ? `Para ${s.qty} personas` : `Para ${s.qty} personas`)
+          : `Para ${s.qty} personas sin restricción`;
         addItem(s.box, s.qty, label);
       }
     } else {
@@ -371,11 +386,15 @@ function buildAllTiers(
 ): Record<string, RawItem[]> {
   // budgetPP = precio de COMIDA por persona (sin IVA ni envío)
   // El IVA y envío se suman aparte en el desglose final
+  // Tiers: esencial 82%, equilibrado 100%, experiencia 122% del presupuesto de comida
   const base = (budgetEnabled && budgetPP > 0) ? budgetPP : 330;
 
+  // Restricciones dietéticas tienen precio fijo (no pueden ajustarse al tier)
+  // Calculamos cuánto "cuesta" el grupo de restricciones para dejar headroom correcto
+  // El target de comida se aplica solo al presupuesto de comida, sin impuestos
   const targets = {
     esencial:    base * people * 0.82,
-    equilibrado: base * people * 1.00,
+    equilibrado: base * people,
     experiencia: base * people * 1.22,
   };
 

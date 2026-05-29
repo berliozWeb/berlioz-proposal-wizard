@@ -1140,10 +1140,9 @@ export default function ProposalStep(props: ProposalStepProps) {
         }))}
         eventType={eventType}
         peopleCount={people}
-        dietaryCounts={(dietaryDistribution ?? []).map((d: any) => ({
-          tipo: d.tipo ?? d.type ?? "",
-          cantidad: d.cantidad ?? d.count ?? 0,
-        }))}
+        dietaryCounts={Object.entries(dietaryDistribution ?? {})
+          .filter(([, v]) => (v as number) > 0)
+          .map(([tipo, cantidad]) => ({ tipo, cantidad: cantidad as number }))}
         month={date ? date.getMonth() + 1 : undefined}
         onConfirm={(extras) => {
           setUpsellOpen(false);

@@ -880,7 +880,13 @@ export default function ProposalStep(props: ProposalStepProps) {
                     </div>
                   </div>
                   <button
-                    onClick={() => handleSelectTier(tier.id)}
+                    onClick={() => {
+                      if (isSelected) {
+                        handleConfirmOrder();
+                      } else {
+                        handleSelectTier(tier.id);
+                      }
+                    }}
                     className={cn(
                       "shrink-0 inline-flex items-center justify-center px-5 py-2.5 rounded-full font-heading text-[11px] font-bold uppercase tracking-wider transition-all",
                       isSelected || isRecommended
@@ -888,7 +894,7 @@ export default function ProposalStep(props: ProposalStepProps) {
                         : "bg-white border border-[#014D6F] text-[#014D6F] hover:bg-[#014D6F]/5",
                     )}
                   >
-                    {isSelected ? "✓ Seleccionado" : "Elegir este →"}
+                    {isSelected ? "Continuar →" : "Elegir este →"}
                   </button>
                 </div>
 

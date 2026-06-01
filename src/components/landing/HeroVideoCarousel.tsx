@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const BUCKET = `${SUPABASE_URL}/storage/v1/object/public/hero-videos`;
@@ -7,21 +8,24 @@ const BUCKET = `${SUPABASE_URL}/storage/v1/object/public/hero-videos`;
 const SLIDES = [
   {
     video: `${BUCKET}/hero-1-overhead-pan.mp4`,
-    line1: "DESAYUNO · COFFEE BREAK · WORKING LUNCH",
-    line2: "EN TU SALA DE JUNTAS",
+    line1: "COMIDA FANTÁSTICA PARA JUNTAS CON ESTILO",
+    line2: "Desayunos, coffee breaks y working lunches listos para sorprender a tu equipo.",
     overlay: "rgba(0, 77, 111, 0.35)",
+    cta: null as null | { label: string; to: string },
   },
   {
     video: `${BUCKET}/hero-2-hands-rotating.mp4`,
-    line1: "ARTESANAL",
-    line2: "HECHO CON LAS MANOS",
+    line1: "EL LUNCH QUE TU EQUIPO MERECE",
+    line2: "Boxes gourmet entregados puntuales donde los necesites.",
     overlay: "rgba(0, 77, 111, 0.30)",
+    cta: null as null | { label: string; to: string },
   },
   {
     video: `${BUCKET}/hero-3-cinematic-push.mp4`,
-    line1: "CATERING CORPORATIVO",
-    line2: "PREMIUM · EDITORIAL · CDMX",
+    line1: "CONOCE NUESTRO MENÚ",
+    line2: "Opciones para todos los gustos.",
     overlay: "rgba(0, 77, 111, 0.35)",
+    cta: { label: "Ver menú →", to: "/menu" },
   },
 ];
 
@@ -32,7 +36,7 @@ const HeroVideoCarousel = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % SLIDES.length);
-    }, 7000);
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -116,14 +120,46 @@ const HeroVideoCarousel = () => {
                 fontSize: "clamp(14px, 2vw, 24px)",
                 fontWeight: 300,
                 color: "rgba(255,255,255,0.95)",
-                letterSpacing: "0.25em",
-                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+                lineHeight: 1.5,
+                maxWidth: 820,
                 margin: 0,
                 textShadow: "0 2px 12px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.3)",
               }}
             >
               {slide.line2}
             </p>
+            {slide.cta && (
+              <Link
+                to={slide.cta.to}
+                style={{
+                  marginTop: 32,
+                  display: "inline-block",
+                  padding: "16px 36px",
+                  background: "#EDD9C8",
+                  color: "#014D6F",
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  textDecoration: "none",
+                  borderRadius: 999,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
+                }}
+              >
+                {slide.cta.label}
+              </Link>
+            )}
           </div>
         </div>
       ))}

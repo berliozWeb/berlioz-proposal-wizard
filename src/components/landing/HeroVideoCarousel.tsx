@@ -8,22 +8,19 @@ const BUCKET = `${SUPABASE_URL}/storage/v1/object/public/hero-videos`;
 const SLIDES = [
   {
     video: `${BUCKET}/hero-1-overhead-pan.mp4`,
-    line1: "COMIDA FANTÁSTICA PARA JUNTAS CON ESTILO",
-    line2: "Desayunos, coffee breaks y working lunches listos para sorprender a tu equipo.",
+    lines: ["COMIDA FANTÁSTICA", "PARA JUNTAS CON ESTILO"],
     overlay: "rgba(0, 77, 111, 0.35)",
     cta: null as null | { label: string; to: string },
   },
   {
     video: `${BUCKET}/hero-2-hands-rotating.mp4`,
-    line1: "EL LUNCH QUE TU EQUIPO MERECE",
-    line2: "Boxes gourmet entregados puntuales donde los necesites.",
+    lines: ["EL WORKING LUNCH", "QUE TU EQUIPO MERECE"],
     overlay: "rgba(0, 77, 111, 0.30)",
     cta: null as null | { label: string; to: string },
   },
   {
     video: `${BUCKET}/hero-3-cinematic-push.mp4`,
-    line1: "CONOCE NUESTRO MENÚ",
-    line2: "Opciones para todos los gustos.",
+    lines: ["FESTEJA EL MUNDIAL", "CON BERLIOZ"],
     overlay: "rgba(0, 77, 111, 0.35)",
     cta: { label: "Ver menú →", to: "/menu" },
   },
@@ -112,22 +109,9 @@ const HeroVideoCarousel = () => {
                 textShadow: "0 2px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.4)",
               }}
             >
-              {slide.line1}
-            </p>
-            <p
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: "clamp(14px, 2vw, 24px)",
-                fontWeight: 300,
-                color: "rgba(255,255,255,0.95)",
-                letterSpacing: "0.04em",
-                lineHeight: 1.5,
-                maxWidth: 820,
-                margin: 0,
-                textShadow: "0 2px 12px rgba(0,0,0,0.45), 0 1px 3px rgba(0,0,0,0.3)",
-              }}
-            >
-              {slide.line2}
+              {slide.lines.map((l, idx) => (
+                <span key={idx} style={{ display: "block" }}>{l}</span>
+              ))}
             </p>
             {slide.cta && (
               <Link

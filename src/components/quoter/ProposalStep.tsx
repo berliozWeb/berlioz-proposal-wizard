@@ -339,7 +339,7 @@ function TierCarousel({
                     <span style={{ fontSize: 32 }}>🍽️</span>
                   )}
                 </div>
-                <p className="font-heading text-[13px] font-semibold uppercase text-[#014D6F] leading-tight line-clamp-2 mb-1">
+                <p className="font-heading text-[13px] font-semibold capitalize text-[#014D6F] leading-tight line-clamp-2 mb-1">
                   {item.isBestseller && <Star className="w-3 h-3 inline text-amber-500 fill-current mr-1 mb-0.5" />}
                   {item.productName}
                 </p>

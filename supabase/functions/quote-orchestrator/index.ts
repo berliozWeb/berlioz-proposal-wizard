@@ -64,32 +64,32 @@ const IMG = {
 // ================================================================
 
 const DESAYUNO: Record<string, { id:string; n:string; p:number; img:string; cat:string; desc:string }> = {
-  esencial:     { id:"breakfast-bag-pavo",              n:"Breakfast Bag — Pavo",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
-  equilibrado:  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma — Pan dulce",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
-  experiencia:  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal — Con yogurt orgánico",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
+  esencial:     { id:"breakfast-bag-pavo",              n:"Breakfast Bag",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
+  equilibrado:  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
+  experiencia:  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
   // Healthy Breakfast = chía pudding, sin huevo, sin lácteos → vegano real ✓ keto ✓ sin_gluten ✓
   keto:         { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. Vegano y sin gluten." },
   sin_gluten:   { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. Sin gluten." },
   vegano:       { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. 100% vegano." },
   // Chilaquiles con huevo = lacto-ovo vegetariano ✓ (no carne), pero NO vegano (tiene huevo+crema+queso)
-  vegetariano:  { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles — Verdes con huevo",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo del día. Vegetariano." },
+  vegetariano:  { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo del día. Vegetariano." },
   // Breakfast BLT: sin lácteos en ingredientes base (pavo, tocino, tomate, lechuga, mayo chipotle)
-  sin_lactosa:  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT — Pavo y yogurt",             p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayonesa de chipotle." },
+  sin_lactosa:  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT",             p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayonesa de chipotle." },
 };
 
 // ================================================================
 // COMIDA — Restricciones dietéticas (fijas, no rotan)
 // ================================================================
 const COMIDA: Record<string, { id:string; n:string; p:number; img:string; cat:string; desc:string }> = {
-  keto:        { id:"box-keto-sin-gluten",   n:"Box Keto – Sin Gluten",             p:370, img:IMG.box_keto,        cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos ni harinas." },
-  sin_gluten:  { id:"box-keto-sin-gluten",   n:"Box Keto – Sin Gluten",             p:370, img:IMG.box_keto,        cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin gluten." },
-  vegano:      { id:"salad-box-vegana",       n:"Salad Box — Vegana con agua",       p:300, img:IMG.salad_box,       cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. Sin lácteos ni huevo. 100% vegana." },
+  keto:        { id:"box-keto-sin-gluten",   n:"Box Keto",             p:370, img:IMG.box_keto,        cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos ni harinas." },
+  sin_gluten:  { id:"box-keto-sin-gluten",   n:"Box Keto",             p:370, img:IMG.box_keto,        cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin gluten." },
+  vegano:      { id:"salad-box-vegana",       n:"Salad Box Vegana",       p:300, img:IMG.salad_box,       cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. Sin lácteos ni huevo. 100% vegana." },
   vegetariano: { id:"box-vegetariana",        n:"Box Vegetariana",                   p:340, img:IMG.box_vegetariana, cat:"Comida", desc:"Ciabatta de verduras horneadas con queso crema, aguacate y jícama con toronja." },
-  sin_lactosa: { id:"box-oriental-pollo",     n:"Box Oriental — Pollo teriyaki",     p:300, img:IMG.box_oriental,    cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
+  sin_lactosa: { id:"box-oriental-pollo",     n:"Box Oriental",     p:300, img:IMG.box_oriental,    cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
   // fallback por si el código pide [tier] y no existe
-  esencial:    { id:"lunch-bag-pasta-pollo",  n:"Lunch Bag — Pasta con pollo",       p:250, img:IMG.lunch_bag,       cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
-  equilibrado: { id:"golden-box-ensalada",    n:"Golden Box — Con ensalada de frutas",p:330, img:IMG.golden_box,     cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
-  experiencia: { id:"orzo-pasta-pollo",       n:"Orzo Pasta Salad Box — Con pollo",  p:390, img:IMG.orzo_pasta,      cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
+  esencial:    { id:"lunch-bag-pasta-pollo",  n:"Lunch Bag",       p:250, img:IMG.lunch_bag,       cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
+  equilibrado: { id:"golden-box-ensalada",    n:"Golden Box",p:330, img:IMG.golden_box,     cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
+  experiencia: { id:"orzo-pasta-pollo",       n:"Orzo Pasta Salad Box",  p:390, img:IMG.orzo_pasta,      cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
 };
 
 // ================================================================
@@ -108,25 +108,25 @@ type BoxDef = { id:string; n:string; p:number; img:string; cat:string; desc:stri
 type BoxDef = { id:string; n:string; p:number; img:string; cat:string; desc:string };
 
 const DESAYUNO_SINR: BoxDef[] = [
-  { id:"breakfast-bag-pavo",              n:"Breakfast Bag — Pavo",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
-  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma — Pan dulce",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
-  { id:"breakfast-in-london-pavo-yogurt", n:"Breakfast in London — Pavo y yogurt",        p:320, img:IMG.breakfast_london,   cat:"Desayuno", desc:"Sándwich de pavo con mostaza Dijon, lechuga, jitomate y yogurt." },
-  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT — Pavo y yogurt",              p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayonesa de chipotle." },
-  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal — Con yogurt orgánico",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
+  { id:"breakfast-bag-pavo",              n:"Breakfast Bag",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
+  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
+  { id:"breakfast-in-london-pavo-yogurt", n:"Breakfast in London",        p:320, img:IMG.breakfast_london,   cat:"Desayuno", desc:"Sándwich de pavo con mostaza Dijon, lechuga, jitomate y yogurt." },
+  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT",              p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayonesa de chipotle." },
+  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
 ];
 
 const COMIDA_SINR: BoxDef[] = [
-  { id:"lunch-bag-pasta-pollo",          n:"Lunch Bag — Pasta con pollo",              p:250, img:IMG.lunch_bag,     cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
-  { id:"salad-box-pollo-agua",           n:"Salad Box — Pollo con agua",               p:280, img:IMG.salad_box,     cat:"Comida", desc:"Ensalada de pollo con verduras frescas y aderezo de la casa." },
-  { id:"piropo-tinga-con-jicama",        n:"Piropo – Tinga de Pollo",                  p:280, img:IMG.piropo,        cat:"Comida", desc:"Burrito artesanal de tinga de pollo con ensalada de jícama y limón." },
-  { id:"white-box-con-ensalada",         n:"White Box — Con ensalada de frutas",       p:300, img:IMG.white_box,     cat:"Comida", desc:"Ciabatta de pollo asado con aderezo de hierbas y ensalada de frutas." },
-  { id:"box-oriental-pollo",             n:"Box Oriental — Pollo teriyaki",            p:300, img:IMG.box_oriental,  cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
-  { id:"golden-box-ensalada",            n:"Golden Box — Con ensalada de frutas",      p:330, img:IMG.golden_box,    cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
-  { id:"blt-box-con-chips",              n:"BLT Box — Con chips",                      p:330, img:IMG.blt_box,       cat:"Comida", desc:"Sándwich BLT de pollo o tocino, jitomate, lechuga y mayonesa de chipotle." },
-  { id:"green-box-con-pepino-feta",      n:"Green Box — Con ensalada de pepino",       p:340, img:IMG.green_box,     cat:"Comida", desc:"Ciabatta con verduras asadas, queso feta, pepino y aderezo de hierbas." },
-  { id:"aqua-box-con-calabaza",          n:"Aqua Box — Con ensalada de calabaza",      p:350, img:IMG.aqua_box,      cat:"Comida", desc:"Box ligero con proteína y ensalada de calabaza asada. Fresco y sofisticado." },
-  { id:"pink-box-clasica-jicama",        n:"Pink Box — Clásica con ensalada de jícama",p:380, img:IMG.pink_box,      cat:"Comida", desc:"Pasta rosa de betabel con pollo, frutos secos y ensalada de jícama." },
-  { id:"orzo-pasta-pollo",               n:"Orzo Pasta Salad Box — Con pollo",         p:390, img:IMG.orzo_pasta,    cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
+  { id:"lunch-bag-pasta-pollo",          n:"Lunch Bag",              p:250, img:IMG.lunch_bag,     cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
+  { id:"salad-box-pollo-agua",           n:"Salad Box",               p:280, img:IMG.salad_box,     cat:"Comida", desc:"Ensalada de pollo con verduras frescas y aderezo de la casa." },
+  { id:"piropo-tinga-con-jicama",        n:"Piropo Tinga de Pollo",                  p:280, img:IMG.piropo,        cat:"Comida", desc:"Burrito artesanal de tinga de pollo con ensalada de jícama y limón." },
+  { id:"white-box-con-ensalada",         n:"White Box",       p:300, img:IMG.white_box,     cat:"Comida", desc:"Ciabatta de pollo asado con aderezo de hierbas y ensalada de frutas." },
+  { id:"box-oriental-pollo",             n:"Box Oriental",            p:300, img:IMG.box_oriental,  cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
+  { id:"golden-box-ensalada",            n:"Golden Box",      p:330, img:IMG.golden_box,    cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
+  { id:"blt-box-con-chips",              n:"BLT Box",                      p:330, img:IMG.blt_box,       cat:"Comida", desc:"Sándwich BLT de pollo o tocino, jitomate, lechuga y mayonesa de chipotle." },
+  { id:"green-box-con-pepino-feta",      n:"Green Box",       p:340, img:IMG.green_box,     cat:"Comida", desc:"Ciabatta con verduras asadas, queso feta, pepino y aderezo de hierbas." },
+  { id:"aqua-box-con-calabaza",          n:"Aqua Box",      p:350, img:IMG.aqua_box,      cat:"Comida", desc:"Box ligero con proteína y ensalada de calabaza asada. Fresco y sofisticado." },
+  { id:"pink-box-clasica-jicama",        n:"Pink Box",p:380, img:IMG.pink_box,      cat:"Comida", desc:"Pasta rosa de betabel con pollo, frutos secos y ensalada de jícama." },
+  { id:"orzo-pasta-pollo",               n:"Orzo Pasta Salad Box",         p:390, img:IMG.orzo_pasta,    cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
 ];
 
 // ── Selección dinámica de productos para sin restricción ──────
@@ -148,28 +148,40 @@ function selectSinRProducts(
 
   const mostExpensive = sorted[sorted.length - 1];
   const secondMost    = sorted.length >= 2 ? sorted[sorted.length - 2] : mostExpensive;
+  const thirdMost     = sorted.length >= 3 ? sorted[sorted.length - 3] : secondMost;
 
   // Si el target supera al producto más caro → variar con rotIdx entre cotizaciones
+  // Respeta la regla: 1-5 personas → 50/50, 6+ personas → 33/33/33
   if (targetPP >= maxP * 0.95) {
-    if (sinR <= 3 || rotIdx === 0) {
-      // Todo al más caro
-      return [{ box: mostExpensive, qty: sinR }];
-    } else if (rotIdx === 1 && secondMost.id !== mostExpensive.id) {
-      // 50/50 entre los dos más caros
+    // Rotar el orden de los productos según rotIdx
+    const pool = [mostExpensive, secondMost, thirdMost]
+      .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i); // dedup
+
+    const f0 = pool[rotIdx % pool.length];
+    const f1 = pool[(rotIdx + 1) % pool.length];
+    const f2 = pool[(rotIdx + 2) % pool.length];
+
+    if (sinR <= 5 || pool.length < 2) {
+      // 50/50
       const a = Math.ceil(sinR / 2), b = sinR - a;
       return [
-        { box: mostExpensive, qty: a },
-        { box: secondMost, qty: b },
-      ];
-    } else {
-      // Rotar: 1/3 del segundo más caro, resto al más caro
-      const b = Math.ceil(sinR / 3);
-      const a = sinR - b;
-      return [
-        { box: mostExpensive, qty: a },
-        ...(secondMost.id !== mostExpensive.id && b > 0 ? [{ box: secondMost, qty: b }] : []),
-      ];
+        { box: f0, qty: a },
+        ...(b > 0 && f1.id !== f0.id ? [{ box: f1, qty: b }] : [{ box: f0, qty: b }]),
+      ].filter(r => r.qty > 0);
     }
+
+    // 33/33/33 para 6+ personas
+    const a = Math.ceil(sinR / 3);
+    const b = Math.ceil(sinR / 3);
+    const c = sinR - a - b;
+    const result: { box: BoxDef; qty: number }[] = [{ box: f0, qty: a }];
+    if (f1.id !== f0.id) result.push({ box: f1, qty: b });
+    else result[0].qty += b;
+    if (c > 0) {
+      if (f2.id !== f0.id && f2.id !== f1.id) result.push({ box: f2, qty: c });
+      else result[result.length - 1].qty += c;
+    }
+    return result.filter(r => r.qty > 0);
   }
 
   // Banda de ±15% alrededor del targetPP
@@ -225,8 +237,8 @@ function selectSinRProducts(
 
 // Surtidos para coffee break
 // ── Bebidas ───────────────────────────────────────────────────
-const BEV_CAFE  = { id:"cafe-te-berlioz", n:"Café / Té Berlioz — termo 12 tazas", p:540, qg:12, img:IMG.cafe_te };
-const BEV_AGUA  = { id:"aguas-frescas",   n:"Agua Fresca — Jamaica",              p:45,  img:IMG.agua_fresca };
+const BEV_CAFE  = { id:"cafe-te-berlioz", n:"Café / Té Berlioz", p:540, qg:12, img:IMG.cafe_te };
+const BEV_AGUA  = { id:"aguas-frescas",   n:"Agua Fresca",              p:45,  img:IMG.agua_fresca };
 const ADDON_CRUDITES  = { id:"crudites-con-limon", n:"Crudités con Limón",        p:50,  img:IMG.crudites };
 const ADDON_SEMILLAS  = { id:"mix-de-semillas",    n:"Mix de Semillas Naturales", p:60,  img:IMG.mix_semillas };
 
@@ -265,16 +277,16 @@ function getCoffeeItems(
     if (tier === "esencial") {
       // Mini surtidos económicos
       surtido = Math.ceil(conSurtido / 4) <= 2
-        ? { id:"mini-surtido-colette", n:"Mini Surtido Colette (10 panes franceses)", p:290, qg:4, img:IMG.surtido_colette }
-        : { id:"surtido-balzac", n:"Surtido Balzac (25 pastelitos)", p:400, qg:8, img:IMG.surtido_balzac };
+        ? { id:"mini-surtido-colette", n:"Mini Surtido Colette", p:290, qg:4, img:IMG.surtido_colette }
+        : { id:"surtido-balzac", n:"Surtido Balzac", p:400, qg:8, img:IMG.surtido_balzac };
     } else if (tier === "equilibrado") {
       // Surtidos estándar
       surtido = conSurtido <= 6
-        ? { id:"surtido-colette", n:"Surtido Colette (25 panes franceses)", p:450, qg:9, img:IMG.surtido_colette }
-        : { id:"surtido-voltaire", n:"Surtido Voltaire (15 bocadillos variados)", p:750, qg:6, img:IMG.surtido_voltaire };
+        ? { id:"surtido-colette", n:"Surtido Colette", p:450, qg:9, img:IMG.surtido_colette }
+        : { id:"surtido-voltaire", n:"Surtido Voltaire", p:750, qg:6, img:IMG.surtido_voltaire };
     } else {
       // Premium: bocadillos gourmet
-      surtido = { id:"surtido-camille", n:"Surtido Camille (15 bocadillos salados)", p:700, qg:6, img:IMG.surtido_camille };
+      surtido = { id:"surtido-camille", n:"Surtido Camille", p:700, qg:6, img:IMG.surtido_camille };
     }
     const qty = Math.ceil(conSurtido / surtido.qg);
     const reason = veg > 0
@@ -463,7 +475,7 @@ function getBoxItems(
       : [
           { id:"crudites-con-limon", n:"Crudités con Limón",           p:50, img:"https://berlioz.mx/wp-content/uploads/2024/04/crudite.jpg",             reason:"Snack ligero post-comida", cat:"Add-on", desc:"Jícama, zanahoria, pepino y apio. Vegano y keto." },
           { id:"mix-de-semillas",    n:"Mix de Semillas Naturales",    p:60, img:"https://berlioz.mx/wp-content/uploads/2020/03/berlioz_fabian-03-scaled.jpg", reason:"Snack energético de cierre", cat:"Add-on", desc:"Mix artesanal tostado. Vegano, keto y sin gluten." },
-          { id:"aguas-frescas",      n:"Agua Fresca — Jamaica",        p:45, img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", reason:"Bebida fresca de temporada", cat:"Bebida", desc:"Agua fresca artesanal, preparada el mismo día." },
+          { id:"aguas-frescas",      n:"Agua Fresca",        p:45, img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", reason:"Bebida fresca de temporada", cat:"Bebida", desc:"Agua fresca artesanal, preparada el mismo día." },
         ];
     const addon = addons[rotIdx % addons.length];
     items.push({ ...addon, qty: sinR });

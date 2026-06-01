@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Clock, CreditCard, MapPin } from "lucide-react";
 import MinimalHeader from "@/components/landing/MinimalHeader";
-import HeroCarousel from "@/components/landing/HeroCarousel";
+import HeroCarousel from "@/components/landing/HeroVideoCarousel";
 import LeadCaptureSection from "@/components/landing/LeadCaptureSection";
 import HeroCards from "@/components/landing/HeroCards";
 import TopSellers from "@/components/landing/TopSellers";

@@ -4,6 +4,7 @@ import { Minus, Plus, X, Trash2, ArrowLeft, ShoppingBag, Sparkles, MapPin, Info 
 import BaseLayout from "@/components/layout/BaseLayout";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import OrderRewardsProgress from "@/components/cart/OrderRewardsProgress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -237,6 +238,8 @@ const CartPage = () => {
           <div className="lg:sticky lg:top-28 h-fit">
             <div className="rounded-xl border border-border bg-card p-6 space-y-5">
               <h3 className="font-heading text-lg text-foreground">Totales del carrito</h3>
+
+              <OrderRewardsProgress subtotal={totals.subtotal} />
 
               <div className="space-y-3 font-body text-sm">
                 <div className="flex justify-between">

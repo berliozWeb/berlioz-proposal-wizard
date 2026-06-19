@@ -165,16 +165,29 @@ serve(async (req) => {
       if (!Array.isArray(orders) || orders.length === 0) break;
 
       const rows = orders.flatMap(orderToItems);
-      if (rows.length > 0) {
+      // Dedupe within batch: Woo can repeat same product_id across line_items
+      // (variations, splits). Sum quantities, keep latest other fields.
+      const merged = new Map<string, any>();
+      for (const r of rows) {
+        const key = `${r.woo_order_id}::${r.product_id}`;
+        const prev = merged.get(key);
+        if (prev) {
+          prev.quantity += r.quantity;
+        } else {
+          merged.set(key, { ...r });
+        }
+      }
+      const deduped = Array.from(merged.values());
+      if (deduped.length > 0) {
         const { error } = await supabase
           .from("woo_order_items")
-          .upsert(rows, { onConflict: "woo_order_id,product_id" });
+          .upsert(deduped, { onConflict: "woo_order_id,product_id" });
         if (error) {
           console.error("orders upsert error page", page, error.message);
           throw new Error(`Upsert failed: ${error.message}`);
         }
       }
-      totalItems += rows.length;
+      totalItems += deduped.length;
       totalOrders += orders.length;
 
       if (orders.length < perPage) break;

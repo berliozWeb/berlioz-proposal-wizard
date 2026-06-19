@@ -33,6 +33,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { Copy, Pencil, Plus, Trash2, RefreshCw } from "lucide-react";
+import WooSyncCard from "@/components/admin/WooSyncCard";
 
 interface Insight {
   id: string;
@@ -169,6 +170,9 @@ const AdminInsightsPage = () => {
           <li>• <code>WOO_WEBHOOK_SECRET</code> — clave HMAC del webhook de WooCommerce (opcional pero recomendado)</li>
         </ul>
       </Card>
+
+      {/* Woo mirror */}
+      <WooSyncCard />
 
       {/* Insights table */}
       <section>

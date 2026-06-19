@@ -397,6 +397,8 @@ export type Database = {
           tipo: string | null
           variante_nombre: string | null
           variantes: string | null
+          woo_last_synced_at: string | null
+          woo_source: boolean
         }
         Insert: {
           activo?: boolean | null
@@ -428,6 +430,8 @@ export type Database = {
           tipo?: string | null
           variante_nombre?: string | null
           variantes?: string | null
+          woo_last_synced_at?: string | null
+          woo_source?: boolean
         }
         Update: {
           activo?: boolean | null
@@ -459,6 +463,8 @@ export type Database = {
           tipo?: string | null
           variante_nombre?: string | null
           variantes?: string | null
+          woo_last_synced_at?: string | null
+          woo_source?: boolean
         }
         Relationships: []
       }
@@ -1184,6 +1190,45 @@ export type Database = {
           sku?: string | null
           unit_price?: number | null
           woo_order_id?: number
+        }
+        Relationships: []
+      }
+      woo_sync_runs: {
+        Row: {
+          error: string | null
+          finished_at: string | null
+          id: string
+          items_synced: number
+          kind: string
+          metadata: Json
+          pages_fetched: number
+          started_at: string
+          status: string
+          trigger: string
+        }
+        Insert: {
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          items_synced?: number
+          kind: string
+          metadata?: Json
+          pages_fetched?: number
+          started_at?: string
+          status?: string
+          trigger?: string
+        }
+        Update: {
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          items_synced?: number
+          kind?: string
+          metadata?: Json
+          pages_fetched?: number
+          started_at?: string
+          status?: string
+          trigger?: string
         }
         Relationships: []
       }

@@ -10,6 +10,7 @@ import WordRotator from "@/components/ui/WordRotator";
 // Premium Images
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";
+import lunchboxVideo from "@/assets/lunchbox.mp4.asset.json";
 import coffeeAmImg from "@/assets/imagenes_menu/cb_coffee-break-am-cafe.jpg";
 import coffeePmImg from "@/assets/imagenes_menu/cb_coffee-break-pm.jpg";
 import juntaImg from "@/assets/imagenes_menu/wl_comedor-berlioz.jpg";

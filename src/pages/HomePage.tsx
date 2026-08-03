@@ -133,6 +133,28 @@ const LogoCarousel = () => {
 /* ── component ── */
 const HomePage = () => {
   const navigate = useNavigate();
+  const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
+  const [lunchboxPlaying, setLunchboxPlaying] = useState(true);
+  const [lunchboxMuted, setLunchboxMuted] = useState(true);
+
+  const toggleLunchboxPlay = () => {
+    const video = lunchboxVideoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play();
+      setLunchboxPlaying(true);
+    } else {
+      video.pause();
+      setLunchboxPlaying(false);
+    }
+  };
+
+  const toggleLunchboxMute = () => {
+    const video = lunchboxVideoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setLunchboxMuted(video.muted);
+  };
 
   return (
     <BaseLayout>

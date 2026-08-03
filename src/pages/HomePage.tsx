@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, ChevronRight, Clock, MapPin, Truck, CreditCard, Utensils } from "lucide-react";
+import { Star, ChevronRight, Clock, MapPin, Truck, CreditCard, Utensils, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import HeroCarousel from "@/components/landing/HeroVideoCarousel";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";

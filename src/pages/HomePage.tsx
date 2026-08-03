@@ -239,9 +239,11 @@ const HomePage = () => {
                   src={lunchboxVideo.url}
                   autoPlay
                   muted={lunchboxMuted}
-                  volume={0.5}
                   loop
                   playsInline
+                  onLoadedMetadata={() => {
+                    if (lunchboxVideoRef.current) lunchboxVideoRef.current.volume = 0.5;
+                  }}
                   onPlay={() => setLunchboxPlaying(true)}
                   onPause={() => setLunchboxPlaying(false)}
                   className="w-full h-full object-cover"

@@ -135,7 +135,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
   const [lunchboxPlaying, setLunchboxPlaying] = useState(true);
-  const [lunchboxMuted, setLunchboxMuted] = useState(true);
+  const [lunchboxMuted, setLunchboxMuted] = useState(false);
 
   const toggleLunchboxPlay = () => {
     const video = lunchboxVideoRef.current;
@@ -238,9 +238,12 @@ const HomePage = () => {
                   ref={lunchboxVideoRef}
                   src={lunchboxVideo.url}
                   autoPlay
-                  muted
+                  muted={lunchboxMuted}
                   loop
                   playsInline
+                  onLoadedMetadata={() => {
+                    if (lunchboxVideoRef.current) lunchboxVideoRef.current.volume = 0.5;
+                  }}
                   onPlay={() => setLunchboxPlaying(true)}
                   onPause={() => setLunchboxPlaying(false)}
                   className="w-full h-full object-cover"

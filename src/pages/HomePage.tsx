@@ -135,7 +135,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
   const [lunchboxPlaying, setLunchboxPlaying] = useState(true);
-  const [lunchboxMuted, setLunchboxMuted] = useState(true);
+  const [lunchboxMuted, setLunchboxMuted] = useState(false);
 
   const toggleLunchboxPlay = () => {
     const video = lunchboxVideoRef.current;

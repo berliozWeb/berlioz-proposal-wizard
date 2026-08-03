@@ -238,7 +238,8 @@ const HomePage = () => {
                   ref={lunchboxVideoRef}
                   src={lunchboxVideo.url}
                   autoPlay
-                  muted
+                  muted={lunchboxMuted}
+                  volume={0.5}
                   loop
                   playsInline
                   onPlay={() => setLunchboxPlaying(true)}

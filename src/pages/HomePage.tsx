@@ -198,21 +198,29 @@ const HomePage = () => {
       </section>
 
       {/* ═══ SECTION — BERLIOZ LUNCH BOX ═══ */}
-      <section className="relative w-full overflow-hidden">
-        <div className="aspect-[1/1] md:aspect-[16/7] relative w-full overflow-hidden">
-          <img src={boxlunchImg} alt="Berlioz Lunch Box Experience" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/5" />
-          <div className="absolute inset-0 flex items-center">
-            <div className="max-w-7xl mx-auto px-6 md:px-12 w-full flex justify-center md:justify-start">
-              <RevealOnScroll>
-                <div className="bg-white p-8 md:p-14 rounded-[40px] shadow-2xl max-w-xl md:ml-12 backdrop-blur-sm bg-white/95">
-                  <span className="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase mb-6">Experiencia Signature</span>
-                  <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl mb-6 tracking-tight leading-[1.05] text-primary">BERLIOZ <br className="hidden sm:block"/> LUNCH BOX</h2>
-                  <p className="font-body text-lg md:text-xl mb-10 leading-relaxed text-muted-foreground">Para tus juntas y eventos, Berlioz ofrece una comida gourmet de tres tiempos, servida en una elegante caja práctica y sofisticada.</p>
-                  <p className="font-heading text-xl md:text-2xl italic text-secondary font-medium leading-tight">&ldquo;Consiente a tus invitados con esta experiencia sensorial.&rdquo;</p>
-                </div>
-              </RevealOnScroll>
-            </div>
+      <section className="relative w-full overflow-hidden py-16 md:py-24" style={{ backgroundColor: '#F2DDD5' }}>
+        <div className="max-w-7xl mx-auto px-6 md:px-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+            <RevealOnScroll>
+              <div>
+                <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl mb-6 tracking-tight leading-[1.05] text-primary">BERLIOZ <br className="hidden sm:block"/> LUNCH BOX</h2>
+                <p className="font-body text-lg md:text-xl mb-8 leading-relaxed text-muted-foreground">Para tus juntas y eventos, Berlioz ofrece una comida gourmet de tres tiempos, servida en una elegante caja práctica y sofisticada.</p>
+                <p className="font-heading text-xl md:text-2xl italic text-secondary font-medium leading-tight">&ldquo;Consiente a tus invitados con esta experiencia sensorial.&rdquo;</p>
+              </div>
+            </RevealOnScroll>
+
+            <RevealOnScroll delay={200}>
+              <div className="rounded-[32px] overflow-hidden shadow-2xl bg-black/5">
+                <video
+                  src={lunchboxVideo.url}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </RevealOnScroll>
           </div>
         </div>
       </section>

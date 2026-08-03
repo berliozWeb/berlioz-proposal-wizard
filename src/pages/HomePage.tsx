@@ -233,15 +233,36 @@ const HomePage = () => {
             </RevealOnScroll>
 
             <RevealOnScroll delay={200}>
-              <div className="rounded-[32px] overflow-hidden shadow-2xl bg-black/5">
+              <div className="relative rounded-[32px] overflow-hidden shadow-2xl bg-black/5 group">
                 <video
+                  ref={lunchboxVideoRef}
                   src={lunchboxVideo.url}
                   autoPlay
                   muted
                   loop
                   playsInline
+                  onPlay={() => setLunchboxPlaying(true)}
+                  onPause={() => setLunchboxPlaying(false)}
                   className="w-full h-full object-cover"
                 />
+                <div className="absolute bottom-4 left-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    type="button"
+                    onClick={toggleLunchboxPlay}
+                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-primary shadow-lg hover:bg-white transition-colors"
+                    aria-label={lunchboxPlaying ? "Pausar video" : "Reproducir video"}
+                  >
+                    {lunchboxPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleLunchboxMute}
+                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-primary shadow-lg hover:bg-white transition-colors"
+                    aria-label={lunchboxMuted ? "Activar sonido" : "Silenciar video"}
+                  >
+                    {lunchboxMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </RevealOnScroll>
           </div>

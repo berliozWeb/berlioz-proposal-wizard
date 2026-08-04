@@ -134,35 +134,39 @@ const LogoCarousel = () => {
 const HomePage = () => {
   const navigate = useNavigate();
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
-  const [lunchboxPlaying, setLunchboxPlaying] = useState(true);
+  const [lunchboxPlaying, setLunchboxPlaying] = useState(false);
   const [lunchboxMuted, setLunchboxMuted] = useState(true);
+  const lunchboxPausedByUser = useRef(false);
 
-  // Los navegadores bloquean el autoplay con sonido: arrancamos muteados,
-  // intentamos activar el audio y si el navegador lo bloquea mostramos el botón.
+  // Autoplay (muteado, como exigen los navegadores) solo cuando la sección
+  // entra en pantalla; se pausa al salir salvo que el usuario haya pausado.
   useEffect(() => {
     const video = lunchboxVideoRef.current;
     if (!video) return;
     video.volume = 0.5;
-    const tryUnmute = async () => {
-      try {
-        video.muted = false;
-        await video.play();
-        setLunchboxMuted(false);
-      } catch {
-        video.muted = true;
-        setLunchboxMuted(true);
-      }
-    };
-    tryUnmute();
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (!lunchboxPausedByUser.current) video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
   }, []);
 
   const toggleLunchboxPlay = () => {
     const video = lunchboxVideoRef.current;
     if (!video) return;
     if (video.paused) {
-      video.play();
+      lunchboxPausedByUser.current = false;
+      video.play().catch(() => {});
       setLunchboxPlaying(true);
     } else {
+      lunchboxPausedByUser.current = true;
       video.pause();
       setLunchboxPlaying(false);
     }
@@ -258,17 +262,30 @@ const HomePage = () => {
                 <video
                   ref={lunchboxVideoRef}
                   src={lunchboxVideo.url}
-                  autoPlay
                   muted={lunchboxMuted}
                   loop
                   playsInline
+                  preload="metadata"
+                  onClick={toggleLunchboxPlay}
                   onLoadedMetadata={() => {
                     if (lunchboxVideoRef.current) lunchboxVideoRef.current.volume = 0.5;
                   }}
                   onPlay={() => setLunchboxPlaying(true)}
                   onPause={() => setLunchboxPlaying(false)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover cursor-pointer"
                 />
+                {!lunchboxPlaying && (
+                  <button
+                    type="button"
+                    onClick={toggleLunchboxPlay}
+                    className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors hover:bg-black/30"
+                    aria-label="Reproducir video"
+                  >
+                    <span className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center text-primary shadow-lg">
+                      <Play className="w-7 h-7 ml-1" />
+                    </span>
+                  </button>
+                )}
                 {lunchboxMuted && (
                   <button
                     type="button"

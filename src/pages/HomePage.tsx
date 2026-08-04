@@ -135,11 +135,10 @@ const HomePage = () => {
   const navigate = useNavigate();
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
   const [lunchboxPlaying, setLunchboxPlaying] = useState(false);
-  const [lunchboxMuted, setLunchboxMuted] = useState(true);
+  const [lunchboxMuted, setLunchboxMuted] = useState(false);
   const lunchboxPausedByUser = useRef(false);
 
-  // Autoplay (muteado, como exigen los navegadores) solo cuando la sección
-  // entra en pantalla; se pausa al salir salvo que el usuario haya pausado.
+  // Inicia con sonido al 50% únicamente cuando la sección entra en pantalla.
   useEffect(() => {
     const video = lunchboxVideoRef.current;
     if (!video) return;
@@ -147,7 +146,12 @@ const HomePage = () => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          if (!lunchboxPausedByUser.current) video.play().catch(() => {});
+          if (!lunchboxPausedByUser.current) {
+            video.muted = false;
+            video.volume = 0.5;
+            setLunchboxMuted(false);
+            video.play().catch(() => setLunchboxPlaying(false));
+          }
         } else {
           video.pause();
         }
@@ -284,17 +288,6 @@ const HomePage = () => {
                     <span className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center text-primary shadow-lg">
                       <Play className="w-7 h-7 ml-1" />
                     </span>
-                  </button>
-                )}
-                {lunchboxMuted && (
-                  <button
-                    type="button"
-                    onClick={toggleLunchboxMute}
-                    className="absolute top-4 right-4 flex items-center gap-2 rounded-full bg-primary/90 px-4 py-2 text-primary-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-primary"
-                    aria-label="Activar sonido"
-                  >
-                    <VolumeX className="w-4 h-4" />
-                    <span className="font-body text-xs font-semibold">Activar sonido</span>
                   </button>
                 )}
                 <div className={`absolute bottom-4 left-4 flex items-center gap-2 transition-opacity duration-300 ${lunchboxMuted ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>

@@ -135,7 +135,26 @@ const HomePage = () => {
   const navigate = useNavigate();
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
   const [lunchboxPlaying, setLunchboxPlaying] = useState(true);
-  const [lunchboxMuted, setLunchboxMuted] = useState(false);
+  const [lunchboxMuted, setLunchboxMuted] = useState(true);
+
+  // Los navegadores bloquean el autoplay con sonido: arrancamos muteados,
+  // intentamos activar el audio y si el navegador lo bloquea mostramos el botón.
+  useEffect(() => {
+    const video = lunchboxVideoRef.current;
+    if (!video) return;
+    video.volume = 0.5;
+    const tryUnmute = async () => {
+      try {
+        video.muted = false;
+        await video.play();
+        setLunchboxMuted(false);
+      } catch {
+        video.muted = true;
+        setLunchboxMuted(true);
+      }
+    };
+    tryUnmute();
+  }, []);
 
   const toggleLunchboxPlay = () => {
     const video = lunchboxVideoRef.current;
@@ -153,6 +172,8 @@ const HomePage = () => {
     const video = lunchboxVideoRef.current;
     if (!video) return;
     video.muted = !video.muted;
+    video.volume = 0.5;
+    if (!video.muted) video.play().catch(() => {});
     setLunchboxMuted(video.muted);
   };
 
@@ -248,7 +269,18 @@ const HomePage = () => {
                   onPause={() => setLunchboxPlaying(false)}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute bottom-4 left-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                {lunchboxMuted && (
+                  <button
+                    type="button"
+                    onClick={toggleLunchboxMute}
+                    className="absolute top-4 right-4 flex items-center gap-2 rounded-full bg-primary/90 px-4 py-2 text-primary-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-primary"
+                    aria-label="Activar sonido"
+                  >
+                    <VolumeX className="w-4 h-4" />
+                    <span className="font-body text-xs font-semibold">Activar sonido</span>
+                  </button>
+                )}
+                <div className={`absolute bottom-4 left-4 flex items-center gap-2 transition-opacity duration-300 ${lunchboxMuted ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
                   <button
                     type="button"
                     onClick={toggleLunchboxPlay}

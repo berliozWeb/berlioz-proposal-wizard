@@ -135,7 +135,26 @@ const HomePage = () => {
   const navigate = useNavigate();
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
   const [lunchboxPlaying, setLunchboxPlaying] = useState(true);
-  const [lunchboxMuted, setLunchboxMuted] = useState(false);
+  const [lunchboxMuted, setLunchboxMuted] = useState(true);
+
+  // Los navegadores bloquean el autoplay con sonido: arrancamos muteados,
+  // intentamos activar el audio y si el navegador lo bloquea mostramos el botón.
+  useEffect(() => {
+    const video = lunchboxVideoRef.current;
+    if (!video) return;
+    video.volume = 0.5;
+    const tryUnmute = async () => {
+      try {
+        video.muted = false;
+        await video.play();
+        setLunchboxMuted(false);
+      } catch {
+        video.muted = true;
+        setLunchboxMuted(true);
+      }
+    };
+    tryUnmute();
+  }, []);
 
   const toggleLunchboxPlay = () => {
     const video = lunchboxVideoRef.current;
@@ -153,6 +172,8 @@ const HomePage = () => {
     const video = lunchboxVideoRef.current;
     if (!video) return;
     video.muted = !video.muted;
+    video.volume = 0.5;
+    if (!video.muted) video.play().catch(() => {});
     setLunchboxMuted(video.muted);
   };
 

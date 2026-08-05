@@ -30,6 +30,12 @@ const SLIDES = [
     overlay: "rgba(0, 77, 111, 0.30)",
     cta: null as null | { label: string; to: string },
   },
+  {
+    video: `${BUCKET}/hero-7-drinks.mp4`,
+    lines: ["CONOCE NUESTRAS", "DELICIOSAS BEBIDAS ARTESANALES"],
+    overlay: "rgba(0, 77, 111, 0.30)",
+    cta: null as null | { label: string; to: string },
+  },
 ];
 
 const HeroVideoCarousel = () => {

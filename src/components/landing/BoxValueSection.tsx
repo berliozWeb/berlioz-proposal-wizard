@@ -71,7 +71,7 @@ const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 /** Posiciones orbitales de los hotspots alrededor de la foto (desktop) */
 const LEFT_POS = [
   { top: "5%", left: "2%", translateX: -32, translateY: -16 },
-  { top: "38%", left: "0%", translateX: -56 },
+  { top: "38%", left: "10%", translateX: 48 },
   { top: "78%", left: "3%", translateX: -24, translateY: 16 },
 ];
 
@@ -241,6 +241,7 @@ const BoxValueSection = () => {
                 top: LEFT_POS[i].top,
                 left: LEFT_POS[i].left,
                 transform: `translate(${LEFT_POS[i].translateX}px, ${LEFT_POS[i].translateY ?? 0}px)`,
+                zIndex: open === t.id ? 50 : 10,
               }}
             >
               {renderTag(t, i, "left", true)}
@@ -255,6 +256,7 @@ const BoxValueSection = () => {
                 top: RIGHT_POS[i].top,
                 right: RIGHT_POS[i].right,
                 transform: `translate(${-RIGHT_POS[i].translateX}px, ${RIGHT_POS[i].translateY ?? 0}px)`,
+                zIndex: open === t.id ? 50 : 10,
               }}
             >
               {renderTag(t, i, "right", true)}

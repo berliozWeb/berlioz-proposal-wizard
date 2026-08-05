@@ -217,25 +217,31 @@ const BoxValueSection = () => {
           ¿Por qué BERLIOZ?
         </h2>
 
-        {/* Desktop: hotspots flotando encima de la foto */}
-        <div className="relative mx-auto hidden w-full lg:block">
-          <div
-            className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F2EAE1" }}
-          >
-            <img
-              src={boxAsset.url}
-              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
-              className="w-full rounded-[24px]"
-              loading="lazy"
-            />
+        {/* Desktop: hotspots orbitando alrededor de la foto */}
+        <div className="relative mx-auto hidden w-full px-6 md:px-12 lg:px-20 xl:px-28 lg:block">
+          <div className="mx-auto w-[88%]">
+            <div
+              className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
+              style={{ background: "#F2EAE1" }}
+            >
+              <img
+                src={boxAsset.url}
+                alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
+                className="w-full rounded-[24px]"
+                loading="lazy"
+              />
+            </div>
           </div>
 
           {LEFT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[220px]"
-              style={{ top: LEFT_POS[i].top, left: LEFT_POS[i].left }}
+              className="absolute w-[220px] transition-transform duration-300 hover:scale-[1.02]"
+              style={{
+                top: LEFT_POS[i].top,
+                left: LEFT_POS[i].left,
+                transform: `translateX(${LEFT_POS[i].translateX}px)`,
+              }}
             >
               {renderTag(t, i, "left", true)}
             </div>
@@ -244,8 +250,12 @@ const BoxValueSection = () => {
           {RIGHT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[232px]"
-              style={{ top: RIGHT_POS[i].top, right: RIGHT_POS[i].right }}
+              className="absolute w-[232px] transition-transform duration-300 hover:scale-[1.02]"
+              style={{
+                top: RIGHT_POS[i].top,
+                right: RIGHT_POS[i].right,
+                transform: `translateX(${-RIGHT_POS[i].translateX}px)`,
+              }}
             >
               {renderTag(t, i, "right", true)}
             </div>

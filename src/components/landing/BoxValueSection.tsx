@@ -71,14 +71,14 @@ const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 /** Posiciones orbitales de los hotspots alrededor de la foto (desktop) */
 const LEFT_POS = [
   { top: "5%", left: "2%", translateX: -32, translateY: -16 },
-  { top: "38%", left: "10%", translateX: 48 },
+  { top: "38%", left: "6%", translateX: 24 },
   { top: "78%", left: "3%", translateX: -24, translateY: 16 },
 ];
 
 const RIGHT_POS = [
   { top: "3%", right: "2%", translateX: 32, translateY: -24 },
   { top: "40%", right: "0%", translateX: 56 },
-  { top: "82%", right: "3%", translateX: 24, translateY: 28 },
+  { top: "72%", right: "10%", translateX: 48, translateY: 20 },
 ];
 
 const OrderCTA = ({ onClick }: { onClick: () => void }) => (

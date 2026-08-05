@@ -207,23 +207,17 @@ const BoxValueSection = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-24" style={{ background: CREAM }}>
+    <section ref={sectionRef} className="py-8 md:py-10" style={{ background: CREAM }}>
       <div className="mx-auto max-w-6xl px-6">
         <h2
           className="text-center"
-          style={{ fontFamily: MONT, fontWeight: 700, fontSize: 36, color: NAVY, lineHeight: 1.15 }}
+          style={{ fontFamily: MONT, fontWeight: 700, fontSize: 28, color: NAVY, lineHeight: 1.1 }}
         >
-          Una Box, todo resuelto
+          ¿Por qué BERLIOZ?
         </h2>
-        <p
-          className="mt-2 text-center text-sm"
-          style={{ fontFamily: MONT, color: "#8A8A8A" }}
-        >
-          Así se ve un pedido Berlioz
-        </p>
 
         {/* Desktop: hotspots flotando encima de la foto */}
-        <div className="relative mx-auto mt-10 hidden w-full max-w-5xl lg:block">
+        <div className="relative mx-auto mt-4 hidden w-full max-w-[1400px] lg:block">
           <img
             src={boxAsset.url}
             alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
@@ -231,9 +225,9 @@ const BoxValueSection = () => {
             loading="lazy"
             style={{
               WebkitMaskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 66%, rgba(0,0,0,0) 100%)",
+                "radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 100%)",
               maskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 66%, rgba(0,0,0,0) 100%)",
+                "radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 100%)",
             }}
           />
 

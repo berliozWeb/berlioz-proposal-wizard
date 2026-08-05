@@ -150,13 +150,13 @@ const BoxValueSection = () => {
         <button
           type="button"
           onClick={() => setOpen(isOpen ? null : tag.id)}
-          className="flex w-full items-center gap-3 rounded-full px-4 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(35,25,15,0.18)]"
+          className="flex w-full items-center gap-3 rounded-full px-4 py-2 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(35,25,15,0.14)]"
           style={{
             background: "#FDF6F3",
-            border: "1px solid #F2DDD5",
+            border: "1px solid rgba(255,255,255,0.50)",
             boxShadow: isOpen
-              ? "0 16px 40px rgba(35,25,15,0.22)"
-              : "0 10px 28px rgba(35,25,15,0.16)",
+              ? "0 16px 40px rgba(0,0,0,0.10)"
+              : "0 10px 28px rgba(0,0,0,0.07)",
           }}
         >
           <span

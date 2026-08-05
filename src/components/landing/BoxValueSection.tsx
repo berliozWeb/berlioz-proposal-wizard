@@ -220,7 +220,7 @@ const BoxValueSection = () => {
         <div className="relative mx-auto hidden w-full lg:block">
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F4E9DE" }}
+            style={{ background: "#F7E8DF" }}
           >
             <img
               src={boxAsset.url}
@@ -255,7 +255,7 @@ const BoxValueSection = () => {
         <div className="lg:hidden">
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F4E9DE" }}
+            style={{ background: "#F7E8DF" }}
           >
             <img
               src={boxAsset.url}

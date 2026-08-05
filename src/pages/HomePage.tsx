@@ -181,9 +181,26 @@ const HomePage = () => {
     const video = lunchboxVideoRef.current;
     if (!video) return;
     video.muted = !video.muted;
-    video.volume = 0.5;
+    if (!video.muted && video.volume === 0) {
+      video.volume = lunchboxVolume || 0.5;
+    }
     if (!video.muted) video.play().catch(() => {});
     setLunchboxMuted(video.muted);
+  };
+
+  const handleLunchboxVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const video = lunchboxVideoRef.current;
+    if (!video) return;
+    const value = parseFloat(e.target.value);
+    setLunchboxVolume(value);
+    video.volume = value;
+    if (value === 0) {
+      video.muted = true;
+      setLunchboxMuted(true);
+    } else if (video.muted) {
+      video.muted = false;
+      setLunchboxMuted(false);
+    }
   };
 
   return (

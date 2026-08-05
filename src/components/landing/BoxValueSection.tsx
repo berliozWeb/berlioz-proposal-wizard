@@ -207,17 +207,17 @@ const BoxValueSection = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-8 md:py-10" style={{ background: CREAM }}>
-      <div className="mx-auto max-w-6xl px-6">
+    <section ref={sectionRef} className="py-5 md:py-6" style={{ background: CREAM }}>
+      <div className="mx-auto max-w-[1400px] px-4 md:px-6">
         <h2
           className="text-center"
-          style={{ fontFamily: MONT, fontWeight: 700, fontSize: 28, color: NAVY, lineHeight: 1.1 }}
+          style={{ fontFamily: MONT, fontWeight: 700, fontSize: 26, color: NAVY, lineHeight: 1.1 }}
         >
           ¿Por qué BERLIOZ?
         </h2>
 
         {/* Desktop: hotspots flotando encima de la foto */}
-        <div className="relative mx-auto mt-4 hidden w-full max-w-[1400px] lg:block">
+        <div className="relative mx-auto mt-3 hidden w-full lg:block">
           <img
             src={boxAsset.url}
             alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
@@ -225,16 +225,16 @@ const BoxValueSection = () => {
             loading="lazy"
             style={{
               WebkitMaskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 100%)",
+                "radial-gradient(ellipse at center, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)",
               maskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 72%, rgba(0,0,0,0) 100%)",
+                "radial-gradient(ellipse at center, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)",
             }}
           />
 
           {LEFT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[236px]"
+              className="absolute w-[220px]"
               style={{ top: LEFT_POS[i].top, left: LEFT_POS[i].left }}
             >
               {renderTag(t, i, "left", true)}
@@ -244,7 +244,7 @@ const BoxValueSection = () => {
           {RIGHT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[248px]"
+              className="absolute w-[232px]"
               style={{ top: RIGHT_POS[i].top, right: RIGHT_POS[i].right }}
             >
               {renderTag(t, i, "right", true)}

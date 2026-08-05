@@ -68,17 +68,17 @@ const RIGHT_TAGS: Tag[] = [
 
 const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 
-/** Posiciones de los hotspots sobre la foto (desktop) */
+/** Posiciones orbitales de los hotspots alrededor de la foto (desktop) */
 const LEFT_POS = [
-  { top: "9%", left: "0%" },
-  { top: "40%", left: "0%" },
-  { top: "71%", left: "0%" },
+  { top: "6%", left: "2%", translateX: -24 },
+  { top: "42%", left: "0%", translateX: -48 },
+  { top: "76%", left: "3%", translateX: -20 },
 ];
 
 const RIGHT_POS = [
-  { top: "9%", right: "0%" },
-  { top: "40%", right: "0%" },
-  { top: "71%", right: "0%" },
+  { top: "6%", right: "2%", translateX: 24 },
+  { top: "42%", right: "0%", translateX: 48 },
+  { top: "76%", right: "3%", translateX: 20 },
 ];
 
 const OrderCTA = ({ onClick }: { onClick: () => void }) => (

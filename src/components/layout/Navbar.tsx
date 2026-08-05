@@ -102,12 +102,10 @@ const Navbar = () => {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden lg:flex items-center transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 active:scale-95"
+            className="hidden lg:flex items-center transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80 active:scale-95"
             style={{ gap: 8, textDecoration: 'none', color: '#014D6F', fontSize: 15, fontFamily: "'Montserrat', sans-serif" }}
           >
-            <span className="inline-flex items-center justify-center rounded-full transition-colors duration-200" style={{ width: 32, height: 32, background: '#014D6F' }}>
-              <WhatsAppIcon size={19} color="white" />
-            </span>
+            <WhatsAppIcon size={22} color="#014D6F" />
             55 8237 5469
           </a>
 
@@ -213,9 +211,7 @@ const Navbar = () => {
               </button>
             )}
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center py-2 active:scale-95 transition-transform" style={{ gap: 8, fontSize: 16, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
-              <span className="inline-flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: '#014D6F' }}>
-                <WhatsAppIcon size={18} color="white" />
-              </span>
+              <WhatsAppIcon size={22} color="#014D6F" />
               55 8237 5469
             </a>
           </div>

@@ -240,7 +240,7 @@ const BoxValueSection = () => {
               style={{
                 top: LEFT_POS[i].top,
                 left: LEFT_POS[i].left,
-                transform: `translateX(${LEFT_POS[i].translateX}px)`,
+                transform: `translate(${LEFT_POS[i].translateX}px, ${LEFT_POS[i].translateY ?? 0}px)`,
               }}
             >
               {renderTag(t, i, "left", true)}
@@ -254,7 +254,7 @@ const BoxValueSection = () => {
               style={{
                 top: RIGHT_POS[i].top,
                 right: RIGHT_POS[i].right,
-                transform: `translateX(${-RIGHT_POS[i].translateX}px)`,
+                transform: `translate(${-RIGHT_POS[i].translateX}px, ${RIGHT_POS[i].translateY ?? 0}px)`,
               }}
             >
               {renderTag(t, i, "right", true)}

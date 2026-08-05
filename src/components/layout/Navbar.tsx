@@ -115,7 +115,7 @@ const Navbar = () => {
             style={{ textDecoration: 'none', color: '#014D6F', fontSize: 15, fontFamily: "'Montserrat', sans-serif" }}
             aria-label="WhatsApp 55 8237 5469"
           >
-            <MessageCircle size={20} color="#014D6F" strokeWidth={2} />
+            <WhatsAppIcon size={20} color="#014D6F" />
             55 8237 5469
           </a>
 
@@ -221,7 +221,7 @@ const Navbar = () => {
               </button>
             )}
             <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 py-2 active:scale-95 transition-transform" style={{ fontSize: 16, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
-              <MessageCircle size={20} color="#014D6F" strokeWidth={2} />
+              <WhatsAppIcon size={20} color="#014D6F" />
               55 8237 5469
             </a>
           </div>

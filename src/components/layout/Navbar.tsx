@@ -75,7 +75,7 @@ const Navbar = () => {
               style={{
                 fontFamily: "'Montserrat', sans-serif",
                 fontWeight: location.pathname === link.to ? 700 : 500,
-                fontSize: 14,
+                fontSize: 16,
                 color: '#014D6F',
                 textDecoration: 'none',
               }}
@@ -103,10 +103,10 @@ const Navbar = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="hidden lg:flex items-center transition-all duration-200 hover:-translate-y-0.5 hover:opacity-90 active:scale-95"
-            style={{ gap: 8, textDecoration: 'none', color: '#014D6F', fontSize: 13, fontFamily: "'Montserrat', sans-serif" }}
+            style={{ gap: 8, textDecoration: 'none', color: '#014D6F', fontSize: 15, fontFamily: "'Montserrat', sans-serif" }}
           >
-            <span className="inline-flex items-center justify-center rounded-full transition-colors duration-200" style={{ width: 28, height: 28, background: 'rgba(37,211,102,0.14)' }}>
-              <WhatsAppIcon size={17} />
+            <span className="inline-flex items-center justify-center rounded-full transition-colors duration-200" style={{ width: 32, height: 32, background: '#014D6F' }}>
+              <WhatsAppIcon size={19} color="white" />
             </span>
             55 8237 5469
           </a>
@@ -212,8 +212,11 @@ const Navbar = () => {
                 Cerrar sesión
               </button>
             )}
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center py-2 active:scale-95 transition-transform" style={{ gap: 8, fontSize: 14, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
-              <WhatsAppIcon size={18} /> 55 8237 5469
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center py-2 active:scale-95 transition-transform" style={{ gap: 8, fontSize: 16, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+              <span className="inline-flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: '#014D6F' }}>
+                <WhatsAppIcon size={18} color="white" />
+              </span>
+              55 8237 5469
             </a>
           </div>
         </div>

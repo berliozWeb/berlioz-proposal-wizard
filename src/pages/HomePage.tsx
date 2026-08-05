@@ -229,6 +229,8 @@ const HomePage = () => {
       </section>
 
       {/* ═══ SECTION 3 — MENU BY OCCASION ═══ */}
+      <BoxValueSection />
+
       <section className="py-20 bg-background">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="font-heading text-[36px] text-foreground text-center mb-2">¿Qué necesitas hoy?</h2>

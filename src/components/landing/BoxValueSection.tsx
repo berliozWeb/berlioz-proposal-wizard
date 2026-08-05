@@ -183,8 +183,8 @@ const BoxValueSection = () => {
             className={`mt-2 rounded-2xl p-4 animate-fade-in ${floating ? "absolute top-full w-[300px]" : ""}`}
             style={{
               background: "#FDF6F3",
-              border: "1px solid rgba(1,77,111,0.10)",
-              boxShadow: "0 18px 44px rgba(35,25,15,0.30)",
+              border: "1px solid #F2DDD5",
+              boxShadow: "0 18px 44px rgba(35,25,15,0.22)",
               ...(floating ? (side === "left" ? { left: 0 } : { right: 0 }) : {}),
             }}
           >

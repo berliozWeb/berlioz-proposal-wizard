@@ -4,7 +4,7 @@ import NosotrosSection from "@/components/landing/NosotrosSection";
 
 const ContactoPage = () => (
   <BaseLayout>
-    <div style={{ paddingTop: 68 }}>
+    <div style={{ paddingTop: 76 }}>
       <ContactSection />
       <NosotrosSection />
     </div>

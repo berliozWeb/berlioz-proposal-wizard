@@ -188,7 +188,7 @@ const HomePage = () => {
   return (
     <BaseLayout>
       {/* ═══ SECTION 1 — HERO CAROUSEL ═══ */}
-      <div style={{ marginTop: -68 }}>
+      <div style={{ marginTop: -76 }}>
         <HeroCarousel />
       </div>
 

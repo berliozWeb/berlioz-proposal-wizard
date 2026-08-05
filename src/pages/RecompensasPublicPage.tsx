@@ -3,7 +3,7 @@ import RecompensasSection from "@/components/landing/RecompensasSection";
 
 const RecompensasPublicPage = () => (
   <BaseLayout>
-    <div style={{ paddingTop: 68 }}>
+    <div style={{ paddingTop: 76 }}>
       <RecompensasSection />
     </div>
   </BaseLayout>

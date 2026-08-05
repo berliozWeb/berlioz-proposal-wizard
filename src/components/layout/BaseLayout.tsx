@@ -10,7 +10,7 @@ interface BaseLayoutProps {
 const BaseLayout = ({ children, hideFooter }: BaseLayoutProps) => (
   <div className="min-h-screen flex flex-col" style={{ background: '#FDFAF7' }}>
     <Navbar />
-    <main className="flex-1" style={{ paddingTop: 68 }}>{children}</main>
+    <main className="flex-1" style={{ paddingTop: 76 }}>{children}</main>
     {!hideFooter && <Footer />}
   </div>
 );

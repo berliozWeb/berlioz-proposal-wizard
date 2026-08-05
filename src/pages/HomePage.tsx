@@ -290,7 +290,7 @@ const HomePage = () => {
                   preload="metadata"
                   onClick={toggleLunchboxPlay}
                   onLoadedMetadata={() => {
-                    if (lunchboxVideoRef.current) lunchboxVideoRef.current.volume = 0.5;
+                    if (lunchboxVideoRef.current) lunchboxVideoRef.current.volume = lunchboxVolume;
                   }}
                   onPlay={() => setLunchboxPlaying(true)}
                   onPause={() => setLunchboxPlaying(false)}

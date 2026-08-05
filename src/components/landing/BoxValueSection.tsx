@@ -10,7 +10,7 @@ import {
   ArrowRight,
   type LucideIcon,
 } from "lucide-react";
-import boxAsset from "@/assets/berlioz-box-rosa.png.asset.json";
+import boxAsset from "@/assets/berlioz-box-beige.png.asset.json";
 
 const NAVY = "#014D6F";
 const CREAM = "#FDFAF7";
@@ -152,16 +152,16 @@ const BoxValueSection = () => {
           onClick={() => setOpen(isOpen ? null : tag.id)}
           className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-transform duration-200 hover:-translate-y-0.5"
           style={{
-            background: "#F4E9DE",
+            background: "#FFFFFF",
+            border: "1px solid rgba(1,77,111,0.10)",
             boxShadow: isOpen
-              ? "0 10px 28px rgba(60,40,20,0.20)"
-              : "0 6px 18px rgba(60,40,20,0.12)",
-            backdropFilter: "blur(2px)",
+              ? "0 16px 40px rgba(35,25,15,0.30)"
+              : "0 10px 28px rgba(35,25,15,0.22)",
           }}
         >
           <span
             className="flex items-center justify-center rounded-full"
-            style={{ width: 34, height: 34, background: "#EADCCD", flexShrink: 0 }}
+            style={{ width: 34, height: 34, background: "#F2DDD5", flexShrink: 0 }}
           >
             <Icon style={{ width: 18, height: 18, color: NAVY }} strokeWidth={1.5} />
           </span>
@@ -182,8 +182,9 @@ const BoxValueSection = () => {
           <div
             className={`mt-2 rounded-2xl p-4 animate-fade-in ${floating ? "absolute top-full w-[300px]" : ""}`}
             style={{
-              background: "#FBF4EC",
-              boxShadow: "0 14px 34px rgba(60,40,20,0.22)",
+              background: "#FFFFFF",
+              border: "1px solid rgba(1,77,111,0.10)",
+              boxShadow: "0 18px 44px rgba(35,25,15,0.30)",
               ...(floating ? (side === "left" ? { left: 0 } : { right: 0 }) : {}),
             }}
           >

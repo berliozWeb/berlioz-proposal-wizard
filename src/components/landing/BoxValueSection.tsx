@@ -210,20 +210,25 @@ const BoxValueSection = () => {
     <section ref={sectionRef} className="py-4 md:py-5" style={{ background: CREAM }}>
       <div className="mx-auto max-w-[1600px] px-4 md:px-6">
         <h2
-          className="text-center"
+          className="text-center mb-2"
           style={{ fontFamily: MONT, fontWeight: 700, fontSize: 26, color: NAVY, lineHeight: 1.1 }}
         >
           ¿Por qué BERLIOZ?
         </h2>
 
         {/* Desktop: hotspots flotando encima de la foto */}
-        <div className="relative mx-auto mt-3 hidden w-full lg:block">
-          <img
-            src={boxAsset.url}
-            alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
-            className="w-full"
-            loading="lazy"
-          />
+        <div className="relative mx-auto mt-6 md:mt-10 hidden w-full lg:block">
+          <div
+            className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
+            style={{ background: "#F4E9DE" }}
+          >
+            <img
+              src={boxAsset.url}
+              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
+              className="w-full rounded-[24px]"
+              loading="lazy"
+            />
+          </div>
 
           {LEFT_TAGS.map((t, i) => (
             <div
@@ -247,13 +252,18 @@ const BoxValueSection = () => {
         </div>
 
         {/* Móvil: imagen arriba, acordeón debajo */}
-        <div className="mt-4 lg:hidden">
-          <img
-            src={boxAsset.url}
-            alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
-            className="w-full"
-            loading="lazy"
-          />
+        <div className="mt-6 md:mt-8 lg:hidden">
+          <div
+            className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
+            style={{ background: "#F4E9DE" }}
+          >
+            <img
+              src={boxAsset.url}
+              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
+              className="w-full rounded-[24px]"
+              loading="lazy"
+            />
+          </div>
           <div className="mt-4 flex flex-col gap-3">
             {ALL_TAGS.map((t, i) => renderTag(t, i, "left"))}
           </div>

@@ -136,6 +136,7 @@ const HomePage = () => {
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
   const [lunchboxPlaying, setLunchboxPlaying] = useState(false);
   const [lunchboxMuted, setLunchboxMuted] = useState(false);
+  const [lunchboxVolume, setLunchboxVolume] = useState(0.5);
   const lunchboxPausedByUser = useRef(false);
 
   // Inicia con sonido al 50% únicamente cuando la sección entra en pantalla.

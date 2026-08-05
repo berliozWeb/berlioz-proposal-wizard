@@ -253,14 +253,14 @@ const BoxValueSection = () => {
         </div>
 
         {/* Móvil: imagen arriba, acordeón debajo */}
-        <div className="mt-8 lg:hidden">
+        <div className="mt-4 lg:hidden">
           <img
             src={boxAsset.url}
             alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
             className="w-full"
             loading="lazy"
           />
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-3">
             {ALL_TAGS.map((t, i) => renderTag(t, i, "left"))}
           </div>
         </div>

@@ -68,17 +68,17 @@ const RIGHT_TAGS: Tag[] = [
 
 const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 
-/** Posiciones de los hotspots sobre la foto (desktop) */
+/** Posiciones orbitales de los hotspots alrededor de la foto (desktop) */
 const LEFT_POS = [
-  { top: "9%", left: "0%" },
-  { top: "40%", left: "0%" },
-  { top: "71%", left: "0%" },
+  { top: "6%", left: "2%", translateX: -24 },
+  { top: "42%", left: "0%", translateX: -48 },
+  { top: "76%", left: "3%", translateX: -20 },
 ];
 
 const RIGHT_POS = [
-  { top: "9%", right: "0%" },
-  { top: "40%", right: "0%" },
-  { top: "71%", right: "0%" },
+  { top: "6%", right: "2%", translateX: 24 },
+  { top: "42%", right: "0%", translateX: 48 },
+  { top: "76%", right: "3%", translateX: 20 },
 ];
 
 const OrderCTA = ({ onClick }: { onClick: () => void }) => (
@@ -150,13 +150,13 @@ const BoxValueSection = () => {
         <button
           type="button"
           onClick={() => setOpen(isOpen ? null : tag.id)}
-          className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-transform duration-200 hover:-translate-y-0.5"
+          className="flex w-full items-center gap-3 rounded-full px-4 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(35,25,15,0.18)]"
           style={{
             background: "#FDF6F3",
-            border: "1px solid rgba(1,77,111,0.10)",
+            border: "1px solid #F2DDD5",
             boxShadow: isOpen
-              ? "0 16px 40px rgba(35,25,15,0.30)"
-              : "0 10px 28px rgba(35,25,15,0.22)",
+              ? "0 16px 40px rgba(35,25,15,0.22)"
+              : "0 10px 28px rgba(35,25,15,0.16)",
           }}
         >
           <span
@@ -183,8 +183,8 @@ const BoxValueSection = () => {
             className={`mt-2 rounded-2xl p-4 animate-fade-in ${floating ? "absolute top-full w-[300px]" : ""}`}
             style={{
               background: "#FDF6F3",
-              border: "1px solid rgba(1,77,111,0.10)",
-              boxShadow: "0 18px 44px rgba(35,25,15,0.30)",
+              border: "1px solid #F2DDD5",
+              boxShadow: "0 18px 44px rgba(35,25,15,0.22)",
               ...(floating ? (side === "left" ? { left: 0 } : { right: 0 }) : {}),
             }}
           >
@@ -217,25 +217,31 @@ const BoxValueSection = () => {
           ¿Por qué BERLIOZ?
         </h2>
 
-        {/* Desktop: hotspots flotando encima de la foto */}
-        <div className="relative mx-auto hidden w-full lg:block">
-          <div
-            className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F2EAE1" }}
-          >
-            <img
-              src={boxAsset.url}
-              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
-              className="w-full rounded-[24px]"
-              loading="lazy"
-            />
+        {/* Desktop: hotspots orbitando alrededor de la foto */}
+        <div className="relative mx-auto hidden w-full px-6 md:px-12 lg:px-20 xl:px-28 lg:block">
+          <div className="mx-auto w-[88%]">
+            <div
+              className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
+              style={{ background: "#F2EAE1" }}
+            >
+              <img
+                src={boxAsset.url}
+                alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
+                className="w-full rounded-[24px]"
+                loading="lazy"
+              />
+            </div>
           </div>
 
           {LEFT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[220px]"
-              style={{ top: LEFT_POS[i].top, left: LEFT_POS[i].left }}
+              className="absolute w-[220px] transition-transform duration-300 hover:scale-[1.02]"
+              style={{
+                top: LEFT_POS[i].top,
+                left: LEFT_POS[i].left,
+                transform: `translateX(${LEFT_POS[i].translateX}px)`,
+              }}
             >
               {renderTag(t, i, "left", true)}
             </div>
@@ -244,8 +250,12 @@ const BoxValueSection = () => {
           {RIGHT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[232px]"
-              style={{ top: RIGHT_POS[i].top, right: RIGHT_POS[i].right }}
+              className="absolute w-[232px] transition-transform duration-300 hover:scale-[1.02]"
+              style={{
+                top: RIGHT_POS[i].top,
+                right: RIGHT_POS[i].right,
+                transform: `translateX(${-RIGHT_POS[i].translateX}px)`,
+              }}
             >
               {renderTag(t, i, "right", true)}
             </div>

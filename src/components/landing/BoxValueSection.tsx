@@ -114,7 +114,12 @@ const BoxValueSection = () => {
 
   const goOrder = () => navigate(ORDER_ROUTE);
 
-  const renderTag = (tag: Tag, index: number, side: "left" | "right") => {
+  const renderTag = (
+    tag: Tag,
+    index: number,
+    side: "left" | "right",
+    floating = false,
+  ) => {
     const Icon = tag.icon;
     const isOpen = open === tag.id;
     return (
@@ -126,24 +131,35 @@ const BoxValueSection = () => {
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(12px)",
           transitionDelay: `${index * 90 + (side === "right" ? 120 : 0)}ms`,
+          zIndex: isOpen ? 30 : 10,
         }}
       >
         <button
           type="button"
           onClick={() => setOpen(isOpen ? null : tag.id)}
-          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-transform duration-200 hover:-translate-y-0.5"
+          className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-transform duration-200 hover:-translate-y-0.5"
           style={{
-            background: "#FFFDFB",
-            border: "1px solid #E8DDD5",
+            background: "#F4E9DE",
             boxShadow: isOpen
-              ? "0 8px 24px rgba(1,77,111,0.14)"
-              : "0 2px 8px rgba(1,77,111,0.07)",
+              ? "0 10px 28px rgba(60,40,20,0.20)"
+              : "0 6px 18px rgba(60,40,20,0.12)",
+            backdropFilter: "blur(2px)",
           }}
         >
-          <Icon style={{ width: 20, height: 20, color: NAVY, flexShrink: 0 }} strokeWidth={1.5} />
           <span
-            className="text-sm"
-            style={{ fontFamily: MONT, fontWeight: 500, color: NAVY, lineHeight: 1.35 }}
+            className="flex items-center justify-center rounded-full"
+            style={{ width: 34, height: 34, background: "#EADCCD", flexShrink: 0 }}
+          >
+            <Icon style={{ width: 18, height: 18, color: NAVY }} strokeWidth={1.5} />
+          </span>
+          <span
+            style={{
+              fontFamily: MONT,
+              fontWeight: 500,
+              fontSize: 13,
+              color: NAVY,
+              lineHeight: 1.3,
+            }}
           >
             {tag.label}
           </span>
@@ -151,12 +167,11 @@ const BoxValueSection = () => {
 
         {isOpen && (
           <div
-            className="z-20 mt-2 rounded-xl p-4 animate-fade-in lg:absolute lg:top-full lg:w-[300px]"
+            className={`mt-2 rounded-2xl p-4 animate-fade-in ${floating ? "absolute top-full w-[300px]" : ""}`}
             style={{
-              background: "#FFFFFF",
-              border: "1px solid #E8DDD5",
-              boxShadow: "0 12px 32px rgba(1,77,111,0.16)",
-              ...(side === "left" ? { left: 0 } : { right: 0 }),
+              background: "#FBF4EC",
+              boxShadow: "0 14px 34px rgba(60,40,20,0.22)",
+              ...(floating ? (side === "left" ? { left: 0 } : { right: 0 }) : {}),
             }}
           >
             <p
@@ -194,30 +209,40 @@ const BoxValueSection = () => {
           Así se ve un pedido Berlioz
         </p>
 
-        {/* Desktop: tags flotando a los lados */}
-        <div className="mt-10 hidden items-center gap-0 lg:grid lg:grid-cols-[minmax(0,250px)_minmax(0,1fr)_minmax(0,250px)]">
-          <div className="flex flex-col gap-14" style={{ transform: "translateX(28px)" }}>
-            {LEFT_TAGS.map((t, i) => renderTag(t, i, "left"))}
-          </div>
+        {/* Desktop: hotspots flotando encima de la foto */}
+        <div className="relative mx-auto mt-10 hidden w-full max-w-5xl lg:block">
+          <img
+            src={boxAsset.url}
+            alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
+            className="w-full"
+            loading="lazy"
+            style={{
+              WebkitMaskImage:
+                "radial-gradient(ellipse at center, rgba(0,0,0,1) 66%, rgba(0,0,0,0) 100%)",
+              maskImage:
+                "radial-gradient(ellipse at center, rgba(0,0,0,1) 66%, rgba(0,0,0,0) 100%)",
+            }}
+          />
 
-          <div className="px-2">
-            <img
-              src={boxAsset.url}
-              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
-              className="w-full"
-              loading="lazy"
-              style={{
-                WebkitMaskImage:
-                  "radial-gradient(ellipse at center, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)",
-                maskImage:
-                  "radial-gradient(ellipse at center, rgba(0,0,0,1) 62%, rgba(0,0,0,0) 100%)",
-              }}
-            />
-          </div>
+          {LEFT_TAGS.map((t, i) => (
+            <div
+              key={t.id}
+              className="absolute w-[236px]"
+              style={{ top: LEFT_POS[i].top, left: LEFT_POS[i].left }}
+            >
+              {renderTag(t, i, "left", true)}
+            </div>
+          ))}
 
-          <div className="flex flex-col gap-14" style={{ transform: "translateX(-28px)" }}>
-            {RIGHT_TAGS.map((t, i) => renderTag(t, i, "right"))}
-          </div>
+          {RIGHT_TAGS.map((t, i) => (
+            <div
+              key={t.id}
+              className="absolute w-[248px]"
+              style={{ top: RIGHT_POS[i].top, right: RIGHT_POS[i].right }}
+            >
+              {renderTag(t, i, "right", true)}
+            </div>
+          ))}
         </div>
 
         {/* Móvil: imagen arriba, acordeón debajo */}

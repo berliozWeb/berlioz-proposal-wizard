@@ -10,7 +10,7 @@ import {
   ArrowRight,
   type LucideIcon,
 } from "lucide-react";
-import boxAsset from "@/assets/berlioz-box-crema.png.asset.json";
+import boxAsset from "@/assets/berlioz-box-rosa.png.asset.json";
 
 const NAVY = "#014D6F";
 const CREAM = "#FDFAF7";
@@ -70,15 +70,15 @@ const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 
 /** Posiciones de los hotspots sobre la foto (desktop) */
 const LEFT_POS = [
-  { top: "8%", left: "0%" },
-  { top: "34%", left: "0%" },
-  { top: "58%", left: "2%" },
+  { top: "9%", left: "0%" },
+  { top: "40%", left: "0%" },
+  { top: "71%", left: "0%" },
 ];
 
 const RIGHT_POS = [
-  { top: "16%", right: "0%" },
-  { top: "42%", right: "0%" },
-  { top: "68%", right: "1%" },
+  { top: "9%", right: "0%" },
+  { top: "40%", right: "0%" },
+  { top: "71%", right: "0%" },
 ];
 
 const OrderCTA = ({ onClick }: { onClick: () => void }) => (
@@ -207,24 +207,24 @@ const BoxValueSection = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-4 md:py-5" style={{ background: CREAM }}>
+    <section ref={sectionRef} className="py-10 md:py-14" style={{ background: CREAM }}>
       <div className="mx-auto max-w-[1600px] px-4 md:px-6">
         <h2
-          className="text-center mb-2"
-          style={{ fontFamily: MONT, fontWeight: 700, fontSize: 26, color: NAVY, lineHeight: 1.1 }}
+          className="text-center mb-8 md:mb-12 text-[32px] md:text-[40px]"
+          style={{ fontFamily: MONT, fontWeight: 700, color: NAVY, lineHeight: 1.15 }}
         >
           ¿Por qué BERLIOZ?
         </h2>
 
         {/* Desktop: hotspots flotando encima de la foto */}
-        <div className="relative mx-auto mt-6 md:mt-10 hidden w-full lg:block">
+        <div className="relative mx-auto hidden w-full lg:block">
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F4E9DE" }}
+            style={{ background: "#F7E8DF" }}
           >
             <img
               src={boxAsset.url}
-              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
+              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo rosa"
               className="w-full rounded-[24px]"
               loading="lazy"
             />
@@ -252,14 +252,14 @@ const BoxValueSection = () => {
         </div>
 
         {/* Móvil: imagen arriba, acordeón debajo */}
-        <div className="mt-6 md:mt-8 lg:hidden">
+        <div className="lg:hidden">
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F4E9DE" }}
+            style={{ background: "#F7E8DF" }}
           >
             <img
               src={boxAsset.url}
-              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
+              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo rosa"
               className="w-full rounded-[24px]"
               loading="lazy"
             />

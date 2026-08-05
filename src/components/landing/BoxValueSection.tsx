@@ -223,12 +223,6 @@ const BoxValueSection = () => {
             alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
             className="w-full"
             loading="lazy"
-            style={{
-              WebkitMaskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)",
-              maskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)",
-            }}
           />
 
           {LEFT_TAGS.map((t, i) => (

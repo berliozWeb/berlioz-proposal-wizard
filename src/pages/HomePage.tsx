@@ -325,6 +325,22 @@ const HomePage = () => {
                   >
                     {lunchboxMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                   </button>
+                  <div className="flex items-center gap-2 h-10 px-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg">
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={lunchboxMuted ? 0 : lunchboxVolume}
+                      onChange={handleLunchboxVolume}
+                      className="w-20 h-1.5 rounded-full appearance-none cursor-pointer"
+                      style={{
+                        background: `linear-gradient(to right, #014D6F ${(lunchboxMuted ? 0 : lunchboxVolume) * 100}%, rgba(1,77,111,0.2) ${(lunchboxMuted ? 0 : lunchboxVolume) * 100}%)`,
+                        accentColor: '#014D6F',
+                      }}
+                      aria-label="Volumen del video"
+                    />
+                  </div>
                 </div>
               </div>
             </RevealOnScroll>

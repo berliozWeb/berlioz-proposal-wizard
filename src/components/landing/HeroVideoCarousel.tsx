@@ -36,6 +36,12 @@ const SLIDES = [
     overlay: "rgba(0, 77, 111, 0.30)",
     cta: null as null | { label: string; to: string },
   },
+  {
+    video: `${BUCKET}/hero-8-practical-products.mp4`,
+    lines: ["CONTAMOS TAMBIÉN CON PRODUCTOS", "PRÁCTICOS Y ACCESIBLES"],
+    overlay: "rgba(0, 77, 111, 0.30)",
+    cta: null as null | { label: string; to: string },
+  },
 ];
 
 const HeroVideoCarousel = () => {

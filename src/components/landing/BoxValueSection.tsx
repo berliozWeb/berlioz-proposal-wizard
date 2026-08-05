@@ -70,7 +70,7 @@ const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 
 /** Posiciones orbitales de los hotspots alrededor de la foto (desktop) */
 const LEFT_POS = [
-  { top: "8%", left: "5%", translateX: -32, translateY: -16 },
+  { top: "8%", left: "11%", translateX: -32, translateY: -16 },
   { top: "38%", left: "6%", translateX: 24 },
   { top: "78%", left: "6%", translateX: -24, translateY: 16 },
 ];

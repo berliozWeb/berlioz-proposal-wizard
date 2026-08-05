@@ -70,14 +70,14 @@ const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 
 /** Posiciones de los hotspots sobre la foto (desktop) */
 const LEFT_POS = [
-  { top: "8%", left: "-1%" },
-  { top: "34%", left: "-4%" },
+  { top: "8%", left: "0%" },
+  { top: "34%", left: "0%" },
   { top: "58%", left: "2%" },
 ];
 
 const RIGHT_POS = [
-  { top: "16%", right: "-2%" },
-  { top: "42%", right: "-4%" },
+  { top: "16%", right: "0%" },
+  { top: "42%", right: "0%" },
   { top: "68%", right: "1%" },
 ];
 
@@ -207,40 +207,28 @@ const BoxValueSection = () => {
   };
 
   return (
-    <section ref={sectionRef} className="py-16 md:py-24" style={{ background: CREAM }}>
-      <div className="mx-auto max-w-6xl px-6">
+    <section ref={sectionRef} className="py-4 md:py-5" style={{ background: CREAM }}>
+      <div className="mx-auto max-w-[1600px] px-4 md:px-6">
         <h2
           className="text-center"
-          style={{ fontFamily: MONT, fontWeight: 700, fontSize: 36, color: NAVY, lineHeight: 1.15 }}
+          style={{ fontFamily: MONT, fontWeight: 700, fontSize: 26, color: NAVY, lineHeight: 1.1 }}
         >
-          Una Box, todo resuelto
+          ¿Por qué BERLIOZ?
         </h2>
-        <p
-          className="mt-2 text-center text-sm"
-          style={{ fontFamily: MONT, color: "#8A8A8A" }}
-        >
-          Así se ve un pedido Berlioz
-        </p>
 
         {/* Desktop: hotspots flotando encima de la foto */}
-        <div className="relative mx-auto mt-10 hidden w-full max-w-5xl lg:block">
+        <div className="relative mx-auto mt-3 hidden w-full lg:block">
           <img
             src={boxAsset.url}
             alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
             className="w-full"
             loading="lazy"
-            style={{
-              WebkitMaskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 66%, rgba(0,0,0,0) 100%)",
-              maskImage:
-                "radial-gradient(ellipse at center, rgba(0,0,0,1) 66%, rgba(0,0,0,0) 100%)",
-            }}
           />
 
           {LEFT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[236px]"
+              className="absolute w-[220px]"
               style={{ top: LEFT_POS[i].top, left: LEFT_POS[i].left }}
             >
               {renderTag(t, i, "left", true)}
@@ -250,7 +238,7 @@ const BoxValueSection = () => {
           {RIGHT_TAGS.map((t, i) => (
             <div
               key={t.id}
-              className="absolute w-[248px]"
+              className="absolute w-[232px]"
               style={{ top: RIGHT_POS[i].top, right: RIGHT_POS[i].right }}
             >
               {renderTag(t, i, "right", true)}
@@ -259,14 +247,14 @@ const BoxValueSection = () => {
         </div>
 
         {/* Móvil: imagen arriba, acordeón debajo */}
-        <div className="mt-8 lg:hidden">
+        <div className="mt-4 lg:hidden">
           <img
             src={boxAsset.url}
             alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo crema"
             className="w-full"
             loading="lazy"
           />
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-4 flex flex-col gap-3">
             {ALL_TAGS.map((t, i) => renderTag(t, i, "left"))}
           </div>
         </div>

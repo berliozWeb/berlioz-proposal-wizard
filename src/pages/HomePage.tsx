@@ -212,7 +212,7 @@ const HomePage = () => {
       </div>
 
       {/* ═══ SECTION 2 — TRUST BAR ═══ */}
-      <section style={{ background: '#014D6F', padding: '24px 0' }}>
+      <section style={{ background: '#014D6F', padding: '20px 0 12px 0' }}>
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { icon: Clock, title: "Pide antes de las 3pm", desc: "Para entrega al día siguiente" },

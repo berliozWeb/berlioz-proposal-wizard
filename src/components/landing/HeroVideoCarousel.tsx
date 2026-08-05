@@ -13,6 +13,12 @@ const SLIDES = [
     cta: { label: "Ver menú →", to: "/menu" },
   },
   {
+    video: `${BUCKET}/hero-5-coffee-break.mp4`,
+    lines: ["COFFEE BREAKS", "LISTOS EN TU OFICINA"],
+    overlay: "rgba(0, 77, 111, 0.35)",
+    cta: null as null | { label: string; to: string },
+  },
+  {
     video: `${BUCKET}/hero-1-overhead-pan.mp4`,
     lines: ["COMIDA FANTÁSTICA", "PARA JUNTAS CON ESTILO"],
     overlay: "rgba(0, 77, 111, 0.35)",
@@ -22,18 +28,6 @@ const SLIDES = [
     video: `${BUCKET}/hero-2-hands-rotating.mp4`,
     lines: ["EL WORKING LUNCH", "QUE TU EQUIPO MERECE"],
     overlay: "rgba(0, 77, 111, 0.30)",
-    cta: null as null | { label: string; to: string },
-  },
-  {
-    video: `${BUCKET}/hero-4-breakfast-box.mp4`,
-    lines: ["DESAYUNOS QUE", "EMPIEZAN BIEN EL DÍA"],
-    overlay: "rgba(0, 77, 111, 0.30)",
-    cta: null as null | { label: string; to: string },
-  },
-  {
-    video: `${BUCKET}/hero-5-coffee-break.mp4`,
-    lines: ["COFFEE BREAKS", "LISTOS EN TU OFICINA"],
-    overlay: "rgba(0, 77, 111, 0.35)",
     cta: null as null | { label: string; to: string },
   },
 ];

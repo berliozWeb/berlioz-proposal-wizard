@@ -208,7 +208,7 @@ const BoxValueSection = () => {
 
   return (
     <section ref={sectionRef} className="py-5 md:py-6" style={{ background: CREAM }}>
-      <div className="mx-auto max-w-[1400px] px-4 md:px-6">
+      <div className="mx-auto max-w-[1600px] px-4 md:px-6">
         <h2
           className="text-center"
           style={{ fontFamily: MONT, fontWeight: 700, fontSize: 26, color: NAVY, lineHeight: 1.1 }}

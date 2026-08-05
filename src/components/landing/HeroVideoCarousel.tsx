@@ -24,6 +24,24 @@ const SLIDES = [
     overlay: "rgba(0, 77, 111, 0.35)",
     cta: { label: "Ver menú →", to: "/menu" },
   },
+  {
+    video: `${BUCKET}/hero-4-breakfast-box.mp4`,
+    lines: ["DESAYUNOS QUE", "EMPIEZAN BIEN EL DÍA"],
+    overlay: "rgba(0, 77, 111, 0.30)",
+    cta: null as null | { label: string; to: string },
+  },
+  {
+    video: `${BUCKET}/hero-5-coffee-break.mp4`,
+    lines: ["COFFEE BREAKS", "LISTOS EN TU OFICINA"],
+    overlay: "rgba(0, 77, 111, 0.35)",
+    cta: null as null | { label: string; to: string },
+  },
+  {
+    video: `${BUCKET}/hero-6-colorful-spread.mp4`,
+    lines: ["MENÚS PARA", "TODOS LOS GUSTOS"],
+    overlay: "rgba(0, 77, 111, 0.30)",
+    cta: { label: "Ver menú →", to: "/menu" },
+  },
 ];
 
 const HeroVideoCarousel = () => {

@@ -221,11 +221,11 @@ const BoxValueSection = () => {
         <div className="relative mx-auto hidden w-full lg:block">
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F7E8DF" }}
+            style={{ background: "#F2EAE1" }}
           >
             <img
               src={boxAsset.url}
-              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo rosa"
+              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
               className="w-full rounded-[24px]"
               loading="lazy"
             />
@@ -256,11 +256,11 @@ const BoxValueSection = () => {
         <div className="lg:hidden">
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
-            style={{ background: "#F7E8DF" }}
+            style={{ background: "#F2EAE1" }}
           >
             <img
               src={boxAsset.url}
-              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal sobre fondo rosa"
+              alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
               className="w-full rounded-[24px]"
               loading="lazy"
             />

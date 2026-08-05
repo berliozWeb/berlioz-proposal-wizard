@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Star, ChevronRight, Clock, MapPin, Truck, CreditCard, Utensils, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import HeroCarousel from "@/components/landing/HeroVideoCarousel";
+import BoxValueSection from "@/components/landing/BoxValueSection";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import WordRotator from "@/components/ui/WordRotator";
@@ -226,6 +227,9 @@ const HomePage = () => {
           ))}
         </div>
       </section>
+
+      {/* ═══ SECTION 2.5 — BOX VALUE PROPS ═══ */}
+      <BoxValueSection />
 
       {/* ═══ SECTION 3 — MENU BY OCCASION ═══ */}
       <section className="py-20 bg-background">

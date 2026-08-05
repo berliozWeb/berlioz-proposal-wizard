@@ -68,6 +68,19 @@ const RIGHT_TAGS: Tag[] = [
 
 const ALL_TAGS = [...LEFT_TAGS, ...RIGHT_TAGS];
 
+/** Posiciones de los hotspots sobre la foto (desktop) */
+const LEFT_POS = [
+  { top: "8%", left: "-1%" },
+  { top: "34%", left: "-4%" },
+  { top: "58%", left: "2%" },
+];
+
+const RIGHT_POS = [
+  { top: "16%", right: "-2%" },
+  { top: "42%", right: "-4%" },
+  { top: "68%", right: "1%" },
+];
+
 const OrderCTA = ({ onClick }: { onClick: () => void }) => (
   <button
     type="button"

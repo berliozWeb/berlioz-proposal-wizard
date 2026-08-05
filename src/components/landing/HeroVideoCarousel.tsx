@@ -7,6 +7,12 @@ const BUCKET = `${SUPABASE_URL}/storage/v1/object/public/hero-videos`;
 
 const SLIDES = [
   {
+    video: `${BUCKET}/hero-6-colorful-spread.mp4`,
+    lines: ["MENÚS PARA", "TODOS LOS GUSTOS"],
+    overlay: "rgba(0, 77, 111, 0.30)",
+    cta: { label: "Ver menú →", to: "/menu" },
+  },
+  {
     video: `${BUCKET}/hero-1-overhead-pan.mp4`,
     lines: ["COMIDA FANTÁSTICA", "PARA JUNTAS CON ESTILO"],
     overlay: "rgba(0, 77, 111, 0.35)",
@@ -19,12 +25,6 @@ const SLIDES = [
     cta: null as null | { label: string; to: string },
   },
   {
-    video: `${BUCKET}/hero-3-cinematic-push.mp4`,
-    lines: ["FESTEJA EL MUNDIAL", "CON BERLIOZ"],
-    overlay: "rgba(0, 77, 111, 0.35)",
-    cta: { label: "Ver menú →", to: "/menu" },
-  },
-  {
     video: `${BUCKET}/hero-4-breakfast-box.mp4`,
     lines: ["DESAYUNOS QUE", "EMPIEZAN BIEN EL DÍA"],
     overlay: "rgba(0, 77, 111, 0.30)",
@@ -35,12 +35,6 @@ const SLIDES = [
     lines: ["COFFEE BREAKS", "LISTOS EN TU OFICINA"],
     overlay: "rgba(0, 77, 111, 0.35)",
     cta: null as null | { label: string; to: string },
-  },
-  {
-    video: `${BUCKET}/hero-6-colorful-spread.mp4`,
-    lines: ["MENÚS PARA", "TODOS LOS GUSTOS"],
-    overlay: "rgba(0, 77, 111, 0.30)",
-    cta: { label: "Ver menú →", to: "/menu" },
   },
 ];
 

@@ -73,7 +73,7 @@ const OCCASIONS: { id: string; name: string; price: number; emoji: string; image
 ];
 
 const STATS = [
-  { label: "Clientes Felices", value: 2500 },
+  { label: "Años teniendo clientes felices", value: 11 },
   { label: "Comidas Entregadas", value: 500000 },
   { label: "Empresas Internacionales", value: 500 },
 ];

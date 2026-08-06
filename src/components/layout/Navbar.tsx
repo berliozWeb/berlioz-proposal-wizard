@@ -75,7 +75,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center" style={{ gap: 36 }}>
+        <div className="hidden md:flex items-center" style={{ gap: 28 }}>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.to}
@@ -84,7 +84,7 @@ const Navbar = () => {
               style={{
                 fontFamily: "'Montserrat', sans-serif",
                 fontWeight: location.pathname === link.to ? 700 : 500,
-                fontSize: 16,
+                fontSize: 15,
                 color: '#014D6F',
                 textDecoration: 'none',
               }}

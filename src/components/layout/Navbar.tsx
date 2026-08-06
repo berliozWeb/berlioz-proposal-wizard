@@ -65,17 +65,17 @@ const Navbar = () => {
       style={{
         background: '#F7E8DF',
         borderBottom: '1px solid #E2D3CA',
-        height: 76,
+        height: 64,
       }}
     >
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 h-full">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 md:px-8 h-full">
         {/* Logo */}
         <Link to="/" className="shrink-0 flex items-center transition-transform duration-300 hover:scale-[1.04] active:scale-95" aria-label="Berlioz" style={{ textDecoration: 'none' }}>
-          <img src={berliozLogo} alt="Berlioz" style={{ height: 56, width: 'auto', display: 'block' }} />
+          <img src={berliozLogo} alt="Berlioz" style={{ height: 44, width: 'auto', display: 'block' }} />
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center" style={{ gap: 36 }}>
+        <div className="hidden md:flex items-center" style={{ gap: 28 }}>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.to}
@@ -84,7 +84,7 @@ const Navbar = () => {
               style={{
                 fontFamily: "'Montserrat', sans-serif",
                 fontWeight: location.pathname === link.to ? 700 : 500,
-                fontSize: 16,
+                fontSize: 15,
                 color: '#014D6F',
                 textDecoration: 'none',
               }}
@@ -105,29 +105,29 @@ const Navbar = () => {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center" style={{ gap: 20 }}>
+        <div className="flex items-center" style={{ gap: 16 }}>
           {/* WhatsApp */}
           <a
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden lg:flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80 active:scale-95"
-            style={{ textDecoration: 'none', color: '#014D6F', fontSize: 15, fontFamily: "'Montserrat', sans-serif" }}
+            className="hidden lg:flex items-center gap-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:opacity-80 active:scale-95"
+            style={{ textDecoration: 'none', color: '#014D6F', fontSize: 14, fontFamily: "'Montserrat', sans-serif" }}
             aria-label="WhatsApp 55 8237 5469"
           >
-            <WhatsAppIcon size={20} color="#014D6F" />
+            <WhatsAppIcon size={18} color="#014D6F" />
             55 8237 5469
           </a>
 
           {/* Cart — always visible */}
-          <Link to="/carrito" className="relative p-1.5 transition-transform duration-200 hover:-translate-y-0.5 hover:scale-110 active:scale-95" style={{ color: '#014D6F' }}>
-            <ShoppingCart style={{ width: 20, height: 20 }} />
+          <Link to="/carrito" className="relative p-1 transition-transform duration-200 hover:-translate-y-0.5 hover:scale-110 active:scale-95" style={{ color: '#014D6F' }}>
+            <ShoppingCart style={{ width: 18, height: 18 }} />
             {itemCount > 0 && (
               <span
                 className="absolute flex items-center justify-center"
                 style={{
-                  top: -2, right: -2, width: 18, height: 18, borderRadius: '50%',
-                  background: '#014D6F', color: 'white', fontSize: 10, fontWeight: 700,
+                  top: -2, right: -2, width: 16, height: 16, borderRadius: '50%',
+                  background: '#014D6F', color: 'white', fontSize: 9, fontWeight: 700,
                   fontFamily: "'Montserrat', sans-serif",
                 }}
               >
@@ -140,15 +140,15 @@ const Navbar = () => {
             <>
               {/* Avatar dropdown */}
               <div className="relative" ref={dropdownRef}>
-                <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center transition-transform duration-200 hover:scale-105 active:scale-95" style={{ gap: 8 }}>
+                <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center transition-transform duration-200 hover:scale-105 active:scale-95" style={{ gap: 6 }}>
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="object-cover" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid white' }} />
+                    <img src={profile.avatar_url} alt="" className="object-cover" style={{ width: 30, height: 30, borderRadius: '50%', border: '2px solid white' }} />
                   ) : (
-                    <div className="flex items-center justify-center" style={{ width: 32, height: 32, borderRadius: '50%', background: '#014D6F', color: 'white', fontSize: 13, fontWeight: 600, fontFamily: "'Montserrat', sans-serif" }}>
+                    <div className="flex items-center justify-center" style={{ width: 30, height: 30, borderRadius: '50%', background: '#014D6F', color: 'white', fontSize: 12, fontWeight: 600, fontFamily: "'Montserrat', sans-serif" }}>
                       {initials}
                     </div>
                   )}
-                  <ChevronDown className="hidden md:block" style={{ width: 14, height: 14, color: '#014D6F' }} />
+                  <ChevronDown className="hidden md:block" style={{ width: 13, height: 13, color: '#014D6F' }} />
                 </button>
 
                 {dropdownOpen && (
@@ -181,8 +181,8 @@ const Navbar = () => {
               to="/login"
               className="hidden md:inline-flex items-center justify-center transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
               style={{
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 borderRadius: '50%',
                 background: '#014D6F',
                 color: 'white',
@@ -190,13 +190,13 @@ const Navbar = () => {
               }}
               title="Iniciar sesión"
             >
-              <User style={{ width: 18, height: 18 }} />
+              <User style={{ width: 16, height: 16 }} />
             </Link>
           )}
 
           {/* Mobile hamburger */}
-          <button className="md:hidden p-2" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu" style={{ color: '#014D6F' }}>
-            {mobileOpen ? <X style={{ width: 24, height: 24 }} /> : <Menu style={{ width: 24, height: 24 }} />}
+          <button className="md:hidden p-1.5" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu" style={{ color: '#014D6F' }}>
+            {mobileOpen ? <X style={{ width: 22, height: 22 }} /> : <Menu style={{ width: 22, height: 22 }} />}
           </button>
         </div>
       </nav>

@@ -278,8 +278,8 @@ const HomePage = () => {
             <RevealOnScroll>
               <div>
                 <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl mb-6 tracking-tight leading-[1.05] text-primary">BERLIOZ <br className="hidden sm:block"/> LUNCH BOX</h2>
-                <p className="font-body text-lg md:text-xl mb-8 leading-relaxed text-muted-foreground">Para tus juntas y eventos, Berlioz ofrece una comida gourmet de tres tiempos, servida en una elegante caja práctica y sofisticada.</p>
-                <p className="font-heading text-xl md:text-2xl italic text-secondary font-medium leading-tight">&ldquo;Consiente a tus invitados con esta experiencia sensorial.&rdquo;</p>
+                <p className="font-body text-lg md:text-xl mb-8 leading-relaxed text-muted-foreground">Berlioz ofrece productos de tipo gourmet para tus reuniones, coffee breaks, desayunos y eventos. Todo servido en empaques biodegradables pero con una calidad y presentación inigualables.</p>
+                <p className="font-heading text-xl md:text-2xl italic text-secondary font-medium leading-tight">&ldquo;Crea experiencias en tu oficina con BERLIOZ. Comida fantástica desde 2015.&rdquo;</p>
               </div>
             </RevealOnScroll>
 

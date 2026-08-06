@@ -37,7 +37,7 @@ import logoZebra from "@/assets/logos/clientesBerlioz_zebra.png";
 import logoGrupoMex from "@/assets/logos/grupomex-1.png";
 
 // Testimonial logos
-import testimoniosPepsico from "@/assets/logos/testimonios_pepsico.png";
+import testimoniosEyAsset from "@/assets/logos/ey.png.asset.json";
 import testimoniosPalmolive from "@/assets/logos/testimonios_palmolive.png";
 import testimoniosIos from "@/assets/logos/clientesBerlioz_ios.png";
 import logoDhl from "@/assets/logos/dhl.svg";
@@ -91,7 +91,7 @@ const TESTIMONIALS = [
     name: "Rocío Ornelas",
     company: "EY México",
     role: "Executive Assistant",
-    logo: testimoniosPepsico,
+    logo: testimoniosEyAsset.url,
   },
   {
     quote: "Necesitábamos catering para un evento de última hora y Berlioz entregó en menos de 24 horas. Servicio excepcional y presentación muy profesional.",

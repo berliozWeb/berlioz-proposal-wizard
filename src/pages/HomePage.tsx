@@ -92,7 +92,7 @@ const TESTIMONIALS = [
     name: "Rocío Ornelas",
     company: "EY México",
     role: "Executive Assistant",
-    logo: testimoniosPepsico,
+    logo: testimoniosEyAsset.url,
   },
   {
     quote: "Necesitábamos catering para un evento de última hora y Berlioz entregó en menos de 24 horas. Servicio excepcional y presentación muy profesional.",

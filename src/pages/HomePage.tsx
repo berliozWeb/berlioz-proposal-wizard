@@ -37,7 +37,6 @@ import logoZebra from "@/assets/logos/clientesBerlioz_zebra.png";
 import logoGrupoMex from "@/assets/logos/grupomex-1.png";
 
 // Testimonial logos
-import testimoniosPepsico from "@/assets/logos/testimonios_pepsico.png";
 import testimoniosEyAsset from "@/assets/logos/ey.png.asset.json";
 import testimoniosPalmolive from "@/assets/logos/testimonios_palmolive.png";
 import testimoniosIos from "@/assets/logos/clientesBerlioz_ios.png";

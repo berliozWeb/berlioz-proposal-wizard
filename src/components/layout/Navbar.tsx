@@ -65,13 +65,13 @@ const Navbar = () => {
       style={{
         background: '#F7E8DF',
         borderBottom: '1px solid #E2D3CA',
-        height: 76,
+        height: 64,
       }}
     >
-      <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-10 h-full">
+      <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 md:px-8 h-full">
         {/* Logo */}
         <Link to="/" className="shrink-0 flex items-center transition-transform duration-300 hover:scale-[1.04] active:scale-95" aria-label="Berlioz" style={{ textDecoration: 'none' }}>
-          <img src={berliozLogo} alt="Berlioz" style={{ height: 56, width: 'auto', display: 'block' }} />
+          <img src={berliozLogo} alt="Berlioz" style={{ height: 44, width: 'auto', display: 'block' }} />
         </Link>
 
         {/* Desktop nav */}

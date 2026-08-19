@@ -28,6 +28,23 @@ const CATEGORY_EMOJIS: Record<CategoriaMenu | "favoritos", string> = {
 };
 
 const PAGE_SIZE = 15;
+const FAVORITOS_PAGE_SIZE = 12;
+
+type SortOption = "populares" | "precio_asc" | "precio_desc" | "alfabetico";
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "populares", label: "Más populares" },
+  { value: "precio_asc", label: "Precio: menor a mayor" },
+  { value: "precio_desc", label: "Precio: mayor a menor" },
+  { value: "alfabetico", label: "Orden alfabético (A-Z)" },
+];
+
+const precioBase = (p: ProductoCotizador) => {
+  const precios = (p.variantes || [])
+    .map((v: Variante) => Number(v.precio) || 0)
+    .filter((n) => n > 0);
+  return precios.length ? Math.min(...precios) : 0;
+};
 
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,6 +56,7 @@ const CatalogPage = () => {
   );
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [sortBy, setSortBy] = useState<SortOption>("populares");
   const navigate = useNavigate();
 
   const handleFilterChange = (value: string) => {
@@ -83,18 +101,27 @@ const CatalogPage = () => {
           p.desc_corta?.toLowerCase().includes(q),
       );
     }
-    return list;
-  }, [data, effectiveFilter, search]);
 
-  const isPaginated = effectiveFilter !== "favoritos";
-  const totalPages = isPaginated ? Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE)) : 1;
+    if (sortBy === "populares") return list;
+    const sorted = [...list];
+    if (sortBy === "alfabetico") {
+      sorted.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    } else if (sortBy === "precio_asc") {
+      sorted.sort((a, b) => precioBase(a) - precioBase(b));
+    } else {
+      sorted.sort((a, b) => precioBase(b) - precioBase(a));
+    }
+    return sorted;
+  }, [data, effectiveFilter, search, sortBy]);
+
+  const pageSize = effectiveFilter === "favoritos" ? FAVORITOS_PAGE_SIZE : PAGE_SIZE;
+  const isPaginated = true;
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const paginatedList = isPaginated
-    ? filteredList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-    : filteredList;
+  const paginatedList = filteredList.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const startIndex = (currentPage - 1) * PAGE_SIZE + 1;
-  const endIndex = Math.min(currentPage * PAGE_SIZE, filteredList.length);
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, filteredList.length);
 
   return (
     <BaseLayout>
@@ -152,7 +179,29 @@ const CatalogPage = () => {
                   className="h-12 pl-12 pr-6 rounded-2xl border border-border/60 bg-card/50 font-body text-sm w-full md:w-[400px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                 />
               </div>
-              <div className="flex items-center gap-3" />
+              <div className="flex items-center gap-3">
+                <label
+                  htmlFor="orden-productos"
+                  className="font-body text-sm text-muted-foreground whitespace-nowrap"
+                >
+                  Ordenar por:
+                </label>
+                <select
+                  id="orden-productos"
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value as SortOption);
+                    setPage(1);
+                  }}
+                  className="h-12 px-4 pr-8 rounded-2xl border border-border/60 bg-card/50 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>

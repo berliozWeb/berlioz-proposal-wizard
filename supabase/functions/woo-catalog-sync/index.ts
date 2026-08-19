@@ -83,6 +83,7 @@ function mapProductRow(p: any) {
   const precioSale = p.sale_price ? parseFloat(p.sale_price) : null;
   return {
     id: String(p.id),
+    woo_id: typeof p.id === "number" ? p.id : null,
     sku: p.sku || null,
     nombre: p.name || "",
     tipo: p.type === "variable" ? "variable" : "simple",
@@ -95,6 +96,7 @@ function mapProductRow(p: any) {
     descripcion_corta: p.short_description || null,
     imagen_url: mainImage,
     activo: p.status === "publish" && (p.stock_status ?? "instock") === "instock",
+    total_sales: typeof p.total_sales === "number" ? p.total_sales : 0,
     woo_source: true,
     woo_last_synced_at: new Date().toISOString(),
   };

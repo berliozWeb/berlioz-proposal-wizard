@@ -104,7 +104,9 @@ function parseVariantes(product: any): Variante[] {
 
 function stripHtml(html: string | null | undefined): string | null {
   if (!html) return null;
-  const cleaned = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const text = doc.body.textContent || "";
+  const cleaned = text.replace(/\s+/g, " ").trim();
   return cleaned || null;
 }
 

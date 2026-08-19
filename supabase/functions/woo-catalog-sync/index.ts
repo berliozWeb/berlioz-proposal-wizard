@@ -71,6 +71,21 @@ async function fetchAllProducts() {
 }
 
 function mapProductRow(p: any) {
+  // Replicar lo que ve un cliente en berlioz.mx:
+  // - oculto del catálogo (catalog_visibility: hidden / search)
+  // - restringido por membresía del plugin Groups (meta groups-read)
+  // - productos internos/cortesía con precio 0
+  const visibility = String(p.catalog_visibility ?? "visible");
+  const visibleEnCatalogo = visibility === "visible" || visibility === "catalog";
+  const restringidoPorGrupo = Array.isArray(p.meta_data)
+    ? p.meta_data.some(
+        (m: any) =>
+          m?.key === "groups-read" &&
+          m?.value !== null &&
+          m?.value !== "" &&
+          !(Array.isArray(m.value) && m.value.length === 0),
+      )
+    : false;
   const gallery = Array.isArray(p.images)
     ? p.images.map((i: any) => i?.src).filter(Boolean)
     : [];
@@ -95,7 +110,12 @@ function mapProductRow(p: any) {
     descripcion: p.description || null,
     descripcion_corta: p.short_description || null,
     imagen_url: mainImage,
-    activo: p.status === "publish" && (p.stock_status ?? "instock") === "instock",
+    activo:
+      p.status === "publish" &&
+      (p.stock_status ?? "instock") === "instock" &&
+      visibleEnCatalogo &&
+      !restringidoPorGrupo &&
+      Number(precio ?? precioReg ?? 0) > 0,
     total_sales: typeof p.total_sales === "number" ? p.total_sales : 0,
     woo_source: true,
     woo_last_synced_at: new Date().toISOString(),

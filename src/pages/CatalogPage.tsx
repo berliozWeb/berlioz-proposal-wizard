@@ -149,24 +149,21 @@ const CatalogPage = () => {
         {/* Filter Bar */}
         <div className="sticky top-[72px] z-40 -mx-6 px-6 py-4 mb-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
           <div className="flex flex-col gap-6">
-            <div className="flex items-center gap-4 pb-1">
-              <div className="flex flex-wrap gap-1 bg-muted/30 p-1 rounded-2xl border border-border/50">
-                {availableTabs.map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => handleFilterChange(f.value)}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-xl font-body text-sm font-medium transition-all duration-300 whitespace-nowrap",
-                      effectiveFilter === f.value
-                        ? "bg-card text-primary shadow-sm ring-1 ring-border/20"
-                        : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
-                    )}
-                  >
-                    <span className="text-lg leading-none">{f.emoji}</span>
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {availableTabs.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => handleFilterChange(f.value)}
+                  className={cn(
+                    "py-3 text-center font-body text-sm font-medium transition-all duration-300",
+                    effectiveFilter === f.value
+                      ? "text-[#014D6F] font-semibold border-b-2 border-[#014D6F]"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="relative group">

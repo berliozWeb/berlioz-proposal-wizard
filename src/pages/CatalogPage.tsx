@@ -155,10 +155,10 @@ const CatalogPage = () => {
                   key={f.value}
                   onClick={() => handleFilterChange(f.value)}
                   className={cn(
-                    "py-3 text-center font-body text-sm font-medium transition-all duration-300",
+                    "py-3 text-center font-body text-sm font-medium transition-all duration-300 border-b",
                     effectiveFilter === f.value
                       ? "text-[#014D6F] font-semibold border-b-2 border-[#014D6F]"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground border-border/30"
                   )}
                 >
                   {f.label}

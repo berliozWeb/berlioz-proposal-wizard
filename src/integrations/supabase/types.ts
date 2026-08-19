@@ -1286,6 +1286,7 @@ export type Database = {
           variantes: string
         }[]
       }
+      trigger_woo_catalog_sync: { Args: never; Returns: undefined }
     }
     Enums: {
       order_frequency: "daily" | "weekly" | "monthly" | "occasional"

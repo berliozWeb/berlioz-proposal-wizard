@@ -180,6 +180,11 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
   // Orden global: más vendidos primero (según total_sales de WooCommerce)
   const rows = (data || [])
     .filter((r) => Boolean(r.categoria?.trim()))
+    // Excluir productos internos/no vendibles (ej. "MUESTRAS", precio $0)
+    .filter((r: any) => {
+      const precio = Number(r.precio ?? r.precio_min ?? r.precio_max ?? 0);
+      return precio > 0;
+    })
     .sort((a: any, b: any) => (Number(b.total_sales) || 0) - (Number(a.total_sales) || 0));
   const productos = rows
     .map(mapProducto)

@@ -50,7 +50,17 @@ export const CATEGORIAS_MENU_ORDEN: CategoriaMenu[] = [
 
 export function mapCategoriaMenu(raw: string | null): CategoriaMenu | null {
   if (!raw) return null;
-  const found = CATEGORIAS_MENU.find((c) => c.db === raw);
+  const norm = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[\s_/-]+/g, " ")
+      .trim();
+  const target = norm(raw);
+  const found = CATEGORIAS_MENU.find(
+    (c) => norm(c.db) === target || norm(c.label) === target,
+  );
   return found ? found.label : null;
 }
 
@@ -104,9 +114,27 @@ function parseVariantes(product: any): Variante[] {
 
 function stripHtml(html: string | null | undefined): string | null {
   if (!html) return null;
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const text = doc.body.textContent || "";
-  const cleaned = text.replace(/\s+/g, " ").trim();
+  let text = html;
+  // Los datos de Woo pueden venir con HTML escapado y anidado: decodificar y
+  // limpiar en varias pasadas hasta que no queden etiquetas ni entidades.
+  for (let i = 0; i < 3; i++) {
+    const before = text;
+    text = new DOMParser().parseFromString(text, "text/html").body.textContent || "";
+    text = text
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<\/(p|li|ul|ol|div|h[1-6])>/gi, " ")
+      .replace(/<[^>]*>/g, " ");
+    if (text === before) break;
+  }
+  const cleaned = text
+    .replace(/[\u00a0\u2007\u202f]/g, " ")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/[–—]/g, "-")
+    .replace(/\s*-\s*/g, " · ")
+    .replace(/\s*·\s*(?=·)/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/^[·\s.,;]+|[·\s;,]+$/g, "")
+    .trim();
   return cleaned || null;
 }
 
@@ -120,7 +148,7 @@ function mapProducto(row: any): ProductoCotizador {
     segunda_categoria: null,
     subcategoria: null,
     tipo: row.tipo ?? "simple",
-    desc_mini: descCorta ? descCorta.slice(0, 140) : null,
+    desc_mini: descCorta ? descCorta.slice(0, 120) : null,
     desc_corta: descCorta,
     desc_bullets: null,
     img_principal: row.imagen_url ?? null,
@@ -149,8 +177,13 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
     throw new Error(`No se pudo cargar el menú: ${error.message}`);
   }
 
-  const rows = (data || []).filter((r) => Boolean(r.categoria?.trim()));
-  const productos = rows.map(mapProducto).filter((p) => p.categoria);
+  // Orden global: más vendidos primero (según total_sales de WooCommerce)
+  const rows = (data || [])
+    .filter((r) => Boolean(r.categoria?.trim()))
+    .sort((a: any, b: any) => (Number(b.total_sales) || 0) - (Number(a.total_sales) || 0));
+  const productos = rows
+    .map(mapProducto)
+    .filter((p) => Boolean(mapCategoriaMenu(p.categoria)));
 
   const porCategoria: Record<CategoriaMenu, ProductoCotizador[]> = {
     "Working Lunch": [],
@@ -173,13 +206,8 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
     (cat) => porCategoria[cat].length > 0,
   );
 
-  const favoritos = [...productos]
-    .sort((a, b) => {
-      const rowA = rows.find((r) => String(r.id) === a.product_id);
-      const rowB = rows.find((r) => String(r.id) === b.product_id);
-      return (rowB?.total_sales ?? 0) - (rowA?.total_sales ?? 0);
-    })
-    .slice(0, 12);
+  // `productos` ya viene ordenado por ventas, igual que cada categoría.
+  const favoritos = productos.slice(0, 12);
 
   return { productos, favoritos, porCategoria, categoriasPresentes };
 }

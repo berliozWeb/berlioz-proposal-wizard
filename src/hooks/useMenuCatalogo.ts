@@ -185,6 +185,8 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
       const precio = Number(r.precio ?? r.precio_min ?? r.precio_max ?? 0);
       return precio > 0;
     })
+    // Excluir cargos administrativos que no son productos (ej. "COSTO POR CAMBIO")
+    .filter((r: any) => !/costo\s*por\s*cambio/i.test(String(r.nombre ?? "")))
     .sort((a: any, b: any) => (Number(b.total_sales) || 0) - (Number(a.total_sales) || 0));
   const productos = rows
     .map(mapProducto)
@@ -212,7 +214,8 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
   );
 
   // `productos` ya viene ordenado por ventas, igual que cada categoría.
-  const favoritos = productos.slice(0, 12);
+  // 4 páginas de 12 productos en Favoritos.
+  const favoritos = productos.slice(0, 48);
 
   return { productos, favoritos, porCategoria, categoriasPresentes };
 }

@@ -102,8 +102,15 @@ function parseVariantes(product: any): Variante[] {
   }));
 }
 
+function stripHtml(html: string | null | undefined): string | null {
+  if (!html) return null;
+  const cleaned = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return cleaned || null;
+}
+
 function mapProducto(row: any): ProductoCotizador {
   const categoria = mapCategoriaMenu(row.categoria);
+  const descCorta = stripHtml(row.descripcion_corta) || stripHtml(row.descripcion) || null;
   return {
     product_id: String(row.id),
     nombre: row.nombre ?? "",
@@ -111,8 +118,8 @@ function mapProducto(row: any): ProductoCotizador {
     segunda_categoria: null,
     subcategoria: null,
     tipo: row.tipo ?? "simple",
-    desc_mini: row.descripcion_corta ?? null,
-    desc_corta: row.descripcion_corta ?? null,
+    desc_mini: descCorta ? descCorta.slice(0, 140) : null,
+    desc_corta: descCorta,
     desc_bullets: null,
     img_principal: row.imagen_url ?? null,
     img_fallback: row.imagen_url ?? null,

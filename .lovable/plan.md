@@ -4,7 +4,7 @@
 `/menu` lee la tabla de productos que `woo-catalog-sync` ya mantiene sincronizada (cero llamadas en vivo a Woo al renderizar), con pestañas en orden fijo, Favoritos automáticos por ventas y paginación.
 
 Orden de pestañas:
-**Favoritos (activa por defecto) | Working Lunch | Desayuno | Coffee Break | Bebidas | Tortas Piropo | Entrega Especial**
+**Favoritos (activa por defecto) | Working Lunch | Desayuno | Coffee Break | Bebidas | Tortas Piropo | Entrega Especial | Vegano / Vegetariano**
 
 ## Estado actual (verificado)
 - `src/pages/CatalogPage.tsx` toma datos de `useMenuCotizador` (feed externo) y muestra filtros dietéticos.
@@ -31,17 +31,15 @@ Una sola consulta a `productos`:
 - descarta productos sin categoría
 - expone productos agrupados por categoría y Favoritos = top 12 por ventas totales
 
-Mapeo de categorías **solo en presentación** (la base no se modifica): Comida → Working Lunch, Coffee-break → Coffee Break, Tortas-piropo → Tortas Piropo, Entrega-especial → Entrega Especial, Bebida/bebidas → Bebidas, Desayuno → Desayuno.
+Mapeo de categorías **solo en presentación** (la base no se modifica): Comida → Working Lunch, Coffee-break → Coffee Break, Tortas-piropo → Tortas Piropo, Entrega-especial → Entrega Especial, Bebida/bebidas → Bebidas, Desayuno → Desayuno, Vegano-vegetariano → Vegano / Vegetariano.
 
 ### 4. `src/pages/CatalogPage.tsx`
 - Cambia su origen de datos al nuevo hook.
 - Pestañas en el orden exacto indicado; una pestaña se oculta si no tiene productos.
 - Favoritos: 12 productos, sin paginación. Si queda vacío, cae a Working Lunch.
-- Las otras 7 pestañas: paginadas de 15 en 15.
+- Las otras 8 pestañas: paginadas de 15 en 15.
 - Se elimina la fila de restricciones alimentarias.
 - Tarjetas, selector de variantes, buscador, contador de invitados y carrito funcionan igual.
-
-Nota: las 10 filas con categoría "Vegano-vegetariano" no tienen pestaña en esta lista, así que no aparecerán en `/menu` en esta fase.
 
 ## DO NOT TOUCH
 `useMenuCotizador`, `useSmartQuote`, `QuotePage`, `ProposalStep`, `InlineUpsell`, `UpsellModal`, `VariantPickerModal`, `quote-orchestrator`, `get-upsell-recommendations`, `BerliozCatalog`, `MenuCatalog`, `useCatalogoCotizador`, `pdfTemplate.ts`, `multiDeliveryPdf.ts`, `useProductos`, `externalCatalog.ts`, `src/data/shippingZones.ts`. Ningún archivo del cotizador. Ningún UPDATE a datos existentes.

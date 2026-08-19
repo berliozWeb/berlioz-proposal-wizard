@@ -1,207 +1,79 @@
 import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, ArrowRight, Check, Minus, Plus, ChevronRight } from "lucide-react";
+import { Search, ShoppingBag, ArrowRight, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
 import {
-  useMenuCotizador,
-  CATEGORIAS_COTIZADOR,
-  productoHasDietary,
+  useMenuCatalogo,
+  CATEGORIAS_MENU_ORDEN,
+  type CategoriaMenu,
+} from "@/hooks/useMenuCatalogo";
+import {
   type ProductoCotizador,
   type Variante,
-  type DietaryFilter,
 } from "@/hooks/useMenuCotizador";
-import { useProductos } from "@/hooks/useProductos";
+import ProductoCard from "@/components/catalog/ProductoCard";
 
-const CATEGORY_EMOJIS: Record<string, string> = {
+const CATEGORY_EMOJIS: Record<CategoriaMenu | "favoritos", string> = {
+  favoritos: "★",
+  "Working Lunch": "🍱",
+  Desayuno: "🍳",
   "Coffee Break": "☕",
-  "Comida": "🍱",
-  "Desayuno": "🍳",
-  "Bebida": "🥤",
-  "Torta Piropo": "🥖",
+  Bebidas: "🥤",
+  "Tortas Piropo": "🥖",
+  "Entrega Especial": "🚚",
+  "Vegano / Vegetariano": "🌿",
 };
-const FAVORITOS_FILTER = { value: "favoritos", label: "Favoritos", emoji: "★" };
-const TAG_FILTERS: { value: DietaryFilter; label: string; emoji: string }[] = [
-  { value: "vegetariano", label: "Vegetariano", emoji: "🌿" },
-  { value: "vegano", label: "Vegano", emoji: "🌱" },
-  { value: "keto", label: "Keto", emoji: "🥑" },
-  { value: "sin_gluten", label: "Sin Gluten", emoji: "🌾" },
-  { value: "sin_lactosa", label: "Sin Lactosa", emoji: "🥛" },
-];
 
-/* ── Per-product card with variant selector + guests counter ── */
-function ProductoCard({ product }: { product: ProductoCotizador }) {
-  const { addItem, isInCart } = useCart();
-  const variantes = product.variantes;
-  const hasMany = variantes.length > 1;
-  const defaultVariante =
-    variantes.find((v) => v.es_base) ?? variantes[0];
-  const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
-  const [invitados, setInvitados] = useState<number>(10);
-
-  const selected: Variante | undefined =
-    variantes.find((v) => v.variante_id === selectedId) ?? defaultVariante;
-
-  if (!selected) return null;
-
-  const img = selected.img || product.img_principal || product.img_fallback || "";
-  const fallback = product.img_fallback || product.img_principal || "";
-  const inCart = isInCart(selected.variante_id);
-  const totalPrecio = (selected.precio || 0) * Math.max(1, invitados);
-
-  const handleAdd = () => {
-    addItem({
-      id: selected.variante_id,
-      name: selected.nombre_display || product.nombre,
-      price: selected.precio || 0,
-      quantity: Math.max(1, invitados),
-      image: img || undefined,
-      category: product.categoria,
-      isPerPerson: true,
-    });
-  };
-
-  return (
-    <div className="group flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-muted">
-        <img
-          src={img}
-          alt={product.nombre}
-          loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            const el = e.target as HTMLImageElement;
-            if (fallback && el.src !== fallback) el.src = fallback;
-          }}
-        />
-        {product.categoria && (
-          <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
-            {product.categoria}
-          </span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-sm font-semibold text-foreground leading-tight mb-1 uppercase tracking-wide">
-          {product.nombre}
-        </h3>
-        {product.desc_mini && (
-          <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
-            {product.desc_mini}
-          </p>
-        )}
-
-        {/* Variante selector */}
-        {hasMany && (
-          <div className="mb-3">
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-              Elige tu opción
-            </label>
-            <select
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="w-full h-9 px-3 rounded-lg border border-border bg-background text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              {variantes.map((v) => (
-                <option key={v.variante_id} value={v.variante_id}>
-                  {v.nombre_variante || v.nombre_display || "Opción"} — ${v.precio.toLocaleString("es-MX")}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Invitados */}
-        <div className="mb-3">
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Invitados
-          </label>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setInvitados((n) => Math.max(1, n - 1))}
-              className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
-              aria-label="Restar invitado"
-            >
-              <Minus className="w-3.5 h-3.5" />
-            </button>
-            <input
-              type="number"
-              min={1}
-              value={invitados}
-              onChange={(e) => setInvitados(Math.max(1, parseInt(e.target.value || "1", 10)))}
-              className="h-9 w-16 rounded-lg border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <button
-              type="button"
-              onClick={() => setInvitados((n) => n + 1)}
-              className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
-              aria-label="Sumar invitado"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] text-muted-foreground ml-1">× ${selected.precio.toLocaleString("es-MX")}</span>
-          </div>
-        </div>
-
-        {/* Add button */}
-        <div className="mt-auto">
-          {inCart ? (
-            <button
-              type="button"
-              onClick={handleAdd}
-              className="w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-green-600 text-white hover:bg-green-700"
-            >
-              <Check className="w-3.5 h-3.5" /> En el carrito — Agregar más
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleAdd}
-              className="w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              Agregar — ${totalPrecio.toLocaleString("es-MX")}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+const PAGE_SIZE = 15;
 
 const CatalogPage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { itemCount } = useCart();
-  const { data: productos = [], isLoading: loading, error, refetch } = useMenuCotizador();
-  const { productos: catalogProductos } = useProductos({ activo: true, tipo: ['simple', 'variable'] });
-  const favoritoIds = useMemo(() => {
-    return new Set(catalogProductos.filter((p) => p.destacado).map((p) => p.id));
-  }, [catalogProductos]);
-  const productosConFavorito = useMemo(() => {
-    return productos.map((p) => ({ ...p, isFavorito: favoritoIds.has(p.product_id) }));
-  }, [productos, favoritoIds]);
+  const { data, isLoading: loading, error, refetch } = useMenuCatalogo();
 
-  const [filter, setFilter] = useState(searchParams.get("categoria") || "favoritos");
+  const [filter, setFilter] = useState(
+    searchParams.get("categoria") || "favoritos",
+  );
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const navigate = useNavigate();
 
-  // Category tabs: Favoritos first, then categories, then dietary
-  const categoryFilters = useMemo(() => {
-    const present = new Set(productos.map((p) => p.categoria));
-    const cats = CATEGORIAS_COTIZADOR.filter((c) => present.has(c));
-    return [
-      FAVORITOS_FILTER,
-      ...cats.map((c) => ({ value: c, label: c, emoji: CATEGORY_EMOJIS[c] ?? "🍽️" })),
-      ...TAG_FILTERS,
-    ];
-  }, [productos]);
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+    setPage(1);
+    setSearchParams(value === "favoritos" ? {} : { categoria: value }, { replace: true });
+  };
 
-  const filtered = useMemo(() => {
-    let list = productosConFavorito;
+  const availableTabs = useMemo(() => {
+    const tabs: { value: string; label: string; emoji: string }[] = [
+      { value: "favoritos", label: "Favoritos", emoji: CATEGORY_EMOJIS.favoritos },
+    ];
+    if (!data) return tabs;
+    CATEGORIAS_MENU_ORDEN.forEach((cat) => {
+      if (data.categoriasPresentes.includes(cat)) {
+        tabs.push({ value: cat, label: cat, emoji: CATEGORY_EMOJIS[cat] });
+      }
+    });
+    return tabs;
+  }, [data]);
+
+  const effectiveFilter = useMemo(() => {
+    if (filter === "favoritos" && data?.favoritos.length === 0) {
+      return data?.categoriasPresentes[0] ?? "favoritos";
+    }
+    return filter;
+  }, [filter, data]);
+
+  const filteredList = useMemo(() => {
+    if (!data) return [];
+    let list =
+      effectiveFilter === "favoritos"
+        ? data.favoritos
+        : data.porCategoria[effectiveFilter as CategoriaMenu] || [];
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -211,16 +83,18 @@ const CatalogPage = () => {
           p.desc_corta?.toLowerCase().includes(q),
       );
     }
-    const dietaryKeys: DietaryFilter[] = ["vegetariano", "vegano", "keto", "sin_gluten", "sin_lactosa"];
-    if ((dietaryKeys as string[]).includes(filter)) {
-      list = list.filter((p) => productoHasDietary(p, filter as DietaryFilter));
-    } else if (filter === "favoritos") {
-      list = list.filter((p) => p.isFavorito);
-    } else if (filter !== "todos") {
-      list = list.filter((p) => p.categoria === filter);
-    }
     return list;
-  }, [productosConFavorito, filter, search]);
+  }, [data, effectiveFilter, search]);
+
+  const isPaginated = effectiveFilter !== "favoritos";
+  const totalPages = isPaginated ? Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE)) : 1;
+  const currentPage = Math.min(page, totalPages);
+  const paginatedList = isPaginated
+    ? filteredList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : filteredList;
+
+  const startIndex = (currentPage - 1) * PAGE_SIZE + 1;
+  const endIndex = Math.min(currentPage * PAGE_SIZE, filteredList.length);
 
   return (
     <BaseLayout>
@@ -250,13 +124,13 @@ const CatalogPage = () => {
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-1">
               <div className="flex bg-muted/30 p-1 rounded-2xl border border-border/50">
-                {categoryFilters.map((f) => (
+                {availableTabs.map((f) => (
                   <button
                     key={f.value}
-                    onClick={() => setFilter(f.value)}
+                    onClick={() => handleFilterChange(f.value)}
                     className={cn(
                       "flex items-center gap-2 px-5 py-2 rounded-xl font-body text-sm font-medium transition-all duration-300 whitespace-nowrap",
-                      filter === f.value
+                      effectiveFilter === f.value
                         ? "bg-card text-primary shadow-sm ring-1 ring-border/20"
                         : "text-muted-foreground hover:bg-card/50 hover:text-foreground"
                     )}
@@ -273,7 +147,7 @@ const CatalogPage = () => {
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   placeholder="Busca bágels, ensaladas, postres..."
                   className="h-12 pl-12 pr-6 rounded-2xl border border-border/60 bg-card/50 font-body text-sm w-full md:w-[400px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                 />
@@ -313,7 +187,7 @@ const CatalogPage = () => {
                   </div>
                 ))}
               </div>
-            ) : filtered.length === 0 ? (
+            ) : paginatedList.length === 0 ? (
               <div className="text-center py-32 rounded-[40px] border border-dashed border-border flex flex-col items-center justify-center bg-muted/10">
                 <div className="w-24 h-24 rounded-full bg-muted/50 flex items-center justify-center mb-6">
                   <ShoppingBag className="w-10 h-10 text-muted-foreground/50" />
@@ -321,20 +195,66 @@ const CatalogPage = () => {
                 <h3 className="font-heading text-2xl text-foreground mb-2">No encontramos resultados</h3>
                 <p className="font-body text-muted-foreground mb-8 max-w-sm">Prueba ajustando tus filtros.</p>
                 <button
-                  onClick={() => { setFilter("favoritos"); setSearch(""); }}
+                  onClick={() => { handleFilterChange("favoritos"); setSearch(""); }}
                   className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                 >
                   <ArrowRight className="w-4 h-4" /> Ver favoritos
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filtered.map((product, i) => (
-                  <RevealOnScroll key={product.product_id} delay={(i % 3) * 100}>
-                    <ProductoCard product={product} />
-                  </RevealOnScroll>
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {paginatedList.map((product, i) => (
+                    <RevealOnScroll key={product.product_id} delay={(i % 3) * 100}>
+                      <ProductoCard product={product} />
+                    </RevealOnScroll>
+                  ))}
+                </div>
+                {isPaginated && totalPages > 1 && (
+                  <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {startIndex}–{endIndex} de {filteredList.length} productos
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="h-10 w-10 rounded-xl border border-border bg-card flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+                        aria-label="Página anterior"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setPage(p)}
+                          className={cn(
+                            "h-10 w-10 rounded-xl font-body text-sm font-medium transition-colors",
+                            currentPage === p
+                              ? "bg-primary text-primary-foreground"
+                              : "border border-border bg-card hover:bg-muted"
+                          )}
+                          aria-label={`Página ${p}`}
+                          aria-current={currentPage === p ? "page" : undefined}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="h-10 w-10 rounded-xl border border-border bg-card flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors"
+                        aria-label="Página siguiente"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -353,7 +273,7 @@ const CatalogPage = () => {
                   className="group w-full h-14 rounded-2xl bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                 >
                   Ver carrito
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>

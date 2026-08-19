@@ -4,7 +4,7 @@
 `/menu` lee la tabla de productos que `woo-catalog-sync` ya mantiene sincronizada (cero llamadas en vivo a Woo al renderizar), con pestañas en orden fijo, Favoritos automáticos por ventas y paginación.
 
 Orden de pestañas:
-**Favoritos (activa por defecto) | Working Lunch | Desayuno | Coffee Break | Bebidas | Tortas Piropo | Entrega Especial**
+**Favoritos (activa por defecto) | Working Lunch | Desayuno | Coffee Break | Bebidas | Tortas Piropo | Entrega Especial | Vegano / Vegetariano**
 
 ## Estado actual (verificado)
 - `src/pages/CatalogPage.tsx` toma datos de `useMenuCotizador` (feed externo) y muestra filtros dietéticos.

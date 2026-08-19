@@ -1,48 +1,47 @@
-# Menú de "Realizar pedido" leyendo de la tabla sincronizada de WooCommerce
+# /menu: pestañas fijas, Favoritos por ventas de Woo y paginación
 
 ## Objetivo
-Que `/menu` use como fuente de verdad la tabla de productos que `woo-catalog-sync` ya mantiene sincronizada con WooCommerce (sin llamadas en vivo a la API de Woo durante el render), con estas pestañas en este orden:
+`/menu` lee la tabla de productos que `woo-catalog-sync` ya mantiene sincronizada (cero llamadas en vivo a Woo al renderizar), con pestañas en orden fijo, Favoritos automáticos por ventas y paginación.
 
-**Favoritos (default) | Working Lunch | Desayuno | Coffee Break | Bebidas | Tortas Piropo | Entrega Especial**
+Orden de pestañas:
+**Favoritos (activa por defecto) | Working Lunch | Desayuno | Coffee Break | Bebidas | Tortas Piropo | Entrega Especial**
 
-- Favoritos = top 8 productos por ventas totales de Woo (`total_sales`). Criterio único, límite duro de 8.
-- Sin sección de restricciones alimentarias en esta fase.
-- Sin pestaña "Sin categoría": los productos sin categoría no se muestran.
+## Estado actual (verificado)
+- `src/pages/CatalogPage.tsx` toma datos de `useMenuCotizador` (feed externo) y muestra filtros dietéticos.
+- En la tabla `productos`, las filas de origen Woo son: Coffee-break 38, Comida 23, Bebidas 16, Desayuno 11, Vegano-vegetariano 10, Tortas-piropo 7, Entrega-especial 5. Ninguna sin categoría hoy.
+- No existen columnas de ventas totales ni de id de Woo.
 
-## Lo que existe hoy (verificado)
-- `/menu` (`src/pages/CatalogPage.tsx`) lee un feed curado externo con 5 categorías (Desayuno, Coffee Break, Comida, Torta Piropo, Bebida); Working Lunch, Tortas Piropo y Entrega Especial no existen como tal ahí.
-- La tabla local `productos` tiene 289 filas, de las cuales 110 vienen de Woo (`woo_source = true`). Las categorías están duplicadas/inconsistentes: convive "Coffee-break" (Woo) con "Coffee Break" (local), "Comida" (Woo) con "Working Lunch" (local), "Tortas-piropo" con "Tortas Piropo", etc.
-- La tabla `productos` no tiene columna de ventas totales, así que hoy no se puede calcular Favoritos por `total_sales`.
+## Cambios
 
-## Cambios propuestos
+### 1. Base de datos (solo agregar columnas)
+`ALTER TABLE productos ADD COLUMN` para:
+- ventas totales (numérico, default 0)
+- id numérico de Woo (nullable)
 
-### 1. Base de datos
-Agregar a `productos` dos columnas que hoy faltan:
-- ventas totales acumuladas del producto en Woo
-- id numérico de Woo (para trazabilidad del sync)
+Sin UPDATE, sin DELETE, sin backfill, sin normalizar datos históricos.
 
-### 2. `woo-catalog-sync` (edge function)
-- Guardar las ventas totales que Woo ya devuelve en cada producto.
-- Normalizar el nombre de categoría a un valor canónico único por categoría de Woo, para eliminar los duplicados ("Coffee-break" → Coffee Break, "Comida" → Working Lunch, "Tortas-piropo" → Tortas Piropo, "Entrega-especial" → Entrega Especial, "Vegano-vegetariano" → Vegano / Vegetariano).
-- Limpieza única de las filas Woo ya existentes para que queden con las categorías canónicas.
-- Ejecutar el sync una vez para poblar ventas y categorías normalizadas.
+### 2. `woo-catalog-sync`
+- Guardar ventas totales e id de Woo en cada sync.
+- Solo escritura hacia adelante: no reescribe categorías ni otros campos de filas existentes.
+- Programar la ejecución una vez al día.
 
 ### 3. Nuevo hook `useMenuCatalogo`
-Lee directamente la tabla `productos` (una sola consulta, cero llamadas a Woo):
-- solo productos activos y de origen Woo, tipo simple o variable
-- descarta los que no tienen categoría
-- expone: productos por categoría (en el orden pedido), y la lista de Favoritos = top 8 por ventas totales
+Una sola consulta a `productos`:
+- filtra activo, origen Woo, tipo simple o variable
+- descarta productos sin categoría
+- expone productos agrupados por categoría y Favoritos = top 12 por ventas totales
+
+Mapeo de categorías **solo en presentación** (la base no se modifica): Comida → Working Lunch, Coffee-break → Coffee Break, Tortas-piropo → Tortas Piropo, Entrega-especial → Entrega Especial, Bebida/bebidas → Bebidas, Desayuno → Desayuno.
 
 ### 4. `src/pages/CatalogPage.tsx`
-- Cambia su fuente de datos al nuevo hook.
-- Pestañas en el orden final indicado, con Favoritos activo por defecto; una categoría se oculta si no tiene productos.
-- Se elimina la fila de filtros de restricciones alimentarias.
-- Tarjetas, selector de variantes, buscador, contador de invitados y carrito siguen funcionando igual: solo cambia el origen de los datos.
+- Cambia su origen de datos al nuevo hook.
+- Pestañas en el orden exacto indicado; una pestaña se oculta si no tiene productos.
+- Favoritos: 12 productos, sin paginación. Si queda vacío, cae a Working Lunch.
+- Las otras 7 pestañas: paginadas de 15 en 15.
+- Se elimina la fila de restricciones alimentarias.
+- Tarjetas, selector de variantes, buscador, contador de invitados y carrito funcionan igual.
+
+Nota: las 10 filas con categoría "Vegano-vegetariano" no tienen pestaña en esta lista, así que no aparecerán en `/menu` en esta fase.
 
 ## DO NOT TOUCH
-No se modifica nada del cotizador ni de sus dependencias: `useMenuCotizador`, `useSmartQuote`, `QuotePage`, `ProposalStep`, `InlineUpsell`, `UpsellModal`, `VariantPickerModal`, `quote-orchestrator`, `get-upsell-recommendations`, `BerliozCatalog`, `MenuCatalog`, ni los PDFs (`pdfTemplate.ts`, `multiDeliveryPdf.ts`).
-Tampoco se toca `useProductos` / `externalCatalog.ts`, que otras páginas siguen usando.
-
-## Notas técnicas
-- Todo el orden y filtrado de pestañas vive en la capa de presentación; precios, categorías y ventas vienen tal cual de Woo vía la tabla sincronizada.
-- Las banderas dietéticas se dejan para una fase posterior, con datos verificados en base.
+`useMenuCotizador`, `useSmartQuote`, `QuotePage`, `ProposalStep`, `InlineUpsell`, `UpsellModal`, `VariantPickerModal`, `quote-orchestrator`, `get-upsell-recommendations`, `BerliozCatalog`, `MenuCatalog`, `useCatalogoCotizador`, `pdfTemplate.ts`, `multiDeliveryPdf.ts`, `useProductos`, `externalCatalog.ts`, `src/data/shippingZones.ts`. Ningún archivo del cotizador. Ningún UPDATE a datos existentes.

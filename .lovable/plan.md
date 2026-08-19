@@ -1,52 +1,48 @@
-# Menú de "Realizar pedido" organizado por categorías de WooCommerce
+# Menú de "Realizar pedido" leyendo de la tabla sincronizada de WooCommerce
 
 ## Objetivo
-Que `/menu` use WooCommerce como única fuente de verdad y muestre las divisiones en este orden:
+Que `/menu` use como fuente de verdad la tabla de productos que `woo-catalog-sync` ya mantiene sincronizada con WooCommerce (sin llamadas en vivo a la API de Woo durante el render), con estas pestañas en este orden:
 
-1. **Favoritos** (prioritario, pestaña inicial)
-2. Working Lunch
-3. Desayuno
-4. Coffee Break
-5. Bebidas
-6. Tortas Piropo
-7. Entrega Especial
-8. Sin categoría
-9. **Restricciones alimentarias**: Vegetariano, Vegano, Sin lactosa, Keto, Sin gluten
+**Favoritos (default) | Working Lunch | Desayuno | Coffee Break | Bebidas | Tortas Piropo | Entrega Especial**
 
-El cotizador (`/cotizar`) no se toca.
+- Favoritos = top 8 productos por ventas totales de Woo (`total_sales`). Criterio único, límite duro de 8.
+- Sin sección de restricciones alimentarias en esta fase.
+- Sin pestaña "Sin categoría": los productos sin categoría no se muestran.
 
-## Lo que existe hoy
-`/menu` (`src/pages/CatalogPage.tsx`) lee un feed curado externo con solo 5 categorías (Desayuno, Coffee Break, Comida, Torta Piropo, Bebida), así que Tortas Piropo, Entrega Especial, Working Lunch y Sin categoría no aparecen como tales. Los "Favoritos" se calculan con un segundo feed cuyo campo `destacado` no coincide con Woo.
-
-En WooCommerce las categorías reales son: Working Lunch (30), Coffee Break (36), Desayuno (21), Bebidas (16), Vegano / Vegetariano (14), Tortas Piropo (7), Entrega Especial (5), Sin categoría (1). Las etiquetas de Woo no traen información dietética (solo tipos de producto), así que las restricciones se resolverán como se explica abajo.
+## Lo que existe hoy (verificado)
+- `/menu` (`src/pages/CatalogPage.tsx`) lee un feed curado externo con 5 categorías (Desayuno, Coffee Break, Comida, Torta Piropo, Bebida); Working Lunch, Tortas Piropo y Entrega Especial no existen como tal ahí.
+- La tabla local `productos` tiene 289 filas, de las cuales 110 vienen de Woo (`woo_source = true`). Las categorías están duplicadas/inconsistentes: convive "Coffee-break" (Woo) con "Coffee Break" (local), "Comida" (Woo) con "Working Lunch" (local), "Tortas-piropo" con "Tortas Piropo", etc.
+- La tabla `productos` no tiene columna de ventas totales, así que hoy no se puede calcular Favoritos por `total_sales`.
 
 ## Cambios propuestos
 
-### 1. Nueva función de backend `woo-menu`
-Lee productos directamente de WooCommerce por el gateway ya conectado (misma credencial que usa `woo-catalog-sync`) y devuelve para cada producto:
-- id de Woo, nombre, descripciones, imagen y galería
-- precio y variantes (con precio y opción por variante)
-- **categoría real de Woo** (slug + nombre), incluyendo "Sin categoría"
-- `favorito`: destacado en Woo o dentro de los más vendidos (`total_sales`)
-- `dietary`: banderas `vegetariano / vegano / keto / sin_gluten / sin_lactosa`
+### 1. Base de datos
+Agregar a `productos` dos columnas que hoy faltan:
+- ventas totales acumuladas del producto en Woo
+- id numérico de Woo (para trazabilidad del sync)
 
-Origen de las banderas dietéticas (en este orden):
-1. Pertenecer a la categoría de Woo "Vegano / Vegetariano"
-2. Datos dietéticos del feed curado ya existente, cruzados por id de Woo (ahí sí están vegano/vegetariano/keto/sin gluten/sin lactosa por variante)
+### 2. `woo-catalog-sync` (edge function)
+- Guardar las ventas totales que Woo ya devuelve en cada producto.
+- Normalizar el nombre de categoría a un valor canónico único por categoría de Woo, para eliminar los duplicados ("Coffee-break" → Coffee Break, "Comida" → Working Lunch, "Tortas-piropo" → Tortas Piropo, "Entrega-especial" → Entrega Especial, "Vegano-vegetariano" → Vegano / Vegetariano).
+- Limpieza única de las filas Woo ya existentes para que queden con las categorías canónicas.
+- Ejecutar el sync una vez para poblar ventas y categorías normalizadas.
 
-Solo se muestran productos publicados y visibles en la tienda; respuesta cacheada unos minutos para que la página cargue rápido.
+### 3. Nuevo hook `useMenuCatalogo`
+Lee directamente la tabla `productos` (una sola consulta, cero llamadas a Woo):
+- solo productos activos y de origen Woo, tipo simple o variable
+- descarta los que no tienen categoría
+- expone: productos por categoría (en el orden pedido), y la lista de Favoritos = top 8 por ventas totales
 
-### 2. Hook nuevo `useWooMenu`
-Consume `woo-menu` con React Query y expone: lista de productos, categorías presentes (en el orden pedido) y helpers de filtro por categoría y por restricción.
+### 4. `src/pages/CatalogPage.tsx`
+- Cambia su fuente de datos al nuevo hook.
+- Pestañas en el orden final indicado, con Favoritos activo por defecto; una categoría se oculta si no tiene productos.
+- Se elimina la fila de filtros de restricciones alimentarias.
+- Tarjetas, selector de variantes, buscador, contador de invitados y carrito siguen funcionando igual: solo cambia el origen de los datos.
 
-### 3. `src/pages/CatalogPage.tsx`
-- Cambia su fuente de datos al nuevo hook (deja de usar el feed del cotizador y el feed de `destacado`).
-- Barra de pestañas en el orden pedido, con **Favoritos** primero y activo por defecto, luego las 7 categorías de Woo (solo si tienen productos) y al final un grupo visualmente separado de **Restricciones alimentarias** con las 5 opciones.
-- Las tarjetas de producto, el selector de variantes, el contador de invitados y el carrito siguen funcionando igual; solo cambia de dónde vienen los datos.
-- Si Favoritos quedara vacío, cae automáticamente a Working Lunch.
+## DO NOT TOUCH
+No se modifica nada del cotizador ni de sus dependencias: `useMenuCotizador`, `useSmartQuote`, `QuotePage`, `ProposalStep`, `InlineUpsell`, `UpsellModal`, `VariantPickerModal`, `quote-orchestrator`, `get-upsell-recommendations`, `BerliozCatalog`, `MenuCatalog`, ni los PDFs (`pdfTemplate.ts`, `multiDeliveryPdf.ts`).
+Tampoco se toca `useProductos` / `externalCatalog.ts`, que otras páginas siguen usando.
 
 ## Notas técnicas
-- Nada de esto toca `/cotizar`: no se modifican `useMenuCotizador`, `useSmartQuote`, `ProposalStep`, `QuotePage`, `quote-orchestrator` ni `BerliozCatalog`.
-- `useProductos` / `get-catalog` siguen usándose en otras páginas; no se alteran.
-- "Bebidas" aparecía dos veces en la lista pedida: se muestra una sola vez.
-- Todo el filtrado y el orden viven en la capa de presentación; los precios y categorías vienen tal cual de WooCommerce.
+- Todo el orden y filtrado de pestañas vive en la capa de presentación; precios, categorías y ventas vienen tal cual de Woo vía la tabla sincronizada.
+- Las banderas dietéticas se dejan para una fase posterior, con datos verificados en base.

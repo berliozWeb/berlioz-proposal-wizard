@@ -27,7 +27,7 @@ const NAV_LINKS = [
   { to: "/contacto", label: "Contacto" },
 ];
 
-const WHATSAPP_URL = "https://wa.me/525582375469";
+const WHATSAPP_URL = "https://wa.me/525582375469?text=Hola%2C%20quiero%20cotizar%20mis%20Boxes%20Berlioz";
 
 
 const Navbar = () => {

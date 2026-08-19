@@ -395,8 +395,10 @@ export type Database = {
           sku: string | null
           texto_busqueda: string | null
           tipo: string | null
+          total_sales: number | null
           variante_nombre: string | null
           variantes: string | null
+          woo_id: number | null
           woo_last_synced_at: string | null
           woo_source: boolean
         }
@@ -428,8 +430,10 @@ export type Database = {
           sku?: string | null
           texto_busqueda?: string | null
           tipo?: string | null
+          total_sales?: number | null
           variante_nombre?: string | null
           variantes?: string | null
+          woo_id?: number | null
           woo_last_synced_at?: string | null
           woo_source?: boolean
         }
@@ -461,8 +465,10 @@ export type Database = {
           sku?: string | null
           texto_busqueda?: string | null
           tipo?: string | null
+          total_sales?: number | null
           variante_nombre?: string | null
           variantes?: string | null
+          woo_id?: number | null
           woo_last_synced_at?: string | null
           woo_source?: boolean
         }

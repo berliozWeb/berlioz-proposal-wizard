@@ -46,7 +46,20 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  const desc = useMemo(() => {
+    if (product.desc_intro || (product.desc_items && product.desc_items.length) || product.desc_nota) {
+      return {
+        intro: product.desc_intro ?? null,
+        items: product.desc_items ?? [],
+        nota: product.desc_nota ?? null,
+      };
+    }
+    return parseDescripcionWoo(product.desc_larga || product.desc_corta);
+  }, [product]);
+
   if (!open || !selected) return null;
+
+  const { intro, items, nota } = desc;
 
   const qty = parseInt(cantidad || "0", 10) || 0;
   const total = (selected.precio || 0) * qty;

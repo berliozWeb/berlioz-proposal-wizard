@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductoCotizador, Variante } from "@/hooks/useMenuCotizador";
+import { parseDescripcionWoo } from "@/lib/productDescription";
 
 export type CategoriaMenu =
   | "Working Lunch"

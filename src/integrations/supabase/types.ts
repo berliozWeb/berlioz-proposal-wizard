@@ -113,6 +113,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cotizador_roles_producto: {
+        Row: {
+          activo: boolean
+          created_at: string
+          evento: string
+          id: string
+          notas: string | null
+          personas_por_unidad: number | null
+          prioridad: number
+          rol: string
+          updated_at: string
+          woo_id: number
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          evento: string
+          id?: string
+          notas?: string | null
+          personas_por_unidad?: number | null
+          prioridad?: number
+          rol: string
+          updated_at?: string
+          woo_id: number
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          evento?: string
+          id?: string
+          notas?: string | null
+          personas_por_unidad?: number | null
+          prioridad?: number
+          rol?: string
+          updated_at?: string
+          woo_id?: number
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           code: string

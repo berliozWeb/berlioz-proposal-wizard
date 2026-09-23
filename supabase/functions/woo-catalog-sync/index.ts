@@ -9,37 +9,13 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/woocommerce";
 
-const CATEGORY_LABELS: Record<string, string> = {
-  coffee_break: "Coffee Break",
-  desayuno: "Desayuno",
-  working_lunch: "Working Lunch",
-  bebidas: "Bebidas",
-  snacks: "Snacks",
-  surtidos: "Surtidos",
-  tortas_piropo: "Tortas Piropo",
-};
-
-function normalizeCategoria(raw?: string | null): string | null {
-  if (!raw) return null;
-  const key = raw.trim().toLowerCase().replace(/\s+/g, "_");
-  if (CATEGORY_LABELS[key]) return CATEGORY_LABELS[key];
-  return raw
-    .trim()
-    .toLowerCase()
-    .replace(/_/g, " ")
-    .split(" ")
-    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
-    .join(" ");
-}
-
 async function wooFetch(path: string): Promise<Response> {
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const wooKey = Deno.env.get("WOOCOMMERCE_API_KEY");
   if (!lovableKey || !wooKey) {
     throw new Error("LOVABLE_API_KEY or WOOCOMMERCE_API_KEY missing");
   }
-  const url = `${GATEWAY_URL}${path}`;
-  const res = await fetch(url, {
+  const res = await fetch(`${GATEWAY_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${lovableKey}`,
       "X-Connection-Api-Key": wooKey,
@@ -58,7 +34,9 @@ async function fetchAllProducts() {
     );
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(`Woo /products page ${page} -> ${res.status}: ${body.slice(0, 200)}`);
+      throw new Error(
+        `Woo /products page ${page} -> ${res.status}: ${body.slice(0, 200)}`,
+      );
     }
     const batch = await res.json();
     if (!Array.isArray(batch) || batch.length === 0) break;
@@ -70,13 +48,56 @@ async function fetchAllProducts() {
   return { products: all, pages: page };
 }
 
-function mapProductRow(p: any) {
-  // Replicar lo que ve un cliente en berlioz.mx:
-  // - oculto del catálogo (catalog_visibility: hidden / search)
-  // - restringido por membresía del plugin Groups (meta groups-read)
-  // - productos internos/cortesía con precio 0
+async function fetchVariations(productId: number): Promise<any[]> {
+  const out: any[] = [];
+  let page = 1;
+  while (true) {
+    const res = await wooFetch(
+      `/products/${productId}/variations?per_page=100&page=${page}`,
+    );
+    if (!res.ok) {
+      console.error(
+        `variations ${productId} -> ${res.status}: ${(await res.text()).slice(0, 160)}`,
+      );
+      break;
+    }
+    const batch = await res.json();
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    out.push(...batch);
+    if (batch.length < 100) break;
+    page++;
+    if (page > 10) break;
+  }
+  return out;
+}
+
+function mapVariation(v: any) {
+  const attrs = Array.isArray(v.attributes)
+    ? v.attributes.map((a: any) => a?.option).filter(Boolean)
+    : [];
+  const precio = v.price ? parseFloat(v.price) : v.regular_price ? parseFloat(v.regular_price) : null;
+  return {
+    id: String(v.id),
+    woo_id: v.id,
+    sku: v.sku || null,
+    opcion: attrs.join(" / ") || String(v.id),
+    nombre: attrs.join(" / ") || String(v.id),
+    precio,
+    imagen_url: v.image?.src ?? null,
+    en_stock: (v.stock_status ?? "instock") === "instock" && v.purchasable !== false,
+  };
+}
+
+/**
+ * Regla absoluta: solo lo publicado y visible en Woo existe aquí.
+ * Devuelve el motivo de exclusión, o null si el producto es vendible.
+ */
+function motivoExclusion(p: any, precio: number | null): string | null {
+  if (p.status !== "publish") return `status=${p.status}`;
   const visibility = String(p.catalog_visibility ?? "visible");
-  const visibleEnCatalogo = visibility === "visible" || visibility === "catalog";
+  if (visibility !== "visible" && visibility !== "catalog") {
+    return `catalog_visibility=${visibility}`;
+  }
   const restringidoPorGrupo = Array.isArray(p.meta_data)
     ? p.meta_data.some(
         (m: any) =>
@@ -86,39 +107,67 @@ function mapProductRow(p: any) {
           !(Array.isArray(m.value) && m.value.length === 0),
       )
     : false;
+  if (restringidoPorGrupo) return "restringido por membresía (groups-read)";
+  if ((p.stock_status ?? "instock") !== "instock") return "sin stock";
+  if (!(Number(precio ?? 0) > 0)) return "precio $0";
+  return null;
+}
+
+function mapProductRow(p: any, variaciones: any[]) {
   const gallery = Array.isArray(p.images)
     ? p.images.map((i: any) => i?.src).filter(Boolean)
     : [];
-  const mainImage = gallery[0] ?? null;
-  const categoria = normalizeCategoria(p.categories?.[0]?.slug ?? p.categories?.[0]?.name);
-  const precio = p.price ? parseFloat(p.price) : null;
-  const precioMin = p.price ? parseFloat(p.price) : null;
-  const precioMax = p.price ? parseFloat(p.price) : null;
+  // Nombres de categoría tal cual están en Woo (no el slug), todas las del producto.
+  const categorias: string[] = Array.isArray(p.categories)
+    ? p.categories.map((c: any) => String(c?.name ?? "").trim()).filter(Boolean)
+    : [];
+  const tags: string[] = Array.isArray(p.tags)
+    ? p.tags.map((t: any) => String(t?.name ?? "").trim()).filter(Boolean)
+    : [];
+
   const precioReg = p.regular_price ? parseFloat(p.regular_price) : null;
   const precioSale = p.sale_price ? parseFloat(p.sale_price) : null;
+  let precio = p.price ? parseFloat(p.price) : precioReg;
+
+  const varPrecios = variaciones
+    .map((v) => v.precio)
+    .filter((n: any) => typeof n === "number" && n > 0) as number[];
+  const precioMin = varPrecios.length ? Math.min(...varPrecios) : precio ?? precioReg;
+  const precioMax = varPrecios.length ? Math.max(...varPrecios) : precio ?? precioReg;
+  if (!precio && varPrecios.length) precio = precioMin;
+
+  const motivo = motivoExclusion(p, precio);
+
   return {
-    id: String(p.id),
-    woo_id: typeof p.id === "number" ? p.id : null,
-    sku: p.sku || null,
-    nombre: p.name || "",
-    tipo: p.type === "variable" ? "variable" : "simple",
-    categoria,
-    precio: precio ?? precioReg,
-    precio_min: precioMin ?? precioReg,
-    precio_max: precioMax ?? precioReg,
-    precio_rebajado: precioSale || null,
-    descripcion: p.description || null,
-    descripcion_corta: p.short_description || null,
-    imagen_url: mainImage,
-    activo:
-      p.status === "publish" &&
-      (p.stock_status ?? "instock") === "instock" &&
-      visibleEnCatalogo &&
-      !restringidoPorGrupo &&
-      Number(precio ?? precioReg ?? 0) > 0,
-    total_sales: typeof p.total_sales === "number" ? p.total_sales : 0,
-    woo_source: true,
-    woo_last_synced_at: new Date().toISOString(),
+    row: {
+      id: String(p.id),
+      woo_id: typeof p.id === "number" ? p.id : null,
+      sku: p.sku || null,
+      nombre: p.name || "",
+      tipo: p.type === "variable" ? "variable" : "simple",
+      categoria: categorias[0] ?? null,
+      woo_categorias: categorias,
+      woo_tags: tags,
+      permalink: p.permalink || null,
+      menu_order: typeof p.menu_order === "number" ? p.menu_order : 0,
+      upsell_ids: Array.isArray(p.upsell_ids) ? p.upsell_ids : [],
+      imagenes_galeria: gallery,
+      woo_variaciones: variaciones,
+      woo_status: p.status ?? null,
+      en_stock: (p.stock_status ?? "instock") === "instock",
+      precio: precio ?? precioReg,
+      precio_min: precioMin,
+      precio_max: precioMax,
+      precio_rebajado: precioSale || null,
+      descripcion: p.description || null,
+      descripcion_corta: p.short_description || null,
+      imagen_url: gallery[0] ?? null,
+      activo: motivo === null,
+      total_sales: typeof p.total_sales === "number" ? p.total_sales : 0,
+      woo_source: true,
+      woo_last_synced_at: new Date().toISOString(),
+    },
+    motivo,
   };
 }
 
@@ -149,19 +198,49 @@ serve(async (req) => {
   try {
     const { products, pages } = await fetchAllProducts();
     let synced = 0;
+    let variablesConVariantes = 0;
+    const excluidos: { nombre: string; motivo: string; woo_id: number | null }[] = [];
 
     for (const p of products) {
-      const row = mapProductRow(p);
-      // Upsert only Woo-owned fields; preserve curated locals.
-      const { error } = await supabase
-        .from("productos")
-        .upsert(row, { onConflict: "id" });
+      const variaciones =
+        p.type === "variable" ? (await fetchVariations(p.id)).map(mapVariation) : [];
+      if (variaciones.length) variablesConVariantes++;
+
+      const { row, motivo } = mapProductRow(p, variaciones);
+      const { error } = await supabase.from("productos").upsert(row, { onConflict: "id" });
       if (error) {
         console.error("upsert error", p.id, error.message);
         continue;
       }
       synced++;
+      if (motivo) {
+        excluidos.push({
+          nombre: row.nombre,
+          motivo,
+          woo_id: row.woo_id,
+        });
+      }
     }
+
+    // Log de exclusiones para revisión: reemplaza el registro del sync anterior.
+    await supabase.from("catalogo_exclusiones").delete().eq("origen", "woo_sync");
+    if (excluidos.length) {
+      await supabase.from("catalogo_exclusiones").insert(
+        excluidos.map((e) => ({
+          origen: "woo_sync",
+          nombre_buscado: e.nombre,
+          motivo: e.motivo,
+          woo_id: e.woo_id,
+        })),
+      );
+    }
+
+    // Todo lo que no vive en Woo deja de existir en el sitio (respaldo histórico intacto).
+    await supabase
+      .from("productos")
+      .update({ activo: false })
+      .neq("woo_source", true)
+      .eq("activo", true);
 
     await supabase
       .from("woo_sync_runs")
@@ -170,12 +249,23 @@ serve(async (req) => {
         items_synced: synced,
         pages_fetched: pages,
         status: "success",
-        metadata: { total_fetched: products.length },
+        metadata: {
+          total_fetched: products.length,
+          variables_con_variantes: variablesConVariantes,
+          excluidos: excluidos.length,
+        },
       })
       .eq("id", runId);
 
     return new Response(
-      JSON.stringify({ ok: true, synced, pages, total: products.length }),
+      JSON.stringify({
+        ok: true,
+        synced,
+        pages,
+        total: products.length,
+        variables_con_variantes: variablesConVariantes,
+        excluidos: excluidos.length,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {

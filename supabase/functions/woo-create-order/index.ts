@@ -86,7 +86,8 @@ Deno.serve(async (req) => {
     });
 
   try {
-    if (!LOVABLE_API_KEY || !WOOCOMMERCE_API_KEY) {
+    const puedeEscribir = (CONSUMER_KEY && CONSUMER_SECRET) || (LOVABLE_API_KEY && WOOCOMMERCE_API_KEY);
+    if (!puedeEscribir) {
       return json({ error: "La conexión con la tienda no está configurada." }, 500);
     }
 

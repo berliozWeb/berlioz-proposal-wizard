@@ -135,14 +135,31 @@ function stripHtml(html: string | null | undefined): string | null {
   return cleaned || null;
 }
 
+function categoriasDeRow(row: any): CategoriaMenu[] {
+  const raw: string[] = Array.isArray(row.woo_categorias) && row.woo_categorias.length > 0
+    ? row.woo_categorias
+    : row.categoria
+      ? [row.categoria]
+      : [];
+  const mapped = raw
+    .map((c) => mapCategoriaMenu(c))
+    .filter((c): c is CategoriaMenu => Boolean(c));
+  return Array.from(new Set(mapped));
+}
+
 function mapProducto(row: any): ProductoCotizador {
-  const categoria = mapCategoriaMenu(row.categoria);
+  const cats = categoriasDeRow(row);
   const descCorta = stripHtml(row.descripcion_corta) || stripHtml(row.descripcion) || null;
+  const galeria = Array.isArray(row.imagenes_galeria) && row.imagenes_galeria.length > 0
+    ? row.imagenes_galeria
+    : row.imagen_url
+      ? [row.imagen_url]
+      : [];
   return {
     product_id: String(row.id),
     nombre: row.nombre ?? "",
-    categoria: categoria ?? row.categoria ?? "",
-    segunda_categoria: null,
+    categoria: cats[0] ?? "",
+    segunda_categoria: cats[1] ?? null,
     subcategoria: null,
     tipo: row.tipo ?? "simple",
     desc_mini: descCorta ? descCorta.slice(0, 120) : null,
@@ -150,7 +167,7 @@ function mapProducto(row: any): ProductoCotizador {
     desc_bullets: null,
     img_principal: row.imagen_url ?? null,
     img_fallback: row.imagen_url ?? null,
-    galeria: row.imagen_url ? [row.imagen_url] : [],
+    galeria,
     variantes: parseVariantes(row),
   };
 }
@@ -163,6 +180,7 @@ interface MenuCatalogoData {
 }
 
 async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
+  // Espejo de WooCommerce: solo lo publicado y activo llega hasta aquí.
   const { data, error } = await supabase
     .from("productos")
     .select("*")
@@ -176,18 +194,10 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
 
   // Orden global: más vendidos primero (según total_sales de WooCommerce)
   const rows = (data || [])
-    .filter((r) => Boolean(r.categoria?.trim()))
-    // Excluir productos internos/no vendibles (ej. "MUESTRAS", precio $0)
-    .filter((r: any) => {
-      const precio = Number(r.precio ?? r.precio_min ?? r.precio_max ?? 0);
-      return precio > 0;
-    })
     // Excluir cargos administrativos que no son productos (ej. "COSTO POR CAMBIO")
     .filter((r: any) => !/costo\s*por\s*cambio/i.test(String(r.nombre ?? "")))
+    .filter((r: any) => categoriasDeRow(r).length > 0)
     .sort((a: any, b: any) => (Number(b.total_sales) || 0) - (Number(a.total_sales) || 0));
-  const productos = rows
-    .map(mapProducto)
-    .filter((p) => Boolean(mapCategoriaMenu(p.categoria)));
 
   const porCategoria: Record<CategoriaMenu, ProductoCotizador[]> = {
     "Working Lunch": [],
@@ -199,10 +209,14 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
     "Vegano / Vegetariano": [],
   };
 
-  for (const p of productos) {
-    const cat = p.categoria as CategoriaMenu;
-    if (porCategoria[cat]) {
-      porCategoria[cat].push(p);
+  const productos: ProductoCotizador[] = [];
+  for (const row of rows) {
+    const producto = mapProducto(row);
+    productos.push(producto);
+    // Un producto aparece en todas las categorías que tiene en Woo,
+    // igual que en berlioz.mx.
+    for (const cat of categoriasDeRow(row)) {
+      porCategoria[cat]?.push(producto);
     }
   }
 
@@ -216,6 +230,7 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
 
   return { productos, favoritos, porCategoria, categoriasPresentes };
 }
+
 
 export function useMenuCatalogo() {
   return useQuery<MenuCatalogoData, Error>({

@@ -174,6 +174,12 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           )}
         </div>
       </div>
+
+      <ProductoDetalleModal
+        product={product}
+        open={detalleOpen}
+        onClose={() => setDetalleOpen(false)}
+      />
     </div>
   );
 }

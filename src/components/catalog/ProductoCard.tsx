@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus, Maximize2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import ProductoDetalleModal from "@/components/catalog/ProductoDetalleModal";
 import type { ProductoCotizador, Variante } from "@/hooks/useMenuCotizador";
 
 export default function ProductoCard({ product }: { product: ProductoCotizador }) {
@@ -11,6 +12,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
   const [picking, setPicking] = useState(false);
   const [cantidad, setCantidad] = useState<string>("");
+  const [detalleOpen, setDetalleOpen] = useState(false);
 
   const selected: Variante | undefined =
     variantes.find((v) => v.variante_id === selectedId) ?? defaultVariante;
@@ -41,7 +43,12 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   return (
     <div className="group flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       {/* Image */}
-      <div className="relative aspect-square overflow-hidden bg-muted">
+      <button
+        type="button"
+        onClick={() => setDetalleOpen(true)}
+        aria-label={`Ver detalles de ${product.nombre}`}
+        className="relative aspect-square overflow-hidden bg-muted block w-full text-left"
+      >
         <img
           src={img}
           alt={product.nombre}
@@ -52,16 +59,24 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
             if (fallback && el.src !== fallback) el.src = fallback;
           }}
         />
+        <span className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/95 text-foreground text-[10px] font-bold uppercase tracking-wider">
+            <Maximize2 className="w-3 h-3" /> Ver detalles
+          </span>
+        </span>
         {product.categoria && (
           <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 text-white text-[10px] font-bold uppercase tracking-wider backdrop-blur-md">
             {product.categoria}
           </span>
         )}
-      </div>
+      </button>
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-sm font-semibold text-foreground leading-tight mb-1 uppercase tracking-wide">
+        <h3
+          onClick={() => setDetalleOpen(true)}
+          className="text-sm font-semibold text-foreground leading-tight mb-1 uppercase tracking-wide cursor-pointer hover:text-primary transition-colors"
+        >
           {product.nombre}
         </h3>
         {product.desc_mini && (
@@ -159,6 +174,12 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           )}
         </div>
       </div>
+
+      <ProductoDetalleModal
+        product={product}
+        open={detalleOpen}
+        onClose={() => setDetalleOpen(false)}
+      />
     </div>
   );
 }

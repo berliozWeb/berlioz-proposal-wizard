@@ -143,14 +143,31 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
               <span className="text-[11px] font-normal text-muted-foreground ml-1">por pieza</span>
             </p>
 
-            {(product.desc_larga || product.desc_corta) && (
+            {(intro || items.length > 0 || nota) && (
               <div className="mb-5">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
                   Detalles
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {product.desc_larga || product.desc_corta}
-                </p>
+                {intro && (
+                  <p className="text-sm text-foreground/80 leading-relaxed mb-3">
+                    {intro}
+                  </p>
+                )}
+                {items.length > 0 && (
+                  <ul className="space-y-1.5 mb-3">
+                    {items.map((it, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-muted-foreground leading-snug">
+                        <span className="mt-[7px] h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
+                        <span>{it}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {nota && (
+                  <p className="text-[11px] text-muted-foreground/90 leading-snug rounded-lg bg-muted/50 border border-border/50 px-3 py-2">
+                    {nota}
+                  </p>
+                )}
               </div>
             )}
 

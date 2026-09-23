@@ -4,6 +4,7 @@ import { X, ChevronLeft, ChevronRight, Minus, Plus, Check } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
 import type { ProductoCotizador, Variante } from "@/hooks/useMenuCotizador";
+import { parseDescripcionWoo } from "@/lib/productDescription";
 
 interface Props {
   product: ProductoCotizador;

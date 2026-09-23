@@ -458,10 +458,11 @@ const CheckoutPage = () => {
               </label>
 
               <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="w-full" size="lg">
-                {submitting ? "Procesando..." : `REALIZAR EL PEDIDO · ${formatMXN(totals.total)}`}
+                {submitting ? "Preparando tu pago..." : `CONTINUAR AL PAGO · ${formatMXN(totals.total)}`}
               </Button>
 
               <p className="font-body text-[10px] text-muted-foreground text-center">
+                El total es estimado; el envío y los cupones se confirman en la página de pago de berlioz.mx.
                 Tus datos personales se utilizarán para procesar tu pedido y otros propósitos descritos en nuestra Política de privacidad.
               </p>
             </div>

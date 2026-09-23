@@ -1,9 +1,12 @@
 // ================================================================
 // BERLIOZ — supabase/functions/quote-orchestrator/index.ts
-// v5 — imágenes en catálogo + etiquetas dietéticas en items
+// v6 — catálogo 100% WooCommerce (espejo en `productos`)
+//      + mapa editable de roles/restricciones (`cotizador_roles_producto`)
+// La lógica de tiers, banda ±15%, splits 50/50 y 33/33/33, rotación,
+// jerarquía dietética, envío, IVA y textos con IA NO cambia.
 // ================================================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 
 const CORS = {
@@ -13,128 +16,125 @@ const CORS = {
 };
 const ENVIO_CALC = 360;
 const IVA = 0.16;
+const IMG_FALLBACK = "https://berlioz.mx/wp-content/uploads/2018/03/berlioz_fabian-46-1-scaled.jpg";
 
 // ================================================================
-// CATÁLOGO CON IMÁGENES
+// TIPOS
 // ================================================================
-const IMG = {
-  breakfast_bag:    "https://berlioz.mx/wp-content/uploads/2023/03/breakfast-bag.webp",
-  breakfast_roma:   "https://berlioz.mx/wp-content/uploads/2023/03/berlioz_fabian-31.jpg",
-  chilaquiles:      "https://berlioz.mx/wp-content/uploads/2023/04/Box-Chilaquiles-verdes-Berlioz-.jpg",
-  breakfast_london: "https://berlioz.mx/wp-content/uploads/2018/03/berlioz_fabian-18-scaled-e1596123929266.jpg",
-  breakfast_blt:    "https://berlioz.mx/wp-content/uploads/2025/06/95A0102-1-scaled.jpg",
-  breakfast_montreal:"https://berlioz.mx/wp-content/uploads/2023/03/Breakfast-in-Montreal-Berlioz1.jpg",
-  salmon_box:       "https://berlioz.mx/wp-content/uploads/2024/02/5.jpg",
-  golden_box:       "https://berlioz.mx/wp-content/uploads/2018/03/berlioz_fabian-40-scaled-e1596130008398.jpg",
-  green_box:        "https://berlioz.mx/wp-content/uploads/2025/08/green-box3.jpg",
-  box_vegetariana:  "https://berlioz.mx/wp-content/uploads/2024/10/web-_Mesa-de-trabajo-1.jpg",
-  pink_box:         "https://berlioz.mx/wp-content/uploads/2023/03/cateringCorporativo12.jpg",
-  box_keto:         "https://berlioz.mx/wp-content/uploads/2023/10/web-06.jpg",
-  orzo_pasta:       "https://berlioz.mx/wp-content/uploads/2024/07/Orzo-Pollo.jpg",
-  box_oriental:     "https://berlioz.mx/wp-content/uploads/2025/02/IMG_8233-copia-1.jpg",
-  salad_box:        "https://berlioz.mx/wp-content/uploads/2019/04/Salad-box-pollo.jpg",
-  lunch_bag:        "https://berlioz.mx/wp-content/uploads/2024/02/lunch-pasta.jpg",
-  aqua_box:         "https://berlioz.mx/wp-content/uploads/2025/08/aqua-box2.jpg",
-  blt_box:          "https://berlioz.mx/wp-content/uploads/2023/03/95A0182-1-scaled.jpg",
-  white_box:        "https://berlioz.mx/wp-content/uploads/2023/03/white-box.jpg",
-  black_box:        "https://berlioz.mx/wp-content/uploads/2018/03/berlioz_fabian-21-scaled.jpg",
-  cafe_te:          "https://berlioz.mx/wp-content/uploads/2015/01/17.jpg",
-  agua_fresca:      "https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp",
-  crudites:         "https://berlioz.mx/wp-content/uploads/2024/04/crudite.jpg",
-  mix_semillas:     "https://berlioz.mx/wp-content/uploads/2020/03/berlioz_fabian-03-scaled.jpg",
-  surtido_colette:  "https://berlioz.mx/wp-content/uploads/2018/03/berlioz_fabian-46-1-scaled.jpg",
-  surtido_balzac:   "https://berlioz.mx/wp-content/uploads/2024/02/pastelitos.jpg",
-  surtido_camille:  "https://berlioz.mx/wp-content/uploads/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg",
-  surtido_voltaire: "https://berlioz.mx/wp-content/uploads/2023/03/Surtido-Camille-Berlioz-bocadillos.jpg",
-  coffee_break_am:  "https://berlioz.mx/wp-content/uploads/2025/08/coffeebreak_AM_cafe.jpg",
-  coffee_break_pm:  "https://berlioz.mx/wp-content/uploads/2025/08/coffeebreak_PM.jpg",
-  piropo:           "https://berlioz.mx/wp-content/uploads/2022/01/Piropo-Tinga-de-Pollo-Berlioz.jpg",
-  white_box:        "https://berlioz.mx/wp-content/uploads/2023/03/white-box.jpg",
-};
+type BoxDef = { id:string; n:string; p:number; img:string; cat:string; desc:string; qg?:number };
+interface RawItem { id:string; n:string; p:number; qty:number; img:string; reason:string; cat:string; desc:string }
 
-// ── Tablas de productos por tipo de evento y tier ─────────────
-// ================================================================
-// JERARQUÍA DIETÉTICA:
-//   vegano ⊂ vegetariano  →  producto vegano sirve para vegetariano
-//   keto implica sin_gluten en Berlioz (todos los boxes keto son SG)
-//
-// Regla aplicada en getBoxItems():
-//   si restricción = "vegetariano" → usar caja VEGANA (cumple ambas)
-//   si restricción = "keto"        → usar caja KETO (también sin_gluten)
-// ================================================================
-
-const DESAYUNO: Record<string, { id:string; n:string; p:number; img:string; cat:string; desc:string }> = {
-  esencial:     { id:"breakfast-bag-pavo",              n:"Breakfast Bag",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
-  equilibrado:  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
-  experiencia:  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
-  // Healthy Breakfast = chía pudding, sin huevo, sin lácteos → vegano real ✓ keto ✓ sin_gluten ✓
-  keto:         { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. Vegano y sin gluten." },
-  sin_gluten:   { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. Sin gluten." },
-  vegano:       { id:"healthy-breakfast",               n:"Healthy Breakfast",                          p:370, img:"https://berlioz.mx/wp-content/uploads/2023/04/Healthy-breakfast-2.jpeg", cat:"Desayuno", desc:"Chía pudding con granola keto, mantequilla de almendras, coco rallado y fruta. 100% vegano." },
-  // Chilaquiles con huevo = lacto-ovo vegetariano ✓ (no carne), pero NO vegano (tiene huevo+crema+queso)
-  vegetariano:  { id:"box-chilaquiles-verdes-con-huevo",n:"Box Chilaquiles",         p:310, img:IMG.chilaquiles,        cat:"Desayuno", desc:"Totopos azules con huevo, crema, queso, cilantro y jugo del día. Vegetariano." },
-  // Breakfast BLT: sin lácteos en ingredientes base (pavo, tocino, tomate, lechuga, mayo chipotle)
-  sin_lactosa:  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT",             p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayonesa de chipotle." },
-};
+interface Catalogo {
+  desayuno: { roles: Record<string, BoxDef>; pool: BoxDef[] };
+  comida:   { roles: Record<string, BoxDef>; pool: BoxDef[] };
+  bevCafe:  BoxDef | null;
+  bevAguas: BoxDef[];
+  addons:   Record<string, BoxDef | undefined>;
+  surtidos: { esencial: BoxDef[]; equilibrado: BoxDef[]; experiencia: BoxDef[] };
+  exclusiones: { nombre_buscado:string; motivo:string; detalle:Record<string,unknown>; woo_id:number|null }[];
+}
 
 // ================================================================
-// COMIDA — Restricciones dietéticas (fijas, no rotan)
+// CARGA DEL CATÁLOGO DESDE EL ESPEJO DE WOO
 // ================================================================
-const COMIDA: Record<string, { id:string; n:string; p:number; img:string; cat:string; desc:string }> = {
-  keto:        { id:"box-keto-sin-gluten",   n:"Box Keto",             p:370, img:IMG.box_keto,        cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin granos ni harinas." },
-  sin_gluten:  { id:"box-keto-sin-gluten",   n:"Box Keto",             p:370, img:IMG.box_keto,        cat:"Comida", desc:"Proteína con vegetales asados y ensalada verde con aguacate. Sin gluten." },
-  vegano:      { id:"salad-box-vegana",       n:"Salad Box Vegana",       p:300, img:IMG.salad_box,       cat:"Comida", desc:"Tofu marinado sobre quinoa con aguacate y verduras. Sin lácteos ni huevo. 100% vegana." },
-  vegetariano: { id:"box-vegetariana",        n:"Box Vegetariana",                   p:340, img:IMG.box_vegetariana, cat:"Comida", desc:"Ciabatta de verduras horneadas con queso crema, aguacate y jícama con toronja." },
-  sin_lactosa: { id:"box-oriental-pollo",     n:"Box Oriental",     p:300, img:IMG.box_oriental,    cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
-  // fallback por si el código pide [tier] y no existe
-  esencial:    { id:"lunch-bag-pasta-pollo",  n:"Lunch Bag",       p:250, img:IMG.lunch_bag,       cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
-  equilibrado: { id:"golden-box-ensalada",    n:"Golden Box",p:330, img:IMG.golden_box,     cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
-  experiencia: { id:"orzo-pasta-pollo",       n:"Orzo Pasta Salad Box",  p:390, img:IMG.orzo_pasta,      cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
-};
+function stripHtml(s: string | null | undefined): string {
+  if (!s) return "";
+  const txt = s.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&").replace(/&aacute;/g, "á").replace(/\s+/g, " ").trim();
+  return txt.length > 180 ? txt.slice(0, 177) + "…" : txt;
+}
+
+async function loadCatalogo(sb: SupabaseClient): Promise<Catalogo> {
+  const [{ data: prods }, { data: roles }] = await Promise.all([
+    sb.from("productos")
+      .select("id, woo_id, nombre, precio, precio_min, imagen_url, descripcion_corta, descripcion, categoria, woo_categorias")
+      .eq("activo", true).eq("woo_source", true),
+    sb.from("cotizador_roles_producto")
+      .select("evento, rol, woo_id, prioridad, personas_por_unidad")
+      .eq("activo", true).order("prioridad", { ascending: true }),
+  ]);
+
+  const byWooId = new Map<number, BoxDef>();
+  for (const p of prods ?? []) {
+    const precio = Number(p.precio ?? p.precio_min ?? 0);
+    if (!p.woo_id || precio <= 0) continue;
+    const cats: string[] = p.woo_categorias ?? [];
+    byWooId.set(Number(p.woo_id), {
+      id: String(p.id),
+      n: p.nombre,
+      p: precio,
+      img: p.imagen_url || IMG_FALLBACK,
+      cat: p.categoria || cats[0] || "Catálogo",
+      desc: stripHtml(p.descripcion_corta || p.descripcion),
+    });
+  }
+
+  const exclusiones: Catalogo["exclusiones"] = [];
+  const pick = (evento: string, rol: string): BoxDef[] => {
+    const rows = (roles ?? []).filter(r => r.evento === evento && r.rol === rol);
+    const out: BoxDef[] = [];
+    for (const r of rows) {
+      const prod = byWooId.get(Number(r.woo_id));
+      if (!prod) {
+        exclusiones.push({
+          nombre_buscado: `${evento}/${rol}`,
+          motivo: "sin_match_publicado_en_woo",
+          detalle: { evento, rol, woo_id: r.woo_id },
+          woo_id: Number(r.woo_id),
+        });
+        continue;
+      }
+      out.push(r.personas_por_unidad ? { ...prod, qg: Number(r.personas_por_unidad) } : prod);
+    }
+    return out;
+  };
+
+  const buildEvento = (evento: "desayuno" | "comida") => {
+    const pool = pick(evento, "pool_sinr").sort((a, b) => a.p - b.p);
+    const rolesMap: Record<string, BoxDef> = {};
+    for (const rol of ["esencial","equilibrado","experiencia","keto","sin_gluten","vegano","vegetariano","sin_lactosa"]) {
+      const found = pick(evento, rol)[0];
+      if (found) { rolesMap[rol] = found; continue; }
+      // Woo manda: si el rol no existe publicado, el más cercano en precio del pool
+      if (pool.length > 0) {
+        const ref = rol === "esencial" ? pool[0]
+          : rol === "experiencia" ? pool[pool.length - 1]
+          : pool[Math.floor(pool.length / 2)];
+        rolesMap[rol] = ref;
+      }
+    }
+    return { roles: rolesMap, pool };
+  };
+
+  return {
+    desayuno: buildEvento("desayuno"),
+    comida: buildEvento("comida"),
+    bevCafe: pick("global", "bebida_caliente")[0] ?? null,
+    bevAguas: pick("global", "bebida_fria"),
+    addons: {
+      crudites: pick("global", "addon_crudites")[0],
+      semillas: pick("global", "addon_semillas")[0],
+      fruta:    pick("global", "addon_fruta")[0],
+      yogurt:   pick("global", "addon_yogurt")[0],
+      jugo:     pick("global", "addon_jugo")[0],
+    },
+    surtidos: {
+      esencial:    pick("coffee", "surtido_esencial"),
+      equilibrado: pick("coffee", "surtido_equilibrado"),
+      experiencia: pick("coffee", "surtido_experiencia"),
+    },
+    exclusiones,
+  };
+}
 
 // ================================================================
-// getBoxItems distribuye sinR entre ellos según tamaño del grupo:
-//   1-5 personas → 50/50 (2 formatos)
-//   6+  personas → 33/33/33 (3 formatos)
-// rotIdx rota el orden de los formatos para que cada cotización sea diferente
-// ================================================================
-type BoxDef = { id:string; n:string; p:number; img:string; cat:string; desc:string };
-
-// ================================================================
-// PRODUCTOS PARA PERSONAS SIN RESTRICCIÓN (ordenados por precio)
-// La selección es DINÁMICA: busca el producto más cercano al targetPP
-// real del tier, considerando lo que ya cuesta el grupo con restricciones
-// ================================================================
-type BoxDef = { id:string; n:string; p:number; img:string; cat:string; desc:string };
-
-const DESAYUNO_SINR: BoxDef[] = [
-  { id:"breakfast-bag-pavo",              n:"Breakfast Bag",                       p:250, img:IMG.breakfast_bag,     cat:"Desayuno", desc:"Ciabatta con pavo, fruta fresca y bebida. Ágil y delicioso." },
-  { id:"breakfast-in-roma-pan-dulce",     n:"Breakfast in Roma",              p:290, img:IMG.breakfast_roma,     cat:"Desayuno", desc:"Croissant relleno de frittata con pavo, fruta fresca y pan o yogurt." },
-  { id:"breakfast-in-london-pavo-yogurt", n:"Breakfast in London",        p:320, img:IMG.breakfast_london,   cat:"Desayuno", desc:"Sándwich de pavo con mostaza Dijon, lechuga, jitomate y yogurt." },
-  { id:"breakfast-blt-pavo-yogurt",       n:"Breakfast BLT",              p:330, img:IMG.breakfast_blt,      cat:"Desayuno", desc:"Sándwich BLT con tocino o pavo, tomate, lechuga y mayonesa de chipotle." },
-  { id:"breakfast-in-montreal-yogurt",    n:"Breakfast in Montreal",p:410, img:IMG.breakfast_montreal, cat:"Desayuno", desc:"Salmón ahumado a las hierbas finas con fruta fresca y yogurt orgánico." },
-];
-
-const COMIDA_SINR: BoxDef[] = [
-  { id:"lunch-bag-pasta-pollo",          n:"Lunch Bag",              p:250, img:IMG.lunch_bag,     cat:"Comida", desc:"Pasta al pesto con jitomates horneados, mozzarella y panqué del día." },
-  { id:"salad-box-pollo-agua",           n:"Salad Box",               p:280, img:IMG.salad_box,     cat:"Comida", desc:"Ensalada de pollo con verduras frescas y aderezo de la casa." },
-  { id:"piropo-tinga-con-jicama",        n:"Piropo Tinga de Pollo",                  p:280, img:IMG.piropo,        cat:"Comida", desc:"Burrito artesanal de tinga de pollo con ensalada de jícama y limón." },
-  { id:"white-box-con-ensalada",         n:"White Box",       p:300, img:IMG.white_box,     cat:"Comida", desc:"Ciabatta de pollo asado con aderezo de hierbas y ensalada de frutas." },
-  { id:"box-oriental-pollo",             n:"Box Oriental",            p:300, img:IMG.box_oriental,  cat:"Comida", desc:"Pollo en salsa de soya, arroz al vapor y verduras salteadas. Sin lácteos." },
-  { id:"golden-box-ensalada",            n:"Golden Box",      p:330, img:IMG.golden_box,    cat:"Comida", desc:"Ciabatta de pollo marinado con queso fundido y ensalada de pepino con cabra." },
-  { id:"blt-box-con-chips",              n:"BLT Box",                      p:330, img:IMG.blt_box,       cat:"Comida", desc:"Sándwich BLT de pollo o tocino, jitomate, lechuga y mayonesa de chipotle." },
-  { id:"green-box-con-pepino-feta",      n:"Green Box",       p:340, img:IMG.green_box,     cat:"Comida", desc:"Ciabatta con verduras asadas, queso feta, pepino y aderezo de hierbas." },
-  { id:"aqua-box-con-calabaza",          n:"Aqua Box",      p:350, img:IMG.aqua_box,      cat:"Comida", desc:"Box ligero con proteína y ensalada de calabaza asada. Fresco y sofisticado." },
-  { id:"pink-box-clasica-jicama",        n:"Pink Box",p:380, img:IMG.pink_box,      cat:"Comida", desc:"Pasta rosa de betabel con pollo, frutos secos y ensalada de jícama." },
-  { id:"orzo-pasta-pollo",               n:"Orzo Pasta Salad Box",         p:390, img:IMG.orzo_pasta,    cat:"Comida", desc:"Pasta orzo con trufa blanca, espárragos, parmesano y ensalada de sandía." },
-];
-
-// ── Selección dinámica de productos para sin restricción ──────
-// 1. Calcula targetPP = presupuesto real por persona después de restar costos dietéticos
-// 2. Busca productos dentro de ±15% del targetPP (banda de precio)
-// 3. Si targetPP > max producto → usa el más caro
-// 4. Si hay 2-3 productos en la banda: split 50/50 (≤5p) o 33/33/33 (6+p)
+// Selección dinámica de productos para sin restricción
+// 1. targetPP = presupuesto real por persona tras restar costos dietéticos
+// 2. Banda de ±15% del targetPP
+// 3. Si targetPP > max producto → usa los más caros
+// 4. 1-5 personas → 50/50 | 6+ personas → 33/33/33
 // 5. rotIdx rota el orden para variar entre cotizaciones
+// ================================================================
 function selectSinRProducts(
   products: BoxDef[],
   targetPP: number,
@@ -150,19 +150,15 @@ function selectSinRProducts(
   const secondMost    = sorted.length >= 2 ? sorted[sorted.length - 2] : mostExpensive;
   const thirdMost     = sorted.length >= 3 ? sorted[sorted.length - 3] : secondMost;
 
-  // Si el target supera al producto más caro → variar con rotIdx entre cotizaciones
-  // Respeta la regla: 1-5 personas → 50/50, 6+ personas → 33/33/33
   if (targetPP >= maxP * 0.95) {
-    // Rotar el orden de los productos según rotIdx
     const pool = [mostExpensive, secondMost, thirdMost]
-      .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i); // dedup
+      .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i);
 
     const f0 = pool[rotIdx % pool.length];
     const f1 = pool[(rotIdx + 1) % pool.length];
     const f2 = pool[(rotIdx + 2) % pool.length];
 
     if (sinR <= 5 || pool.length < 2) {
-      // 50/50
       const a = Math.ceil(sinR / 2), b = sinR - a;
       return [
         { box: f0, qty: a },
@@ -170,7 +166,6 @@ function selectSinRProducts(
       ].filter(r => r.qty > 0);
     }
 
-    // 33/33/33 para 6+ personas
     const a = Math.ceil(sinR / 3);
     const b = Math.ceil(sinR / 3);
     const c = sinR - a - b;
@@ -184,12 +179,10 @@ function selectSinRProducts(
     return result.filter(r => r.qty > 0);
   }
 
-  // Banda de ±15% alrededor del targetPP
   const lo = targetPP * 0.87;
   const hi = targetPP * 1.15;
-  let inBand = products.filter(p => p.p >= lo && p.p <= hi);
+  const inBand = products.filter(p => p.p >= lo && p.p <= hi);
 
-  // Si no hay productos en la banda, usar el más cercano
   if (inBand.length === 0) {
     const closest = products.reduce((a, b) =>
       Math.abs(b.p - targetPP) < Math.abs(a.p - targetPP) ? b : a
@@ -197,7 +190,6 @@ function selectSinRProducts(
     return [{ box: closest, qty: sinR }];
   }
 
-  // Solo 1 en la banda → todos al mismo
   if (inBand.length === 1 || sinR <= 3) {
     const best = inBand.reduce((a, b) =>
       Math.abs(b.p - targetPP) < Math.abs(a.p - targetPP) ? b : a
@@ -205,14 +197,12 @@ function selectSinRProducts(
     return [{ box: best, qty: sinR }];
   }
 
-  // Rotar el orden dentro de la banda
   const rotated = [
     ...inBand.slice(rotIdx % inBand.length),
     ...inBand.slice(0, rotIdx % inBand.length),
   ];
 
   if (sinR <= 5 || rotated.length < 3) {
-    // 50/50
     const a = Math.ceil(sinR / 2), b = sinR - a;
     return [
       { box: rotated[0], qty: a },
@@ -220,7 +210,6 @@ function selectSinRProducts(
     ];
   }
 
-  // 33/33/33 con hasta 3 productos
   const use = rotated.slice(0, 3);
   const a = Math.ceil(sinR / 3);
   const b = Math.ceil(sinR / 3);
@@ -229,199 +218,112 @@ function selectSinRProducts(
     { box: use[0], qty: a },
     { box: use[1], qty: b },
   ];
-  if (c > 0) {
-    result.push({ box: use[2] ?? use[1], qty: c });
-  }
+  if (c > 0) result.push({ box: use[2] ?? use[1], qty: c });
   return result.filter(r => r.qty > 0);
 }
-
-// Surtidos para coffee break
-// ── Bebidas ───────────────────────────────────────────────────
-const BEV_CAFE  = { id:"cafe-te-berlioz", n:"Café / Té Berlioz", p:540, qg:12, img:IMG.cafe_te };
-const BEV_AGUA  = { id:"aguas-frescas",   n:"Agua Fresca",              p:45,  img:IMG.agua_fresca };
-const ADDON_CRUDITES  = { id:"crudites-con-limon", n:"Crudités con Limón",        p:50,  img:IMG.crudites };
-const ADDON_SEMILLAS  = { id:"mix-de-semillas",    n:"Mix de Semillas Naturales", p:60,  img:IMG.mix_semillas };
-
-// ── Tipo de item interno ──────────────────────────────────────
-interface RawItem { id:string; n:string; p:number; qty:number; img:string; reason:string; cat:string; desc:string }
 
 function calcSubtotal(items: RawItem[]): number {
   return items.reduce((s, i) => s + i.p * i.qty, 0);
 }
 
 // ── Selector Coffee Break ────────────────────────────────────
-// tier: "esencial" | "equilibrado" | "experiencia"
 function getCoffeeItems(
+  cat: Catalogo,
   people: number,
   dietaryCounts: {tipo:string;cantidad:number}[],
-  targetSub: number,
+  _targetSub: number,
   tier: "esencial"|"equilibrado"|"experiencia"
 ): RawItem[] {
   const items: RawItem[] = [];
 
-  // Personas que SÍ pueden comer surtidos (sin restricción + vegetariano)
   const keto    = dietaryCounts.filter(d=>d.tipo==="keto").reduce((s,d)=>s+d.cantidad,0);
   const vegano  = dietaryCounts.filter(d=>d.tipo==="vegano").reduce((s,d)=>s+d.cantidad,0);
   const sg      = dietaryCounts.filter(d=>d.tipo==="sin_gluten").reduce((s,d)=>s+d.cantidad,0);
-  const sinLac  = dietaryCounts.filter(d=>d.tipo==="sin_lactosa").reduce((s,d)=>s+d.cantidad,0);
   const veg     = dietaryCounts.filter(d=>d.tipo==="vegetariano").reduce((s,d)=>s+d.cantidad,0);
 
-  // Personas que no pueden comer pan/bocadillos del surtido (keto, vegano, sin_gluten)
   const noSurtido = keto + vegano + sg;
-  const conSurtido = Math.max(0, people - noSurtido); // sin restricción + vegetariano + sin lactosa
+  const conSurtido = Math.max(0, people - noSurtido);
 
-  // ── Surtido según tier y cuántas personas lo pueden comer ──
   if (conSurtido > 0) {
-    // Surtido diferente por tier
-    let surtido;
+    const opciones = cat.surtidos[tier];
+    let surtido: BoxDef | undefined;
     if (tier === "esencial") {
-      // Mini surtidos económicos
-      surtido = Math.ceil(conSurtido / 4) <= 2
-        ? { id:"mini-surtido-colette", n:"Mini Surtido Colette", p:290, qg:4, img:IMG.surtido_colette }
-        : { id:"surtido-balzac", n:"Surtido Balzac", p:400, qg:8, img:IMG.surtido_balzac };
+      surtido = Math.ceil(conSurtido / (opciones[0]?.qg ?? 4)) <= 2 ? opciones[0] : (opciones[1] ?? opciones[0]);
     } else if (tier === "equilibrado") {
-      // Surtidos estándar
-      surtido = conSurtido <= 6
-        ? { id:"surtido-colette", n:"Surtido Colette", p:450, qg:9, img:IMG.surtido_colette }
-        : { id:"surtido-voltaire", n:"Surtido Voltaire", p:750, qg:6, img:IMG.surtido_voltaire };
+      surtido = conSurtido <= 6 ? opciones[0] : (opciones[1] ?? opciones[0]);
     } else {
-      // Premium: bocadillos gourmet
-      surtido = { id:"surtido-camille", n:"Surtido Camille", p:700, qg:6, img:IMG.surtido_camille };
+      surtido = opciones[0];
     }
-    const qty = Math.ceil(conSurtido / surtido.qg);
-    const reason = veg > 0
-      ? `Para ${conSurtido - veg} personas + ${veg} vegetariano${veg>1?"s":""}`
-      : `Para ${conSurtido} personas`;
-    items.push({ id:surtido.id, n:surtido.n, p:surtido.p, qty, img:surtido.img, reason, cat:"Coffee Break", desc:"Selección gourmet de bocadillos y panes para compartir." });
+    if (surtido) {
+      const qty = Math.ceil(conSurtido / (surtido.qg ?? 6));
+      const reason = veg > 0
+        ? `Para ${conSurtido - veg} personas + ${veg} vegetariano${veg>1?"s":""}`
+        : `Para ${conSurtido} personas`;
+      items.push({ id:surtido.id, n:surtido.n, p:surtido.p, qty, img:surtido.img, reason, cat:surtido.cat, desc:surtido.desc });
+    }
   }
 
-  // ── Café (siempre, para todos) ──
-  const cafeQty = Math.max(1, Math.ceil(people / BEV_CAFE.qg));
-  items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:cafeQty, img:BEV_CAFE.img,
-    reason:"Bebida caliente para todos", cat:"Bebida", desc:"Café o té en termo para 12 tazas. Se mantiene caliente 3 horas." });
+  // Café (siempre, para todos)
+  if (cat.bevCafe) {
+    const cafeQty = Math.max(1, Math.ceil(people / (cat.bevCafe.qg ?? 12)));
+    items.push({ id:cat.bevCafe.id, n:cat.bevCafe.n, p:cat.bevCafe.p, qty:cafeQty, img:cat.bevCafe.img,
+      reason:"Bebida caliente para todos", cat:cat.bevCafe.cat, desc:cat.bevCafe.desc });
+  }
 
-  // ── Opciones para personas con restricciones dietéticas ──
-  // Veganos: crudités + semillas (vegano, sin gluten, sin lactosa)
+  const crud = cat.addons.crudites;
+  const sem  = cat.addons.semillas;
+
   if (vegano > 0) {
-    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:vegano,
-      img:ADDON_CRUDITES.img, reason:`🌱 Vegano — ${vegano} persona${vegano>1?"s":""}`,
-      cat:"Snack", desc:"Jícama, zanahoria, pepino y apio frescos con limón y chile. 100% vegano." });
-    items.push({ id:ADDON_SEMILLAS.id, n:ADDON_SEMILLAS.n, p:ADDON_SEMILLAS.p, qty:vegano,
-      img:ADDON_SEMILLAS.img, reason:`🌱 Vegano — complemento`,
-      cat:"Snack", desc:"Mix artesanal de semillas tostadas. Vegano, keto y sin gluten." });
+    if (crud) items.push({ ...crud, qty:vegano, reason:`🌱 Vegano — ${vegano} persona${vegano>1?"s":""}` });
+    if (sem)  items.push({ ...sem,  qty:vegano, reason:"🌱 Vegano — complemento" });
   }
-
-  // Keto: crudités + semillas (no pan, no azúcar)
   if (keto > 0) {
-    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:keto,
-      img:ADDON_CRUDITES.img, reason:`🔥 Keto — ${keto} persona${keto>1?"s":""}`,
-      cat:"Snack", desc:"Jícama, zanahoria, pepino y apio frescos. Sin carbohidratos." });
-    items.push({ id:ADDON_SEMILLAS.id, n:ADDON_SEMILLAS.n, p:ADDON_SEMILLAS.p, qty:keto,
-      img:ADDON_SEMILLAS.img, reason:`🔥 Keto — complemento`,
-      cat:"Snack", desc:"Mix de semillas naturales. Keto, vegano y sin gluten." });
+    if (crud) items.push({ ...crud, qty:keto, reason:`🔥 Keto — ${keto} persona${keto>1?"s":""}` });
+    if (sem)  items.push({ ...sem,  qty:keto, reason:"🔥 Keto — complemento" });
   }
-
-  // Sin gluten (si no es también keto o vegano, ya cubiertos arriba)
-  if (sg > 0) {
-    items.push({ id:ADDON_CRUDITES.id, n:ADDON_CRUDITES.n, p:ADDON_CRUDITES.p, qty:sg,
-      img:ADDON_CRUDITES.img, reason:`🌾 Sin Gluten — ${sg} persona${sg>1?"s":""}`,
-      cat:"Snack", desc:"Crudités frescos. Sin gluten, sin lácteos." });
+  if (sg > 0 && crud) {
+    items.push({ ...crud, qty:sg, reason:`🌾 Sin Gluten — ${sg} persona${sg>1?"s":""}` });
   }
 
   return items;
 }
 
-// ── Distribución de sin restricción entre formatos ───────────
-// Si todos los formatos son el mismo producto → sin split (1 sola card limpia)
-// Si hay productos distintos:
-//   1-5 personas → 50/50 (2 formatos)
-//   6+  personas → 33/33/33 (3 formatos)
-// rotIdx rota el orden para que cada cotización sea diferente
-function distribuirFormatos(
-  sinR: number,
-  formatos: BoxDef[],
-  rotIdx: number
-): { box: BoxDef; qty: number }[] {
-  if (sinR <= 0 || formatos.length === 0) return [];
-
-  // Desduplicar formatos por id para saber cuántos son realmente distintos
-  const uniqueFormats: BoxDef[] = [];
-  const seenIds = new Set<string>();
-  for (let i = 0; i < formatos.length; i++) {
-    const f = formatos[(i + rotIdx) % formatos.length];
-    if (!seenIds.has(f.id)) { uniqueFormats.push(f); seenIds.add(f.id); }
-  }
-
-  // Si solo hay 1 producto único → todo al mismo, sin split
-  if (uniqueFormats.length === 1) {
-    return [{ box: uniqueFormats[0], qty: sinR }];
-  }
-
-  const f0 = uniqueFormats[0];
-  const f1 = uniqueFormats[1];
-  const f2 = uniqueFormats[2];
-
-  if (sinR <= 5 || uniqueFormats.length < 3) {
-    // 50/50 entre los 2 primeros únicos
-    const a = Math.ceil(sinR / 2);
-    const b = sinR - a;
-    const result: { box: BoxDef; qty: number }[] = [{ box: f0, qty: a }];
-    if (b > 0) result.push({ box: f1, qty: b });
-    return result;
-  }
-
-  // 33/33/33 entre los 3 formatos únicos
-  const a = Math.ceil(sinR / 3);
-  const b = Math.ceil(sinR / 3);
-  const c = sinR - a - b;
-  const result: { box: BoxDef; qty: number }[] = [
-    { box: f0, qty: a },
-    { box: f1, qty: b },
-  ];
-  if (c > 0 && f2) result.push({ box: f2, qty: c });
-  return result;
-}
-
 // ── Selector Desayuno / Comida ────────────────────────────────
 function getBoxItems(
+  cat: Catalogo,
   tabla: Record<string, BoxDef>,
   tier: string,
-  ev: string,                // "desayuno" | "comida" para elegir add-ons correctos
+  ev: string,
   people: number,
   dietaryCounts: {tipo:string;cantidad:number}[],
   targetSub: number,
-  sinRProducts?: BoxDef[],
+  sinRProducts: BoxDef[],
   rotIdx = 0
 ): RawItem[] {
   const sinR = Math.max(0, people - dietaryCounts.reduce((s,d)=>s+d.cantidad, 0));
-  const mainBox = tabla[tier] ?? (sinRProducts?.[0]);
+  const mainBox = tabla[tier] ?? sinRProducts[0];
+  if (!mainBox) return [];
 
-  // Acumular por producto — si vegano+vegetariano mapean al mismo id, fusionar
   const merged = new Map<string, RawItem>();
-
-  const addItem = (box: {id:string;n:string;p:number;img:string;cat:string;desc:string}, q: number, reason: string) => {
+  const addItem = (box: BoxDef, q: number, reason: string) => {
     if (merged.has(box.id)) {
       const existing = merged.get(box.id)!;
       existing.qty += q;
-      if (!existing.reason.includes(reason)) {
-        existing.reason = existing.reason + " + " + reason;
-      }
+      if (!existing.reason.includes(reason)) existing.reason = existing.reason + " + " + reason;
     } else {
       merged.set(box.id, { id:box.id, n:box.n, p:box.p, qty:q, img:box.img, reason, cat:box.cat, desc:box.desc });
     }
   };
 
-  // Calcular costo mínimo de las restricciones para saber cuánto queda para sin restricción
   const costoRestricciones = dietaryCounts.reduce((sum, dc) => {
-    const dietBox = (tabla[dc.tipo] as typeof mainBox | undefined) ?? mainBox;
+    const dietBox = tabla[dc.tipo] ?? mainBox;
     return sum + dietBox.p * dc.cantidad;
   }, 0);
   const presupuestoRestante = targetSub - costoRestricciones;
   const ppRestante = sinR > 0 ? presupuestoRestante / sinR : 0;
 
-  // Box para sin restricción: selección dinámica por presupuesto real
   if (sinR > 0) {
-    if (sinRProducts && sinRProducts.length > 0) {
+    if (sinRProducts.length > 0) {
       const splits = selectSinRProducts(sinRProducts, ppRestante > 0 ? ppRestante : mainBox.p, sinR, rotIdx);
       for (const s of splits) {
         const label = sinR === people
@@ -430,14 +332,13 @@ function getBoxItems(
         addItem(s.box, s.qty, label);
       }
     } else {
-      addItem(tabla[tier] ?? mainBox, sinR, sinR === people ? `Para ${sinR} personas` : `Para ${sinR} personas sin restricción`);
+      addItem(mainBox, sinR, sinR === people ? `Para ${sinR} personas` : `Para ${sinR} personas sin restricción`);
     }
   }
 
-  // Box para cada restricción dietética
   for (const dc of dietaryCounts) {
     if (dc.cantidad <= 0) continue;
-    const dietBox = (tabla[dc.tipo] as typeof mainBox | undefined) ?? mainBox;
+    const dietBox = tabla[dc.tipo] ?? mainBox;
     const label = dc.tipo === "keto" ? `🔥 Keto — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
       : dc.tipo === "vegetariano" ? `🥗 Vegetariano — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
       : dc.tipo === "vegano"      ? `🌱 Vegano — ${dc.cantidad} persona${dc.cantidad>1?"s":""}`
@@ -452,33 +353,26 @@ function getBoxItems(
   // Bebida
   const sub = calcSubtotal(items);
   let left = targetSub - sub;
-  if (left >= 480) {
-    items.push({ id:BEV_CAFE.id, n:BEV_CAFE.n, p:BEV_CAFE.p, qty:1, img:BEV_CAFE.img, reason:"Bebida caliente del evento", cat:"Bebida", desc:"Café o té para 12 tazas en termo. Se mantiene caliente 3 horas." });
-    left -= BEV_CAFE.p;
-  } else if (left >= 40 * people) {
-    items.push({ id:BEV_AGUA.id, n:BEV_AGUA.n, p:BEV_AGUA.p, qty:people, img:BEV_AGUA.img, reason:"Bebida del evento", cat:"Bebida", desc:"Agua fresca artesanal preparada el mismo día. Sin conservadores." });
-    left -= BEV_AGUA.p * people;
+  const agua = cat.bevAguas.length > 0 ? cat.bevAguas[rotIdx % cat.bevAguas.length] : undefined;
+  if (cat.bevCafe && left >= cat.bevCafe.p - 60) {
+    items.push({ ...cat.bevCafe, qty:1, reason:"Bebida caliente del evento" });
+    left -= cat.bevCafe.p;
+  } else if (agua && left >= agua.p * people * 0.9) {
+    items.push({ ...agua, qty:people, reason:"Bebida del evento" });
+    left -= agua.p * people;
   }
 
   // Experiencia: complemento contextual según tipo de evento
-  // Diferencia la experiencia del equilibrado cuando el catálogo toca el techo
-  if (tier === "experiencia" && sinR > 0 && left >= 45 * sinR) {
-    // Desayuno y working lunch → fruta fresca o yogurt
-    // Comida → crudités o mix de semillas (snack ligero post-comida)
+  if (tier === "experiencia" && sinR > 0) {
     const esDesayuno = ev === "desayuno";
-    const addons = esDesayuno
-      ? [
-          { id:"ensalada-de-fruta",  n:"Ensalada de Fruta",           p:50, img:"https://berlioz.mx/wp-content/uploads/2022/06/berlioz_fabian-51.jpg",   reason:"Complemento gourmet del desayuno", cat:"Add-on", desc:"Fruta fresca de temporada. Ligero y refrescante." },
-          { id:"yogurt-organico",    n:"Yogurt Orgánico con granola",  p:50, img:"https://berlioz.mx/wp-content/uploads/2023/03/breakfast-bag.webp",      reason:"Complemento gourmet del desayuno", cat:"Add-on", desc:"Yogurt orgánico con granola artesanal. Vegetariano." },
-          { id:"jugo-de-naranja",    n:"Jugo de Naranja (Jus)",        p:60, img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", reason:"Refrescante con el desayuno", cat:"Bebida", desc:"Jugo natural exprimido, 355 ml por persona." },
-        ]
-      : [
-          { id:"crudites-con-limon", n:"Crudités con Limón",           p:50, img:"https://berlioz.mx/wp-content/uploads/2024/04/crudite.jpg",             reason:"Snack ligero post-comida", cat:"Add-on", desc:"Jícama, zanahoria, pepino y apio. Vegano y keto." },
-          { id:"mix-de-semillas",    n:"Mix de Semillas Naturales",    p:60, img:"https://berlioz.mx/wp-content/uploads/2020/03/berlioz_fabian-03-scaled.jpg", reason:"Snack energético de cierre", cat:"Add-on", desc:"Mix artesanal tostado. Vegano, keto y sin gluten." },
-          { id:"aguas-frescas",      n:"Agua Fresca",        p:45, img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", reason:"Bebida fresca de temporada", cat:"Bebida", desc:"Agua fresca artesanal, preparada el mismo día." },
-        ];
-    const addon = addons[rotIdx % addons.length];
-    items.push({ ...addon, qty: sinR });
+    const addons = (esDesayuno
+      ? [cat.addons.fruta, cat.addons.yogurt, cat.addons.jugo]
+      : [cat.addons.crudites, cat.addons.semillas, agua]
+    ).filter((a): a is BoxDef => !!a);
+    const addon = addons[rotIdx % Math.max(1, addons.length)];
+    if (addon && left >= addon.p * sinR * 0.9) {
+      items.push({ ...addon, qty: sinR, reason: esDesayuno ? "Complemento gourmet del desayuno" : "Complemento de cierre" });
+    }
   }
 
   return items;
@@ -486,20 +380,15 @@ function getBoxItems(
 
 // ── Construir los 3 tiers ────────────────────────────────────
 function buildAllTiers(
+  cat: Catalogo,
   eventType: string,
   people: number,
   dietaryCounts: {tipo:string;cantidad:number}[],
   budgetEnabled: boolean,
   budgetPP: number
 ): Record<string, RawItem[]> {
-  // budgetPP = precio de COMIDA por persona (sin IVA ni envío)
-  // El IVA y envío se suman aparte en el desglose final
-  // Tiers: esencial 82%, equilibrado 100%, experiencia 122% del presupuesto de comida
   const base = (budgetEnabled && budgetPP > 0) ? budgetPP : 330;
 
-  // Restricciones dietéticas tienen precio fijo (no pueden ajustarse al tier)
-  // Calculamos cuánto "cuesta" el grupo de restricciones para dejar headroom correcto
-  // El target de comida se aplica solo al presupuesto de comida, sin impuestos
   const targets = {
     esencial:    base * people * 0.82,
     equilibrado: base * people,
@@ -510,30 +399,21 @@ function buildAllTiers(
            : eventType.toLowerCase().includes("desayuno") ? "desayuno"
            : "comida";
 
-  // Rotación aleatoria por solicitud — 3 formatos: pasta / sandwich+pan / ensalada
-  // Cada vez que alguien cotiza recibe una selección diferente para sin restricción
-  const rotIdx = String(Math.floor(Math.random() * 3)) as "0"|"1"|"2";
+  const rotIdx = Math.floor(Math.random() * 3);
 
   if (ev === "coffee") {
     return {
-      esencial:    getCoffeeItems(people, dietaryCounts, targets.esencial,    "esencial"),
-      equilibrado: getCoffeeItems(people, dietaryCounts, targets.equilibrado, "equilibrado"),
-      experiencia: getCoffeeItems(people, dietaryCounts, targets.experiencia, "experiencia"),
+      esencial:    getCoffeeItems(cat, people, dietaryCounts, targets.esencial,    "esencial"),
+      equilibrado: getCoffeeItems(cat, people, dietaryCounts, targets.equilibrado, "equilibrado"),
+      experiencia: getCoffeeItems(cat, people, dietaryCounts, targets.experiencia, "experiencia"),
     };
   }
 
-  if (ev === "desayuno") {
-    return {
-      esencial:    getBoxItems(DESAYUNO, "esencial",    ev, people, dietaryCounts, targets.esencial,    DESAYUNO_SINR, rotIdx),
-      equilibrado: getBoxItems(DESAYUNO, "equilibrado", ev, people, dietaryCounts, targets.equilibrado, DESAYUNO_SINR, rotIdx),
-      experiencia: getBoxItems(DESAYUNO, "experiencia", ev, people, dietaryCounts, targets.experiencia, DESAYUNO_SINR, rotIdx),
-    };
-  }
-
+  const fuente = ev === "desayuno" ? cat.desayuno : cat.comida;
   return {
-    esencial:    getBoxItems(COMIDA, "esencial",    ev, people, dietaryCounts, targets.esencial,    COMIDA_SINR, rotIdx),
-    equilibrado: getBoxItems(COMIDA, "equilibrado", ev, people, dietaryCounts, targets.equilibrado, COMIDA_SINR, rotIdx),
-    experiencia: getBoxItems(COMIDA, "experiencia", ev, people, dietaryCounts, targets.experiencia, COMIDA_SINR, rotIdx),
+    esencial:    getBoxItems(cat, fuente.roles, "esencial",    ev, people, dietaryCounts, targets.esencial,    fuente.pool, rotIdx),
+    equilibrado: getBoxItems(cat, fuente.roles, "equilibrado", ev, people, dietaryCounts, targets.equilibrado, fuente.pool, rotIdx),
+    experiencia: getBoxItems(cat, fuente.roles, "experiencia", ev, people, dietaryCounts, targets.experiencia, fuente.pool, rotIdx),
   };
 }
 
@@ -563,8 +443,28 @@ serve(async (req: Request) => {
     const contactName   = (body.contactName   as string)  ?? "";
     const companyName   = (body.companyName   as string)  ?? "";
 
-    // 1. Selección determinista de productos
-    const tierItems = buildAllTiers(eventType, peopleCount, dietaryCounts, budgetEnabled, budgetPP);
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    // 0. Catálogo vivo de Woo
+    const catalogo = await loadCatalogo(sb);
+
+    // Log de roles sin producto publicado en Woo
+    if (catalogo.exclusiones.length > 0) {
+      try {
+        await sb.from("catalogo_exclusiones").insert(
+          catalogo.exclusiones.map(e => ({
+            origen: "cotizador",
+            nombre_buscado: e.nombre_buscado,
+            motivo: e.motivo,
+            detalle: e.detalle,
+            woo_id: e.woo_id,
+          }))
+        );
+      } catch (_) { /* silent */ }
+    }
+
+    // 1. Selección determinista de productos (misma lógica, productos de Woo)
+    const tierItems = buildAllTiers(catalogo, eventType, peopleCount, dietaryCounts, budgetEnabled, budgetPP);
 
     // 2. Textos de Claude
     const anthropic = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY")! });
@@ -610,13 +510,13 @@ EXPERIENCIA: ${tierItems.experiencia.map(i=>`${i.n} ×${i.qty}`).join(", ")}`;
           productName: i.n,
           quantity: i.qty, unitPrice: i.p, computedPrice: i.p * i.qty,
           score: 80,
-          recommendationReason: i.reason,   // etiqueta dietética (badge de color)
-          imageUrl: i.img,                   // imagen directa del catálogo
+          recommendationReason: i.reason,
+          imageUrl: i.img,
           imageSource: "catalog" as const,
           imagePrompt: null, sourceType: "supabase" as const,
-          swapGroup: i.cat,                  // categoría real del producto
-          categoria: i.cat,                  // para el sidebar de cambio
-          descripcion: i.desc,               // descripción corta visible en la card
+          swapGroup: i.cat,
+          categoria: i.cat,
+          descripcion: i.desc,
         })),
         subtotal: sub, shipping: ENVIO_CALC, iva, total,
         pricePerPerson: Math.round((sub / Math.max(1, peopleCount)) * 100) / 100,
@@ -629,7 +529,6 @@ EXPERIENCIA: ${tierItems.experiencia.map(i=>`${i.n} ×${i.qty}`).join(", ")}`;
     // 4. Guardar en Supabase (silencioso)
     const proposalId = crypto.randomUUID();
     try {
-      const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       await sb.from("cotizaciones").insert({
         id: proposalId, personas: peopleCount, tipo_servicio: eventType,
         presupuesto_por_persona: budgetPP, presupuesto_total: peopleCount * budgetPP,
@@ -640,7 +539,7 @@ EXPERIENCIA: ${tierItems.experiencia.map(i=>`${i.n} ×${i.qty}`).join(", ")}`;
     } catch (_) { /* silent */ }
 
     return new Response(
-      JSON.stringify({ requestId:proposalId, proposalId, engineVersion:"v5-images",
+      JSON.stringify({ requestId:proposalId, proposalId, engineVersion:"v6-woo",
         fallbackUsed:false, packages,
         recommendationSummary:`Propuesta para ${eventType}, ${peopleCount} personas.` }),
       { status:200, headers:{ ...CORS, "Content-Type":"application/json" } }

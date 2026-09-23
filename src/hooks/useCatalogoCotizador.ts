@@ -79,7 +79,6 @@ export const QUOTER_SIDEBAR_CATEGORIES = [
   'Coffee Break',
   'Working Lunch',
   'Bebidas',
-  'Surtidos',
   'Vegano',
   'Piropo',
 ] as const;

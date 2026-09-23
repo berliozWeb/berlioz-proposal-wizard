@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk";
 
 const CORS = {
@@ -7,23 +8,52 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const COMPLEMENTOS = [
-  { id:"agua-fresca-jamaica", name:"Agua Fresca de Jamaica", price:45, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", tags:["bebida","vegano","temporada","fresco"] },
-  { id:"agua-fresca-limon-hierbabuena", name:"Agua de Limón con Hierbabuena", price:45, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", tags:["bebida","vegano","temporada","fresco","refrescante"] },
-  { id:"agua-fresca-pepino-limon", name:"Agua de Pepino con Limón", price:45, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", tags:["bebida","vegano","temporada","keto","fresco"] },
-  { id:"agua-fresca-sandia", name:"Agua Fresca de Sandía", price:45, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", tags:["bebida","vegano","temporada","verano"] },
-  { id:"agua-fresca-tamarindo", name:"Agua Fresca de Tamarindo", price:45, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", tags:["bebida","vegano","temporada"] },
-  { id:"agua-bui-natural", name:"Agua Bui Natural", price:50, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", tags:["bebida","vegano","keto","premium","muy-pedido"] },
-  { id:"jugo-de-naranja", name:"Jugo de Naranja (Jus)", price:60, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/Aguas-de-sabor-Berlioz.jpg.webp", tags:["bebida","vegano","desayuno","popular"] },
-  { id:"cafe-frio", name:"Café Frío (latte de avena)", price:60, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2015/01/17.jpg", tags:["bebida","vegano","keto","sin-gluten","popular"] },
-  { id:"cafe-te-berlioz", name:"Café / Té Berlioz — termo 12 tazas", price:540, unit:"grupal (12 tazas)", img:"https://berlioz.mx/wp-content/uploads/2015/01/17.jpg", tags:["bebida","grupal","muy-pedido","caliente"] },
-  { id:"ensalada-de-fruta", name:"Ensalada de Fruta", price:50, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2022/06/berlioz_fabian-51.jpg", tags:["addon","vegano","keto","sin-gluten","fresco","popular"] },
-  { id:"crudites-con-limon", name:"Crudités con Limón", price:50, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2024/04/crudite.jpg", tags:["addon","vegano","keto","sin-gluten"] },
-  { id:"yogurt-organico", name:"Yogurt Orgánico con granola", price:50, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2023/03/breakfast-bag.webp", tags:["addon","vegetariano","desayuno"] },
-  { id:"cookies", name:"Cookies artesanales", price:50, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2020/03/berlioz_fabian-03-scaled.jpg", tags:["addon","vegetariano","popular"] },
-  { id:"panque-de-naranja", name:"Panqué de Naranja", price:50, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2020/03/berlioz_fabian-03-scaled.jpg", tags:["addon","vegetariano"] },
-  { id:"mix-de-semillas", name:"Mix de Semillas Naturales", price:60, unit:"por persona", img:"https://berlioz.mx/wp-content/uploads/2020/03/berlioz_fabian-03-scaled.jpg", tags:["addon","vegano","keto","sin-gluten"] },
-];
+const IMG_FALLBACK = "https://berlioz.mx/wp-content/uploads/2018/03/berlioz_fabian-46-1-scaled.jpg";
+
+interface Complemento {
+  id: string; name: string; price: number; unit: string; img: string; tags: string[];
+}
+
+// Candidatos reales de WooCommerce: complementos individuales de Bebidas y Coffee Break.
+// Nada hardcodeado — si Ana despublica un producto, deja de ofrecerse solo.
+async function loadComplementos(sb: ReturnType<typeof createClient>): Promise<Complemento[]> {
+  const { data } = await sb.from("productos")
+    .select("id, nombre, precio, precio_min, imagen_url, dietary_tags, woo_categorias, categoria, total_sales")
+    .eq("activo", true).eq("woo_source", true)
+    .order("total_sales", { ascending: false })
+    .limit(400);
+
+  const out: Complemento[] = [];
+  for (const p of data ?? []) {
+    const cats: string[] = (p.woo_categorias as string[]) ?? [];
+    const esComplemento = cats.includes("Bebidas") || cats.includes("Coffee Break");
+    if (!esComplemento) continue;
+    const price = Number(p.precio ?? p.precio_min ?? 0);
+    if (price <= 0 || price > 600) continue;
+    const nombre = String(p.nombre ?? "");
+    if (/costo por cambio|mi logo|entrega especial|extras|caja berlioz/i.test(nombre)) continue;
+
+    const grupal = price >= 200;
+    const tags = [
+      cats.includes("Bebidas") ? "bebida" : "addon",
+      ...(((p.dietary_tags as string[]) ?? [])),
+      ...(grupal ? ["grupal"] : []),
+      ...(Number(p.total_sales ?? 0) > 1000 ? ["muy-pedido"] : []),
+      ...(/agua|jugo|refresco|café frío/i.test(nombre) ? ["fresco"] : []),
+    ];
+
+    out.push({
+      id: String(p.id),
+      name: nombre,
+      price,
+      unit: grupal ? "grupal" : "por persona",
+      img: (p.imagen_url as string) || IMG_FALLBACK,
+      tags,
+    });
+    if (out.length >= 30) break;
+  }
+  return out;
+}
 
 const SYSTEM = `Eres el asistente de ventas de Berlioz Catering Corporativo (CDMX).
 Recomienda 3-4 complementos para aumentar el ticket del pedido que recibes.
@@ -36,7 +66,7 @@ DATOS REALES DE PEDIDOS 2025-2026 (7,242 pedidos):
 - Pedidos con restricciones tienen ticket +44% mayor
 
 REGLAS:
-1. Recomienda EXACTAMENTE 3 o 4 productos del catálogo recibido
+1. Recomienda EXACTAMENTE 3 o 4 productos del catálogo recibido, usando su id tal cual
 2. Prioriza bebidas — son el upsell más natural
 3. Mayo-agosto = verano en CDMX → prioriza aguas frescas y refrescantes
 4. Si hay restricciones dietéticas, incluye al menos 1 opción compatible
@@ -50,12 +80,25 @@ Responde SOLO JSON válido sin markdown:
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  let complementos: Complemento[] = [];
+
   try {
     const body = await req.json();
     const { tierItems = [], eventType = "comida", peopleCount = 10, dietaryCounts = [], month = new Date().getMonth() + 1 } = body;
 
-    const itemsList = tierItems.map((i: { productName: string; quantity: number; unitPrice: number }) =>
-      `- ${i.productName} ×${i.quantity} ($${i.unitPrice})`).join("\n");
+    complementos = await loadComplementos(sb);
+    if (complementos.length === 0) {
+      return new Response(JSON.stringify({ recommendations: [] }), { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
+    }
+
+    const enPedido = new Set<string>(
+      (tierItems as { productName?: string }[]).map(i => String(i.productName ?? "").toLowerCase())
+    );
+    const candidatos = complementos.filter(c => !enPedido.has(c.name.toLowerCase()));
+
+    const itemsList = (tierItems as { productName: string; quantity: number; unitPrice: number }[])
+      .map(i => `- ${i.productName} ×${i.quantity} ($${i.unitPrice})`).join("\n");
 
     const dietas = dietaryCounts.length > 0
       ? dietaryCounts.map((d: { tipo: string; cantidad: number }) => `${d.cantidad} ${d.tipo}`).join(", ")
@@ -64,7 +107,7 @@ serve(async (req: Request) => {
     const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
     const esVerano = month >= 4 && month <= 9;
 
-    const catalogoStr = COMPLEMENTOS.map(c =>
+    const catalogoStr = candidatos.map(c =>
       `{id:"${c.id}",name:"${c.name}",price:${c.price},unit:"${c.unit}",tags:["${c.tags.join('","')}"],img:"${c.img}"}`
     ).join("\n");
 
@@ -87,23 +130,42 @@ ${catalogoStr}`;
     const clean = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
     const parsed = JSON.parse(clean);
 
-    const validIds = new Set(COMPLEMENTOS.map(c => c.id));
-    const recs = (parsed.recommendations || []).filter((r: { id: string }) => validIds.has(r.id)).slice(0, 4);
+    const byId = new Map(candidatos.map(c => [c.id, c]));
+    const recs = ((parsed.recommendations || []) as { id: string; reason?: string; tag?: string }[])
+      .filter(r => byId.has(String(r.id)))
+      .slice(0, 4)
+      .map(r => {
+        const c = byId.get(String(r.id))!;
+        return { ...c, reason: r.reason ?? "Muy pedido por nuestros clientes", tag: r.tag ?? c.tags[0] };
+      });
 
     if (recs.length === 0) {
-      const fallbackIds = eventType === "desayuno"
-        ? ["cafe-te-berlioz", "jugo-de-naranja", "ensalada-de-fruta"]
-        : ["agua-fresca-jamaica", "agua-bui-natural", "crudites-con-limon"];
-      return new Response(JSON.stringify({
-        recommendations: COMPLEMENTOS.filter(c => fallbackIds.includes(c.id)).map(c => ({ ...c, reason: "Muy pedido por nuestros clientes" })),
-      }), { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ recommendations: fallback(candidatos, eventType) }),
+        { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
     }
 
     return new Response(JSON.stringify({ recommendations: recs }), { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
   } catch (err) {
     console.error("get-upsell-recommendations error:", err);
-    const fallback = COMPLEMENTOS.filter(c => ["agua-fresca-jamaica","agua-bui-natural","cafe-te-berlioz","ensalada-de-fruta"].includes(c.id))
-      .map(c => ({ ...c, reason: "Muy pedido por nuestros clientes" }));
-    return new Response(JSON.stringify({ recommendations: fallback }), { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ recommendations: fallback(complementos, "comida") }),
+      { status: 200, headers: { ...CORS, "Content-Type": "application/json" } });
   }
 });
+
+// Fallback determinista sobre los mismos candidatos de Woo, por ventas
+function fallback(candidatos: Complemento[], eventType: string) {
+  const esDesayuno = String(eventType).toLowerCase().includes("desayuno");
+  const prefer = esDesayuno
+    ? [/café|te|té/i, /jugo/i, /fruta|yogurt/i]
+    : [/agua de jamaica|agua de temporada/i, /agua bui/i, /crudit|semillas/i];
+  const out: Complemento[] = [];
+  for (const rx of prefer) {
+    const hit = candidatos.find(c => rx.test(c.name) && !out.includes(c));
+    if (hit) out.push(hit);
+  }
+  for (const c of candidatos) {
+    if (out.length >= 3) break;
+    if (!out.includes(c)) out.push(c);
+  }
+  return out.slice(0, 3).map(c => ({ ...c, reason: "Muy pedido por nuestros clientes", tag: c.tags[0] }));
+}

@@ -221,14 +221,14 @@ const CatalogPage = () => {
                 </button>
               </div>
             ) : loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="rounded-[32px] border border-border bg-card animate-pulse overflow-hidden">
-                    <div className="aspect-square bg-muted" />
-                    <div className="p-6 space-y-4">
-                      <div className="h-5 bg-muted rounded-full w-3/4" />
-                      <div className="h-4 bg-muted rounded-full w-1/2" />
-                      <div className="h-12 bg-muted rounded-2xl w-full" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-border bg-card animate-pulse overflow-hidden">
+                    <div className="aspect-[4/3] bg-muted" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-muted rounded-full w-3/4" />
+                      <div className="h-3 bg-muted rounded-full w-1/2" />
+                      <div className="h-9 bg-muted rounded-xl w-full" />
                     </div>
                   </div>
                 ))}
@@ -249,9 +249,9 @@ const CatalogPage = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {paginatedList.map((product, i) => (
-                    <RevealOnScroll key={product.product_id} delay={(i % 3) * 100}>
+                    <RevealOnScroll key={product.product_id} delay={(i % 4) * 75}>
                       <ProductoCard product={product} />
                     </RevealOnScroll>
                   ))}

@@ -18,6 +18,7 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
   const defaultVariante = variantes.find((v) => v.es_base) ?? variantes[0];
   const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
   const [cantidad, setCantidad] = useState<string>("");
+  const [cantidades, setCantidades] = useState<Record<string, number>>({});
   const [added, setAdded] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
 
@@ -37,6 +38,7 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
     if (open) {
       setImgIdx(0);
       setCantidad("");
+      setCantidades({});
       setAdded(false);
     }
   }, [open, product.product_id]);
@@ -61,21 +63,48 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
   if (!open || !selected) return null;
 
   const { intro, items, nota } = desc;
+  const multi = variantes.length > 1;
 
   const qty = parseInt(cantidad || "0", 10) || 0;
-  const total = (selected.precio || 0) * qty;
+  const totalPiezas = multi
+    ? Object.values(cantidades).reduce((a, b) => a + (b || 0), 0)
+    : qty;
+  const totalPrecio = multi
+    ? variantes.reduce((sum, v) => sum + (cantidades[v.variante_id] || 0) * (v.precio || 0), 0)
+    : (selected.precio || 0) * qty;
+
+  const setVarQty = (id: string, n: number) =>
+    setCantidades((prev) => ({ ...prev, [id]: Math.max(0, n) }));
 
   const handleAdd = () => {
-    if (qty < 1) return;
-    addItem({
-      id: selected.variante_id,
-      name: selected.nombre_display || product.nombre,
-      price: selected.precio || 0,
-      quantity: qty,
-      image: gallery[0] || undefined,
-      category: product.categoria,
-      isPerPerson: true,
-    });
+    if (totalPiezas < 1) return;
+    if (multi) {
+      variantes.forEach((v) => {
+        const n = cantidades[v.variante_id] || 0;
+        if (n < 1) return;
+        addItem({
+          id: v.variante_id,
+          name: v.nombre_display || `${product.nombre} — ${v.nombre_variante ?? ""}`.trim(),
+          price: v.precio || 0,
+          quantity: n,
+          image: v.img || gallery[0] || undefined,
+          category: product.categoria,
+          isPerPerson: true,
+        });
+      });
+      setCantidades({});
+    } else {
+      addItem({
+        id: selected.variante_id,
+        name: selected.nombre_display || product.nombre,
+        price: selected.precio || 0,
+        quantity: qty,
+        image: gallery[0] || undefined,
+        category: product.categoria,
+        isPerPerson: true,
+      });
+      setCantidad("");
+    }
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   };
@@ -185,33 +214,62 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
               </div>
             )}
 
-            {variantes.length > 1 && (
+            {multi && (
               <div className="mb-5">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                  Elige tu opción
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+                  Elige cuántas de cada opción
                 </h3>
+                <p className="text-[11px] text-muted-foreground/80 mb-3">
+                  Puedes combinar: por ejemplo 3 de una y 2 de otra.
+                </p>
                 <div className="space-y-2">
                   {variantes.map((v) => {
-                    const active = v.variante_id === selectedId;
+                    const n = cantidades[v.variante_id] || 0;
                     return (
-                      <button
+                      <div
                         key={v.variante_id}
-                        type="button"
-                        onClick={() => setSelectedId(v.variante_id)}
                         className={cn(
-                          "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-all",
-                          active
-                            ? "border-primary bg-primary/5"
-                            : "border-border/60 bg-background hover:border-primary/40",
+                          "flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border transition-all",
+                          n > 0 ? "border-primary bg-primary/5" : "border-border/60 bg-background",
                         )}
                       >
-                        <span className="text-sm truncate">
-                          {v.nombre_variante || v.nombre_display || "Opción"}
-                        </span>
-                        <span className="text-xs font-bold text-primary whitespace-nowrap">
-                          ${v.precio.toLocaleString("es-MX")}
-                        </span>
-                      </button>
+                        <div className="min-w-0">
+                          <p className="text-sm truncate">
+                            {v.nombre_variante || v.nombre_display || "Opción"}
+                          </p>
+                          <p className="text-[11px] font-bold text-primary">
+                            ${v.precio.toLocaleString("es-MX")}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setVarQty(v.variante_id, n - 1)}
+                            className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+                            aria-label={`Restar ${v.nombre_variante || "opción"}`}
+                          >
+                            <Minus className="w-3.5 h-3.5" />
+                          </button>
+                          <input
+                            type="number"
+                            min={0}
+                            value={n === 0 ? "" : String(n)}
+                            placeholder="0"
+                            onChange={(e) =>
+                              setVarQty(v.variante_id, parseInt(e.target.value.replace(/[^0-9]/g, "") || "0", 10))
+                            }
+                            className="h-9 w-12 rounded-lg border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setVarQty(v.variante_id, n + 1)}
+                            className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+                            aria-label={`Sumar ${v.nombre_variante || "opción"}`}
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -220,36 +278,38 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
 
             {/* Cantidad + agregar */}
             <div className="mt-auto space-y-3 pt-4">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCantidad(String(Math.max(1, qty - 1)))}
-                  className="h-11 w-11 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
-                  aria-label="Restar pieza"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="Piezas"
-                  value={cantidad}
-                  onChange={(e) => setCantidad(e.target.value.replace(/[^0-9]/g, ""))}
-                  className="h-11 flex-1 min-w-0 rounded-xl border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-                <button
-                  type="button"
-                  onClick={() => setCantidad(String(qty + 1))}
-                  className="h-11 w-11 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
-                  aria-label="Sumar pieza"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
+              {!multi && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCantidad(String(Math.max(1, qty - 1)))}
+                    className="h-11 w-11 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+                    aria-label="Restar pieza"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="Piezas"
+                    value={cantidad}
+                    onChange={(e) => setCantidad(e.target.value.replace(/[^0-9]/g, ""))}
+                    className="h-11 flex-1 min-w-0 rounded-xl border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCantidad(String(qty + 1))}
+                    className="h-11 w-11 rounded-xl border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+                    aria-label="Sumar pieza"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleAdd}
-                disabled={qty < 1}
+                disabled={totalPiezas < 1}
                 className={cn(
                   "w-full h-12 rounded-xl font-body text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
                   added
@@ -261,8 +321,8 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
                   <>
                     <Check className="w-4 h-4" /> ¡En el carrito!
                   </>
-                ) : qty > 0 ? (
-                  `Agregar ${qty} — $${total.toLocaleString("es-MX")}`
+                ) : totalPiezas > 0 ? (
+                  `Agregar ${totalPiezas} — $${totalPrecio.toLocaleString("es-MX")}`
                 ) : (
                   "Elige cuántas piezas"
                 )}

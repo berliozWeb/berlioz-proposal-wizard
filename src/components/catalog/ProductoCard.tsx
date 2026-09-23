@@ -42,7 +42,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   };
 
   return (
-    <div className="group flex flex-row sm:flex-col bg-card rounded-2xl border border-border/60 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30">
+    <div className="group h-full flex flex-row sm:flex-col bg-card rounded-2xl border border-border/60 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30">
       {/* Imagen */}
       <button
         type="button"
@@ -77,7 +77,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           )}
           <h3
             onClick={() => setDetalleOpen(true)}
-            className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide leading-tight cursor-pointer hover:text-primary transition-colors line-clamp-2"
+            className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide leading-tight cursor-pointer hover:text-primary transition-colors line-clamp-2 sm:min-h-[2.2rem]"
           >
             {product.nombre}
           </h3>
@@ -87,9 +87,9 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           </p>
         </div>
 
-        {/* Selector compacto de variante */}
-        {hasMany && (
-          <div className="mt-2">
+        {/* Selector compacto de variante (siempre reserva la misma altura) */}
+        <div className="mt-2">
+          {hasMany ? (
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
@@ -101,8 +101,16 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
                 </option>
               ))}
             </select>
-          </div>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDetalleOpen(true)}
+              className="w-full h-8 px-2.5 rounded-lg border border-transparent bg-muted/40 text-[11px] font-medium text-muted-foreground flex items-center hover:text-primary transition-colors"
+            >
+              <span className="truncate">Ver detalles</span>
+            </button>
+          )}
+        </div>
 
         {/* Agregar / stepper */}
         <div className="mt-2 sm:mt-2.5">

@@ -42,6 +42,12 @@ export interface ProductoCotizador {
   desc_bullets: string | null;
   /** Descripción completa (WooCommerce), limpia de HTML. */
   desc_larga?: string | null;
+  /** Párrafo introductorio derivado de la descripción de WooCommerce. */
+  desc_intro?: string | null;
+  /** Detalles en bullets derivados de la descripción de WooCommerce. */
+  desc_items?: string[] | null;
+  /** Aclaración final (ej. cambios permitidos). */
+  desc_nota?: string | null;
   img_principal: string | null;
   img_fallback: string | null;
   galeria: string[];

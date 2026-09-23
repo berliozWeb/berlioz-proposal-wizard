@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProductoCotizador, Variante } from "@/hooks/useMenuCotizador";
+import { parseDescripcionWoo } from "@/lib/productDescription";
 
 export type CategoriaMenu =
   | "Working Lunch"
@@ -150,6 +151,7 @@ function categoriasDeRow(row: any): CategoriaMenu[] {
 function mapProducto(row: any): ProductoCotizador {
   const cats = categoriasDeRow(row);
   const descCorta = stripHtml(row.descripcion_corta) || stripHtml(row.descripcion) || null;
+  const parsed = parseDescripcionWoo(row.descripcion || row.descripcion_corta);
   const galeria = Array.isArray(row.imagenes_galeria) && row.imagenes_galeria.length > 0
     ? row.imagenes_galeria
     : row.imagen_url
@@ -166,6 +168,9 @@ function mapProducto(row: any): ProductoCotizador {
     desc_corta: descCorta,
     desc_bullets: null,
     desc_larga: stripHtml(row.descripcion) || descCorta,
+    desc_intro: parsed.intro ?? (parsed.items.length > 0 ? null : descCorta),
+    desc_items: parsed.items,
+    desc_nota: parsed.nota,
     img_principal: row.imagen_url ?? null,
     img_fallback: row.imagen_url ?? null,
     galeria,

@@ -38,6 +38,7 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
     if (open) {
       setImgIdx(0);
       setCantidad("");
+      setCantidades({});
       setAdded(false);
     }
   }, [open, product.product_id]);

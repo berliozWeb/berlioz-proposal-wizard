@@ -105,13 +105,13 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
         )}
 
         {/* Agregar / stepper */}
-        <div className="mt-2.5">
+        <div className="mt-2 sm:mt-2.5">
           {!picking ? (
             <button
               type="button"
               onClick={() => setPicking(true)}
               className={cn(
-                "w-full h-9 rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
+                "w-full h-8 sm:h-9 rounded-lg sm:rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
                 inCart
                   ? "bg-green-600 text-white hover:bg-green-700"
                   : "bg-primary text-primary-foreground hover:bg-primary/90"

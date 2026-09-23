@@ -101,8 +101,16 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
                 </option>
               ))}
             </select>
-          </div>
-        )}
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDetalleOpen(true)}
+              className="w-full h-8 px-2.5 rounded-lg border border-transparent bg-muted/40 text-[11px] font-medium text-muted-foreground flex items-center hover:text-primary transition-colors"
+            >
+              <span className="truncate">Ver detalles</span>
+            </button>
+          )}
+        </div>
 
         {/* Agregar / stepper */}
         <div className="mt-2 sm:mt-2.5">

@@ -165,6 +165,7 @@ function mapProducto(row: any): ProductoCotizador {
     desc_mini: descCorta ? descCorta.slice(0, 120) : null,
     desc_corta: descCorta,
     desc_bullets: null,
+    desc_larga: stripHtml(row.descripcion) || descCorta,
     img_principal: row.imagen_url ?? null,
     img_fallback: row.imagen_url ?? null,
     galeria,

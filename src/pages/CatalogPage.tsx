@@ -173,7 +173,7 @@ const CatalogPage = () => {
                   type="text"
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  placeholder="Busca bágels, ensaladas, postres..."
+                  placeholder="Busca boxes, snacks, bebidas..."
                   className="h-10 pl-9 pr-4 rounded-xl border border-border/60 bg-card/50 font-body text-sm w-full md:w-[360px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                 />
               </div>

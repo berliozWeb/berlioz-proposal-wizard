@@ -1,110 +1,73 @@
+import { supabase } from '@/integrations/supabase/client';
 import type { Producto, ProductoVariante } from '@/hooks/useProductos';
 
-const CATALOG_URL =
-  'https://rrfvdhegvgmejxmsdijn.supabase.co/functions/v1/get-catalog';
+/**
+ * Espejo local de WooCommerce (tabla `productos`, filas con `woo_source`).
+ * Regla absoluta: si no está publicado y activo en Woo, no existe aquí.
+ */
 
-interface RemoteProduct {
-  id: string;
-  woo_tipo?: string | null;
+interface WooVariacion {
+  id?: string | number;
+  woo_id?: number;
   sku?: string | null;
-  nombre: string;
-  descripcion_corta?: string | null;
-  descripcion_larga?: string | null;
-  precio_base?: number | null;
-  precio_max?: number | null;
-  precio_rebajado?: number | null;
-  categoria?: string | null;
+  opcion?: string | null;
+  nombre?: string | null;
+  precio?: number | null;
   imagen_url?: string | null;
-  imagenes_galeria?: string[] | null;
-  tags?: string[] | null;
-  visible_en_web?: boolean;
-  activo?: boolean;
-  destacado?: boolean;
-  orden_display?: number | null;
-  opciones?: string[] | null;
-  variaciones?: RemoteProduct[] | null;
-  requiere_variante?: boolean;
   en_stock?: boolean;
 }
 
-interface RemoteCatalogResponse {
-  productos: RemoteProduct[];
-  total?: number;
-  categorias?: string[];
+function mapVariaciones(raw: unknown): ProductoVariante[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const list = (raw as WooVariacion[])
+    .map((v) => ({
+      id: String(v.id ?? v.woo_id ?? ''),
+      sku: v.sku ?? null,
+      nombre: String(v.nombre ?? v.opcion ?? ''),
+      opcion: String(v.opcion ?? v.nombre ?? ''),
+      precio: typeof v.precio === 'number' ? v.precio : null,
+      imagen_url: v.imagen_url ?? null,
+      en_stock: v.en_stock !== false,
+    }))
+    .filter((v) => v.id && v.opcion);
+  return list.length > 0 ? list : null;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  coffee_break: 'Coffee Break',
-  desayuno: 'Desayuno',
-  working_lunch: 'Working Lunch',
-  bebidas: 'Bebidas',
-  snacks: 'Snacks',
-  surtidos: 'Surtidos',
-  tortas_piropo: 'Tortas Piropo',
-  piropo: 'Piropo',
-  vegano: 'Vegano / Vegetariano',
-  entrega_especial: 'Entrega Especial',
-};
-
-function normalizeCategoria(raw?: string | null): string | null {
-  if (!raw) return null;
-  const key = raw.trim().toLowerCase();
-  if (CATEGORY_LABELS[key]) return CATEGORY_LABELS[key];
-  // generic fallback: snake_case -> Title Case
-  return key
-    .replace(/_/g, ' ')
-    .split(' ')
-    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
-    .join(' ');
-}
-
-function mapRemoteToProducto(r: RemoteProduct, idx: number): Producto {
-  const isActive = (r.visible_en_web ?? true) && (r.activo ?? true);
-  const variaciones: ProductoVariante[] | null = Array.isArray(r.variaciones) && r.variaciones.length > 0
-    ? r.variaciones
-        .filter((v) => (v.activo ?? true))
-        .map((v) => {
-          // Display option: prefer first 'opciones' entry, fallback to text after " - " in name
-          const opcion = (Array.isArray(v.opciones) && v.opciones[0])
-            ? v.opciones[0]
-            : (v.nombre.includes(' - ') ? v.nombre.split(' - ').slice(1).join(' - ') : v.nombre);
-          return {
-            id: v.id,
-            sku: v.sku ?? null,
-            nombre: v.nombre,
-            opcion,
-            precio: v.precio_base ?? null,
-            imagen_url: v.imagen_url ?? null,
-            en_stock: v.en_stock ?? true,
-          };
-        })
-    : null;
+function mapRow(r: any, idx: number): Producto {
+  const variaciones = mapVariaciones(r.woo_variaciones);
+  const galeria = Array.isArray(r.imagenes_galeria) && r.imagenes_galeria.length > 0
+    ? r.imagenes_galeria
+    : r.imagen_url
+      ? [r.imagen_url]
+      : null;
   return {
-    id: r.id,
+    id: String(r.id),
     sku: r.sku ?? null,
-    nombre: r.nombre,
-    tipo: r.woo_tipo ?? 'simple',
-    categoria: normalizeCategoria(r.categoria),
-    precio: r.precio_base ?? null,
-    precio_min: r.precio_base ?? null,
-    precio_max: r.precio_max ?? null,
+    nombre: r.nombre ?? '',
+    tipo: r.tipo ?? 'simple',
+    categoria: r.categoria ?? null,
+    precio: r.precio ?? r.precio_min ?? null,
+    precio_min: r.precio_min ?? r.precio ?? null,
+    precio_max: r.precio_max ?? r.precio ?? null,
     precio_rebajado: r.precio_rebajado ?? null,
-    descripcion: r.descripcion_larga ?? null,
+    descripcion: r.descripcion ?? null,
     descripcion_corta: r.descripcion_corta ?? null,
     variante_nombre: null,
-    variantes: null,
+    variantes: r.variantes ?? null,
     imagen: null,
     imagen_url: r.imagen_url ?? null,
-    imagenes_galeria: Array.isArray(r.imagenes_galeria) ? r.imagenes_galeria : null,
-    parent_id: null,
-    activo: isActive,
+    imagenes_galeria: galeria,
+    parent_id: r.parent_id ?? null,
+    activo: r.activo !== false,
     destacado: r.destacado ?? false,
-    orden: r.orden_display ?? idx,
-    created_at: null,
-    popularity_rank: null,
-    dietary_tags: r.tags ?? [],
+    orden: typeof r.menu_order === 'number' ? r.menu_order : idx,
+    created_at: r.created_at ?? null,
+    popularity_rank: r.popularity_rank ?? null,
+    dietary_tags: Array.isArray(r.woo_tags) && r.woo_tags.length > 0
+      ? r.woo_tags
+      : (r.dietary_tags ?? []),
     variaciones,
-    requiere_variante: r.requiere_variante ?? (r.woo_tipo === 'variable' && !!variaciones?.length),
+    requiere_variante: r.tipo === 'variable' && !!variaciones?.length,
   };
 }
 
@@ -113,18 +76,17 @@ let cache: Promise<Producto[]> | null = null;
 export function fetchExternalCatalog(): Promise<Producto[]> {
   if (!cache) {
     cache = (async () => {
-      const res = await fetch(CATALOG_URL, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) {
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*')
+        .eq('woo_source', true)
+        .eq('activo', true)
+        .order('total_sales', { ascending: false });
+      if (error) {
         cache = null;
-        throw new Error(`Catálogo externo respondió ${res.status}`);
+        throw new Error(`No se pudo cargar el catálogo: ${error.message}`);
       }
-      const json = (await res.json()) as RemoteCatalogResponse;
-      const list = Array.isArray(json?.productos) ? json.productos : [];
-      return list
-        .filter((p) => p.visible_en_web !== false)
-        .map(mapRemoteToProducto);
+      return (data ?? []).map(mapRow);
     })();
   }
   return cache;

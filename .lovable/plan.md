@@ -82,6 +82,27 @@ Lo que cambia es de dónde salen los productos:
   (bebidas primero, aguas frescas en temporada de calor, compatibilidad con
   restricciones).
 
+### Regla absoluta: Woo manda
+
+Si un producto no está **publicado y activo** en Woo, no existe: ni en el
+backoffice ni en el cotizador. De ahí se derivan estos casos ya resueltos:
+
+- **Breakfast BLT y BLT Box** (hoy en borrador): fuera del cotizador. Cuando Ana
+  los publique, el sync los trae solos y vuelven a estar disponibles sin que
+  nadie toque código.
+- **Box Keto** → se mapea a **PINK BOX KETO - SIN GLUTEN ($380)**, publicado y activo.
+- **Precios**: siempre los de Woo, sin excepción. Breakfast in Roma **$300**,
+  Aqua Box **$330**. Los precios escritos en el cotizador se eliminan.
+- **Agua Fresca genérica**: se elimina y se reemplaza por las aguas reales
+  publicadas en Woo, en rotación. Las de temporada (hoy Tamarindo y Sandía)
+  tienen prioridad, leyendo su estado desde Woo en cada sync — nada hardcodeado;
+  si Ana despublica una, deja de ofrecerse automáticamente.
+- **Sin match publicado y activo → excluido**, y queda anotado en un log de
+  productos descartados (nombre buscado, motivo, fecha) que puedes revisar en el
+  backoffice para pedir que se publiquen o se corrijan.
+
+
+
 ## Fase 4 — Validación antes de dar por bueno
 
 - Comparar producto por producto y categoría por categoría contra berlioz.mx.

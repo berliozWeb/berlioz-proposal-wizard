@@ -61,21 +61,48 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
   if (!open || !selected) return null;
 
   const { intro, items, nota } = desc;
+  const multi = variantes.length > 1;
 
   const qty = parseInt(cantidad || "0", 10) || 0;
-  const total = (selected.precio || 0) * qty;
+  const totalPiezas = multi
+    ? Object.values(cantidades).reduce((a, b) => a + (b || 0), 0)
+    : qty;
+  const totalPrecio = multi
+    ? variantes.reduce((sum, v) => sum + (cantidades[v.variante_id] || 0) * (v.precio || 0), 0)
+    : (selected.precio || 0) * qty;
+
+  const setVarQty = (id: string, n: number) =>
+    setCantidades((prev) => ({ ...prev, [id]: Math.max(0, n) }));
 
   const handleAdd = () => {
-    if (qty < 1) return;
-    addItem({
-      id: selected.variante_id,
-      name: selected.nombre_display || product.nombre,
-      price: selected.precio || 0,
-      quantity: qty,
-      image: gallery[0] || undefined,
-      category: product.categoria,
-      isPerPerson: true,
-    });
+    if (totalPiezas < 1) return;
+    if (multi) {
+      variantes.forEach((v) => {
+        const n = cantidades[v.variante_id] || 0;
+        if (n < 1) return;
+        addItem({
+          id: v.variante_id,
+          name: v.nombre_display || `${product.nombre} — ${v.nombre_variante ?? ""}`.trim(),
+          price: v.precio || 0,
+          quantity: n,
+          image: v.img || gallery[0] || undefined,
+          category: product.categoria,
+          isPerPerson: true,
+        });
+      });
+      setCantidades({});
+    } else {
+      addItem({
+        id: selected.variante_id,
+        name: selected.nombre_display || product.nombre,
+        price: selected.precio || 0,
+        quantity: qty,
+        image: gallery[0] || undefined,
+        category: product.categoria,
+        isPerPerson: true,
+      });
+      setCantidad("");
+    }
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   };

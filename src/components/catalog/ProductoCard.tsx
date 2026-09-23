@@ -20,18 +20,22 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const img = selected.img || product.img_principal || product.img_fallback || "";
   const fallback = product.img_fallback || product.img_principal || "";
   const inCart = isInCart(selected.variante_id);
-  const totalPrecio = (selected.precio || 0) * Math.max(1, invitados);
+  const qty = parseInt(cantidad || "0", 10) || 0;
+  const totalPrecio = (selected.precio || 0) * qty;
 
   const handleAdd = () => {
+    if (qty < 1) return;
     addItem({
       id: selected.variante_id,
       name: selected.nombre_display || product.nombre,
       price: selected.precio || 0,
-      quantity: Math.max(1, invitados),
+      quantity: qty,
       image: img || undefined,
       category: product.categoria,
       isPerPerson: true,
     });
+    setPicking(false);
+    setCantidad("");
   };
 
   return (

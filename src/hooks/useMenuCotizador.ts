@@ -40,6 +40,8 @@ export interface ProductoCotizador {
   desc_mini: string | null;
   desc_corta: string | null;
   desc_bullets: string | null;
+  /** Descripción completa (WooCommerce), limpia de HTML. */
+  desc_larga?: string | null;
   img_principal: string | null;
   img_fallback: string | null;
   galeria: string[];

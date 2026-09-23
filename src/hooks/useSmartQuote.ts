@@ -115,7 +115,7 @@ export function useSmartQuote() {
         console.warn('Smart quote failed, using fallback:', fnError || data?.error);
 
         // Fallback to deterministic
-        const fallbackPkgs = buildFallbackPackages(request.eventType, request.peopleCount);
+        const fallbackPkgs = await buildFallbackPackages(request.eventType, request.peopleCount);
         const fallbackResponse: SmartQuoteResponse = {
           requestId: null,
           proposalId: null,
@@ -135,7 +135,7 @@ export function useSmartQuote() {
       console.error('Smart quote error:', err);
 
       // Fallback
-      const fallbackPkgs = buildFallbackPackages(request.eventType, request.peopleCount);
+      const fallbackPkgs = await buildFallbackPackages(request.eventType, request.peopleCount);
       const fallbackResponse: SmartQuoteResponse = {
         requestId: null,
         proposalId: null,

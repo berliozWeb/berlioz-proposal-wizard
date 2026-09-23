@@ -121,6 +121,13 @@
     border: 1.5px solid hsl(var(--primary));
     box-shadow: none;
   }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes bob {

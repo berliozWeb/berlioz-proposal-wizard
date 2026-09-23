@@ -1,14 +1,44 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { SmartQuoteRequest, SmartQuoteResponse, ProposalPackage } from '@/domain/entities/SmartQuote';
-import {
-  CATALOG, getDefaultItems, findProduct,
-  BASE_SHIPPING_COST, IVA_RATE, type PackageTier,
-} from '@/domain/entities/BerliozCatalog';
+import { BASE_SHIPPING_COST, IVA_RATE, type PackageTier } from '@/domain/entities/BerliozCatalog';
 
-// ═══ FALLBACK — builds packages from hardcoded catalog ═══
-function buildFallbackPackages(eventType: string, people: number): ProposalPackage[] {
-  const defaults = getDefaultItems(eventType);
+// ═══ FALLBACK — se arma con el espejo de WooCommerce, nunca con listas fijas ═══
+// Regla: si un producto no está publicado y activo en Woo, no existe aquí.
+async function buildFallbackPackages(eventType: string, people: number): Promise<ProposalPackage[]> {
+  const ev = eventType.toLowerCase();
+  const categoria = ev.includes('coffee') ? 'Coffee Break'
+    : ev.includes('desayuno') ? 'Desayuno'
+    : 'Working Lunch';
+
+  const { data } = await supabase
+    .from('productos')
+    .select('id, nombre, precio, precio_min, imagen_url, categoria, woo_categorias, total_sales')
+    .eq('activo', true)
+    .eq('woo_source', true)
+    .contains('woo_categorias', [categoria])
+    .order('total_sales', { ascending: false })
+    .limit(80);
+
+  const candidatos = (data ?? [])
+    .map(p => ({
+      id: String(p.id),
+      name: p.nombre as string,
+      price: Number(p.precio ?? p.precio_min ?? 0),
+      img: (p.imagen_url as string | null) ?? null,
+      categoria: (p.categoria as string | null) ?? categoria,
+    }))
+    .filter(p => p.price > 0 && !/costo por cambio/i.test(p.name))
+    .sort((a, b) => a.price - b.price);
+
+  if (candidatos.length === 0) return [];
+
+  const pick: Record<PackageTier, typeof candidatos[number]> = {
+    esencial: candidatos[0],
+    equilibrado: candidatos[Math.floor(candidatos.length / 2)],
+    experiencia: candidatos[candidatos.length - 1],
+  };
+
   const tiers: PackageTier[] = ['esencial', 'equilibrado', 'experiencia'];
   const titles: Record<PackageTier, { title: string; tagline: string }> = {
     esencial: { title: 'Esencial', tagline: 'Lo necesario, bien ejecutado' },
@@ -17,27 +47,23 @@ function buildFallbackPackages(eventType: string, people: number): ProposalPacka
   };
 
   return tiers.map(tier => {
-    const items = defaults[tier].map(d => {
-      const product = findProduct(d.productName);
-      if (!product) return null;
-      const qty = d.qtyMultiplier === 'N' ? people : d.qtyMultiplier;
-      return {
-        productId: product.id,
-        parentProductId: null,
-        productName: product.name,
-        quantity: qty,
-        unitPrice: product.price,
-        computedPrice: product.price * qty,
-        score: 50,
-        recommendationReason: 'Selección del catálogo Berlioz',
-        imageUrl: null,
-        imageSource: 'generated_prompt' as const,
-        imagePrompt: null,
-        sourceType: 'deterministic-fallback' as const,
-        swapGroup: product.sidebarCategory,
-        categoria: product.category,
-      };
-    }).filter(Boolean) as ProposalPackage['items'];
+    const product = pick[tier];
+    const items = [{
+      productId: product.id,
+      parentProductId: null,
+      productName: product.name,
+      quantity: people,
+      unitPrice: product.price,
+      computedPrice: product.price * people,
+      score: 50,
+      recommendationReason: 'Selección del catálogo Berlioz',
+      imageUrl: product.img,
+      imageSource: 'catalog' as const,
+      imagePrompt: null,
+      sourceType: 'deterministic-fallback' as const,
+      swapGroup: product.categoria,
+      categoria: product.categoria,
+    }] as ProposalPackage['items'];
 
     const subtotal = items.reduce((s, i) => s + i.computedPrice, 0);
     const shipping = BASE_SHIPPING_COST;

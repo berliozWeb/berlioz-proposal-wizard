@@ -87,9 +87,9 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           </p>
         </div>
 
-        {/* Selector compacto de variante */}
-        {hasMany && (
-          <div className="mt-2">
+        {/* Selector compacto de variante (siempre reserva la misma altura) */}
+        <div className="mt-2">
+          {hasMany ? (
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}

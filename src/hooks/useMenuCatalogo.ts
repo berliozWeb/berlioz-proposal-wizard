@@ -69,7 +69,7 @@ function parseVariantes(product: any): Variante[] {
     variante_id: String(product.id),
     nombre_variante: product.nombre,
     nombre_display: product.nombre,
-    precio: product.precio ?? 0,
+    precio: product.precio ?? product.precio_min ?? 0,
     notas_precio: null,
     es_base: true,
     es_comida: "No",
@@ -82,35 +82,32 @@ function parseVariantes(product: any): Variante[] {
     wc_id: product.id,
   };
 
-  const raw = product.variantes;
-  if (typeof raw !== "string" || !raw.trim()) {
-    return [base];
+  // Variantes reales de Woo (`/products/{id}/variations`), sincronizadas por woo-catalog-sync.
+  const wooVars = Array.isArray(product.woo_variaciones) ? product.woo_variaciones : [];
+  if (wooVars.length > 0) {
+    return wooVars
+      .filter((v: any) => v?.en_stock !== false)
+      .map((v: any, idx: number) => ({
+        variante_id: String(v.id ?? `${product.id}-${idx}`),
+        nombre_variante: String(v.opcion ?? v.nombre ?? ""),
+        nombre_display: `${product.nombre} — ${v.opcion ?? v.nombre ?? ""}`,
+        precio: typeof v.precio === "number" ? v.precio : (product.precio_min ?? product.precio ?? 0),
+        notas_precio: null,
+        es_base: idx === 0,
+        es_comida: "No",
+        vegetariano: "No",
+        vegano: "No",
+        keto: "No",
+        sin_gluten: "No",
+        sin_lactosa: "No",
+        img: v.imagen_url ?? product.imagen_url ?? null,
+        wc_id: v.woo_id ?? v.id ?? product.id,
+      }));
   }
 
-  const names = raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  if (names.length === 0) return [base];
-
-  return names.map((name, idx) => ({
-    variante_id: `${product.id}-${idx}`,
-    nombre_variante: name,
-    nombre_display: `${product.nombre} — ${name}`,
-    precio: product.precio ?? 0,
-    notas_precio: null,
-    es_base: idx === 0,
-    es_comida: "No",
-    vegetariano: "No",
-    vegano: "No",
-    keto: "No",
-    sin_gluten: "No",
-    sin_lactosa: "No",
-    img: product.imagen_url ?? null,
-    wc_id: product.id,
-  }));
+  return [base];
 }
+
 
 function stripHtml(html: string | null | undefined): string | null {
   if (!html) return null;

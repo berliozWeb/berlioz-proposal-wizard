@@ -69,11 +69,14 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
             {product.categoria}
           </span>
         )}
-      </div>
+      </button>
 
       {/* Content */}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-sm font-semibold text-foreground leading-tight mb-1 uppercase tracking-wide">
+        <h3
+          onClick={() => setDetalleOpen(true)}
+          className="text-sm font-semibold text-foreground leading-tight mb-1 uppercase tracking-wide cursor-pointer hover:text-primary transition-colors"
+        >
           {product.nombre}
         </h3>
         {product.desc_mini && (

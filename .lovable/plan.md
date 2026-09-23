@@ -1,142 +1,41 @@
-# WooCommerce como única fuente de verdad de productos
+# Checkout: traspaso del carrito a berlioz.mx (WooCommerce)
 
-## Situación actual (verificada hoy)
+## Regla
+No se construye pago ni calendario propio. La nueva página sirve el catálogo y el carrito; el cobro, el calendario de cocina y los correos siguen viviendo en berlioz.mx.
 
-Hay **tres** fuentes de producto vivas al mismo tiempo:
+## Cómo se hace el traspaso
 
-| Flujo | De dónde lee hoy |
-|---|---|
-| `/menu` (catálogo) | tabla `productos` filtrando solo lo que vino de Woo (110 productos activos) |
-| Producto, carrito, checkout, cotizador (panel de productos, cambios, upsell) | un **endpoint externo del backoffice viejo** (`get-catalog` de otro proyecto), no Woo |
-| Cotizador (armado de los 3 paquetes) | **listas fijas escritas en código** dentro de `quote-orchestrator`: nombres, precios, imágenes y descripciones a mano (Desayuno, Comida, bebidas y snacks) |
+La opción robusta es **crear el pedido en WooCommerce antes de redirigir**, no arrastrar el carrito por la URL.
 
-Además la tabla `productos` mezcla 176 filas del menú viejo con 111 de Woo, y las
-categorías están duplicadas (`Comida`/`Working Lunch`, `Coffee-break`/`Coffee Break`,
-`Tortas-piropo`, etc.) porque el sync guarda el *slug* de Woo en vez del nombre.
+1. El cliente arma su carrito en la página nueva y toca "Continuar al pago".
+2. Una función de servidor crea un pedido real en berlioz.mx con estado `pending` (pendiente de pago), con:
+   - cada renglón con su identificador de producto y de variante (jícama vs papitas, sandía vs tamarindo) y su cantidad,
+   - precios calculados por WooCommerce, no por nosotros (así nunca hay diferencia de precio),
+   - datos del cliente si ya inició sesión (nombre, correo, teléfono, dirección),
+   - fecha y horario de entrega y las notas del pedido como campos del pedido,
+   - el origen marcado como `web-nueva` para poder medirlo.
+3. WooCommerce devuelve el número de pedido y su llave de pago. La página redirige a la pantalla de pago de ese pedido en berlioz.mx, con el pedido ya armado; el cliente solo confirma datos y paga con los métodos que ya tiene configurados.
+4. Al volver de la pasarela, WooCommerce hace lo de siempre: confirma, dispara el calendario de cocina y los correos.
+5. Cuando el pago se confirma, el espejo de pedidos que ya existe trae el pedido a la nueva página, así el historial del cliente y el panel siguen completos.
+6. Si la creación del pedido falla, el cliente ve un aviso claro y se le ofrece un respaldo: un enlace a berlioz.mx con los productos precargados en el carrito.
 
-En Woo hoy hay 7 categorías reales, exactamente las que quieres ver:
-Coffee Break (38), Working Lunch (31), Desayuno (21), Bebidas (16),
-Vegano / Vegetariano (14), Tortas Piropo (7), Entrega Especial (5).
+## Qué se toca
 
-## Objetivo
+- Nueva función de servidor `woo-create-order`: valida el carrito recibido, resuelve cada renglón contra la copia sincronizada de la tienda (solo productos publicados y activos), crea el pedido vía la conexión de WooCommerce y devuelve la URL de pago.
+- `CheckoutPage.tsx` / `CartPage.tsx`: el botón de confirmar llama a esa función, muestra estado de carga y redirige. Se quitan del flujo los pasos de pago y de confirmación propios (quedan sin usar, no se borran todavía).
+- El carrito local se limpia solo después de una redirección exitosa.
+- El pedido lleva la fecha y el horario que el cliente eligió, para que la cocina no dependa de que los reescriba en WooCommerce.
 
-1. Un solo espejo de Woo alimentando **todo**.
-2. "Realizar pedido" = lo mismo que ve un cliente hoy en berlioz.mx.
-3. El cotizador conserva **todas** sus reglas y la IA, pero trabajando con productos de Woo.
+## Detalles técnicos
 
----
+- Creación: `POST /orders` de la API v3 de WooCommerce a través del gateway de conectores, desde una función de borde (las credenciales nunca salen al navegador).
+- Renglones: `line_items: [{ product_id, variation_id?, quantity }]` sin `price`, para que Woo aplique su propio precio; `meta_data` para fecha/horario/notas; `set_paid: false`, `status: "pending"`.
+- Redirección: `https://berlioz.mx/checkout/order-pay/{order_id}/?pay_for_order=true&key={order_key}` con `order_key` de la respuesta.
+- Validación del carrito con Zod antes de llamar a Woo; se rechaza cualquier renglón cuyo `woo_id` no exista activo en la tabla `productos`.
+- Respaldo: `https://berlioz.mx/?add-to-cart=<id>&quantity=<n>` (uno por renglón) o carrito precargado con varios ids.
+- Si el cliente tiene cuenta con el mismo correo en Woo, se asocia el pedido a ese cliente (`customer_id`) buscándolo por correo.
 
-## Fase 1 — Espejo completo y fiel de Woo
+## Riesgos
 
-- Sincronizar la **categoría por nombre** de Woo (no el slug) y guardar todas las
-  categorías de cada producto, no solo la primera. Adiós a los duplicados.
-- Sincronizar las **variantes** (hoy no se traen): los 42 productos variables
-  quedan con sus opciones y precios reales.
-- Traer también: enlace del producto, galería completa, etiquetas de Woo, estado
-  de inventario, orden del menú y los "upsell" que ya tienes configurados en Woo.
-- Respetar las reglas de visibilidad que ya definimos (oculto del catálogo,
-  restringido por membresía, precio $0 → inactivo).
-- Marcar como inactivas las 176 filas del menú viejo, para que no se cuelen en
-  ningún flujo. No se borran: quedan como respaldo histórico.
-- Apagar el endpoint del backoffice viejo: producto, carrito, checkout y
-  cotizador pasan a leer el espejo de Woo.
-
-## Fase 2 — "Realizar pedido" idéntico a berlioz.mx
-
-- Las pestañas del menú pasan a ser las 7 categorías reales de Woo, en su orden,
-  más Favoritos (los más vendidos según Woo). Si mañana creas una categoría en
-  Woo, aparece sola.
-- Cada producto muestra el precio, la foto, la descripción y las variantes de Woo.
-- Los productos con variante piden elegirla antes de agregar al carrito, con el
-  precio de esa variante.
-- Se mantienen buscador, "Ordenar por", paginación y el diseño de las tarjetas.
-
-## Fase 3 — Cotizador: mismas reglas, productos de Woo
-
-Se conserva **tal cual**: los 3 niveles (Esencial / Equilibrado / Experiencia
-Completa), el cálculo de presupuesto por persona con banda de ±15%, las mezclas
-50/50 y 33/33/33 según tamaño del grupo, la rotación para que dos cotizaciones no
-salgan iguales, la jerarquía de restricciones (vegano cubre vegetariano, keto
-implica sin gluten), bebidas y complementos por nivel, envío, IVA 16%, cortes de
-horario y mínimos, el copy con IA, el upsell y los PDF.
-
-Lo que cambia es de dónde salen los productos:
-
-- Las listas fijas de código se reemplazan por una consulta al espejo de Woo:
-  desayunos = categoría Desayuno ordenada por precio, comidas = Working Lunch,
-  bebidas y complementos = Bebidas y Coffee Break. Precios, fotos y descripciones
-  siempre los de Woo.
-- Para las restricciones alimentarias (vegano, vegetariano, keto, sin gluten, sin
-  lactosa) creo una **tabla de reglas editable** que asigna el producto de Woo que
-  cumple cada restricción, con el criterio que ya está definido hoy. Es necesaria
-  porque en Woo solo 1 de cada 3 productos trae etiquetas, así que no se puede
-  adivinar. Queda documentada y se puede ajustar sin tocar código.
-- Si Woo se queda sin un producto para un rol (por ejemplo, desapareció el box
-  vegano), el cotizador elige el más cercano en precio dentro de la misma
-  categoría y lo registra; nunca inventa un producto que no existe.
-- El panel de productos, el cambio de producto dentro de un paquete y el upsell
-  también leen el espejo, así que el cliente solo puede agregar cosas que
-  realmente se venden.
-- El upsell con IA deja de usar su lista fija de 15 complementos: los candidatos
-  se sacan de Woo por categoría y ventas, con las mismas prioridades
-  (bebidas primero, aguas frescas en temporada de calor, compatibilidad con
-  restricciones).
-
-### Regla absoluta: Woo manda
-
-Si un producto no está **publicado y activo** en Woo, no existe: ni en el
-backoffice ni en el cotizador. De ahí se derivan estos casos ya resueltos:
-
-- **Breakfast BLT y BLT Box** (hoy en borrador): fuera del cotizador. Cuando Ana
-  los publique, el sync los trae solos y vuelven a estar disponibles sin que
-  nadie toque código.
-- **Box Keto** → se mapea a **PINK BOX KETO - SIN GLUTEN ($380)**, publicado y activo.
-- **Precios**: siempre los de Woo, sin excepción. Breakfast in Roma **$300**,
-  Aqua Box **$330**. Los precios escritos en el cotizador se eliminan.
-- **Agua Fresca genérica**: se elimina y se reemplaza por las aguas reales
-  publicadas en Woo, en rotación. Las de temporada (hoy Tamarindo y Sandía)
-  tienen prioridad, leyendo su estado desde Woo en cada sync — nada hardcodeado;
-  si Ana despublica una, deja de ofrecerse automáticamente.
-- **Sin match publicado y activo → excluido**, y queda anotado en un log de
-  productos descartados (nombre buscado, motivo, fecha) que puedes revisar en el
-  backoffice para pedir que se publiquen o se corrijan.
-
-
-
-## Fase 4 — Validación antes de dar por bueno
-
-- Comparar producto por producto y categoría por categoría contra berlioz.mx.
-- Generar cotizaciones de prueba cubriendo: desayuno / comida / coffee break,
-  grupos de 5, 20 y 60 personas, con y sin restricciones, y revisar que los 3
-  niveles, precios, envío, IVA y el PDF cuadren.
-- Probar el flujo completo de pedido: menú → producto con variante → carrito →
-  checkout.
-
----
-
-## Riesgos y decisiones que necesito de ti
-
-1. **Cualquier producto sin match publicado en Woo queda fuera** (regla ya cerrada,
-   no hay decisión pendiente). Queda registrado en el log para tu revisión.
-
-2. **Cotizaciones viejas.** Las guardadas siguen apuntando a productos antiguos;
-   se conservan como están, sin recalcular.
-3. **Woo como dependencia.** Si la tienda está caída, el sync no corre pero el
-   sitio sigue mostrando la última copia buena. Nada de lecturas en vivo contra
-   Woo en el navegador del cliente.
-4. **Orden de entrega.** Propongo ejecutar Fase 1 y 2 primero, validar el menú
-   contigo, y solo entonces tocar el cotizador. Así lo crítico (las reglas) se
-   mueve con el catálogo ya verificado.
-
-## Nota técnica
-
-Sync (`woo-catalog-sync`): categoría por nombre + `woo_categorias text[]`,
-variantes vía `/products/{id}/variations`, nuevas columnas (`permalink`,
-`woo_tags`, `en_stock`, `menu_order`, `upsell_ids`, `imagenes_galeria`).
-`quote-orchestrator`: las constantes `DESAYUNO`, `COMIDA`, `*_SINR`, `BEV_*`,
-`ADDON_*` e `IMG` se sustituyen por un resolver que carga el catálogo desde
-`productos` (Woo) y una tabla `cotizador_roles_producto` (rol/restricción →
-`woo_id`); la lógica de selección, scoring, rotación y precios no se toca.
-Frontend: `externalCatalog.ts` deja de apuntar al proyecto externo y
-`useProductos`, `useCatalogoCotizador`, `useMenuCatalogo`, `useSmartQuote`
-(fallback) y `BerliozCatalog.ts` convergen en el espejo local.
+- Un pedido `pending` que nunca se paga queda en WooCommerce; Woo ya los cancela automáticamente pasado su plazo, se revisa que ese ajuste esté activo.
+- Los cupones y el envío los recalcula WooCommerce en su checkout; el total que muestre la nueva página se marca como estimado para evitar confusión.

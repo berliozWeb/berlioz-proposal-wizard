@@ -58,7 +58,7 @@ async function buildFallbackPackages(eventType: string, people: number): Promise
       score: 50,
       recommendationReason: 'Selección del catálogo Berlioz',
       imageUrl: product.img,
-      imageSource: 'catalog' as const,
+      imageSource: 'product_image' as const,
       imagePrompt: null,
       sourceType: 'deterministic-fallback' as const,
       swapGroup: product.categoria,

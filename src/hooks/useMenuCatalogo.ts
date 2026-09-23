@@ -150,6 +150,7 @@ function categoriasDeRow(row: any): CategoriaMenu[] {
 function mapProducto(row: any): ProductoCotizador {
   const cats = categoriasDeRow(row);
   const descCorta = stripHtml(row.descripcion_corta) || stripHtml(row.descripcion) || null;
+  const parsed = parseDescripcionWoo(row.descripcion || row.descripcion_corta);
   const galeria = Array.isArray(row.imagenes_galeria) && row.imagenes_galeria.length > 0
     ? row.imagenes_galeria
     : row.imagen_url

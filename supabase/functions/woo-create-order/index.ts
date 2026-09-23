@@ -40,12 +40,30 @@ const BodySchema = z.object({
   notes: z.string().max(600).optional().default(""),
 });
 
+const CONSUMER_KEY = Deno.env.get("WOOCOMMERCE_CONSUMER_KEY");
+const CONSUMER_SECRET = Deno.env.get("WOOCOMMERCE_CONSUMER_SECRET");
+
+/**
+ * Crear pedidos requiere permisos de escritura. Se usan las llaves
+ * lectura/escritura de la tienda cuando existen; si no, se cae al gateway
+ * (solo lectura) para las consultas.
+ */
 async function woo(path: string, init?: RequestInit) {
-  const res = await fetch(`${GATEWAY_URL}${path}`, {
+  const direct = Boolean(CONSUMER_KEY && CONSUMER_SECRET);
+  const url = direct
+    ? `${STORE_URL}/wp-json/wc/v3${path}`
+    : `${GATEWAY_URL}${path}`;
+  const auth = direct
+    ? { Authorization: `Basic ${btoa(`${CONSUMER_KEY}:${CONSUMER_SECRET}`)}` }
+    : {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": WOOCOMMERCE_API_KEY!,
+      };
+
+  const res = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": WOOCOMMERCE_API_KEY!,
+      ...auth,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
@@ -68,7 +86,8 @@ Deno.serve(async (req) => {
     });
 
   try {
-    if (!LOVABLE_API_KEY || !WOOCOMMERCE_API_KEY) {
+    const puedeEscribir = (CONSUMER_KEY && CONSUMER_SECRET) || (LOVABLE_API_KEY && WOOCOMMERCE_API_KEY);
+    if (!puedeEscribir) {
       return json({ error: "La conexión con la tienda no está configurada." }, 500);
     }
 
@@ -219,7 +238,12 @@ Deno.serve(async (req) => {
       throw new Error("La tienda no devolvió el pedido creado.");
     }
 
-    const payUrl = `${STORE_URL}/checkout/order-pay/${order.id}/?pay_for_order=true&key=${order.order_key}`;
+    // WooCommerce devuelve la liga de pago con el slug real del checkout de la
+    // tienda (puede estar traducido), así que se prefiere sobre una construida.
+    const payUrl: string =
+      typeof order.payment_url === "string" && order.payment_url.length > 0
+        ? order.payment_url
+        : `${STORE_URL}/checkout/order-pay/${order.id}/?pay_for_order=true&key=${order.order_key}`;
 
     return json({
       order_id: order.id,

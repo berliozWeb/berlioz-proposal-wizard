@@ -36,3 +36,11 @@
 ## Deuda técnica pendiente
 - [ ] Pantalla antigua `/propuesta` (no enlazada en el sitio) todavía usa el menú fijo: retirarla o migrarla a Woo
 - [ ] Publicar BLT y BLT Box en Woo (Ana) → entran solos al sync
+
+## Fase 5 — Checkout en berlioz.mx (WooCommerce) ✅
+- [x] Edge function `woo-create-order`: valida el carrito contra la copia de Woo y crea el pedido (status pending, precios de Woo)
+- [x] Llaves lectura/escritura de Woo (`WOOCOMMERCE_CONSUMER_KEY` / `_SECRET`) usadas para crear pedidos
+- [x] Liga de pago tomada de `payment_url` de Woo (`/finalizar-compra/order-pay/...`)
+- [x] CheckoutPage: "CONTINUAR AL PAGO", total marcado como estimado, sin selector de método de pago
+- [x] Pruebas: producto simple, variante y producto inexistente (rechazo 409)
+- [ ] Cancelar en WordPress los pedidos de prueba 32425, 32426 y 32427 (PRUEBA - NO SURTIR)

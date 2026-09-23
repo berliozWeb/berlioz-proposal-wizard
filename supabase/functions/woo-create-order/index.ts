@@ -40,12 +40,30 @@ const BodySchema = z.object({
   notes: z.string().max(600).optional().default(""),
 });
 
+const CONSUMER_KEY = Deno.env.get("WOOCOMMERCE_CONSUMER_KEY");
+const CONSUMER_SECRET = Deno.env.get("WOOCOMMERCE_CONSUMER_SECRET");
+
+/**
+ * Crear pedidos requiere permisos de escritura. Se usan las llaves
+ * lectura/escritura de la tienda cuando existen; si no, se cae al gateway
+ * (solo lectura) para las consultas.
+ */
 async function woo(path: string, init?: RequestInit) {
-  const res = await fetch(`${GATEWAY_URL}${path}`, {
+  const direct = Boolean(CONSUMER_KEY && CONSUMER_SECRET);
+  const url = direct
+    ? `${STORE_URL}/wp-json/wc/v3${path}`
+    : `${GATEWAY_URL}${path}`;
+  const auth = direct
+    ? { Authorization: `Basic ${btoa(`${CONSUMER_KEY}:${CONSUMER_SECRET}`)}` }
+    : {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": WOOCOMMERCE_API_KEY!,
+      };
+
+  const res = await fetch(url, {
     ...init,
     headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "X-Connection-Api-Key": WOOCOMMERCE_API_KEY!,
+      ...auth,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },

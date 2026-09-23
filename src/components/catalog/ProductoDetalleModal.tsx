@@ -18,6 +18,7 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
   const defaultVariante = variantes.find((v) => v.es_base) ?? variantes[0];
   const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
   const [cantidad, setCantidad] = useState<string>("");
+  const [cantidades, setCantidades] = useState<Record<string, number>>({});
   const [added, setAdded] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
 

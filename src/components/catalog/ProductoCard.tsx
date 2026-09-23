@@ -9,7 +9,8 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const hasMany = variantes.length > 1;
   const defaultVariante = variantes.find((v) => v.es_base) ?? variantes[0];
   const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
-  const [invitados, setInvitados] = useState<number>(10);
+  const [picking, setPicking] = useState(false);
+  const [cantidad, setCantidad] = useState<string>("");
 
   const selected: Variante | undefined =
     variantes.find((v) => v.variante_id === selectedId) ?? defaultVariante;
@@ -19,18 +20,22 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const img = selected.img || product.img_principal || product.img_fallback || "";
   const fallback = product.img_fallback || product.img_principal || "";
   const inCart = isInCart(selected.variante_id);
-  const totalPrecio = (selected.precio || 0) * Math.max(1, invitados);
+  const qty = parseInt(cantidad || "0", 10) || 0;
+  const totalPrecio = (selected.precio || 0) * qty;
 
   const handleAdd = () => {
+    if (qty < 1) return;
     addItem({
       id: selected.variante_id,
       name: selected.nombre_display || product.nombre,
       price: selected.precio || 0,
-      quantity: Math.max(1, invitados),
+      quantity: qty,
       image: img || undefined,
       category: product.categoria,
       isPerPerson: true,
     });
+    setPicking(false);
+    setCantidad("");
   };
 
   return (
@@ -85,57 +90,72 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           </div>
         )}
 
-        {/* Invitados */}
-        <div className="mb-3">
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Invitados
-          </label>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setInvitados((n) => Math.max(1, n - 1))}
-              className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
-              aria-label="Restar invitado"
-            >
-              <Minus className="w-3.5 h-3.5" />
-            </button>
-            <input
-              type="number"
-              min={1}
-              value={invitados}
-              onChange={(e) => setInvitados(Math.max(1, parseInt(e.target.value || "1", 10)))}
-              className="h-9 w-16 rounded-lg border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <button
-              type="button"
-              onClick={() => setInvitados((n) => n + 1)}
-              className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
-              aria-label="Sumar invitado"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-            <span className="text-[10px] text-muted-foreground ml-1">× ${selected.precio.toLocaleString("es-MX")}</span>
-          </div>
-        </div>
+        {/* Precio unitario */}
+        <p className="text-sm font-bold text-foreground mb-3">
+          ${selected.precio.toLocaleString("es-MX")}
+          <span className="text-[10px] font-normal text-muted-foreground ml-1">por pieza</span>
+        </p>
 
-        {/* Add button */}
+        {/* Add / cantidad */}
         <div className="mt-auto">
-          {inCart ? (
+          {!picking ? (
             <button
               type="button"
-              onClick={handleAdd}
-              className="w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-green-600 text-white hover:bg-green-700"
+              onClick={() => setPicking(true)}
+              className={`w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                inCart
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
             >
-              <Check className="w-3.5 h-3.5" /> En el carrito — Agregar más
+              {inCart ? (
+                <>
+                  <Check className="w-3.5 h-3.5" /> En el carrito — Agregar más
+                </>
+              ) : (
+                "Agregar"
+              )}
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={handleAdd}
-              className="w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              Agregar — ${totalPrecio.toLocaleString("es-MX")}
-            </button>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCantidad(String(Math.max(1, qty - 1)))}
+                  className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+                  aria-label="Restar pieza"
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  autoFocus
+                  placeholder="Piezas"
+                  value={cantidad}
+                  onChange={(e) => setCantidad(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="h-9 flex-1 min-w-0 rounded-lg border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <button
+                  type="button"
+                  onClick={() => setCantidad(String(qty + 1))}
+                  className="h-9 w-9 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors"
+                  aria-label="Sumar pieza"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={qty < 1}
+                className="w-full h-11 rounded-xl font-body text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {qty > 0
+                  ? `Confirmar ${qty} — $${totalPrecio.toLocaleString("es-MX")}`
+                  : "Elige cuántas piezas"}
+              </button>
+            </div>
           )}
         </div>
       </div>

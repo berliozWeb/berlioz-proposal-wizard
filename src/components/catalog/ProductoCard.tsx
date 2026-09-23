@@ -77,7 +77,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           )}
           <h3
             onClick={() => setDetalleOpen(true)}
-            className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide leading-tight cursor-pointer hover:text-primary transition-colors line-clamp-2"
+            className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide leading-tight cursor-pointer hover:text-primary transition-colors line-clamp-2 sm:min-h-[2.2rem]"
           >
             {product.nombre}
           </h3>

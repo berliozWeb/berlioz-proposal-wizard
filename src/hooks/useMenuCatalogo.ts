@@ -168,7 +168,7 @@ function mapProducto(row: any): ProductoCotizador {
     desc_corta: descCorta,
     desc_bullets: null,
     desc_larga: stripHtml(row.descripcion) || descCorta,
-    desc_intro: parsed.intro ?? descCorta,
+    desc_intro: parsed.intro ?? (parsed.items.length > 0 ? null : descCorta),
     desc_items: parsed.items,
     desc_nota: parsed.nota,
     img_principal: row.imagen_url ?? null,

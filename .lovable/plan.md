@@ -95,10 +95,9 @@ Lo que cambia es de dónde salen los productos:
 
 ## Riesgos y decisiones que necesito de ti
 
-1. **Productos que existen en el cotizador pero no en Woo.** Algunos nombres del
-   cotizador (surtidos, paquetes de café por 12 personas) pueden no existir hoy
-   como producto publicado en Woo. Los listo en la Fase 1 y tú decides: crearlos
-   en Woo (recomendado, así el pedido se puede cerrar) o quitarlos del cotizador.
+1. **Cualquier producto sin match publicado en Woo queda fuera** (regla ya cerrada,
+   no hay decisión pendiente). Queda registrado en el log para tu revisión.
+
 2. **Cotizaciones viejas.** Las guardadas siguen apuntando a productos antiguos;
    se conservan como están, sin recalcular.
 3. **Woo como dependencia.** Si la tienda está caída, el sync no corre pero el

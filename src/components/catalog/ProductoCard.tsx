@@ -36,6 +36,9 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
       image: img || undefined,
       category: product.categoria,
       isPerPerson: true,
+      wooProductId: product.woo_id ?? null,
+      wooVariationId: selected.woo_variation_id ?? null,
+      productoId: product.product_id,
     });
     setPicking(false);
     setCantidad("");

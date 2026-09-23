@@ -90,6 +90,9 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
           image: v.img || gallery[0] || undefined,
           category: product.categoria,
           isPerPerson: true,
+          wooProductId: product.woo_id ?? null,
+          wooVariationId: v.woo_variation_id ?? null,
+          productoId: product.product_id,
         });
       });
       setCantidades({});
@@ -102,6 +105,9 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
         image: gallery[0] || undefined,
         category: product.categoria,
         isPerPerson: true,
+        wooProductId: product.woo_id ?? null,
+        wooVariationId: selected.woo_variation_id ?? null,
+        productoId: product.product_id,
       });
       setCantidad("");
     }

@@ -11,6 +11,12 @@ export interface CartItem {
   image?: string;
   category?: string;
   isPerPerson?: boolean;
+  /** Id del producto en la tienda (WooCommerce). */
+  wooProductId?: number | null;
+  /** Id de la variante en la tienda, cuando el producto tiene opciones. */
+  wooVariationId?: number | null;
+  /** Id de la fila en el espejo del catálogo. */
+  productoId?: string | null;
 }
 
 type ShippingType = "delivery" | "pickup";

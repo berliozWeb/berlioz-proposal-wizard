@@ -80,7 +80,8 @@ function parseVariantes(product: any): Variante[] {
     sin_gluten: "No",
     sin_lactosa: "No",
     img: product.imagen_url ?? null,
-    wc_id: product.id,
+    wc_id: product.woo_id ?? product.id,
+    woo_variation_id: null,
   };
 
   // Variantes reales de Woo (`/products/{id}/variations`), sincronizadas por woo-catalog-sync.
@@ -103,6 +104,7 @@ function parseVariantes(product: any): Variante[] {
         sin_lactosa: "No",
         img: v.imagen_url ?? product.imagen_url ?? null,
         wc_id: v.woo_id ?? v.id ?? product.id,
+        woo_variation_id: Number(v.woo_id ?? v.id) || null,
       }));
   }
 
@@ -159,6 +161,7 @@ function mapProducto(row: any): ProductoCotizador {
       : [];
   return {
     product_id: String(row.id),
+    woo_id: row.woo_id ?? null,
     nombre: row.nombre ?? "",
     categoria: cats[0] ?? "",
     segunda_categoria: cats[1] ?? null,

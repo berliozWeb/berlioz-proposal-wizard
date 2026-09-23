@@ -21,6 +21,8 @@ export interface Variante {
   img: string | null;
   wc_nombre?: string | null;
   wc_id?: string | number | null;
+  /** Id de la variante en WooCommerce (null si el producto es simple). */
+  woo_variation_id?: number | null;
 }
 
 export type CategoriaCotizador =
@@ -32,6 +34,8 @@ export type CategoriaCotizador =
 
 export interface ProductoCotizador {
   product_id: string;
+  /** Id del producto en WooCommerce. */
+  woo_id?: number | null;
   nombre: string;
   categoria: CategoriaCotizador | string;
   segunda_categoria: string | null;

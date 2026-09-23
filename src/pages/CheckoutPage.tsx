@@ -135,86 +135,71 @@ const CheckoutPage = () => {
 
   const canSubmit = email && firstName && lastName && phone.length === 10 && deliveryDate && deliverySlot && termsAccepted && !timeError && (shippingType === "pickup" || (street && colonia && cp && cpValid));
 
+  // El pago y el calendario de cocina viven en berlioz.mx (WooCommerce).
+  // Aquí solo se crea el pedido en la tienda y se redirige a pagarlo.
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
 
     try {
-      const addressText = shippingType === "pickup"
-        ? "Recoger en Lago Onega 265, Modelo Pensil"
-        : `${street} ${numExt}${numInt ? ` Int. ${numInt}` : ""}, ${colonia}, ${city}, CP ${cp}`;
-
-      const orderData = {
-        user_id: user?.id || null,
-        delivery_date: deliveryDate!,
-        delivery_slot: deliverySlot!,
-        delivery_address_text: addressText,
-        notes: instructions || notes || null,
-        subtotal: totals.subtotal,
-        iva: totals.iva,
-        shipping: totals.shipping,
-        discount: totals.discount,
-        total: totals.total,
-        discount_code: null,
-        payment_method: paymentMethod,
-        points_earned: Math.floor(totals.total / 50),
-        shipping_zone: shippingZone,
-        shipping_cost_breakdown: {
-          zone: shippingZone,
-          base_cost: shippingPrice ?? 360,
-          surcharge_early: totals.earlySurcharge,
-          total: totals.shipping + totals.earlySurcharge,
-        },
-      };
-
-      // Only insert order if user is authenticated
-      if (user) {
-        const { data: order, error } = await supabase.from("orders").insert({
-          ...orderData,
-          user_id: user.id,
-        }).select("id, order_number").single();
-
-        if (error || !order) throw error;
-
-        // Insert order items
-        await supabase.from("order_items").insert(
-          items.map(item => ({
-            order_id: order.id,
-            product_name: item.name,
+      const { data, error } = await supabase.functions.invoke("woo-create-order", {
+        body: {
+          items: items.map((item) => ({
+            producto_id: item.productoId ?? item.id,
+            woo_product_id: item.wooProductId ?? undefined,
+            woo_variation_id: item.wooVariationId ?? undefined,
+            name: item.name,
             quantity: item.quantity,
-            unit_price: item.price,
-            image_url: item.image ?? null,
-          }))
-        );
+          })),
+          customer: {
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            phone,
+            company: companyName,
+          },
+          shipping: {
+            type: shippingType,
+            address_1: `${street} ${numExt}`.trim(),
+            address_2: numInt ? `Int. ${numInt}` : "",
+            colonia,
+            city,
+            postcode: cp,
+          },
+          delivery: {
+            date: deliveryDate!,
+            slot: deliverySlot!,
+            event_time: eventTime,
+          },
+          notes: instructions || notes || "",
+        },
+      });
 
-        // Award loyalty points
-        if (profile) {
-          await supabase.from("profiles").update({
-            loyalty_points: ((profile as any).loyalty_points ?? 0) + orderData.points_earned,
-          }).eq("id", user.id);
-        }
-
-        // Save company if provided
-        if (companyName.trim()) {
-          await supabase.from("companies").upsert(
-            { name: companyName.trim() },
-            { onConflict: "name", ignoreDuplicates: true }
-          ).select().maybeSingle();
-        }
-
-        clearCart();
-        sessionStorage.setItem("berlioz_order_number", order.order_number);
-        sessionStorage.setItem("berlioz_order_id", order.id);
-        navigate("/checkout/confirmacion");
-      } else {
-        // Guest flow — just show confirmation
-        clearCart();
-        sessionStorage.setItem("berlioz_order_number", `BRL-${new Date().getFullYear()}-GUEST`);
-        navigate("/checkout/confirmacion");
+      if (error) {
+        const details =
+          typeof (error as any)?.context?.text === "function"
+            ? await (error as any).context.text()
+            : error.message;
+        console.error("woo-create-order failed:", details);
+        throw new Error(details);
       }
+
+      const payUrl = (data as any)?.pay_url as string | undefined;
+      if (!payUrl) throw new Error("La tienda no devolvió la liga de pago.");
+
+      if (companyName.trim()) {
+        await supabase
+          .from("companies")
+          .upsert({ name: companyName.trim() }, { onConflict: "name", ignoreDuplicates: true })
+          .select()
+          .maybeSingle();
+      }
+
+      clearCart();
+      window.location.href = payUrl;
     } catch (err) {
       console.error(err);
-      toast.error("Error al crear el pedido. Intenta de nuevo.");
+      toast.error("No pudimos preparar tu pago. Intenta de nuevo o escríbenos por WhatsApp.");
     } finally {
       setSubmitting(false);
     }
@@ -435,43 +420,26 @@ const CheckoutPage = () => {
               </div>
             </section>
 
-            {/* Payment */}
+            {/* Pago — se completa en berlioz.mx (WooCommerce) */}
             <section>
-              <h2 className="font-heading text-xl mb-4 text-foreground">Método de pago</h2>
-              <div className="space-y-3">
-                {bankTransferEnabled && (
-                  <label className={cn("flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all", paymentMethod === "bank_transfer" ? "border-primary bg-primary/5" : "border-border bg-card")}>
-                    <input type="radio" name="payment" checked={paymentMethod === "bank_transfer"} onChange={() => setPaymentMethod("bank_transfer")} className="accent-primary mt-1" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Landmark className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-body text-sm font-medium">Transferencia bancaria directa</span>
-                      </div>
-                      {paymentMethod === "bank_transfer" && (
-                        <p className="font-body text-xs text-muted-foreground mt-2">
-                          Realiza tu pago directamente a nuestra cuenta bancaria. Usa el número de pedido como referencia. Tu pedido no será enviado hasta recibir confirmación de pago.
-                        </p>
-                      )}
-                    </div>
-                  </label>
-                )}
-
-                <label className={cn("flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all", paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border bg-card")}>
-                  <input type="radio" name="payment" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} className="accent-primary mt-1" />
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-body text-sm font-medium">Tarjeta de crédito / débito</span>
-                  </div>
-                </label>
-
-                {!bankTransferEnabled && (
+              <h2 className="font-heading text-xl mb-4 text-foreground">Pago</h2>
+              <div className="p-4 rounded-xl border border-border bg-card flex items-start gap-3">
+                <CreditCard className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-body text-sm font-medium text-foreground">
+                    Terminas tu compra en berlioz.mx
+                  </p>
                   <p className="font-body text-xs text-muted-foreground mt-1">
+                    Al confirmar te llevamos a la página de pago de Berlioz con tu pedido ya armado.
+                    Ahí pagas con tarjeta de crédito o débito de forma segura.
+                  </p>
+                  <p className="font-body text-xs text-muted-foreground mt-2">
                     ¿Prefieres pagar por transferencia?{" "}
                     <a href="https://wa.me/5215582375469" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                      Contáctanos al 55 8237 5469
+                      Escríbenos al 55 8237 5469
                     </a>
                   </p>
-                )}
+                </div>
               </div>
             </section>
 
@@ -490,10 +458,11 @@ const CheckoutPage = () => {
               </label>
 
               <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="w-full" size="lg">
-                {submitting ? "Procesando..." : `REALIZAR EL PEDIDO · ${formatMXN(totals.total)}`}
+                {submitting ? "Preparando tu pago..." : `CONTINUAR AL PAGO · ${formatMXN(totals.total)}`}
               </Button>
 
               <p className="font-body text-[10px] text-muted-foreground text-center">
+                El total es estimado; el envío y los cupones se confirman en la página de pago de berlioz.mx.
                 Tus datos personales se utilizarán para procesar tu pedido y otros propósitos descritos en nuestra Política de privacidad.
               </p>
             </div>

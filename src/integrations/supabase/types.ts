@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      catalogo_exclusiones: {
+        Row: {
+          created_at: string
+          detalle: Json
+          id: string
+          motivo: string
+          nombre_buscado: string
+          origen: string
+          woo_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          detalle?: Json
+          id?: string
+          motivo: string
+          nombre_buscado: string
+          origen: string
+          woo_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          detalle?: Json
+          id?: string
+          motivo?: string
+          nombre_buscado?: string
+          origen?: string
+          woo_id?: number | null
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           created_at: string | null
@@ -376,13 +406,17 @@ export type Database = {
           descripcion_corta: string | null
           destacado: boolean | null
           dietary_tags: string[] | null
+          en_stock: boolean | null
           id: string
           imagen: string | null
           imagen_url: string | null
+          imagenes_galeria: string[] | null
+          menu_order: number | null
           min_qty: number | null
           nombre: string
           orden: number | null
           parent_id: string | null
+          permalink: string | null
           popularity_rank: number | null
           precio: number | null
           precio_max: number | null
@@ -396,11 +430,16 @@ export type Database = {
           texto_busqueda: string | null
           tipo: string | null
           total_sales: number | null
+          upsell_ids: number[] | null
           variante_nombre: string | null
           variantes: string | null
+          woo_categorias: string[] | null
           woo_id: number | null
           woo_last_synced_at: string | null
           woo_source: boolean
+          woo_status: string | null
+          woo_tags: string[] | null
+          woo_variaciones: Json | null
         }
         Insert: {
           activo?: boolean | null
@@ -411,13 +450,17 @@ export type Database = {
           descripcion_corta?: string | null
           destacado?: boolean | null
           dietary_tags?: string[] | null
+          en_stock?: boolean | null
           id: string
           imagen?: string | null
           imagen_url?: string | null
+          imagenes_galeria?: string[] | null
+          menu_order?: number | null
           min_qty?: number | null
           nombre: string
           orden?: number | null
           parent_id?: string | null
+          permalink?: string | null
           popularity_rank?: number | null
           precio?: number | null
           precio_max?: number | null
@@ -431,11 +474,16 @@ export type Database = {
           texto_busqueda?: string | null
           tipo?: string | null
           total_sales?: number | null
+          upsell_ids?: number[] | null
           variante_nombre?: string | null
           variantes?: string | null
+          woo_categorias?: string[] | null
           woo_id?: number | null
           woo_last_synced_at?: string | null
           woo_source?: boolean
+          woo_status?: string | null
+          woo_tags?: string[] | null
+          woo_variaciones?: Json | null
         }
         Update: {
           activo?: boolean | null
@@ -446,13 +494,17 @@ export type Database = {
           descripcion_corta?: string | null
           destacado?: boolean | null
           dietary_tags?: string[] | null
+          en_stock?: boolean | null
           id?: string
           imagen?: string | null
           imagen_url?: string | null
+          imagenes_galeria?: string[] | null
+          menu_order?: number | null
           min_qty?: number | null
           nombre?: string
           orden?: number | null
           parent_id?: string | null
+          permalink?: string | null
           popularity_rank?: number | null
           precio?: number | null
           precio_max?: number | null
@@ -466,11 +518,16 @@ export type Database = {
           texto_busqueda?: string | null
           tipo?: string | null
           total_sales?: number | null
+          upsell_ids?: number[] | null
           variante_nombre?: string | null
           variantes?: string | null
+          woo_categorias?: string[] | null
           woo_id?: number | null
           woo_last_synced_at?: string | null
           woo_source?: boolean
+          woo_status?: string | null
+          woo_tags?: string[] | null
+          woo_variaciones?: Json | null
         }
         Relationships: []
       }

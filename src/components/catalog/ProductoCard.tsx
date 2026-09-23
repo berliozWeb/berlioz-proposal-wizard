@@ -9,7 +9,8 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const hasMany = variantes.length > 1;
   const defaultVariante = variantes.find((v) => v.es_base) ?? variantes[0];
   const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
-  const [invitados, setInvitados] = useState<number>(10);
+  const [picking, setPicking] = useState(false);
+  const [cantidad, setCantidad] = useState<string>("");
 
   const selected: Variante | undefined =
     variantes.find((v) => v.variante_id === selectedId) ?? defaultVariante;

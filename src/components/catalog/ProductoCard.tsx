@@ -41,9 +41,6 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
     setCantidad("");
   };
 
-  const variantLabel =
-    selected.nombre_variante || selected.nombre_display || "Opción";
-
   return (
     <div className="group flex flex-row sm:flex-col bg-card rounded-2xl border border-border/60 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30">
       {/* Imagen */}

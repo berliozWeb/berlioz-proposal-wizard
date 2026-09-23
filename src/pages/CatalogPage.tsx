@@ -126,18 +126,18 @@ const CatalogPage = () => {
   return (
     <BaseLayout>
       {/* Hero */}
-      <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
+      <section className="relative h-[32vh] min-h-[220px] md:h-[40vh] md:min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20">
           <RevealOnScroll>
             <div className="max-w-2xl">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase mb-4 backdrop-blur-sm">
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] sm:text-[10px] font-bold tracking-[0.25em] uppercase mb-3 backdrop-blur-sm">
                 Explora el sabor
               </span>
-              <h1 className="font-heading text-4xl md:text-6xl text-foreground mb-4 leading-tight tracking-tight">
+              <h1 className="font-heading text-3xl md:text-6xl text-foreground mb-3 leading-tight tracking-tight">
                 Nuestro Menú<br />Gourmet
               </h1>
-              <p className="font-body text-base md:text-lg text-muted-foreground/90 max-w-md leading-relaxed">
+              <p className="font-body text-sm md:text-lg text-muted-foreground/90 max-w-md leading-relaxed">
                 Selecciona tus favoritos y arma tu pedido perfecto.
               </p>
             </div>
@@ -147,15 +147,16 @@ const CatalogPage = () => {
 
       <div className="max-w-7xl mx-auto px-6 pb-20">
         {/* Filter Bar */}
-        <div className="sticky top-[72px] z-40 -mx-6 px-6 py-4 mb-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
-          <div className="flex flex-col gap-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="sticky top-[72px] z-40 -mx-6 px-6 py-3 mb-6 bg-background/80 backdrop-blur-xl border-b border-border/50">
+          <div className="flex flex-col gap-4">
+            {/* Categorías: scroll horizontal en móvil, grid compacto en desktop */}
+            <div className="flex md:grid md:grid-cols-4 gap-1 overflow-x-auto md:overflow-visible pb-1 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
               {availableTabs.map((f) => (
                 <button
                   key={f.value}
                   onClick={() => handleFilterChange(f.value)}
                   className={cn(
-                    "py-3 text-center font-body text-sm font-medium transition-all duration-300 border-b",
+                    "shrink-0 md:w-auto text-center font-body text-xs font-medium transition-all duration-300 border-b md:py-2 md:px-1 py-2 px-3",
                     effectiveFilter === f.value
                       ? "text-[#014D6F] font-semibold border-b-2 border-[#014D6F]"
                       : "text-muted-foreground hover:text-foreground border-border/30"
@@ -165,21 +166,21 @@ const CatalogPage = () => {
                 </button>
               ))}
             </div>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-300" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                   placeholder="Busca bágels, ensaladas, postres..."
-                  className="h-12 pl-12 pr-6 rounded-2xl border border-border/60 bg-card/50 font-body text-sm w-full md:w-[400px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+                  className="h-10 pl-9 pr-4 rounded-xl border border-border/60 bg-card/50 font-body text-sm w-full md:w-[360px] focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                 />
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <label
                   htmlFor="orden-productos"
-                  className="font-body text-sm text-muted-foreground whitespace-nowrap"
+                  className="font-body text-xs text-muted-foreground whitespace-nowrap"
                 >
                   Ordenar por:
                 </label>
@@ -190,7 +191,7 @@ const CatalogPage = () => {
                     setSortBy(e.target.value as SortOption);
                     setPage(1);
                   }}
-                  className="h-12 px-4 pr-8 rounded-2xl border border-border/60 bg-card/50 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
+                  className="h-10 px-3 pr-7 rounded-xl border border-border/60 bg-card/50 font-body text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300"
                 >
                   {SORT_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>

@@ -48,7 +48,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
         type="button"
         onClick={() => setDetalleOpen(true)}
         aria-label={`Ver detalles de ${product.nombre}`}
-        className="relative w-[36%] sm:w-full aspect-[4/3] overflow-hidden bg-muted shrink-0 text-left"
+        className="relative w-[32%] sm:w-full aspect-square sm:aspect-[4/3] overflow-hidden bg-muted shrink-0 text-left"
       >
         <img
           src={img}
@@ -68,22 +68,22 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
       </button>
 
       {/* Contenido */}
-      <div className="flex flex-col flex-1 min-w-0 p-3 sm:p-4 justify-between">
+      <div className="flex flex-col flex-1 min-w-0 p-2.5 sm:p-4 justify-between">
         <div className="min-w-0">
           {product.categoria && (
-            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/80 hidden sm:inline">
               {product.categoria}
             </span>
           )}
           <h3
             onClick={() => setDetalleOpen(true)}
-            className="text-sm font-bold text-foreground uppercase tracking-wide leading-tight cursor-pointer hover:text-primary transition-colors line-clamp-2"
+            className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide leading-tight cursor-pointer hover:text-primary transition-colors line-clamp-2"
           >
             {product.nombre}
           </h3>
-          <p className="text-base font-bold text-foreground mt-0.5">
+          <p className="text-sm sm:text-base font-bold text-foreground mt-0.5">
             ${selected.precio.toLocaleString("es-MX")}
-            <span className="text-[10px] font-normal text-muted-foreground ml-1">por pieza</span>
+            <span className="text-[9px] sm:text-[10px] font-normal text-muted-foreground ml-1">por pieza</span>
           </p>
         </div>
 
@@ -105,13 +105,13 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
         )}
 
         {/* Agregar / stepper */}
-        <div className="mt-2.5">
+        <div className="mt-2 sm:mt-2.5">
           {!picking ? (
             <button
               type="button"
               onClick={() => setPicking(true)}
               className={cn(
-                "w-full h-9 rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
+                "w-full h-8 sm:h-9 rounded-lg sm:rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
                 inCart
                   ? "bg-green-600 text-white hover:bg-green-700"
                   : "bg-primary text-primary-foreground hover:bg-primary/90"

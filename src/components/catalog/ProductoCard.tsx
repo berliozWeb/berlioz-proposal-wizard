@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Check, Minus, Plus } from "lucide-react";
+import { Check, Minus, Plus, Maximize2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import ProductoDetalleModal from "@/components/catalog/ProductoDetalleModal";
 import type { ProductoCotizador, Variante } from "@/hooks/useMenuCotizador";
 
 export default function ProductoCard({ product }: { product: ProductoCotizador }) {

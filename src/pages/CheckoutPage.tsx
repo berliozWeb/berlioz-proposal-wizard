@@ -420,43 +420,26 @@ const CheckoutPage = () => {
               </div>
             </section>
 
-            {/* Payment */}
+            {/* Pago — se completa en berlioz.mx (WooCommerce) */}
             <section>
-              <h2 className="font-heading text-xl mb-4 text-foreground">Método de pago</h2>
-              <div className="space-y-3">
-                {bankTransferEnabled && (
-                  <label className={cn("flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all", paymentMethod === "bank_transfer" ? "border-primary bg-primary/5" : "border-border bg-card")}>
-                    <input type="radio" name="payment" checked={paymentMethod === "bank_transfer"} onChange={() => setPaymentMethod("bank_transfer")} className="accent-primary mt-1" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Landmark className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-body text-sm font-medium">Transferencia bancaria directa</span>
-                      </div>
-                      {paymentMethod === "bank_transfer" && (
-                        <p className="font-body text-xs text-muted-foreground mt-2">
-                          Realiza tu pago directamente a nuestra cuenta bancaria. Usa el número de pedido como referencia. Tu pedido no será enviado hasta recibir confirmación de pago.
-                        </p>
-                      )}
-                    </div>
-                  </label>
-                )}
-
-                <label className={cn("flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all", paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border bg-card")}>
-                  <input type="radio" name="payment" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} className="accent-primary mt-1" />
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-body text-sm font-medium">Tarjeta de crédito / débito</span>
-                  </div>
-                </label>
-
-                {!bankTransferEnabled && (
+              <h2 className="font-heading text-xl mb-4 text-foreground">Pago</h2>
+              <div className="p-4 rounded-xl border border-border bg-card flex items-start gap-3">
+                <CreditCard className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-body text-sm font-medium text-foreground">
+                    Terminas tu compra en berlioz.mx
+                  </p>
                   <p className="font-body text-xs text-muted-foreground mt-1">
+                    Al confirmar te llevamos a la página de pago de Berlioz con tu pedido ya armado.
+                    Ahí pagas con tarjeta de crédito o débito de forma segura.
+                  </p>
+                  <p className="font-body text-xs text-muted-foreground mt-2">
                     ¿Prefieres pagar por transferencia?{" "}
                     <a href="https://wa.me/5215582375469" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                      Contáctanos al 55 8237 5469
+                      Escríbenos al 55 8237 5469
                     </a>
                   </p>
-                )}
+                </div>
               </div>
             </section>
 

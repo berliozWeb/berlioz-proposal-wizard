@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, ChevronLeft, ChevronRight, Minus, Plus, Check } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
@@ -65,8 +66,8 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
     setTimeout(() => setAdded(false), 1800);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-card rounded-3xl border border-border shadow-2xl">
         <button
@@ -239,6 +240,7 @@ export default function ProductoDetalleModal({ product, open, onClose }: Props) 
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

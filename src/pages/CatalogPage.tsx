@@ -126,18 +126,18 @@ const CatalogPage = () => {
   return (
     <BaseLayout>
       {/* Hero */}
-      <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
+      <section className="relative h-[32vh] min-h-[220px] md:h-[40vh] md:min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20">
           <RevealOnScroll>
             <div className="max-w-2xl">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase mb-4 backdrop-blur-sm">
+              <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-[9px] sm:text-[10px] font-bold tracking-[0.25em] uppercase mb-3 backdrop-blur-sm">
                 Explora el sabor
               </span>
-              <h1 className="font-heading text-4xl md:text-6xl text-foreground mb-4 leading-tight tracking-tight">
+              <h1 className="font-heading text-3xl md:text-6xl text-foreground mb-3 leading-tight tracking-tight">
                 Nuestro Menú<br />Gourmet
               </h1>
-              <p className="font-body text-base md:text-lg text-muted-foreground/90 max-w-md leading-relaxed">
+              <p className="font-body text-sm md:text-lg text-muted-foreground/90 max-w-md leading-relaxed">
                 Selecciona tus favoritos y arma tu pedido perfecto.
               </p>
             </div>

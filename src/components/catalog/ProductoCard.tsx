@@ -42,7 +42,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   };
 
   return (
-    <div className="group flex flex-row sm:flex-col bg-card rounded-2xl border border-border/60 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30">
+    <div className="group h-full flex flex-row sm:flex-col bg-card rounded-2xl border border-border/60 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30">
       {/* Imagen */}
       <button
         type="button"

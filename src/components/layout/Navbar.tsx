@@ -236,6 +236,7 @@ const Navbar = () => {
         </div>
       )}
     </header>
+    </>
   );
 };
 

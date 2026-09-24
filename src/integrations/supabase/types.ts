@@ -1271,6 +1271,96 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      web_orders: {
+        Row: {
+          company: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          delivery_date: string | null
+          delivery_slot: string | null
+          delivery_type: string | null
+          order_number: string
+          pay_url: string | null
+          status: string
+          total: number | null
+          updated_at: string
+          woo_order_id: number
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          delivery_date?: string | null
+          delivery_slot?: string | null
+          delivery_type?: string | null
+          order_number: string
+          pay_url?: string | null
+          status?: string
+          total?: number | null
+          updated_at?: string
+          woo_order_id: number
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          delivery_date?: string | null
+          delivery_slot?: string | null
+          delivery_type?: string | null
+          order_number?: string
+          pay_url?: string | null
+          status?: string
+          total?: number | null
+          updated_at?: string
+          woo_order_id?: number
+        }
+        Relationships: []
+      }
       woo_order_items: {
         Row: {
           category: string | null
@@ -1387,6 +1477,13 @@ export type Database = {
     }
     Functions: {
       get_my_email_domain: { Args: never; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       search_products_for_quote: {
         Args: {
@@ -1418,6 +1515,7 @@ export type Database = {
       trigger_woo_catalog_sync: { Args: never; Returns: undefined }
     }
     Enums: {
+      app_role: "admin" | "user"
       order_frequency: "daily" | "weekly" | "monthly" | "occasional"
       profile_type: "company" | "agency" | "personal"
     }
@@ -1547,6 +1645,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       order_frequency: ["daily", "weekly", "monthly", "occasional"],
       profile_type: ["company", "agency", "personal"],
     },

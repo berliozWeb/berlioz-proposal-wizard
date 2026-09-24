@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { syncOrderCalendar } from "../_shared/calendarEvent.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -62,6 +63,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Calendario de cocina: nunca bloquea el resto del webhook.
+    const calendar = await syncOrderCalendar(supabase, order);
+    console.log("calendar:", order?.id, order?.status, JSON.stringify(calendar));
 
     const empresa =
       order.billing?.company ||

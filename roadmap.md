@@ -44,3 +44,10 @@
 - [x] CheckoutPage: "CONTINUAR AL PAGO", total marcado como estimado, sin selector de método de pago
 - [x] Pruebas: producto simple, variante y producto inexistente (rechazo 409)
 - [ ] Cancelar en WordPress los pedidos de prueba 32425, 32426 y 32427 (PRUEBA - NO SURTIR)
+
+## Fase 6 — Pedidos confirmados → Google Calendar (hola@berlioz.mx) ✅
+- [x] Google Calendar conectado (hola@berlioz.mx)
+- [x] Registro pedido ↔ evento (sin duplicados, borra al cancelar/reembolsar)
+- [x] Evento creado desde el aviso de la tienda cuando el pedido pasa a "Procesando" (solo pedidos de la página nueva)
+- [x] Prueba de creación y borrado en el calendario
+- [ ] Confirmar en WordPress que el aviso de la tienda incluye "Pedido actualizado" (la conexión con la tienda no respondió)

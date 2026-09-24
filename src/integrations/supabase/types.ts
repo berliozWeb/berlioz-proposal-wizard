@@ -275,6 +275,39 @@ export type Database = {
         }
         Relationships: []
       }
+      order_calendar_events: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          google_event_id: string | null
+          id: string
+          last_error: string | null
+          status: string
+          updated_at: string
+          woo_order_id: number
+        }
+        Insert: {
+          calendar_id?: string
+          created_at?: string
+          google_event_id?: string | null
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+          woo_order_id: number
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          google_event_id?: string | null
+          id?: string
+          last_error?: string | null
+          status?: string
+          updated_at?: string
+          woo_order_id?: number
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string

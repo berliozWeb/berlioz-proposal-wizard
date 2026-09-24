@@ -36,10 +36,16 @@ const LoginPage = () => {
 
   const handleGoogleLogin = async () => {
     setError(null);
-    const { error } = await lovable.auth.signInWithOAuth("google", {
+    const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
-    if (error) setError(error.message ?? "Error al iniciar con Google");
+    if (result.error) {
+      setError(result.error.message ?? "Error al iniciar con Google");
+      return;
+    }
+    if (result.redirected) return;
+    // Sesión ya establecida (ventana emergente): salir del login.
+    navigate(returnUrl);
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {

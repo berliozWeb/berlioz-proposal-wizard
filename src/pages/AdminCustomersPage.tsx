@@ -31,19 +31,10 @@ const AdminCustomersPage = () => {
   // Check admin role
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
-    supabase
-      .from("profiles")
-      .select("admin_role")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.admin_role === "admin") {
-          setIsAdmin(true);
-        } else {
-          toast.error("Acceso denegado");
-          navigate("/dashboard");
-        }
-      });
+    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => {
+      if (data === true) setIsAdmin(true);
+      else { toast.error("Acceso denegado"); navigate("/"); }
+    });
   }, [user, navigate]);
 
   const fetchCustomers = useCallback(async () => {

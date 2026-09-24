@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart, User, Menu, X, ChevronDown, LogOut, Package, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useSiteSettings, whatsappUrl } from "@/hooks/useSiteSettings";
 
 const WhatsAppIcon = ({ size = 20, color = "#014D6F" }: { size?: number; color?: string }) => (
   <svg
@@ -27,7 +28,6 @@ const NAV_LINKS = [
   { to: "/contacto", label: "Contacto" },
 ];
 
-const WHATSAPP_URL = "https://wa.me/525582375469?text=Hola%2C%20quiero%20cotizar%20mis%20Boxes%20Berlioz";
 
 
 const Navbar = () => {
@@ -37,6 +37,8 @@ const Navbar = () => {
   const { user, profile, signOut } = useAuth();
   const { itemCount } = useCart();
   const location = useLocation();
+  const { settings } = useSiteSettings();
+  const WHATSAPP_URL = whatsappUrl(settings);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -60,6 +62,12 @@ const Navbar = () => {
   };
 
   return (
+    <>
+    {settings.announcement_enabled && settings.announcement_text.trim() && (
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-primary text-primary-foreground text-center font-body text-sm py-2 px-4">
+        {settings.announcement_text}
+      </div>
+    )}
     <header
       className="fixed top-0 left-0 right-0 z-50"
       style={{
@@ -228,6 +236,7 @@ const Navbar = () => {
         </div>
       )}
     </header>
+    </>
   );
 };
 

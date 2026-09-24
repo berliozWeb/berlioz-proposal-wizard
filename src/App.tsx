@@ -9,6 +9,10 @@ import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import AdminRoute from "@/components/layout/AdminRoute";
 import AdminInsightsPage from "./pages/AdminInsightsPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
+import AdminOrdersPage from "./pages/AdminOrdersPage";
+import AdminSettingsPage from "./pages/AdminSettingsPage";
+import { Navigate } from "react-router-dom";
 
 // Pages
 import HomePage from "./pages/HomePage";
@@ -74,7 +78,11 @@ const App = () => (
 
                 {/* Legacy */}
                 <Route path="/admin-leads" element={<AdminLeads />} />
-                <Route path="/admin/customers" element={<ProtectedRoute><AdminCustomersPage /></ProtectedRoute>} />
+                <Route path="/admin" element={<Navigate to="/admin/pedidos" replace />} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin/pedidos" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
+                <Route path="/admin/configuracion" element={<AdminRoute><AdminSettingsPage /></AdminRoute>} />
+                <Route path="/admin/customers" element={<AdminRoute><AdminCustomersPage /></AdminRoute>} />
                 <Route path="/admin/insights" element={<AdminRoute><AdminInsightsPage /></AdminRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -245,6 +245,25 @@ Deno.serve(async (req) => {
         ? order.payment_url
         : `${STORE_URL}/checkout/order-pay/${order.id}/?pay_for_order=true&key=${order.order_key}`;
 
+    // Registro para el panel admin (no bloquea el pago si falla).
+    try {
+      await supabase.from("web_orders").upsert({
+        woo_order_id: Number(order.id),
+        order_number: String(order.number ?? order.id),
+        customer_name: `${customer.first_name} ${customer.last_name ?? ""}`.trim(),
+        customer_email: customer.email,
+        company: customer.company ?? null,
+        total: order.total ? Number(order.total) : null,
+        status: order.status ?? "pending",
+        delivery_date: delivery.date,
+        delivery_slot: delivery.slot,
+        delivery_type: shipping.type,
+        pay_url: payUrl,
+      }, { onConflict: "woo_order_id" });
+    } catch (e) {
+      console.error("web_orders insert:", e);
+    }
+
     return json({
       order_id: order.id,
       order_number: order.number ?? String(order.id),

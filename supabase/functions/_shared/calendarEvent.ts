@@ -105,10 +105,20 @@ export async function syncOrderCalendar(supabase: any, order: any) {
   const wooId = Number(order?.id);
   if (!wooId) return { skipped: "sin id" };
   const status = String(order.status ?? "");
-  const cal = encodeURIComponent(CALENDAR_ID);
 
   const { data: row } = await supabase
     .from("order_calendar_events").select("*").eq("woo_order_id", wooId).maybeSingle();
+
+  // Calendario configurable desde el panel admin; si el evento ya existe, se usa el suyo.
+  let calendarId = CALENDAR_ID;
+  try {
+    const { data: s } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+    const v = s?.value?.calendar_id;
+    if (typeof v === "string" && v.trim()) calendarId = v.trim();
+  } catch (_e) { /* usa el predeterminado */ }
+  if (row?.calendar_id && row.status === "created") calendarId = row.calendar_id;
+  const CAL_ID = calendarId;
+  const cal = encodeURIComponent(CAL_ID);
 
   try {
     if (status === "processing") {
@@ -119,7 +129,7 @@ export async function syncOrderCalendar(supabase: any, order: any) {
         body: JSON.stringify(construirEvento(order)),
       });
       await supabase.from("order_calendar_events").upsert(
-        { woo_order_id: wooId, google_event_id: ev.id, calendar_id: CALENDAR_ID, status: "created", last_error: null },
+        { woo_order_id: wooId, google_event_id: ev.id, calendar_id: CAL_ID, status: "created", last_error: null },
         { onConflict: "woo_order_id" },
       );
       return { created: ev.id };
@@ -136,7 +146,7 @@ export async function syncOrderCalendar(supabase: any, order: any) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`calendar sync pedido ${wooId}:`, msg);
     await supabase.from("order_calendar_events").upsert(
-      { woo_order_id: wooId, google_event_id: row?.google_event_id ?? null, calendar_id: CALENDAR_ID, status: row?.status === "created" ? "created" : "error", last_error: msg },
+      { woo_order_id: wooId, google_event_id: row?.google_event_id ?? null, calendar_id: CAL_ID, status: row?.status === "created" ? "created" : "error", last_error: msg },
       { onConflict: "woo_order_id" },
     );
     return { error: msg };

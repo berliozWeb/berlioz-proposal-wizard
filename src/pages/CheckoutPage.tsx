@@ -180,6 +180,8 @@ const CheckoutPage = () => {
             colonia,
             city,
             postcode: cp,
+            cost: shippingType === "delivery" ? totals.shipping : 0,
+            zone: shippingZone ?? null,
           },
           delivery: {
             date: deliveryDate!,

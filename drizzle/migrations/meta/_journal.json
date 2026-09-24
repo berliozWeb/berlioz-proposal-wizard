@@ -15,6 +15,13 @@
       "when": 1790136856178,
       "tag": "0001_cotizador_roles_producto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790223439858,
+      "tag": "0002_order_calendar_events",
+      "breakpoints": true
     }
   ]
 }

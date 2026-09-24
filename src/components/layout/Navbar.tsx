@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Menu, X, ChevronDown, LogOut, Package, UserCircle } from "lucide-react";
+import { ShoppingCart, User, Menu, X, ChevronDown, LogOut, Package, UserCircle, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/components/layout/AdminRoute";
 import { useCart } from "@/contexts/CartContext";
 import { useSiteSettings, whatsappUrl } from "@/hooks/useSiteSettings";
 
@@ -35,6 +36,7 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const { itemCount } = useCart();
   const location = useLocation();
   const { settings } = useSiteSettings();
@@ -175,6 +177,11 @@ const Navbar = () => {
                     <Link to="/dashboard/pedidos" className="flex items-center transition-colors hover:bg-muted" style={{ gap: 12, padding: '10px 16px', fontSize: 14, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
                       <Package style={{ width: 16, height: 16, color: '#888888' }} /> Mis pedidos
                     </Link>
+                    {isAdmin && (
+                      <Link to="/admin/pedidos" className="flex items-center transition-colors hover:bg-muted" style={{ gap: 12, padding: '10px 16px', fontSize: 14, color: '#014D6F', fontWeight: 600, textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>
+                        <Shield style={{ width: 16, height: 16, color: '#014D6F' }} /> Panel de administrador
+                      </Link>
+                    )}
                     <div style={{ borderTop: '1px solid #E2D3CA', marginTop: 4, paddingTop: 4 }}>
                       <button onClick={handleSignOut} className="flex items-center w-full transition-colors hover:bg-muted" style={{ gap: 12, padding: '10px 16px', fontSize: 14, color: '#B20000', fontFamily: "'Montserrat', sans-serif" }}>
                         <LogOut style={{ width: 16, height: 16 }} /> Cerrar sesión

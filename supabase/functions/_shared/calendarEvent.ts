@@ -105,10 +105,20 @@ export async function syncOrderCalendar(supabase: any, order: any) {
   const wooId = Number(order?.id);
   if (!wooId) return { skipped: "sin id" };
   const status = String(order.status ?? "");
-  const cal = encodeURIComponent(CALENDAR_ID);
 
   const { data: row } = await supabase
     .from("order_calendar_events").select("*").eq("woo_order_id", wooId).maybeSingle();
+
+  // Calendario configurable desde el panel admin; si el evento ya existe, se usa el suyo.
+  let calendarId = CALENDAR_ID;
+  try {
+    const { data: s } = await supabase.from("site_settings").select("value").eq("key", "general").maybeSingle();
+    const v = s?.value?.calendar_id;
+    if (typeof v === "string" && v.trim()) calendarId = v.trim();
+  } catch (_e) { /* usa el predeterminado */ }
+  if (row?.calendar_id && row.status === "created") calendarId = row.calendar_id;
+  const CAL_ID = calendarId;
+  const cal = encodeURIComponent(CAL_ID);
 
   try {
     if (status === "processing") {

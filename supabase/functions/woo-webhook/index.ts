@@ -68,6 +68,16 @@ serve(async (req) => {
     const calendar = await syncOrderCalendar(supabase, order);
     console.log("calendar:", order?.id, order?.status, JSON.stringify(calendar));
 
+    // Estado para el panel admin: solo pedidos de la página nueva.
+    const origen = (order?.meta_data ?? []).find((m: any) => m.key === "_berlioz_origen")?.value;
+    if (order?.id && origen === "web-nueva") {
+      const { error: woErr } = await supabase.from("web_orders").update({
+        status: order.status,
+        total: order.total ? Number(order.total) : undefined,
+      }).eq("woo_order_id", Number(order.id));
+      if (woErr) console.error("web_orders update:", woErr.message);
+    }
+
     const empresa =
       order.billing?.company ||
       `${order.billing?.first_name ?? ""} ${order.billing?.last_name ?? ""}`.trim();

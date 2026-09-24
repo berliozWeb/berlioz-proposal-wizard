@@ -62,6 +62,12 @@ const Navbar = () => {
   };
 
   return (
+    <>
+    {settings.announcement_enabled && settings.announcement_text.trim() && (
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-primary text-primary-foreground text-center font-body text-sm py-2 px-4">
+        {settings.announcement_text}
+      </div>
+    )}
     <header
       className="fixed top-0 left-0 right-0 z-50"
       style={{

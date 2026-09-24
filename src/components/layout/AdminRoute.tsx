@@ -1,40 +1,34 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface AdminRouteProps {
-  children: React.ReactNode;
-}
-
-const AdminRoute = ({ children }: AdminRouteProps) => {
+export function useIsAdmin() {
   const { user, loading } = useAuth();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-
   useEffect(() => {
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-    supabase
-      .from("profiles")
-      .select("admin_role")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(data?.admin_role === "admin"));
-  }, [user]);
+    if (loading) return;
+    if (!user) { setIsAdmin(false); return; }
+    setIsAdmin(null);
+    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })
+      .then(({ data }) => setIsAdmin(data === true));
+  }, [user, loading]);
+  return { isAdmin, user, loading: loading || isAdmin === null };
+}
 
-  if (loading || isAdmin === null) {
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAdmin, user, loading } = useIsAdmin();
+  const location = useLocation();
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
-
-  if (!user) return <Navigate to="/login?returnUrl=/admin/insights" replace />;
-  if (!isAdmin) return <Navigate to="/" replace />;
-
+  if (!user) return <Navigate to={`/admin/login?returnUrl=${encodeURIComponent(location.pathname)}`} replace />;
+  if (!isAdmin) return <Navigate to="/admin/login?denied=1" replace />;
   return <>{children}</>;
 };
 

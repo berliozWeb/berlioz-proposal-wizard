@@ -143,6 +143,8 @@ export function getDateDisclaimer(dateStr: string): DateWarning | null {
 }
 
 // ── Cutoff logic (stricter: block tomorrow after 3pm) ──
+// Editable desde el panel admin (useSiteSettings.applyRules).
+export const CUTOFF_CONFIG = { hour: 15 };
 export type CutoffWarning = {
   type: 'yellow' | 'red';
   message: string;
@@ -175,7 +177,7 @@ export function getCutoffWarning(dateStr: string): CutoffWarning | null {
   }
 
   // Tomorrow after 3pm: block
-  if (diffDays === 1 && currentMinutes >= 15 * 60) {
+  if (diffDays === 1 && currentMinutes >= CUTOFF_CONFIG.hour * 60) {
     return {
       type: 'red',
       message: '⛔ Ya no es posible cotizar para mañana — límite 3:00pm. Elige otra fecha o escríbenos: hola@berlioz.mx · 55 8237 5469',

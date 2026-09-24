@@ -32,9 +32,10 @@ function PayForm({ session, onPaid }: { session: PaymentSession; onPaid: Props["
     if (!stripe || !elements) return;
     setPaying(true);
     setError(null);
+    sessionStorage.setItem("berlioz_pending_order_id", String(session.orderId));
     const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: `${window.location.origin}/pedido-confirmado` },
+      confirmParams: { return_url: `${window.location.origin}/pedido-pagado` },
       redirect: "if_required",
     });
     if (stripeError) {

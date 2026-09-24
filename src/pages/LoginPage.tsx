@@ -34,6 +34,17 @@ const LoginPage = () => {
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get("returnUrl") || "/";
 
+  // Si ya hay sesión (p. ej. al volver de Google), no quedarse en el login.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate(returnUrl, { replace: true });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) navigate(returnUrl, { replace: true });
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate, returnUrl]);
+
   const handleGoogleLogin = async () => {
     setError(null);
     const result = await lovable.auth.signInWithOAuth("google", {

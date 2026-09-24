@@ -222,7 +222,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const shippingBase = state.shippingPrice ?? 0;
     const shipping = state.shippingType === "pickup" ? 0 : shippingBase;
     const earlySurcharge = state.earlySurcharge;
-    const iva = Math.round(subtotal * 0.16);
     let discount = 0;
     if (state.discountAmount > 0) {
       if (state.discountType === "percentage") {
@@ -231,6 +230,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         discount = state.discountAmount;
       }
     }
+    // Igual que la tienda: el IVA aplica a productos, envío y recargo.
+    const iva = Math.round((subtotal + shipping + earlySurcharge) * 0.16 * 100) / 100;
     const total = Math.max(0, subtotal + iva + shipping + earlySurcharge - discount);
     return { subtotal, iva, shipping, earlySurcharge, discount, total };
   }, [subtotal, state.shippingType, state.shippingPrice, state.discountAmount, state.discountType, state.earlySurcharge]);

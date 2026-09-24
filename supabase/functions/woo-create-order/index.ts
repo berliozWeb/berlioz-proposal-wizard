@@ -33,6 +33,7 @@ const BodySchema = z.object({
     postcode: z.string().max(10).optional().default(""),
     cost: z.number().min(0).max(5000).optional().default(0),
     zone: z.number().int().min(0).max(20).nullable().optional(),
+    early_surcharge: z.number().min(0).max(1000).optional().default(0),
   }),
   delivery: z.object({
     date: z.string().min(4).max(20),
@@ -234,6 +235,10 @@ Deno.serve(async (req) => {
             : shipping.type === "pickup"
               ? [{ method_id: "local_pickup", method_title: "Recoger en sucursal", total: "0.00" }]
               : [],
+        fee_lines:
+          shipping.early_surcharge > 0
+            ? [{ name: "Recargo entrega temprana", total: shipping.early_surcharge.toFixed(2), tax_status: "taxable" }]
+            : [],
         customer_note: notaCliente,
         meta_data: [
           { key: "_berlioz_origen", value: "web-nueva" },

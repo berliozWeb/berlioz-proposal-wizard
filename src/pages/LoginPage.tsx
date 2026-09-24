@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -34,12 +34,29 @@ const LoginPage = () => {
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get("returnUrl") || "/";
 
+  // Si ya hay sesión (p. ej. al volver de Google), no quedarse en el login.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate(returnUrl, { replace: true });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) navigate(returnUrl, { replace: true });
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [navigate, returnUrl]);
+
   const handleGoogleLogin = async () => {
     setError(null);
-    const { error } = await lovable.auth.signInWithOAuth("google", {
+    const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
     });
-    if (error) setError(error.message ?? "Error al iniciar con Google");
+    if (result.error) {
+      setError(result.error.message ?? "Error al iniciar con Google");
+      return;
+    }
+    if (result.redirected) return;
+    // Sesión ya establecida (ventana emergente): salir del login.
+    navigate(returnUrl);
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {

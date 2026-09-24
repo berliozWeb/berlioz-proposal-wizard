@@ -129,7 +129,7 @@ export async function syncOrderCalendar(supabase: any, order: any) {
         body: JSON.stringify(construirEvento(order)),
       });
       await supabase.from("order_calendar_events").upsert(
-        { woo_order_id: wooId, google_event_id: ev.id, calendar_id: CALENDAR_ID, status: "created", last_error: null },
+        { woo_order_id: wooId, google_event_id: ev.id, calendar_id: CAL_ID, status: "created", last_error: null },
         { onConflict: "woo_order_id" },
       );
       return { created: ev.id };
@@ -146,7 +146,7 @@ export async function syncOrderCalendar(supabase: any, order: any) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`calendar sync pedido ${wooId}:`, msg);
     await supabase.from("order_calendar_events").upsert(
-      { woo_order_id: wooId, google_event_id: row?.google_event_id ?? null, calendar_id: CALENDAR_ID, status: row?.status === "created" ? "created" : "error", last_error: msg },
+      { woo_order_id: wooId, google_event_id: row?.google_event_id ?? null, calendar_id: CAL_ID, status: row?.status === "created" ? "created" : "error", last_error: msg },
       { onConflict: "woo_order_id" },
     );
     return { error: msg };

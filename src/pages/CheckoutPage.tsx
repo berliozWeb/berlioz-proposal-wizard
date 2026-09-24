@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getShippingInfo } from "@/utils/shippingCalculator";
+import StripePaymentDialog, { type PaymentSession } from "@/components/checkout/StripePaymentDialog";
 
 function formatMXN(n: number) {
   return "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -52,6 +53,7 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentSession, setPaymentSession] = useState<PaymentSession | null>(null);
   const [timeError, setTimeError] = useState<string | null>(null);
   const [companySuggestions, setCompanySuggestions] = useState<string[]>([]);
   const [bankTransferEnabled, setBankTransferEnabled] = useState(false);
@@ -185,7 +187,8 @@ const CheckoutPage = () => {
       }
 
       const payUrl = (data as any)?.pay_url as string | undefined;
-      if (!payUrl) throw new Error("La tienda no devolvió la liga de pago.");
+      const orderId = Number((data as any)?.order_id);
+      if (!payUrl || !orderId) throw new Error("La tienda no devolvió el pedido.");
 
       if (companyName.trim()) {
         await supabase
@@ -195,14 +198,37 @@ const CheckoutPage = () => {
           .maybeSingle();
       }
 
-      clearCart();
-      window.location.href = payUrl;
+      const { data: intent, error: intentError } = await supabase.functions.invoke("stripe-order-payment", {
+        body: { action: "intent", order_id: orderId },
+      });
+      if (intentError || !(intent as any)?.client_secret) {
+        // Respaldo: pagar en berlioz.mx
+        clearCart();
+        window.location.href = payUrl;
+        return;
+      }
+      setPaymentSession({
+        orderId,
+        orderNumber: (intent as any).order_number,
+        clientSecret: (intent as any).client_secret,
+        publishableKey: (intent as any).publishable_key,
+        total: Number((intent as any).total),
+        payUrl,
+      });
     } catch (err) {
       console.error(err);
       toast.error("No pudimos preparar tu pago. Intenta de nuevo o escríbenos por WhatsApp.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePaid = (orderNumber: string) => {
+    setPaymentSession(null);
+    clearCart();
+    sessionStorage.setItem("berlioz_woo_order_number", orderNumber);
+    toast.success(`¡Pago recibido! Pedido #${orderNumber} confirmado.`);
+    navigate("/pedido-pagado");
   };
 
   if (items.length === 0) return null;
@@ -427,11 +453,10 @@ const CheckoutPage = () => {
                 <CreditCard className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <p className="font-body text-sm font-medium text-foreground">
-                    Terminas tu compra en berlioz.mx
+                    Tarjeta de crédito o débito
                   </p>
                   <p className="font-body text-xs text-muted-foreground mt-1">
-                    Al confirmar te llevamos a la página de pago de Berlioz con tu pedido ya armado.
-                    Ahí pagas con tarjeta de crédito o débito de forma segura.
+                    Pagas aquí mismo, de forma segura con Stripe. Al continuar verás el total final con envío e IVA.
                   </p>
                   <p className="font-body text-xs text-muted-foreground mt-2">
                     ¿Prefieres pagar por transferencia?{" "}
@@ -462,9 +487,14 @@ const CheckoutPage = () => {
               </Button>
 
               <p className="font-body text-[10px] text-muted-foreground text-center">
-                El total es estimado; el envío y los cupones se confirman en la página de pago de berlioz.mx.
+                El total es estimado; el total final con envío se confirma antes de pagar.
                 Tus datos personales se utilizarán para procesar tu pedido y otros propósitos descritos en nuestra Política de privacidad.
               </p>
+              <StripePaymentDialog
+                session={paymentSession}
+                onClose={() => setPaymentSession(null)}
+                onPaid={handlePaid}
+              />
             </div>
           </div>
 

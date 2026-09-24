@@ -32,6 +32,7 @@ import ConfirmationPage from "./pages/ConfirmationPage";
 import AccountPage from "./pages/AccountPage";
 import CartPage from "./pages/CartPage";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage";
+import OrderPaidPage from "./pages/OrderPaidPage";
 import Propuesta from "./pages/Propuesta";
 import AdminLeads from "./pages/AdminLeads";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -74,6 +75,7 @@ const App = () => (
                 <Route path="/cotizaciones" element={<ProtectedRoute><QuotesPage /></ProtectedRoute>} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/checkout/confirmacion" element={<OrderConfirmationPage />} />
+                <Route path="/pedido-pagado" element={<OrderPaidPage />} />
                 <Route path="/cuenta" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
 
                 {/* Legacy */}

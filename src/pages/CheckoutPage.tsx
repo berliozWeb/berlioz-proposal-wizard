@@ -135,7 +135,20 @@ const CheckoutPage = () => {
 
   const isPast3PM = new Date().getHours() >= 15;
 
-  const canSubmit = email && firstName && lastName && phone.length === 10 && deliveryDate && deliverySlot && termsAccepted && !timeError && (shippingType === "pickup" || (street && colonia && cp && cpValid));
+  const faltantes = [
+    !email && "correo",
+    !firstName && "nombre",
+    !lastName && "apellidos",
+    phone.length !== 10 && "teléfono de 10 dígitos",
+    shippingType !== "pickup" && !street && "calle y número",
+    shippingType !== "pickup" && !colonia && "colonia",
+    shippingType !== "pickup" && (!cp || !cpValid) && "código postal válido",
+    !deliveryDate && "fecha de entrega",
+    !deliverySlot && "hora de entrega",
+    timeError && "una hora de entrega con 90 min antes del evento",
+    !termsAccepted && "aceptar los términos",
+  ].filter(Boolean) as string[];
+  const canSubmit = faltantes.length === 0;
 
   // El pago y el calendario de cocina viven en berlioz.mx (WooCommerce).
   // Aquí solo se crea el pedido en la tienda y se redirige a pagarlo.
@@ -485,6 +498,11 @@ const CheckoutPage = () => {
               <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="w-full" size="lg">
                 {submitting ? "Preparando tu pago..." : `CONTINUAR AL PAGO · ${formatMXN(totals.total)}`}
               </Button>
+              {!canSubmit && (
+                <p className="font-body text-xs text-destructive text-center">
+                  Para continuar falta: {faltantes.join(", ")}.
+                </p>
+              )}
 
               <p className="font-body text-[10px] text-muted-foreground text-center">
                 El total es estimado; el total final con envío se confirma antes de pagar.

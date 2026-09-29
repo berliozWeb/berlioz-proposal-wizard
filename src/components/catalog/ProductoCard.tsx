@@ -109,7 +109,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
             <DetalleTrigger
               href={href}
               onOpen={() => setDetalleOpen(true)}
-              className="w-full h-8 px-2.5 rounded-lg border border-transparent bg-muted/40 text-[11px] font-medium text-muted-foreground flex items-center hover:text-primary transition-colors"
+              className="w-full min-h-11 px-2.5 rounded-lg border border-transparent bg-muted/40 text-[11px] font-medium text-muted-foreground flex items-center hover:text-primary transition-colors"
             >
               <span className="truncate">Ver detalles</span>
             </DetalleTrigger>
@@ -122,7 +122,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
             type="button"
             onClick={handleAdd}
             className={cn(
-              "w-full h-8 sm:h-9 rounded-lg sm:rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
+              "w-full min-h-11 rounded-lg sm:rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
               inCart
                 ? "bg-green-600 text-white hover:bg-green-700"
                 : "bg-primary text-primary-foreground hover:bg-primary/90"

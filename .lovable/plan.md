@@ -1,38 +1,41 @@
-# Plan: mejoras de compra en /menu
+# Plan: SEO técnico de rutas públicas
 
-## 0. Datos verificados (solo lectura)
+## Aviso importante antes de empezar
+Hoy **berlioz.mx es la tienda WooCommerce** y esta app se publica en berlioz-web.lovable.app (sin dominio propio conectado). Si ponemos canonical, og:url, og:image y sitemap apuntando a https://berlioz.mx antes de que ese dominio sirva esta app, Google entenderá que la página "real" es la de WooCommerce y la imagen de vista previa no cargará. Se construye todo con https://berlioz.mx como pediste; solo funcionará bien cuando el dominio apunte aquí.
 
-- 111 productos activos; **0** tienen `min_qty` lleno → los 111 caen al respaldo de **1 pieza** al presionar "Agregar".
-- No se agrega ninguna validación de mínimo de $1,000 (los mínimos actuales por producto y de fin de semana se quedan como están).
+## 1. Título, descripción y canonical por página
+- Instalar react-helmet-async y un componente `Seo` reutilizable (title, description, canonical, og:title/description/url).
+- Textos exactos que enviaste para Home, /menu, /cotizar, /contacto, /recompensas.
+- /producto/:slug: "{Nombre} | Berlioz" y descripción = descripción corta limpia (~150 caracteres) + "Desde $X MXN". Canonical https://berlioz.mx/producto/{slug}.
+- Quitar del index.html los tags que chocarían; dejar los generales como respaldo para WhatsApp/Facebook (esas redes solo leen el index.html, no los de cada página).
 
-## 1. "Agregar" directo con cantidad mínima sugerida
+## 2. Imagen para compartir
+- Crear og-image.jpg de 1200×630 (collage/recorte de fotos existentes de ocasiones, con logo Berlioz) en la carpeta pública, peso de unos cientos de KB.
+- Reemplazar la captura de Lovable por https://berlioz.mx/og-image.jpg; añadir og:url y og:locale=es_MX.
 
-- En `ProductoCard.tsx`, el botón **Agregar** dejará de abrir el stepper en 0: agregará de inmediato la cantidad mínima sugerida del producto (campo `min_qty`; si no existe, 1 pieza).
-- Se elimina el flujo de dos pasos (stepper + botón OK) del estado inicial. El ajuste fino de cantidad seguirá disponible en el modal de detalle y en el carrito.
-- Al agregar se mostrará un toast de confirmación (sonner ya montado): "Nombre del producto añadido al carrito" (el `addItem` del contexto ya lo emite; se conserva).
-- Si el producto ya está en el carrito, el botón dirá **Agregar más** y sumará otra vez la cantidad mínima.
+## 3. Íconos
+- Generar desde el logo actual: favicon (32px), apple-touch-icon (180px), íconos 192/512 y site.webmanifest (nombre Berlioz, color navy #014D6F). Declararlos en el index.html.
 
-## 2. Badge de piezas en el carrito del header
+## 4. robots.txt
+Disallow: /admin, /dashboard, /checkout, /login, /carrito + `Sitemap: https://berlioz.mx/sitemap.xml`.
 
-- En `Navbar.tsx`, el badge del ícono del carrito mostrará el **número total de piezas** (`totalUnits` del contexto) en lugar del número de renglones (`itemCount`).
-- Mismo estilo actual (círculo navy sobre el ícono); se oculta cuando el carrito está vacío.
+## 5. sitemap.xml estático
+Rutas públicas (/, /menu, /cotizar, /contacto, /recompensas) + todos los productos activos, obtenidos con una consulta **solo de lectura** hoy. Es una foto fija: si cambian productos, hay que regenerarlo.
 
-## 3. Barra fija inferior en móvil: "Ver pedido · $X"
+## 6. Página 404
+Meta robots noindex solo en esa página.
 
-- En `CatalogPage.tsx`, el botón flotante actual se reemplaza por una **barra fija inferior de ancho completo** visible solo en móvil (`md:hidden`) cuando el carrito tiene productos.
-- Texto: **"Ver pedido · $X"** con el subtotal del carrito formateado en MXN; al tocarla navega a `/carrito`.
-- Se agrega padding inferior al contenido para que la barra no tape la última fila de productos.
+## 7. JSON-LD FoodEstablishment en el home
+Con exactamente los datos enviados: nombre, teléfono, correo, dirección (Miguel Hidalgo, CDMX, 11450, MX, sin calle), areaServed y los 4 perfiles sociales. Sin openingHours.
 
-## 4. "Realizar Pedido" como botón de color en desktop
+## 8. Footer
+Nuevo bloque con las 4 líneas indicadas, usando los estilos de texto que ya tiene el footer.
 
-- En `Navbar.tsx` (solo desktop), el enlace **Realizar Pedido** se separa de los demás links y se muestra como botón sólido: fondo navy `#014D6F`, texto crema/blanco, esquinas redondeadas, con el mismo hover suave del resto del header.
-- En el menú móvil se mantiene como enlace de texto normal.
+## No se toca
+Base de datos (solo lectura para el sitemap), backend, checkout, /admin, diseño fuera del footer.
 
-## Validación
-
-- Escritorio y móvil con Playwright: agregar desde la tarjeta con un clic, toast visible, badge con piezas y barra inferior con total actualizado.
-- Confirmar que el build queda sin errores.
-
-## Límites respetados
-
-No se tocará lógica de pago, Stripe, cálculo de precios/IVA/envío, base de datos ni `/admin`. Los cambios se limitan a `ProductoCard.tsx`, `Navbar.tsx` y `CatalogPage.tsx`.
+## Detalles técnicos
+- `HelmetProvider` en main.tsx; `<Seo>` en HomePage, CatalogPage, QuotePage, ContactoPage, RecompensasPublicPage, ProductDetailPage, NotFound.
+- canonical se quita del index.html (Helmet no deduplica `<link>`).
+- Íconos y og-image generados con ImageMagick desde assets existentes.
+- Validación: Playwright revisa title/description/canonical por ruta y que el JSON-LD sea JSON válido.

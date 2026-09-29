@@ -23,7 +23,6 @@ import {
   type DeliveryGroup,
   type EventMode,
 } from "@/domain/entities/DeliveryGroup";
-import { generateMultiDeliveryPdf } from "@/lib/multiDeliveryPdf";
 import { toast } from "sonner";
 
 
@@ -1219,7 +1218,7 @@ const QuotePage = () => {
                       onClick={async () => {
                         if (!smartData?.proposals) return;
                         try {
-                          await generateMultiDeliveryPdf({
+                          await (await import("@/lib/multiDeliveryPdf")).generateMultiDeliveryPdf({
                             clientName,
                             empresa,
                             eventLabel: EVENT_TYPES.find(e => e.value === eventType)?.label ?? eventType,

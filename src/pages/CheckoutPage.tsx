@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getShippingInfo } from "@/utils/shippingCalculator";
-import StripePaymentDialog, { type PaymentSession } from "@/components/checkout/StripePaymentDialog";
+import { lazy, Suspense } from "react";
+import type { PaymentSession } from "@/components/checkout/StripePaymentDialog";
+const StripePaymentDialog = lazy(() => import("@/components/checkout/StripePaymentDialog"));
 
 function formatMXN(n: number) {
   return "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -511,11 +513,15 @@ const CheckoutPage = () => {
                 El total es estimado; el total final con envío se confirma antes de pagar.
                 Tus datos personales se utilizarán para procesar tu pedido y otros propósitos descritos en nuestra Política de privacidad.
               </p>
-              <StripePaymentDialog
-                session={paymentSession}
-                onClose={() => setPaymentSession(null)}
-                onPaid={handlePaid}
-              />
+              {paymentSession && (
+                <Suspense fallback={null}>
+                  <StripePaymentDialog
+                    session={paymentSession}
+                    onClose={() => setPaymentSession(null)}
+                    onPaid={handlePaid}
+                  />
+                </Suspense>
+              )}
             </div>
           </div>
 

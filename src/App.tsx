@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,37 +9,37 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import AdminRoute from "@/components/layout/AdminRoute";
-import AdminInsightsPage from "./pages/AdminInsightsPage";
-import AdminLoginPage from "./pages/AdminLoginPage";
-import AdminOrdersPage from "./pages/AdminOrdersPage";
-import AdminSettingsPage from "./pages/AdminSettingsPage";
+const AdminInsightsPage = lazy(() => import("./pages/AdminInsightsPage"));
+const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
+const AdminOrdersPage = lazy(() => import("./pages/AdminOrdersPage"));
+const AdminSettingsPage = lazy(() => import("./pages/AdminSettingsPage"));
 import { Navigate } from "react-router-dom";
 
 // Pages
 import HomePage from "./pages/HomePage";
 import CatalogPage from "./pages/CatalogPage";
-import QuotePage from "./pages/QuotePage";
-import LoginPage from "./pages/LoginPage";
-import PasswordRecoveryPage from "./pages/PasswordRecoveryPage";
-import NewPasswordPage from "./pages/NewPasswordPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import DashboardPage from "./pages/DashboardPage";
-import OrderHistoryPage from "./pages/OrderHistoryPage";
-import TeamPage from "./pages/TeamPage";
-import RewardsPage from "./pages/RewardsPage";
-import QuotesPage from "./pages/QuotesPage";
-import CheckoutPage from "./pages/CheckoutPage";
-import ConfirmationPage from "./pages/ConfirmationPage";
-import AccountPage from "./pages/AccountPage";
-import CartPage from "./pages/CartPage";
-import OrderConfirmationPage from "./pages/OrderConfirmationPage";
-import OrderPaidPage from "./pages/OrderPaidPage";
-import Propuesta from "./pages/Propuesta";
-import AdminLeads from "./pages/AdminLeads";
+const QuotePage = lazy(() => import("./pages/QuotePage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const PasswordRecoveryPage = lazy(() => import("./pages/PasswordRecoveryPage"));
+const NewPasswordPage = lazy(() => import("./pages/NewPasswordPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const OrderHistoryPage = lazy(() => import("./pages/OrderHistoryPage"));
+const TeamPage = lazy(() => import("./pages/TeamPage"));
+const RewardsPage = lazy(() => import("./pages/RewardsPage"));
+const QuotesPage = lazy(() => import("./pages/QuotesPage"));
+const CheckoutPage = lazy(() => import("./pages/CheckoutPage"));
+const ConfirmationPage = lazy(() => import("./pages/ConfirmationPage"));
+const AccountPage = lazy(() => import("./pages/AccountPage"));
+const CartPage = lazy(() => import("./pages/CartPage"));
+const OrderConfirmationPage = lazy(() => import("./pages/OrderConfirmationPage"));
+const OrderPaidPage = lazy(() => import("./pages/OrderPaidPage"));
+const Propuesta = lazy(() => import("./pages/Propuesta"));
+const AdminLeads = lazy(() => import("./pages/AdminLeads"));
 import ProductDetailPage from "./pages/ProductDetailPage";
-import ContactoPage from "./pages/ContactoPage";
-import RecompensasPublicPage from "./pages/RecompensasPublicPage";
-import AdminCustomersPage from "./pages/AdminCustomersPage";
+const ContactoPage = lazy(() => import("./pages/ContactoPage"));
+const RecompensasPublicPage = lazy(() => import("./pages/RecompensasPublicPage"));
+const AdminCustomersPage = lazy(() => import("./pages/AdminCustomersPage"));
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
               <Routes>
                 {/* Public */}
                 <Route path="/" element={<HomePage />} />
@@ -88,6 +90,7 @@ const App = () => (
                 <Route path="/admin/insights" element={<AdminRoute><AdminInsightsPage /></AdminRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </BrowserRouter>
           </AppDependenciesProvider>
         </CartProvider>

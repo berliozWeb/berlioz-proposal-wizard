@@ -221,13 +221,21 @@ const Navbar = () => {
                 textDecoration: 'none',
               }}
               title="Iniciar sesión"
+              aria-label="Iniciar sesión"
             >
               <User style={{ width: 16, height: 16 }} />
             </Link>
           )}
 
           {/* Mobile hamburger */}
-          <button className="md:hidden p-1.5" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu" style={{ color: '#014D6F' }}>
+          <button
+            className="md:hidden inline-flex min-h-11 min-w-11 items-center justify-center"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={mobileOpen}
+            aria-controls="menu-movil"
+            style={{ color: '#014D6F' }}
+          >
             {mobileOpen ? <X style={{ width: 22, height: 22 }} /> : <Menu style={{ width: 22, height: 22 }} />}
           </button>
         </div>
@@ -235,7 +243,7 @@ const Navbar = () => {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="md:hidden animate-slide-up" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA' }}>
+        <div id="menu-movil" className="md:hidden animate-slide-up" style={{ background: '#F7E8DF', borderTop: '1px solid #E2D3CA' }}>
           <div style={{ padding: '16px 24px' }} className="space-y-3">
             {NAV_LINKS.map((link) => (
               <Link key={link.to} to={link.to} className="block py-2 transition-colors hover:opacity-80" style={{ fontSize: 16, fontWeight: 500, color: '#014D6F', textDecoration: 'none', fontFamily: "'Montserrat', sans-serif" }}>

@@ -30,6 +30,24 @@ async function fetchProductoPorSlug(slug: string): Promise<ProductoCotizador | n
   return row ? mapProducto(row) : null;
 }
 
+/** Sugerencias: productos activos del espejo de Woo, ordenados por ventas, excluyendo el actual. */
+async function fetchSugerencias(excludeWooId: number | null): Promise<ProductoCotizador[]> {
+  const { data, error } = await supabase
+    .from("productos")
+    .select("*")
+    .eq("activo", true)
+    .eq("woo_source", true)
+    .in("tipo", ["simple", "variable"])
+    .not("permalink", "is", null)
+    .order("total_sales", { ascending: false })
+    .limit(30);
+  if (error) throw new Error(error.message);
+  return (data || [])
+    .map((r: any) => mapProducto(r))
+    .filter((p) => p.slug && p.woo_id !== excludeWooId)
+    .slice(0, 4);
+}
+
 export default function ProductDetailPage() {
   const { slug = "" } = useParams<{ slug: string }>();
   const location = useLocation();
@@ -50,6 +68,13 @@ export default function ProductDetailPage() {
     queryKey: ["producto-slug", normalizeSlug(slug)],
     queryFn: () => fetchProductoPorSlug(slug),
     enabled: !invalid,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: sugerencias = [] } = useQuery({
+    queryKey: ["producto-sugerencias", product?.woo_id ?? null],
+    queryFn: () => fetchSugerencias(product?.woo_id ?? null),
+    enabled: !!product,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -278,6 +303,43 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+
+        {sugerencias.length > 0 && (
+          <section className="mt-16">
+            <h2 className="font-heading text-2xl text-foreground mb-6">Sugerencias para ti</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {sugerencias.map((s) => {
+                const preciosS = s.variantes.map((v) => Number(v.precio) || 0).filter((p) => p > 0);
+                const lowS = preciosS.length ? Math.min(...preciosS) : 0;
+                const highS = preciosS.length ? Math.max(...preciosS) : 0;
+                return (
+                  <Link
+                    key={s.product_id}
+                    to={productPath(s.slug!)}
+                    className="group rounded-2xl border border-border/60 bg-card overflow-hidden hover:shadow-md transition-shadow"
+                  >
+                    <div className="aspect-[4/3] bg-muted overflow-hidden">
+                      {s.img_principal && (
+                        <img
+                          src={s.img_principal}
+                          alt={`${s.nombre} — Berlioz`}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-semibold text-foreground leading-snug line-clamp-2">{s.nombre}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {preciosS.length > 1 && lowS !== highS ? `Desde ${fmt(lowS)}` : fmt(lowS)}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </div>
     </BaseLayout>
   );

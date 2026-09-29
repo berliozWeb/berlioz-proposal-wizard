@@ -30,6 +30,24 @@ async function fetchProductoPorSlug(slug: string): Promise<ProductoCotizador | n
   return row ? mapProducto(row) : null;
 }
 
+/** Sugerencias: productos activos del espejo de Woo, ordenados por ventas, excluyendo el actual. */
+async function fetchSugerencias(excludeWooId: number | null): Promise<ProductoCotizador[]> {
+  const { data, error } = await supabase
+    .from("productos")
+    .select("*")
+    .eq("activo", true)
+    .eq("woo_source", true)
+    .in("tipo", ["simple", "variable"])
+    .not("permalink", "is", null)
+    .order("total_sales", { ascending: false })
+    .limit(30);
+  if (error) throw new Error(error.message);
+  return (data || [])
+    .map((r: any) => mapProducto(r))
+    .filter((p) => p.slug && p.woo_id !== excludeWooId)
+    .slice(0, 4);
+}
+
 export default function ProductDetailPage() {
   const { slug = "" } = useParams<{ slug: string }>();
   const location = useLocation();

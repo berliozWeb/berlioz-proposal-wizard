@@ -7,10 +7,10 @@
    - Mantener `11` para “Años teniendo clientes felices”.
    - Mostrar `+500,000` para comidas y `+500` para empresas, conservando el separador de miles.
 
-2. **Alinear la sección de opciones alimentarias**
-   - Cambiar “sin glúten” por “sin gluten”.
-   - Centrar el H2 y su párrafo para que compartan la misma alineación visual.
-   - Mantener intactos los demás textos rotativos y el estilo actual.
+2. **Sincronizar el contenido de las opciones alimentarias**
+   - Mantener la rotación actual entre “vegetariana”, “sin gluten”, “vegana”, “keto” y “sin lácteos”, corrigiendo “glúten” a “gluten”.
+   - Hacer que el párrafo cambie junto con cada título y describa específicamente esa misma opción.
+   - No centrar ni modificar estilos, espaciados o composición de la sección.
 
 3. **Establecer un solo H1 en el hero**
    - Agregar el H1 fijo: “Catering corporativo y box lunch en CDMX”.

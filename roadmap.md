@@ -51,3 +51,10 @@
 - [x] Evento creado desde el aviso de la tienda cuando el pedido pasa a "Procesando" (solo pedidos de la página nueva)
 - [x] Prueba de creación y borrado en el calendario
 - [ ] Confirmar en WordPress que el aviso de la tienda incluye "Pedido actualizado" (la conexión con la tienda no respondió)
+
+## Ajustes de contenido y jerarquía del home
+- [ ] Contadores exactos: 11, +500,000 y +500
+- [ ] Hero con un H1 fijo y frases rotativas como texto secundario
+- [ ] Sincronizar cada opción alimentaria rotativa con su descripción, sin cambiar estilos
+- [ ] Corregir jerarquía de testimonios, footer, /contacto y /recompensas
+- [ ] Validar escritorio, móvil y jerarquía de encabezados

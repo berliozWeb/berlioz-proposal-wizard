@@ -513,11 +513,15 @@ const CheckoutPage = () => {
                 El total es estimado; el total final con envío se confirma antes de pagar.
                 Tus datos personales se utilizarán para procesar tu pedido y otros propósitos descritos en nuestra Política de privacidad.
               </p>
-              <StripePaymentDialog
-                session={paymentSession}
-                onClose={() => setPaymentSession(null)}
-                onPaid={handlePaid}
-              />
+              {paymentSession && (
+                <Suspense fallback={null}>
+                  <StripePaymentDialog
+                    session={paymentSession}
+                    onClose={() => setPaymentSession(null)}
+                    onPaid={handlePaid}
+                  />
+                </Suspense>
+              )}
             </div>
           </div>
 

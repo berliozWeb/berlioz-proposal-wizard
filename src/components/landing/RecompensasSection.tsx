@@ -28,7 +28,7 @@ const RecompensasSection = () => (
 
     <div className="max-w-4xl mx-auto px-6 text-center">
       <RevealOnScroll>
-        <h2
+        <h1
           style={{
             fontFamily: "'Montserrat', sans-serif",
             fontWeight: 300,
@@ -39,7 +39,7 @@ const RecompensasSection = () => (
           }}
         >
           PROGRAMA DE RECOMPENSAS
-        </h2>
+        </h1>
         <p
           style={{
             fontFamily: "'Montserrat', sans-serif",

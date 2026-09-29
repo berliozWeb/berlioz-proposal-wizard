@@ -114,11 +114,25 @@ const HeroVideoCarousel = () => {
               padding: "0 40px",
             }}
           >
+            <h1
+              style={{
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: "clamp(30px, 4.5vw, 58px)",
+                fontWeight: 700,
+                color: "white",
+                lineHeight: 1.12,
+                margin: "0 0 24px",
+                maxWidth: 960,
+                textShadow: "0 2px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.4)",
+              }}
+            >
+              Catering corporativo y box lunch en CDMX
+            </h1>
             <p
               style={{
                 fontFamily: "'Montserrat', sans-serif",
-                fontSize: "clamp(28px, 5vw, 64px)",
-                fontWeight: 700,
+                fontSize: "clamp(16px, 2.4vw, 30px)",
+                fontWeight: 600,
                 color: "white",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",

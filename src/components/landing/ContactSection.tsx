@@ -21,7 +21,7 @@ const ContactSection = () => (
             className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl"
             style={{ padding: '48px 56px', maxWidth: 420 }}
           >
-            <h2
+            <h1
               style={{
                 fontFamily: "'Montserrat', sans-serif",
                 fontWeight: 300,
@@ -32,7 +32,7 @@ const ContactSection = () => (
               }}
             >
               CONTACTO
-            </h2>
+            </h1>
 
             <a
               href="tel:5582375469"

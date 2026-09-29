@@ -71,6 +71,13 @@ export default function ProductDetailPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: sugerencias = [] } = useQuery({
+    queryKey: ["producto-sugerencias", product?.woo_id ?? null],
+    queryFn: () => fetchSugerencias(product?.woo_id ?? null),
+    enabled: !!product,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [selectedId, setSelectedId] = useState("");
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);

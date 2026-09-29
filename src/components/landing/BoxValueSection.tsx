@@ -298,7 +298,6 @@ const BoxValueSection = () => {
         </div>
         )}
       </div>
-      </div>
     </section>
   );
 };

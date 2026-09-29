@@ -98,6 +98,18 @@ const BoxValueSection = () => {
   const [open, setOpen] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLElement | null>(null);
+  // Una sola versión en el DOM según el ancho (evita duplicar el contenido).
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    setIsDesktop(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -218,7 +230,8 @@ const BoxValueSection = () => {
         </h2>
 
         {/* Desktop: hotspots orbitando alrededor de la foto */}
-        <div className="relative mx-auto hidden w-full px-6 md:px-12 lg:px-20 xl:px-28 lg:block">
+        {isDesktop && (
+        <div className="relative mx-auto block w-full px-6 md:px-12 lg:px-20 xl:px-28">
           <div className="mx-auto w-[88%]">
             <div
               className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
@@ -263,9 +276,11 @@ const BoxValueSection = () => {
             </div>
           ))}
         </div>
+        )}
 
         {/* Móvil: imagen arriba, acordeón debajo */}
-        <div className="lg:hidden">
+        {!isDesktop && (
+        <div>
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
             style={{ background: "#F2EAE1" }}
@@ -281,6 +296,7 @@ const BoxValueSection = () => {
             {ALL_TAGS.map((t, i) => renderTag(t, i, "left"))}
           </div>
         </div>
+        )}
       </div>
     </section>
   );

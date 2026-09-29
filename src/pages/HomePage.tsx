@@ -133,7 +133,16 @@ const STEPS = [
 
 /* ── Infinite Logo Carousel ── */
 const LogoCarousel = () => {
-  const doubled = [...CLIENT_LOGOS, ...CLIENT_LOGOS];
+  const renderLogos = (duplicate: boolean) =>
+    CLIENT_LOGOS.map((logo, i) => (
+      <img
+        key={`${logo.alt}-${duplicate ? "dup" : "orig"}-${i}`}
+        src={logo.src}
+        alt={duplicate ? "" : logo.alt}
+        aria-hidden={duplicate ? "true" : undefined}
+        style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+      />
+    ));
 
   return (
     <div className="relative overflow-hidden" style={{ height: 80 }}>
@@ -141,14 +150,8 @@ const LogoCarousel = () => {
         className="flex items-center gap-20 animate-scroll-logos"
         style={{ width: 'max-content' }}
       >
-        {doubled.map((logo, i) => (
-          <img
-            key={`${logo.alt}-${i}`}
-            src={logo.src}
-            alt={logo.alt}
-            style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
-          />
-        ))}
+        {renderLogos(false)}
+        {renderLogos(true)}
       </div>
     </div>
   );
@@ -243,11 +246,11 @@ const HomePage = () => {
                   <div className="relative h-44 overflow-hidden">
                     <img src={o.image} alt={o.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    <span className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-2xl shadow">{o.emoji}</span>
+                    <span aria-hidden="true" className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-2xl shadow">{o.emoji}</span>
                   </div>
                 ) : (
                   <div className="h-44 bg-gradient-to-br from-muted/80 to-muted flex items-center justify-center">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-5xl shadow-inner transition-transform duration-300 group-hover:scale-110">{o.emoji}</div>
+                    <div aria-hidden="true" className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-5xl shadow-inner transition-transform duration-300 group-hover:scale-110">{o.emoji}</div>
                   </div>
                 )}
                 <div className="p-5 flex flex-col flex-1">

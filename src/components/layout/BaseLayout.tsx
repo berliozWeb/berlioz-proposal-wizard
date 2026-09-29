@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import WhatsAppFab from "./WhatsAppFab";
 
 interface BaseLayoutProps {
   children: ReactNode;
@@ -12,6 +13,7 @@ const BaseLayout = ({ children, hideFooter }: BaseLayoutProps) => (
     <Navbar />
     <main className="flex-1" style={{ paddingTop: 76 }}>{children}</main>
     {!hideFooter && <Footer />}
+    <WhatsAppFab />
   </div>
 );
 

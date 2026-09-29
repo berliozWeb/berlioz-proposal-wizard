@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { productPath } from "@/lib/productSlug";
 import { Check, Maximize2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import ProductoDetalleModal from "@/components/catalog/ProductoDetalleModal";
@@ -12,6 +14,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const defaultVariante = variantes.find((v) => v.es_base) ?? variantes[0];
   const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
   const [detalleOpen, setDetalleOpen] = useState(false);
+  const href = product.slug ? productPath(product.slug) : null;
 
   const selected: Variante | undefined =
     variantes.find((v) => v.variante_id === selectedId) ?? defaultVariante;
@@ -42,11 +45,11 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   return (
     <div className="group h-full flex flex-row sm:flex-col bg-card rounded-2xl border border-border/60 overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/30">
       {/* Imagen */}
-      <button
-        type="button"
-        onClick={() => setDetalleOpen(true)}
-        aria-label={`Ver detalles de ${product.nombre}`}
-        className="relative w-[32%] sm:w-full aspect-square sm:aspect-[4/3] overflow-hidden bg-muted shrink-0 text-left"
+      <DetalleTrigger
+        href={href}
+        onOpen={() => setDetalleOpen(true)}
+        ariaLabel={`Ver detalles de ${product.nombre}`}
+        className="relative block w-[32%] sm:w-full aspect-square sm:aspect-[4/3] overflow-hidden bg-muted shrink-0 text-left"
       >
         <img
           src={img}
@@ -63,7 +66,7 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
             <Maximize2 className="w-2.5 h-2.5" /> Ver
           </span>
         </span>
-      </button>
+      </DetalleTrigger>
 
       {/* Contenido */}
       <div className="flex flex-col flex-1 min-w-0 p-2.5 sm:p-4 justify-between">
@@ -73,11 +76,14 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
               {product.categoria}
             </span>
           )}
-          <h3
-            onClick={() => setDetalleOpen(true)}
-            className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide leading-tight cursor-pointer hover:text-primary transition-colors line-clamp-2 sm:min-h-[2.2rem]"
-          >
-            {product.nombre}
+          <h3 className="text-xs sm:text-sm font-bold text-foreground uppercase tracking-wide leading-tight line-clamp-2 sm:min-h-[2.2rem]">
+            <DetalleTrigger
+              href={href}
+              onOpen={() => setDetalleOpen(true)}
+              className="cursor-pointer hover:text-primary transition-colors text-left"
+            >
+              {product.nombre}
+            </DetalleTrigger>
           </h3>
           <p className="text-sm sm:text-base font-bold text-foreground mt-0.5">
             ${selected.precio.toLocaleString("es-MX")}
@@ -100,13 +106,13 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
               ))}
             </select>
           ) : (
-            <button
-              type="button"
-              onClick={() => setDetalleOpen(true)}
+            <DetalleTrigger
+              href={href}
+              onOpen={() => setDetalleOpen(true)}
               className="w-full h-8 px-2.5 rounded-lg border border-transparent bg-muted/40 text-[11px] font-medium text-muted-foreground flex items-center hover:text-primary transition-colors"
             >
               <span className="truncate">Ver detalles</span>
-            </button>
+            </DetalleTrigger>
           )}
         </div>
 
@@ -133,11 +139,41 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
         </div>
       </div>
 
-      <ProductoDetalleModal
-        product={product}
-        open={detalleOpen}
-        onClose={() => setDetalleOpen(false)}
-      />
+      {!href && (
+        <ProductoDetalleModal
+          product={product}
+          open={detalleOpen}
+          onClose={() => setDetalleOpen(false)}
+        />
+      )}
     </div>
+  );
+}
+
+/** Enlace real a /producto/{slug}/ si hay permalink; si no, abre la ventana de detalle. */
+function DetalleTrigger({
+  href,
+  onOpen,
+  className,
+  ariaLabel,
+  children,
+}: {
+  href: string | null;
+  onOpen: () => void;
+  className?: string;
+  ariaLabel?: string;
+  children: React.ReactNode;
+}) {
+  if (href) {
+    return (
+      <Link to={href} aria-label={ariaLabel} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" onClick={onOpen} aria-label={ariaLabel} className={className}>
+      {children}
+    </button>
   );
 }

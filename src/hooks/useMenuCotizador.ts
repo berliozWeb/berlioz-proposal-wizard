@@ -43,6 +43,8 @@ export interface ProductoCotizador {
   tipo?: string;
   /** Cantidad mínima sugerida por pedido (WooCommerce). Null = 1 pieza. */
   min_qty?: number | null;
+  /** Slug de WooCommerce extraído del permalink de berlioz.mx. */
+  slug?: string | null;
   desc_mini: string | null;
   desc_corta: string | null;
   desc_bullets: string | null;

@@ -6,7 +6,6 @@ import HeroCarousel from "@/components/landing/HeroVideoCarousel";
 import BoxValueSection from "@/components/landing/BoxValueSection";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
-import WordRotator from "@/components/ui/WordRotator";
 
 // Premium Images
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
@@ -73,9 +72,32 @@ const OCCASIONS: { id: string; name: string; price: number; emoji: string; image
 ];
 
 const STATS = [
-  { label: "Años teniendo clientes felices", value: 11 },
-  { label: "Comidas Entregadas", value: 500000 },
-  { label: "Empresas Internacionales", value: 500 },
+  { label: "Años teniendo clientes felices", value: 11, prefix: "" },
+  { label: "Comidas Entregadas", value: 500000, prefix: "+" },
+  { label: "Empresas Internacionales", value: 500, prefix: "+" },
+];
+
+const FOOD_OPTIONS = [
+  {
+    title: "vegetariana",
+    description: "Propuestas vegetarianas completas, equilibradas y llenas de sabor para tus reuniones corporativas.",
+  },
+  {
+    title: "sin gluten",
+    description: "Opciones sin gluten preparadas con ingredientes seleccionados, sin sacrificar sabor ni presentación.",
+  },
+  {
+    title: "vegana",
+    description: "Alternativas veganas frescas y completas, creadas exclusivamente con ingredientes de origen vegetal.",
+  },
+  {
+    title: "keto",
+    description: "Menús keto con bajo contenido de carbohidratos, pensados para mantener el sabor y el equilibrio.",
+  },
+  {
+    title: "sin lácteos",
+    description: "Preparaciones sin lácteos con ingredientes cuidadosamente elegidos para una experiencia deliciosa.",
+  },
 ];
 
 const TESTIMONIALS = [
@@ -138,7 +160,21 @@ const HomePage = () => {
   const [lunchboxPlaying, setLunchboxPlaying] = useState(false);
   const [lunchboxMuted, setLunchboxMuted] = useState(false);
   const [lunchboxVolume, setLunchboxVolume] = useState(0.5);
+  const [foodOptionIndex, setFoodOptionIndex] = useState(0);
+  const [foodOptionVisible, setFoodOptionVisible] = useState(true);
   const lunchboxPausedByUser = useRef(false);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setFoodOptionVisible(false);
+      window.setTimeout(() => {
+        setFoodOptionIndex((current) => (current + 1) % FOOD_OPTIONS.length);
+        setFoodOptionVisible(true);
+      }, 500);
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, []);
 
   // Inicia con sonido al 50% únicamente cuando la sección entra en pantalla.
   useEffect(() => {
@@ -357,9 +393,14 @@ const HomePage = () => {
         <div className="max-w-6xl mx-auto px-6">
           <RevealOnScroll>
             <h2 className="font-heading text-4xl md:text-[64px] md:leading-[1.1] text-primary mb-4 min-h-[1.2em]">
-              Opción <WordRotator words={["vegetariana", "sin glúten", "vegana", "keto", "sin lácteos"]} className="text-secondary italic" duration={3000} />
+              Opción{" "}
+              <span className={`text-secondary italic inline-block transition-all duration-500 transform ${foodOptionVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
+                {FOOD_OPTIONS[foodOptionIndex].title}
+              </span>
             </h2>
-            <p className="font-body text-muted-foreground text-lg mb-12 max-w-2xl mx-auto">Calidad y sabor que transforman tus reuniones corporativas sin dejar de lado lo saludable</p>
+            <p className={`font-body text-muted-foreground text-lg mb-12 max-w-2xl mx-auto transition-opacity duration-500 ${foodOptionVisible ? "opacity-100" : "opacity-0"}`}>
+              {FOOD_OPTIONS[foodOptionIndex].description}
+            </p>
           </RevealOnScroll>
 
           {/* Stats */}
@@ -369,7 +410,7 @@ const HomePage = () => {
                 <div className="text-center group">
                   <div className="flex justify-center mb-1">
                     <div className="text-[44px] md:text-[68px] font-heading font-black tracking-tighter text-primary">
-                      <AnimatedCounter end={s.value} />
+                      <AnimatedCounter end={s.value} prefix={s.prefix} />
                     </div>
                   </div>
                   <p className="font-body text-[12px] text-muted-foreground uppercase tracking-[0.3em] font-bold group-hover:text-secondary transition-colors duration-300">{s.label}</p>
@@ -380,7 +421,7 @@ const HomePage = () => {
 
           {/* Testimonials */}
           <RevealOnScroll delay={600}>
-            <h3 className="font-heading text-4xl md:text-5xl text-foreground mb-16 mt-24 text-center">Lo que dicen nuestros clientes</h3>
+            <h2 className="font-heading text-4xl md:text-5xl text-foreground mb-16 mt-24 text-center">Lo que dicen nuestros clientes</h2>
           </RevealOnScroll>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -407,7 +448,7 @@ const HomePage = () => {
                     />
                   </div>
                   <div>
-                    <h4 className="font-body text-base font-bold text-foreground">{t.name}</h4>
+                    <p className="font-body text-base font-bold text-foreground">{t.name}</p>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <span className="font-body text-sm">{t.company}</span>
                       <span className="w-1 h-1 rounded-full bg-border" />

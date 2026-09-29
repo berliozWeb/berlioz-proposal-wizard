@@ -8,7 +8,7 @@ const Footer = () => (
     <div style={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
       <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
-          <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 24, color: '#EDD9C8', marginBottom: 4 }}>¿Listo para cotizar?</h3>
+          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 24, color: '#EDD9C8', marginBottom: 4 }}>¿Listo para cotizar?</h2>
           <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
             Recibe una propuesta personalizada en minutos, sin compromiso.
           </p>
@@ -37,9 +37,9 @@ const Footer = () => (
 
         {/* Nav */}
         <div>
-          <h4 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
             Navegar
-          </h4>
+          </p>
           <ul className="space-y-2.5">
             {[
               { to: "/menu", label: "Realizar Pedido" },
@@ -60,9 +60,9 @@ const Footer = () => (
 
         {/* Company */}
         <div>
-          <h4 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
             Empresa
-          </h4>
+          </p>
           <ul className="space-y-2.5">
             {["Nosotros", "Términos", "Privacidad"].map((label) => (
               <li key={label}>
@@ -76,9 +76,9 @@ const Footer = () => (
 
         {/* Contact */}
         <div>
-          <h4 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
             Contacto
-          </h4>
+          </p>
           <ul className="space-y-3">
             <li>
               <a href="tel:5582375469" className="group flex items-center gap-3 transition-colors" style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}

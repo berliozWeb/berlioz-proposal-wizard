@@ -3,11 +3,12 @@ import { useEffect, useState, useRef } from "react";
 interface AnimatedCounterProps {
   end: number;
   duration?: number;
+  prefix?: string;
   suffix?: string;
   separator?: boolean;
 }
 
-const AnimatedCounter = ({ end, duration = 2000, suffix = "", separator = true }: AnimatedCounterProps) => {
+const AnimatedCounter = ({ end, duration = 2000, prefix = "", suffix = "", separator = true }: AnimatedCounterProps) => {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
@@ -39,7 +40,7 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = "", separator = true }
       
       // Easing function: easeOutExpo
       const easing = 1 - Math.pow(2, -10 * progress);
-      const currentCount = Math.floor(easing * end);
+      const currentCount = progress === 1 ? end : Math.floor(easing * end);
       
       setCount(currentCount);
 
@@ -58,6 +59,7 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = "", separator = true }
 
   return (
     <div ref={elementRef} className="font-heading font-bold text-4xl md:text-5xl text-primary tracking-tight">
+      {prefix}
       {formatNumber(count)}
       {suffix}
     </div>

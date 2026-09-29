@@ -73,6 +73,28 @@ const HeroVideoCarousel = () => {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden", background: "#000" }}>
+      <h1
+        style={{
+          position: "absolute",
+          top: "38%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 5,
+          width: "calc(100% - 80px)",
+          fontFamily: "'Montserrat', sans-serif",
+          fontSize: "clamp(30px, 4.5vw, 58px)",
+          fontWeight: 700,
+          color: "white",
+          lineHeight: 1.12,
+          margin: 0,
+          maxWidth: 960,
+          textAlign: "center",
+          textShadow: "0 2px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.4)",
+          pointerEvents: "none",
+        }}
+      >
+        Catering corporativo y box lunch en CDMX
+      </h1>
       {SLIDES.map((slide, i) => (
         <div
           key={i}
@@ -111,23 +133,9 @@ const HeroVideoCarousel = () => {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
-              padding: "0 40px",
+              padding: "120px 40px 0",
             }}
           >
-            <h1
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: "clamp(30px, 4.5vw, 58px)",
-                fontWeight: 700,
-                color: "white",
-                lineHeight: 1.12,
-                margin: "0 0 24px",
-                maxWidth: 960,
-                textShadow: "0 2px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.4)",
-              }}
-            >
-              Catering corporativo y box lunch en CDMX
-            </h1>
             <p
               style={{
                 fontFamily: "'Montserrat', sans-serif",

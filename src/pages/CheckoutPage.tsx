@@ -13,7 +13,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getShippingInfo } from "@/utils/shippingCalculator";
-import StripePaymentDialog, { type PaymentSession } from "@/components/checkout/StripePaymentDialog";
+import { lazy, Suspense } from "react";
+import type { PaymentSession } from "@/components/checkout/StripePaymentDialog";
+const StripePaymentDialog = lazy(() => import("@/components/checkout/StripePaymentDialog"));
 
 function formatMXN(n: number) {
   return "$" + n.toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });

@@ -1,3 +1,4 @@
+import Seo from "@/components/seo/Seo";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Star, ChevronRight, Clock, MapPin, Truck, CreditCard, Utensils, Play, Pause } from "lucide-react";
@@ -193,6 +194,13 @@ const HomePage = () => {
 
   return (
     <BaseLayout>
+      <Seo title="Catering corporativo y box lunch en CDMX | Berlioz" description="Desayunos, coffee breaks y working lunch gourmet para empresas en CDMX y Área Metropolitana. Pide antes de las 3 pm para el día siguiente." path="/" jsonLd={{
+  "@context": "https://schema.org", "@type": "FoodEstablishment", name: "Berlioz", url: "https://berlioz.mx",
+  telephone: "+52 55 8237 5469", email: "hola@berlioz.mx",
+  address: { "@type": "PostalAddress", addressLocality: "Miguel Hidalgo", addressRegion: "CDMX", postalCode: "11450", addressCountry: "MX" },
+  areaServed: "Ciudad de México y Área Metropolitana",
+  sameAs: ["https://www.facebook.com/BerliozMx", "https://www.instagram.com/berliozmx/", "https://mx.linkedin.com/company/berlioz", "https://www.youtube.com/channel/UCSLphReV4_CNOSBaL8Xf7jg"],
+}} />
       {/* ═══ SECTION 1 — HERO CAROUSEL ═══ */}
       <div style={{ marginTop: -76 }}>
         <HeroCarousel />

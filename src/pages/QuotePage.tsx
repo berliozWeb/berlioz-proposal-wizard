@@ -1,3 +1,4 @@
+import Seo from "@/components/seo/Seo";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
@@ -337,6 +338,7 @@ const QuotePage = () => {
 
   return (
     <BaseLayout hideFooter>
+      <Seo title="Cotiza catering para tu evento | Berlioz" description="Cotiza box lunch y coffee breaks para juntas, capacitaciones y eventos corporativos en CDMX." path="/cotizar" />
       <div className="bg-background min-h-screen pb-20">
         {/* COMPACT HERO 3:1 (only intake) */}
         {step === 0 && (

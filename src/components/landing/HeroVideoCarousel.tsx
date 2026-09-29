@@ -52,7 +52,7 @@ const HeroVideoCarousel = () => {
 
   useEffect(() => {
     if (paused) videoRef.current?.pause();
-    else if (!useStaticImage) videoRef.current?.play().catch(() => setPaused(true));
+    else if (!useStaticImage) videoRef.current?.play().catch(() => {});
   }, [current, paused, useStaticImage]);
 
   useEffect(() => {
@@ -91,6 +91,9 @@ const HeroVideoCarousel = () => {
           loop
           playsInline
           preload="auto"
+          onCanPlay={() => {
+            if (!paused) videoRef.current?.play().catch(() => {});
+          }}
           className="absolute inset-0 h-full w-full object-cover"
         />
       )}

@@ -1,25 +1,43 @@
-# Plan: carga más ligera del sitio
+# Accesibilidad y botón flotante de WhatsApp
 
-## Lo que encontré
-- Hoy las ~30 páginas (incluidas /admin, /dashboard y checkout) se descargan todas juntas al abrir el home.
-- Stripe solo lo usa la ventana de pago del checkout.
-- Recharts: solo Historial de pedidos (/dashboard). Calendario (react-day-picker) y PDF (jsPDF): solo /cotizar.
-- **Three.js no está instalado** en el proyecto: no hay nada que mover.
-- Montserrat carga pesos 100/300/400/500/600/700. Hay 10 textos con peso ligero (home, cotizador, barra de pasos); con el cambio se verán en 400, un poco más gruesos.
-- Mixpanel en index.html bloquea la carga.
+Siete ajustes de interfaz y accesibilidad. No se toca base de datos, checkout, textos de marketing ni lógica del carrito.
 
-## Cambios
-1. **Páginas por separado**: en App.tsx, home, /menu y producto siguen cargando al inicio; todas las demás (admin, dashboard, checkout, cuenta, cotizar, propuesta, login, etc.) se cargan al entrar, con un indicador de carga discreto mientras.
-2. **Stripe solo en checkout**: la ventana de pago se carga al abrir el paso de pago; `loadStripe` se llama ahí mismo (no antes).
-3. **Librerías pesadas**: recharts queda dentro de la página de historial; el calendario y el PDF de /cotizar se cargan solo cuando se muestra el calendario o al pulsar "Descargar PDF" (import dinámico de `multiDeliveryPdf`/`pdfTemplate`).
-4. **Mixpanel async**: el script pasa a `async` y el `init` se ejecuta en su `onload`; la guardia `if (window.mixpanel)` se mantiene.
-5. **Montserrat**: URL de Google Fonts con `wght@400;500;600;700`.
+## 1. Botón flotante de WhatsApp (solo móvil)
+Nuevo componente flotante, visible únicamente en pantallas chicas, que abre
+`https://wa.me/5215582375469` con el mensaje prellenado
+"¡Hola! Quiero ayuda para hacer mi pedido o cotizar".
+
+Para que no estorbe:
+- Se coloca arriba a la derecha de la zona inferior, con separación suficiente para quedar por encima de la barra "Ver pedido · $X" cuando esa barra existe.
+- En el inicio se respeta el espacio del botón de pausa del hero (que vive del lado contrario), así que no se encima.
+- Se le pone nombre accesible "Escríbenos por WhatsApp" y tamaño mínimo de 44×44 px.
+
+## 2. Nombres accesibles en el encabezado
+- Logo: "Inicio" (hoy dice "Berlioz").
+- Ícono de carrito: "Carrito".
+- Acceso/ingreso: "Iniciar sesión".
+
+## 3. Menú hamburguesa
+Se agregan `aria-expanded` (según esté abierto o cerrado) y `aria-controls` apuntando al panel del menú móvil, que recibe su `id`. La etiqueta pasa a español: "Abrir menú" / "Cerrar menú".
+
+## 4. Contenido decorativo oculto para lectores de pantalla
+- La segunda copia de los logos del carrusel de clientes se marca `aria-hidden="true"` (hoy se duplica la lista completa y se lee dos veces).
+- Los emojis dentro de los enlaces de ocasiones se envuelven en un `<span aria-hidden="true">`.
+
+## 5. Controles del carrusel en español
+Flechas y puntos del hero: "Anterior", "Siguiente", "Ir al slide N", y pausa/reproducción en español.
+
+## 6. Áreas de toque de 44×44 px
+- Ícono de carrito del encabezado.
+- Botón "Agregar" de las tarjetas de producto.
+- Enlace "Ver detalles".
+Se logra con altura/ancho mínimos, sin cambiar el aspecto visual más allá de un poco de holgura.
+
+## 7. "¿Por qué BERLIOZ?" sin duplicados
+Hoy la sección arma dos veces el mismo contenido (versión escritorio y versión móvil) y esconde una con CSS, así que ambas existen en la página.
+Se cambia a detectar el tamaño de pantalla en tiempo real (`matchMedia`, punto de corte `lg`) y renderizar solo la versión que corresponde. Mismo diseño, mismo comportamiento, la mitad del contenido repetido.
 
 ## Detalles técnicos
-- `React.lazy` + `<Suspense>` alrededor de `<Routes>`; los proveedores (Auth, Cart, Query) no cambian.
-- `StripePaymentDialog` vía `lazy()` en CheckoutPage, montado solo cuando hay `session`.
-- `generateMultiDeliveryPdf` y jsPDF en ProposalStep por `await import(...)` en el handler.
-- Verificación: build y revisión en navegador de que el home no pide los archivos de admin, checkout, Stripe, recharts ni jsPDF.
-
-## No se toca
-Lógica de negocio, precios, base de datos, autenticación, flujo de pago.
+- Nuevo `src/components/layout/WhatsAppFab.tsx`, montado en el layout base para que aparezca en todas las páginas públicas; se oculta en rutas de administración, panel y checkout.
+- El desplazamiento vertical del botón usa una variable CSS que la barra móvil de "Ver pedido" ya puede ajustar, para no encimarse.
+- `BoxValueSection` usa un hook local con `matchMedia("(min-width: 1024px)")` y escucha cambios de tamaño.

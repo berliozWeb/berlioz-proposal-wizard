@@ -1,3 +1,4 @@
+import Seo from "@/components/seo/Seo";
 import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Search, ShoppingBag, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
@@ -126,6 +127,7 @@ const CatalogPage = () => {
 
   return (
     <BaseLayout>
+      <Seo title="Menú de catering corporativo | Berlioz" description="Box lunch, desayunos, coffee breaks, opciones veganas y bebidas con precios visibles. Entrega en CDMX y Área Metropolitana." path="/menu" />
       {/* Hero */}
       <section className="relative h-[32vh] min-h-[220px] md:h-[40vh] md:min-h-[300px] flex items-center justify-center overflow-hidden -mt-[72px]" style={{ background: '#F2E4D8' }}>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />

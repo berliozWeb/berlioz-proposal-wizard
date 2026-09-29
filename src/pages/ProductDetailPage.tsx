@@ -1,3 +1,4 @@
+import Seo from "@/components/seo/Seo";
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { 
@@ -218,8 +219,14 @@ const ProductDetailPage = () => {
   const cleanDescription = stripHtml(product.description || product.short_description || '');
   const shortDescription = product.short_description ? stripHtml(product.short_description) : (cleanDescription.length > 200 ? cleanDescription.slice(0, 200) + '…' : cleanDescription);
 
+  const seoName = toTitleCase(product.name);
+  const seoPrice = Number(finalPrice) > 0 ? ` Desde ${new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(finalPrice))}.` : "";
+  const seoShort = shortDescription.replace(/\s+/g, " ").trim();
+  const seoDesc = (seoShort.length > 130 ? seoShort.slice(0, 127).trimEnd() + "…" : seoShort) + seoPrice;
+
   return (
     <BaseLayout>
+      <Seo title={`${seoName} | Berlioz`} description={seoDesc.trim() || `${seoName} de Berlioz, catering corporativo en CDMX.`} path={`/producto/${slug ?? product.slug}`} />
       <div className="relative pt-8 pb-24">
         <div className="max-w-7xl mx-auto px-6">
           {/* Back */}

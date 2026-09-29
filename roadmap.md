@@ -60,9 +60,9 @@
 - [x] Validar escritorio, móvil y jerarquía de encabezados
 
 ## Optimización del hero y video Lunch Box
-- [ ] Hero fijo con titular, subtítulo de cobertura real y dos acciones visibles
-- [ ] Simplificar videos de fondo y eliminar textos superpuestos
-- [ ] Añadir posters y estrategia móvil/Save-Data
-- [ ] Añadir pausa y respetar movimiento reducido
-- [ ] Ajustar video Lunch Box a reproducción silenciosa, poster y preload none
-- [ ] Validar escritorio, móvil, Save-Data y movimiento reducido
+- [x] Hero fijo con titular, subtítulo de cobertura real y dos acciones visibles
+- [x] Simplificar videos de fondo y eliminar textos superpuestos
+- [x] Añadir posters y estrategia móvil/Save-Data
+- [x] Añadir pausa y respetar movimiento reducido
+- [x] Ajustar video Lunch Box a reproducción silenciosa, poster y preload none
+- [x] Validar escritorio, móvil, Save-Data y movimiento reducido

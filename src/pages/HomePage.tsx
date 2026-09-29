@@ -133,7 +133,16 @@ const STEPS = [
 
 /* ── Infinite Logo Carousel ── */
 const LogoCarousel = () => {
-  const doubled = [...CLIENT_LOGOS, ...CLIENT_LOGOS];
+  const renderLogos = (duplicate: boolean) =>
+    CLIENT_LOGOS.map((logo, i) => (
+      <img
+        key={`${logo.alt}-${duplicate ? "dup" : "orig"}-${i}`}
+        src={logo.src}
+        alt={duplicate ? "" : logo.alt}
+        aria-hidden={duplicate ? "true" : undefined}
+        style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+      />
+    ));
 
   return (
     <div className="relative overflow-hidden" style={{ height: 80 }}>
@@ -141,14 +150,8 @@ const LogoCarousel = () => {
         className="flex items-center gap-20 animate-scroll-logos"
         style={{ width: 'max-content' }}
       >
-        {doubled.map((logo, i) => (
-          <img
-            key={`${logo.alt}-${i}`}
-            src={logo.src}
-            alt={logo.alt}
-            style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
-          />
-        ))}
+        {renderLogos(false)}
+        {renderLogos(true)}
       </div>
     </div>
   );

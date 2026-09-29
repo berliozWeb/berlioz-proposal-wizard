@@ -74,5 +74,5 @@
 - [x] "Realizar Pedido" como botón de color en desktop
 
 ## SEO técnico (29 sep)
-- [ ] Helmet por ruta + noindex fuera de berlioz.mx (excepto regla 404)
-- [ ] og-image, íconos, manifest, robots, sitemap, JSON-LD, footer
+- [x] Helmet por ruta + noindex fuera de berlioz.mx (excepto regla 404)
+- [x] og-image, íconos, manifest, robots, sitemap, JSON-LD, footer

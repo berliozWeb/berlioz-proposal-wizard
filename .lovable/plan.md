@@ -1,41 +1,52 @@
-# Plan: SEO técnico de rutas públicas
+# Páginas de producto con las URLs de WooCommerce
 
-## Aviso importante antes de empezar
-Hoy **berlioz.mx es la tienda WooCommerce** y esta app se publica en berlioz-web.lovable.app (sin dominio propio conectado). Si ponemos canonical, og:url, og:image y sitemap apuntando a https://berlioz.mx antes de que ese dominio sirva esta app, Google entenderá que la página "real" es la de WooCommerce y la imagen de vista previa no cargará. Se construye todo con https://berlioz.mx como pediste; solo funcionará bien cuando el dominio apunte aquí.
+## Qué verá el cliente
+- Cada producto con dirección en berlioz.mx tiene su propia página en `/producto/{slug}/`, la misma dirección que hoy tiene en berlioz.mx.
+- En /menu, "Ver detalles" (y la foto y el nombre de la tarjeta) se vuelven enlaces reales a esa página. PIROPO MUNDIAL y GOLDEN BOX siguen abriendo la ventana de detalle actual.
+- Las direcciones viejas con guion bajo (por ejemplo `pink_box`) muestran la página de "no encontrado" y los buscadores no la guardan.
 
-## 1. Título, descripción y canonical por página
-- Instalar react-helmet-async y un componente `Seo` reutilizable (title, description, canonical, og:title/description/url).
-- Textos exactos que enviaste para Home, /menu, /cotizar, /contacto, /recompensas.
-- /producto/:slug: "{Nombre} | Berlioz" y descripción = descripción corta limpia (~150 caracteres) + "Desde $X MXN". Canonical https://berlioz.mx/producto/{slug}.
-- Quitar del index.html los tags que chocarían; dejar los generales como respaldo para WhatsApp/Facebook (esas redes solo leen el index.html, no los de cada página).
+## 1. Búsqueda por slug de Woo
+- La página de producto deja de usar el catálogo viejo y busca en el espejo de Woo: productos activos, que vienen de Woo, simples o variables. Es el mismo filtro de /menu.
+- El slug se saca del permalink guardado: `https://berlioz.mx/producto/{slug}/` → `{slug}`. Se compara sin distinguir mayúsculas.
+- La página muestra lo mismo que la ventana de detalle actual: galería, descripción legible, variantes con cantidades independientes y "Agregar al carrito". Se reutilizan las piezas que ya existen para no duplicar nada.
+- No se cambian la base de datos ni la sincronización.
 
-## 2. Imagen para compartir
-- Crear og-image.jpg de 1200×630 (collage/recorte de fotos existentes de ocasiones, con logo Berlioz) en la carpeta pública, peso de unos cientos de KB.
-- Reemplazar la captura de Lovable por https://berlioz.mx/og-image.jpg; añadir og:url y og:locale=es_MX.
+## 2. Con y sin diagonal final
+- `/producto/pink-box` y `/producto/pink-box/` abren la misma página. Sin diagonal, la dirección se reescribe con diagonal sin recargar la página.
+- El canonical siempre es `https://berlioz.mx/producto/{slug}/`.
 
-## 3. Íconos
-- Generar desde el logo actual: favicon (32px), apple-touch-icon (180px), íconos 192/512 y site.webmanifest (nombre Berlioz, color navy #014D6F). Declararlos en el index.html.
+## 3. Enlaces desde /menu
+- En la tarjeta, "Ver detalles", la foto y el nombre son enlaces `<a href="/producto/{slug}/">` que navegan dentro del sitio.
+- Si el producto no tiene permalink, se mantienen los botones que abren la ventana de detalle.
+- "Agregar" y el selector de variante no cambian.
 
-## 4. robots.txt
-Disallow: /admin, /dashboard, /checkout, /login, /carrito + `Sitemap: https://berlioz.mx/sitemap.xml`.
+## 4. Datos de cada página
+- Título: `{Nombre} | Berlioz`.
+- Descripción: la introducción de Woo sin formato, recortada a unos 155 caracteres. Si falta, se usa "{Nombre} de Berlioz, catering corporativo en CDMX y Área Metropolitana."
+- Precio visible: el precio de Woo o "Desde $X" si tiene variantes, con la nota "+ IVA".
+- Texto alternativo de la foto: "{Nombre} — {categoría} de Berlioz" y un número si hay varias fotos.
+- JSON-LD con `Product` (name, description, image, sku con el ID de Woo solo dentro de los datos y nunca en la dirección, brand Berlioz, category) y `Offer`:
+  - Un solo precio: `price` en MXN.
+  - Con variantes: `AggregateOffer` con `lowPrice` y `highPrice`.
+  - `priceCurrency: "MXN"`, `availability: InStock`, `url` canónica y `priceSpecification` con `valueAddedTaxIncluded: false`.
 
-## 5. sitemap.xml estático
-Rutas públicas (/, /menu, /cotizar, /contacto, /recompensas) + todos los productos activos, obtenidos con una consulta **solo de lectura** hoy. Es una foto fija: si cambian productos, hay que regenerarlo.
+## 5. Sitemap
+- Se regenera `public/sitemap.xml` con 114 direcciones: las 5 páginas públicas (/, /menu, /cotizar, /contacto, /recompensas) y los 109 productos con su permalink de Woo con diagonal final.
+- Se quitan todos los slugs del catálogo viejo.
+- Es una lista fija generada ahora con una consulta de solo lectura. Si Woo agrega productos, habrá que regenerarla. Lo anoto como pendiente en el roadmap.
 
-## 6. Página 404
-Meta robots noindex solo en esa página.
-
-## 7. JSON-LD FoodEstablishment en el home
-Con exactamente los datos enviados: nombre, teléfono, correo, dirección (Miguel Hidalgo, CDMX, 11450, MX, sin calle), areaServed y los 4 perfiles sociales. Sin openingHours.
-
-## 8. Footer
-Nuevo bloque con las 4 líneas indicadas, usando los estilos de texto que ya tiene el footer.
+## 6. Slugs viejos y productos inexistentes
+- Un slug con guion bajo, o que no coincide con ningún producto activo, muestra la 404 del sitio con `noindex, nofollow` en cualquier dominio.
+- Mientras carga no se muestra la 404, para que no aparezca un instante.
 
 ## No se toca
-Base de datos (solo lectura para el sitemap), backend, checkout, /admin, diseño fuera del footer.
+MenuCatalog.ts, /propuesta y sus componentes, el generador de propuestas de respaldo, el checkout, la base de datos ni la sincronización con Woo. El inicio viejo que usa el catálogo viejo tampoco se toca.
+
+## Validación
+Se revisa en el navegador: una dirección con diagonal y otra sin ella, la etiqueta canonical, el título, el JSON-LD, el enlace desde /menu, que los 2 productos sin permalink sigan abriendo la ventana y que `pink_box` muestre la 404 con noindex. Además, se confirma que el sitemap tenga 114 direcciones y que el sitio compile sin errores.
 
 ## Detalles técnicos
-- `HelmetProvider` en main.tsx; `<Seo>` en HomePage, CatalogPage, QuotePage, ContactoPage, RecompensasPublicPage, ProductDetailPage, NotFound.
-- canonical se quita del index.html (Helmet no deduplica `<link>`).
-- Íconos y og-image generados con ImageMagick desde assets existentes.
-- Validación: Playwright revisa title/description/canonical por ruta y que el JSON-LD sea JSON válido.
+- Un nuevo hook `useProductoPorSlug(slug)` reutiliza `mapProducto` de `useMenuCatalogo` y lee `permalink`.
+- Un helper `slugFromPermalink()` va en `src/lib/`.
+- La ruta sigue siendo `/producto/:slug`. React Router ya acepta la diagonal final y la normalización se hace con `navigate(..., { replace: true })`.
+- `Seo` recibe un canonical absoluto con diagonal y `noindex` en la 404.

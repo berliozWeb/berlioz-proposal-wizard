@@ -76,3 +76,10 @@
 ## SEO técnico (29 sep)
 - [x] Helmet por ruta + noindex fuera de berlioz.mx (excepto regla 404)
 - [x] og-image, íconos, manifest, robots, sitemap, JSON-LD, footer
+
+## Páginas de producto con URL de Woo (29 sep)
+- [x] /producto/{slug}/ desde el espejo Woo (slug decodificado), canonical con diagonal
+- [x] "Ver detalles" como enlace real; PIROPO MUNDIAL y GOLDEN BOX con ventana
+- [x] Título, descripción, precio + IVA, alt, JSON-LD Product/Offer MXN sin IVA
+- [x] Sitemap: 5 páginas + 109 productos Woo; slugs viejos → 404 noindex
+- [ ] Regenerar sitemap cuando Woo agregue productos (lista fija)

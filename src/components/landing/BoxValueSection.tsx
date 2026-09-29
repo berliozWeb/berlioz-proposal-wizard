@@ -230,7 +230,8 @@ const BoxValueSection = () => {
         </h2>
 
         {/* Desktop: hotspots orbitando alrededor de la foto */}
-        <div className="relative mx-auto hidden w-full px-6 md:px-12 lg:px-20 xl:px-28 lg:block">
+        {isDesktop && (
+        <div className="relative mx-auto block w-full px-6 md:px-12 lg:px-20 xl:px-28">
           <div className="mx-auto w-[88%]">
             <div
               className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
@@ -275,9 +276,11 @@ const BoxValueSection = () => {
             </div>
           ))}
         </div>
+        )}
 
         {/* Móvil: imagen arriba, acordeón debajo */}
-        <div className="lg:hidden">
+        {!isDesktop && (
+        <div>
           <div
             className="rounded-[32px] overflow-hidden shadow-2xl p-2 md:p-4"
             style={{ background: "#F2EAE1" }}
@@ -293,6 +296,8 @@ const BoxValueSection = () => {
             {ALL_TAGS.map((t, i) => renderTag(t, i, "left"))}
           </div>
         </div>
+        )}
+      </div>
       </div>
     </section>
   );

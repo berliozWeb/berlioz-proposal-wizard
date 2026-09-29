@@ -66,3 +66,9 @@
 - [x] Añadir pausa y respetar movimiento reducido
 - [x] Ajustar video Lunch Box a reproducción silenciosa, poster y preload none
 - [x] Validar escritorio, móvil, Save-Data y movimiento reducido
+
+## Compra en /menu (29 sep)
+- [ ] Agregar directo con min_qty (respaldo 1 pieza; 0 de 111 productos activos tienen min_qty lleno) + toast
+- [ ] Badge de piezas (totalUnits) en el carrito del header
+- [ ] Barra fija móvil "Ver pedido · $X" en /menu
+- [ ] "Realizar Pedido" como botón de color en desktop

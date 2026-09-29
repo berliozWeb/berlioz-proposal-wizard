@@ -41,6 +41,8 @@ export interface ProductoCotizador {
   segunda_categoria: string | null;
   subcategoria: string | null;
   tipo?: string;
+  /** Cantidad mínima sugerida por pedido (WooCommerce). Null = 1 pieza. */
+  min_qty?: number | null;
   desc_mini: string | null;
   desc_corta: string | null;
   desc_bullets: string | null;

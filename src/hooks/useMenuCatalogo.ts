@@ -167,6 +167,7 @@ function mapProducto(row: any): ProductoCotizador {
     segunda_categoria: cats[1] ?? null,
     subcategoria: null,
     tipo: row.tipo ?? "simple",
+    min_qty: row.min_qty != null ? Math.max(1, Number(row.min_qty) || 1) : null,
     desc_mini: descCorta ? descCorta.slice(0, 120) : null,
     desc_corta: descCorta,
     desc_bullets: null,

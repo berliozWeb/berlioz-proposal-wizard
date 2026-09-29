@@ -72,3 +72,7 @@
 - [x] Badge de piezas (totalUnits) en el carrito del header
 - [x] Barra fija móvil "Ver pedido · $X" en /menu
 - [x] "Realizar Pedido" como botón de color en desktop
+
+## SEO técnico (29 sep)
+- [ ] Helmet por ruta + noindex fuera de berlioz.mx (excepto regla 404)
+- [ ] og-image, íconos, manifest, robots, sitemap, JSON-LD, footer

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Minus, Plus, Maximize2 } from "lucide-react";
+import { Check, Maximize2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import ProductoDetalleModal from "@/components/catalog/ProductoDetalleModal";
 import { cn } from "@/lib/utils";
@@ -11,8 +11,6 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const hasMany = variantes.length > 1;
   const defaultVariante = variantes.find((v) => v.es_base) ?? variantes[0];
   const [selectedId, setSelectedId] = useState<string>(defaultVariante?.variante_id ?? "");
-  const [picking, setPicking] = useState(false);
-  const [cantidad, setCantidad] = useState<string>("");
   const [detalleOpen, setDetalleOpen] = useState(false);
 
   const selected: Variante | undefined =
@@ -23,16 +21,15 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
   const img = selected.img || product.img_principal || product.img_fallback || "";
   const fallback = product.img_fallback || product.img_principal || "";
   const inCart = isInCart(selected.variante_id);
-  const qty = parseInt(cantidad || "0", 10) || 0;
-  const totalPrecio = (selected.precio || 0) * qty;
+  /** Cantidad mínima sugerida del producto; si no existe, 1 pieza. */
+  const minQty = Math.max(1, Number(product.min_qty) || 1);
 
   const handleAdd = () => {
-    if (qty < 1) return;
     addItem({
       id: selected.variante_id,
       name: selected.nombre_display || product.nombre,
       price: selected.precio || 0,
-      quantity: qty,
+      quantity: minQty,
       image: img || undefined,
       category: product.categoria,
       isPerPerson: true,
@@ -40,8 +37,6 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
       wooVariationId: selected.woo_variation_id ?? null,
       productoId: product.product_id,
     });
-    setPicking(false);
-    setCantidad("");
   };
 
   return (
@@ -115,64 +110,26 @@ export default function ProductoCard({ product }: { product: ProductoCotizador }
           )}
         </div>
 
-        {/* Agregar / stepper */}
+        {/* Agregar directo con la cantidad mínima sugerida */}
         <div className="mt-2 sm:mt-2.5">
-          {!picking ? (
-            <button
-              type="button"
-              onClick={() => setPicking(true)}
-              className={cn(
-                "w-full h-8 sm:h-9 rounded-lg sm:rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
-                inCart
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"
-              )}
-            >
-              {inCart ? (
-                <>
-                  <Check className="w-3.5 h-3.5" /> Agregar más
-                </>
-              ) : (
-                "Agregar"
-              )}
-            </button>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setCantidad(String(Math.max(1, qty - 1)))}
-                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors shrink-0"
-                aria-label="Restar pieza"
-              >
-                <Minus className="w-3 h-3" />
-              </button>
-              <input
-                type="number"
-                min={1}
-                autoFocus
-                placeholder="0"
-                value={cantidad}
-                onChange={(e) => setCantidad(e.target.value.replace(/[^0-9]/g, ""))}
-                className="h-8 flex-1 min-w-0 rounded-lg border border-border bg-background text-center text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              <button
-                type="button"
-                onClick={() => setCantidad(String(qty + 1))}
-                className="h-8 w-8 rounded-lg border border-border bg-background flex items-center justify-center hover:bg-muted transition-colors shrink-0"
-                aria-label="Sumar pieza"
-              >
-                <Plus className="w-3 h-3" />
-              </button>
-              <button
-                type="button"
-                onClick={handleAdd}
-                disabled={qty < 1}
-                className="h-8 px-3 rounded-lg font-body text-[11px] font-semibold flex items-center justify-center transition-all bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-              >
-                {qty > 0 ? `$${totalPrecio.toLocaleString("es-MX")}` : "OK"}
-              </button>
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={handleAdd}
+            className={cn(
+              "w-full h-8 sm:h-9 rounded-lg sm:rounded-xl font-body text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all",
+              inCart
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "bg-primary text-primary-foreground hover:bg-primary/90"
+            )}
+          >
+            {inCart ? (
+              <>
+                <Check className="w-3.5 h-3.5" /> Agregar más
+              </>
+            ) : (
+              minQty > 1 ? `Agregar ${minQty}` : "Agregar"
+            )}
+          </button>
         </div>
       </div>
 

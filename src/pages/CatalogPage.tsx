@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, ShoppingBag, ArrowRight, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { Search, ShoppingBag, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatMXN } from "@/domain/value-objects/Money";
 import BaseLayout from "@/components/layout/BaseLayout";
 import RevealOnScroll from "@/components/ui/RevealOnScroll";
 import { useCart } from "@/contexts/CartContext";
@@ -48,7 +49,7 @@ const precioBase = (p: ProductoCotizador) => {
 
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { itemCount } = useCart();
+  const { itemCount, subtotal } = useCart();
   const { data, isLoading: loading, error, refetch } = useMenuCatalogo();
 
   const [filter, setFilter] = useState(
@@ -320,7 +321,7 @@ const CatalogPage = () => {
                   className="group w-full h-14 rounded-2xl bg-primary text-primary-foreground font-body text-sm font-semibold hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                 >
                   Ver carrito
-                  <ChevronRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
@@ -328,22 +329,23 @@ const CatalogPage = () => {
         </div>
       </div>
 
-      {/* Floating Cart Button */}
+      {/* Barra fija inferior en móvil: Ver pedido · $X */}
       {itemCount > 0 && (
         <button
           onClick={() => navigate("/carrito")}
-          className="xl:hidden fixed bottom-8 right-8 z-50 px-6 py-4 rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30 flex items-center gap-4 animate-in slide-in-from-bottom-5 duration-500"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-primary text-primary-foreground shadow-[0_-8px_24px_rgba(1,77,111,0.25)] px-5 py-4 flex items-center justify-between active:opacity-95 transition-opacity"
         >
-          <div className="relative">
+          <span className="flex items-center gap-2.5">
             <ShoppingBag className="w-5 h-5" />
-            <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white text-primary text-[10px] font-bold flex items-center justify-center shadow-md">
-              {itemCount}
-            </span>
-          </div>
-          <span className="font-body text-sm font-bold uppercase tracking-wider">Ver Carrito</span>
-          <ArrowRight className="w-4 h-4" />
+            <span className="font-body text-xs font-medium opacity-85">{itemCount} {itemCount === 1 ? "producto" : "productos"}</span>
+          </span>
+          <span className="flex items-center gap-2 font-body text-sm font-bold">
+            Ver pedido · {formatMXN(subtotal)}
+            <ArrowRight className="w-4 h-4" />
+          </span>
         </button>
       )}
+      {itemCount > 0 && <div className="md:hidden h-[64px]" aria-hidden="true" />}
 
     </BaseLayout>
   );

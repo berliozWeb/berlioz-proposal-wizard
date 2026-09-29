@@ -37,7 +37,7 @@ const Navbar = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
-  const { itemCount } = useCart();
+  const { totalUnits } = useCart();
   const location = useLocation();
   const { settings } = useSiteSettings();
   const WHATSAPP_URL = whatsappUrl(settings);
@@ -84,9 +84,9 @@ const Navbar = () => {
           <img src={berliozLogo} alt="Berlioz" style={{ height: 44, width: 'auto', display: 'block' }} />
         </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop nav — "Realizar Pedido" se separa como botón de color */}
         <div className="hidden md:flex items-center" style={{ gap: 28 }}>
-          {NAV_LINKS.map((link) => (
+          {NAV_LINKS.filter((link) => link.to !== "/menu").map((link) => (
             <Link
               key={link.to}
               to={link.to}
@@ -112,6 +112,23 @@ const Navbar = () => {
               <span className="pointer-events-none absolute left-0 -bottom-1 h-[2px] w-full origin-left scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100" style={{ background: '#014D6F' }} />
             </Link>
           ))}
+          <Link
+            to="/menu"
+            className="inline-flex items-center justify-center transition-all duration-200 hover:opacity-90 active:scale-95"
+            style={{
+              background: '#014D6F',
+              color: '#FDFAF7',
+              fontFamily: "'Montserrat', sans-serif",
+              fontWeight: 600,
+              fontSize: 14,
+              padding: '8px 18px',
+              borderRadius: 10,
+              textDecoration: 'none',
+              marginLeft: 4,
+            }}
+          >
+            Realizar Pedido
+          </Link>
         </div>
 
         {/* Right side */}
@@ -129,19 +146,19 @@ const Navbar = () => {
             55 8237 5469
           </a>
 
-          {/* Cart — always visible */}
+          {/* Cart — always visible, badge = total de piezas */}
           <Link to="/carrito" className="relative p-1 transition-transform duration-200 hover:-translate-y-0.5 hover:scale-110 active:scale-95" style={{ color: '#014D6F' }}>
             <ShoppingCart style={{ width: 18, height: 18 }} />
-            {itemCount > 0 && (
+            {totalUnits > 0 && (
               <span
                 className="absolute flex items-center justify-center"
                 style={{
-                  top: -2, right: -2, width: 16, height: 16, borderRadius: '50%',
+                  top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, padding: '0 3px',
                   background: '#014D6F', color: 'white', fontSize: 9, fontWeight: 700,
                   fontFamily: "'Montserrat', sans-serif",
                 }}
               >
-                {itemCount}
+                {totalUnits > 99 ? '99+' : totalUnits}
               </span>
             )}
           </Link>

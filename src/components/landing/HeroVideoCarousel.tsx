@@ -150,13 +150,15 @@ const HeroVideoCarousel = () => {
           {paused ? <Play /> : <Pause />}
         </Button>
         {SLIDES.map((slide, index) => (
-          <button
+          <Button
             key={slide.video}
             type="button"
+            size="icon"
+            variant="ghost"
             onClick={() => setCurrent(index)}
             aria-label={`Mostrar fondo ${index + 1}`}
             aria-current={index === current ? "true" : undefined}
-            className={`h-2 w-2 rounded-full border border-primary-foreground transition-colors ${
+            className={`h-2 w-2 rounded-full border border-primary-foreground p-0 transition-colors hover:bg-primary-foreground ${
               index === current ? "bg-primary-foreground" : "bg-primary-foreground/30"
             }`}
           />

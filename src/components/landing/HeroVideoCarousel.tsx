@@ -1,270 +1,168 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
+import boxlunchImg from "@/assets/food-boxlunch.jpg";
+import coffeeAmImg from "@/assets/imagenes_menu/cb_coffee-break-am-cafe.jpg";
+import coffeePmImg from "@/assets/imagenes_menu/cb_coffee-break-pm.jpg";
+import juntaImg from "@/assets/imagenes_menu/wl_comedor-berlioz.jpg";
+import veganoImg from "@/assets/imagenes_menu/veg_pink-box-vegana.jpg";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const BUCKET = `${SUPABASE_URL}/storage/v1/object/public/hero-videos`;
 
 const SLIDES = [
-  {
-    video: `${BUCKET}/hero-6-colorful-spread.mp4`,
-    lines: ["MENÚS PARA", "TODOS LOS GUSTOS"],
-    overlay: "rgba(0, 77, 111, 0.30)",
-    cta: { label: "Ver menú →", to: "/menu" },
-  },
-  {
-    video: `${BUCKET}/hero-5-coffee-break.mp4`,
-    lines: ["COFFEE BREAKS", "LISTOS EN TU OFICINA"],
-    overlay: "rgba(0, 77, 111, 0.35)",
-    cta: null as null | { label: string; to: string },
-  },
-  {
-    video: `${BUCKET}/hero-1-overhead-pan.mp4`,
-    lines: ["COMIDA FANTÁSTICA", "PARA JUNTAS CON ESTILO"],
-    overlay: "rgba(0, 77, 111, 0.35)",
-    cta: null as null | { label: string; to: string },
-  },
-  {
-    video: `${BUCKET}/hero-2-hands-rotating.mp4`,
-    lines: ["EL WORKING LUNCH", "QUE TU EQUIPO MERECE"],
-    overlay: "rgba(0, 77, 111, 0.30)",
-    cta: null as null | { label: string; to: string },
-  },
-  {
-    video: `${BUCKET}/hero-7-drinks.mp4`,
-    lines: ["CONOCE NUESTRAS", "DELICIOSAS BEBIDAS ARTESANALES"],
-    overlay: "rgba(0, 77, 111, 0.30)",
-    cta: null as null | { label: string; to: string },
-  },
-  {
-    video: `${BUCKET}/hero-8-practical-products.mp4`,
-    lines: ["CONTAMOS TAMBIÉN CON PRODUCTOS", "PRÁCTICOS Y ACCESIBLES"],
-    overlay: "rgba(0, 77, 111, 0.30)",
-    cta: null as null | { label: string; to: string },
-  },
+  { video: `${BUCKET}/hero-6-colorful-spread.mp4`, poster: boxlunchImg, alt: "Selección de boxes Berlioz" },
+  { video: `${BUCKET}/hero-5-coffee-break.mp4`, poster: coffeeAmImg, alt: "Coffee break corporativo" },
+  { video: `${BUCKET}/hero-1-overhead-pan.mp4`, poster: breakfastImg, alt: "Desayuno corporativo Berlioz" },
+  { video: `${BUCKET}/hero-2-hands-rotating.mp4`, poster: juntaImg, alt: "Working lunch para equipos" },
+  { video: `${BUCKET}/hero-7-drinks.mp4`, poster: coffeePmImg, alt: "Bebidas para eventos corporativos" },
+  { video: `${BUCKET}/hero-8-practical-products.mp4`, poster: veganoImg, alt: "Opciones prácticas Berlioz" },
 ];
+
+type NavigatorWithConnection = Navigator & {
+  connection?: { saveData?: boolean };
+};
 
 const HeroVideoCarousel = () => {
   const [current, setCurrent] = useState(0);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const [paused, setPaused] = useState(false);
+  const [useStaticImage, setUseStaticImage] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const currentSlide = SLIDES[current];
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % SLIDES.length);
+    const mobileQuery = window.matchMedia("(max-width: 767px)");
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMediaPreference = () => {
+      const saveData = (navigator as NavigatorWithConnection).connection?.saveData === true;
+      setUseStaticImage(mobileQuery.matches || reducedMotionQuery.matches || saveData);
+      if (reducedMotionQuery.matches) setPaused(true);
+    };
+
+    updateMediaPreference();
+    mobileQuery.addEventListener("change", updateMediaPreference);
+    reducedMotionQuery.addEventListener("change", updateMediaPreference);
+    return () => {
+      mobileQuery.removeEventListener("change", updateMediaPreference);
+      reducedMotionQuery.removeEventListener("change", updateMediaPreference);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (paused) videoRef.current?.pause();
+    else if (!useStaticImage) videoRef.current?.play().catch(() => setPaused(true));
+  }, [current, paused, useStaticImage]);
+
+  useEffect(() => {
+    if (paused) return;
+    const timer = window.setInterval(() => {
+      setCurrent((previous) => (previous + 1) % SLIDES.length);
     }, 10000);
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
+  }, [paused]);
+
+  const go = useCallback((direction: number) => {
+    setCurrent((previous) => (previous + direction + SLIDES.length) % SLIDES.length);
   }, []);
 
-  useEffect(() => {
-    videoRefs.current.forEach((v, i) => {
-      if (!v) return;
-      if (i === current) {
-        v.currentTime = 0;
-        v.play().catch(() => {});
-      } else {
-        v.pause();
-      }
-    });
-  }, [current]);
-
-  const go = useCallback((dir: number) => {
-    setCurrent((prev) => (prev + dir + SLIDES.length) % SLIDES.length);
-  }, []);
+  const togglePause = () => {
+    setPaused((wasPaused) => !wasPaused);
+  };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100vh", overflow: "hidden", background: "#000" }}>
-      <h1
-        style={{
-          position: "absolute",
-          top: "38%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          zIndex: 5,
-          width: "calc(100% - 80px)",
-          fontFamily: "'Montserrat', sans-serif",
-          fontSize: "clamp(30px, 4.5vw, 58px)",
-          fontWeight: 700,
-          color: "white",
-          lineHeight: 1.12,
-          margin: 0,
-          maxWidth: 960,
-          textAlign: "center",
-          textShadow: "0 2px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.4)",
-          pointerEvents: "none",
-        }}
-      >
-        Catering corporativo y box lunch en CDMX
-      </h1>
-      {SLIDES.map((slide, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: i === current ? 1 : 0,
-            transition: "opacity 1s ease",
-            pointerEvents: i === current ? "auto" : "none",
-          }}
-        >
-          <video
-            ref={(el) => (videoRefs.current[i] = el)}
-            src={slide.video}
-            autoPlay={i === 0}
-            muted
-            loop
-            playsInline
-            preload={i === 0 ? "auto" : "metadata"}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
-          />
-          <div style={{ position: "absolute", inset: 0, background: slide.overlay }} />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              padding: "120px 40px 0",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "'Montserrat', sans-serif",
-                fontSize: "clamp(16px, 2.4vw, 30px)",
-                fontWeight: 600,
-                color: "white",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                lineHeight: 1.2,
-                margin: "0 0 16px",
-                textShadow: "0 2px 16px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.4)",
-              }}
-            >
-              {slide.lines.map((l, idx) => (
-                <span key={idx} style={{ display: "block" }}>{l}</span>
-              ))}
-            </p>
-            {slide.cta && (
-              <Link
-                to={slide.cta.to}
-                style={{
-                  marginTop: 32,
-                  display: "inline-block",
-                  padding: "16px 36px",
-                  background: "#EDD9C8",
-                  color: "#014D6F",
-                  fontFamily: "'Montserrat', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  textDecoration: "none",
-                  borderRadius: 999,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 12px 30px rgba(0,0,0,0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
-                }}
-              >
-                {slide.cta.label}
-              </Link>
-            )}
+    <section className="relative h-[100svh] min-h-[620px] w-full overflow-hidden bg-foreground" aria-label="Berlioz catering corporativo">
+      <img
+        key={`poster-${current}`}
+        src={currentSlide.poster}
+        alt={currentSlide.alt}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+
+      {!useStaticImage && (
+        <video
+          key={currentSlide.video}
+          ref={videoRef}
+          src={currentSlide.video}
+          poster={currentSlide.poster}
+          autoPlay={!paused}
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
+
+      <div className="absolute inset-0 bg-foreground/45" aria-hidden="true" />
+
+      <div className="absolute inset-0 z-10 flex items-center justify-center px-6 pb-12 pt-28 text-center md:px-12">
+        <div className="max-w-4xl">
+          <h1 className="font-heading text-4xl font-bold leading-tight text-primary-foreground sm:text-5xl md:text-6xl">
+            Catering corporativo y box lunch en CDMX
+          </h1>
+          <p className="mx-auto mt-5 max-w-3xl font-body text-lg leading-relaxed text-primary-foreground sm:text-xl md:text-2xl">
+            Boxes, coffee breaks y catering para empresas y equipos en CDMX y Área Metropolitana.
+          </p>
+          <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+            <Button asChild size="lg" className="min-w-44 bg-accent text-accent-foreground hover:bg-accent/90">
+              <Link to="/menu">Hacer pedido</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="min-w-44 border-primary-foreground/70 bg-background/10 text-primary-foreground backdrop-blur-sm hover:bg-background/20 hover:text-primary-foreground">
+              <Link to="/cotizar">Cotizar evento</Link>
+            </Button>
           </div>
         </div>
-      ))}
+      </div>
 
-      <button
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
         onClick={() => go(-1)}
-        aria-label="Previous slide"
-        style={{
-          position: "absolute",
-          left: 16,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.25)",
-          border: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          zIndex: 10,
-          backdropFilter: "blur(4px)",
-        }}
+        aria-label="Mostrar imagen anterior"
+        className="absolute left-3 top-1/2 z-20 -translate-y-1/2 bg-background/15 text-primary-foreground backdrop-blur-sm hover:bg-background/25 hover:text-primary-foreground md:left-6"
       >
-        <ChevronLeft size={24} color="white" />
-      </button>
-      <button
+        <ChevronLeft />
+      </Button>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
         onClick={() => go(1)}
-        aria-label="Next slide"
-        style={{
-          position: "absolute",
-          right: 16,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.25)",
-          border: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          zIndex: 10,
-          backdropFilter: "blur(4px)",
-        }}
+        aria-label="Mostrar imagen siguiente"
+        className="absolute right-3 top-1/2 z-20 -translate-y-1/2 bg-background/15 text-primary-foreground backdrop-blur-sm hover:bg-background/25 hover:text-primary-foreground md:right-6"
       >
-        <ChevronRight size={24} color="white" />
-      </button>
+        <ChevronRight />
+      </Button>
 
-      <div
-        style={{
-          position: "absolute",
-          bottom: 24,
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: 8,
-          zIndex: 10,
-        }}
-      >
-        {SLIDES.map((_, i) => (
+      <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          onClick={togglePause}
+          aria-label={paused ? "Reanudar carrusel y video" : "Pausar carrusel y video"}
+          aria-pressed={paused}
+          className="mr-2 bg-background/15 text-primary-foreground backdrop-blur-sm hover:bg-background/25 hover:text-primary-foreground"
+        >
+          {paused ? <Play /> : <Pause />}
+        </Button>
+        {SLIDES.map((slide, index) => (
           <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            aria-label={`Go to slide ${i + 1}`}
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              border: "1.5px solid white",
-              background: i === current ? "white" : "rgba(255,255,255,0.4)",
-              cursor: "pointer",
-              padding: 0,
-              transition: "background 0.3s",
-            }}
+            key={slide.video}
+            type="button"
+            onClick={() => setCurrent(index)}
+            aria-label={`Mostrar fondo ${index + 1}`}
+            aria-current={index === current ? "true" : undefined}
+            className={`h-2 w-2 rounded-full border border-primary-foreground transition-colors ${
+              index === current ? "bg-primary-foreground" : "bg-primary-foreground/30"
+            }`}
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 

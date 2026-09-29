@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Star, ChevronRight, Clock, MapPin, Truck, CreditCard, Utensils, Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Star, ChevronRight, Clock, MapPin, Truck, CreditCard, Utensils, Play, Pause } from "lucide-react";
 import BaseLayout from "@/components/layout/BaseLayout";
 import HeroCarousel from "@/components/landing/HeroVideoCarousel";
 import BoxValueSection from "@/components/landing/BoxValueSection";
@@ -158,11 +158,9 @@ const HomePage = () => {
   const navigate = useNavigate();
   const lunchboxVideoRef = useRef<HTMLVideoElement>(null);
   const [lunchboxPlaying, setLunchboxPlaying] = useState(false);
-  const [lunchboxMuted, setLunchboxMuted] = useState(false);
-  const [lunchboxVolume, setLunchboxVolume] = useState(0.5);
+  const [lunchboxRequested, setLunchboxRequested] = useState(false);
   const [foodOptionIndex, setFoodOptionIndex] = useState(0);
   const [foodOptionVisible, setFoodOptionVisible] = useState(true);
-  const lunchboxPausedByUser = useRef(false);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -176,67 +174,20 @@ const HomePage = () => {
     return () => window.clearInterval(interval);
   }, []);
 
-  // Inicia con sonido al 50% únicamente cuando la sección entra en pantalla.
-  useEffect(() => {
-    const video = lunchboxVideoRef.current;
-    if (!video) return;
-    video.volume = 0.5;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          if (!lunchboxPausedByUser.current) {
-            video.muted = false;
-            video.volume = 0.5;
-            setLunchboxMuted(false);
-            video.play().catch(() => setLunchboxPlaying(false));
-          }
-        } else {
-          video.pause();
-        }
-      },
-      { threshold: 0.4 }
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, []);
-
   const toggleLunchboxPlay = () => {
     const video = lunchboxVideoRef.current;
     if (!video) return;
     if (video.paused) {
-      lunchboxPausedByUser.current = false;
+      if (!lunchboxRequested) {
+        setLunchboxRequested(true);
+        video.src = lunchboxVideo.url;
+        video.load();
+      }
       video.play().catch(() => {});
       setLunchboxPlaying(true);
     } else {
-      lunchboxPausedByUser.current = true;
       video.pause();
       setLunchboxPlaying(false);
-    }
-  };
-
-  const toggleLunchboxMute = () => {
-    const video = lunchboxVideoRef.current;
-    if (!video) return;
-    video.muted = !video.muted;
-    if (!video.muted && video.volume === 0) {
-      video.volume = lunchboxVolume || 0.5;
-    }
-    if (!video.muted) video.play().catch(() => {});
-    setLunchboxMuted(video.muted);
-  };
-
-  const handleLunchboxVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const video = lunchboxVideoRef.current;
-    if (!video) return;
-    const value = parseFloat(e.target.value);
-    setLunchboxVolume(value);
-    video.volume = value;
-    if (value === 0) {
-      video.muted = true;
-      setLunchboxMuted(true);
-    } else if (video.muted) {
-      video.muted = false;
-      setLunchboxMuted(false);
     }
   };
 
@@ -323,15 +274,12 @@ const HomePage = () => {
               <div className="relative rounded-[32px] overflow-hidden shadow-2xl bg-black/5 group">
                 <video
                   ref={lunchboxVideoRef}
-                  src={lunchboxVideo.url}
-                  muted={lunchboxMuted}
+                  poster={boxlunchImg}
+                  muted
                   loop
                   playsInline
-                  preload="metadata"
+                  preload="none"
                   onClick={toggleLunchboxPlay}
-                  onLoadedMetadata={() => {
-                    if (lunchboxVideoRef.current) lunchboxVideoRef.current.volume = lunchboxVolume;
-                  }}
                   onPlay={() => setLunchboxPlaying(true)}
                   onPause={() => setLunchboxPlaying(false)}
                   className="w-full h-full object-cover cursor-pointer"
@@ -348,7 +296,7 @@ const HomePage = () => {
                     </span>
                   </button>
                 )}
-                <div className={`absolute bottom-4 left-4 flex items-center gap-2 transition-opacity duration-300 ${lunchboxMuted ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+                <div className="absolute bottom-4 left-4 flex items-center gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 focus-within:opacity-100">
                   <button
                     type="button"
                     onClick={toggleLunchboxPlay}
@@ -357,30 +305,6 @@ const HomePage = () => {
                   >
                     {lunchboxPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
                   </button>
-                  <button
-                    type="button"
-                    onClick={toggleLunchboxMute}
-                    className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-primary shadow-lg hover:bg-white transition-colors"
-                    aria-label={lunchboxMuted ? "Activar sonido" : "Silenciar video"}
-                  >
-                    {lunchboxMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                  </button>
-                  <div className="flex items-center gap-2 h-10 px-3 rounded-full bg-white/90 backdrop-blur-sm shadow-lg">
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={lunchboxMuted ? 0 : lunchboxVolume}
-                      onChange={handleLunchboxVolume}
-                      className="w-20 h-1.5 rounded-full appearance-none cursor-pointer"
-                      style={{
-                        background: `linear-gradient(to right, #014D6F ${(lunchboxMuted ? 0 : lunchboxVolume) * 100}%, rgba(1,77,111,0.2) ${(lunchboxMuted ? 0 : lunchboxVolume) * 100}%)`,
-                        accentColor: '#014D6F',
-                      }}
-                      aria-label="Volumen del video"
-                    />
-                  </div>
                 </div>
               </div>
             </RevealOnScroll>

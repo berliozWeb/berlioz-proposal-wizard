@@ -80,7 +80,7 @@ const Navbar = () => {
     >
       <nav className="max-w-7xl mx-auto flex items-center justify-between px-5 md:px-8 h-full">
         {/* Logo */}
-        <Link to="/" className="shrink-0 flex items-center transition-transform duration-300 hover:scale-[1.04] active:scale-95" aria-label="Berlioz" style={{ textDecoration: 'none' }}>
+        <Link to="/" className="shrink-0 flex items-center transition-transform duration-300 hover:scale-[1.04] active:scale-95" aria-label="Inicio" style={{ textDecoration: 'none' }}>
           <img src={berliozLogo} alt="Berlioz" style={{ height: 44, width: 'auto', display: 'block' }} />
         </Link>
 
@@ -147,13 +147,13 @@ const Navbar = () => {
           </a>
 
           {/* Cart — always visible, badge = total de piezas */}
-          <Link to="/carrito" className="relative p-1 transition-transform duration-200 hover:-translate-y-0.5 hover:scale-110 active:scale-95" style={{ color: '#014D6F' }}>
+          <Link to="/carrito" aria-label="Carrito" className="relative inline-flex min-h-11 min-w-11 items-center justify-center transition-transform duration-200 hover:-translate-y-0.5 hover:scale-110 active:scale-95" style={{ color: '#014D6F' }}>
             <ShoppingCart style={{ width: 18, height: 18 }} />
             {totalUnits > 0 && (
               <span
                 className="absolute flex items-center justify-center"
                 style={{
-                  top: -2, right: -2, minWidth: 16, height: 16, borderRadius: 8, padding: '0 3px',
+                  top: 4, right: 4, minWidth: 16, height: 16, borderRadius: 8, padding: '0 3px',
                   background: '#014D6F', color: 'white', fontSize: 9, fontWeight: 700,
                   fontFamily: "'Montserrat', sans-serif",
                 }}

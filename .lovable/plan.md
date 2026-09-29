@@ -1,52 +1,25 @@
-# Páginas de producto con las URLs de WooCommerce
+# Plan: carga más ligera del sitio
 
-## Qué verá el cliente
-- Cada producto con dirección en berlioz.mx tiene su propia página en `/producto/{slug}/`, la misma dirección que hoy tiene en berlioz.mx.
-- En /menu, "Ver detalles" (y la foto y el nombre de la tarjeta) se vuelven enlaces reales a esa página. PIROPO MUNDIAL y GOLDEN BOX siguen abriendo la ventana de detalle actual.
-- Las direcciones viejas con guion bajo (por ejemplo `pink_box`) muestran la página de "no encontrado" y los buscadores no la guardan.
+## Lo que encontré
+- Hoy las ~30 páginas (incluidas /admin, /dashboard y checkout) se descargan todas juntas al abrir el home.
+- Stripe solo lo usa la ventana de pago del checkout.
+- Recharts: solo Historial de pedidos (/dashboard). Calendario (react-day-picker) y PDF (jsPDF): solo /cotizar.
+- **Three.js no está instalado** en el proyecto: no hay nada que mover.
+- Montserrat carga pesos 100/300/400/500/600/700. Hay 10 textos con peso ligero (home, cotizador, barra de pasos); con el cambio se verán en 400, un poco más gruesos.
+- Mixpanel en index.html bloquea la carga.
 
-## 1. Búsqueda por slug de Woo
-- La página de producto deja de usar el catálogo viejo y busca en el espejo de Woo: productos activos, que vienen de Woo, simples o variables. Es el mismo filtro de /menu.
-- El slug se saca del permalink guardado: `https://berlioz.mx/producto/{slug}/` → `{slug}`. Se compara sin distinguir mayúsculas.
-- La página muestra lo mismo que la ventana de detalle actual: galería, descripción legible, variantes con cantidades independientes y "Agregar al carrito". Se reutilizan las piezas que ya existen para no duplicar nada.
-- No se cambian la base de datos ni la sincronización.
-
-## 2. Con y sin diagonal final
-- `/producto/pink-box` y `/producto/pink-box/` abren la misma página. Sin diagonal, la dirección se reescribe con diagonal sin recargar la página.
-- El canonical siempre es `https://berlioz.mx/producto/{slug}/`.
-
-## 3. Enlaces desde /menu
-- En la tarjeta, "Ver detalles", la foto y el nombre son enlaces `<a href="/producto/{slug}/">` que navegan dentro del sitio.
-- Si el producto no tiene permalink, se mantienen los botones que abren la ventana de detalle.
-- "Agregar" y el selector de variante no cambian.
-
-## 4. Datos de cada página
-- Título: `{Nombre} | Berlioz`.
-- Descripción: la introducción de Woo sin formato, recortada a unos 155 caracteres. Si falta, se usa "{Nombre} de Berlioz, catering corporativo en CDMX y Área Metropolitana."
-- Precio visible: el precio de Woo o "Desde $X" si tiene variantes, con la nota "+ IVA".
-- Texto alternativo de la foto: "{Nombre} — {categoría} de Berlioz" y un número si hay varias fotos.
-- JSON-LD con `Product` (name, description, image, sku con el ID de Woo solo dentro de los datos y nunca en la dirección, brand Berlioz, category) y `Offer`:
-  - Un solo precio: `price` en MXN.
-  - Con variantes: `AggregateOffer` con `lowPrice` y `highPrice`.
-  - `priceCurrency: "MXN"`, `availability: InStock`, `url` canónica y `priceSpecification` con `valueAddedTaxIncluded: false`.
-
-## 5. Sitemap
-- Se regenera `public/sitemap.xml` con 114 direcciones: las 5 páginas públicas (/, /menu, /cotizar, /contacto, /recompensas) y los 109 productos con su permalink de Woo con diagonal final.
-- Se quitan todos los slugs del catálogo viejo.
-- Es una lista fija generada ahora con una consulta de solo lectura. Si Woo agrega productos, habrá que regenerarla. Lo anoto como pendiente en el roadmap.
-
-## 6. Slugs viejos y productos inexistentes
-- Un slug con guion bajo, o que no coincide con ningún producto activo, muestra la 404 del sitio con `noindex, nofollow` en cualquier dominio.
-- Mientras carga no se muestra la 404, para que no aparezca un instante.
-
-## No se toca
-MenuCatalog.ts, /propuesta y sus componentes, el generador de propuestas de respaldo, el checkout, la base de datos ni la sincronización con Woo. El inicio viejo que usa el catálogo viejo tampoco se toca.
-
-## Validación
-Se revisa en el navegador: una dirección con diagonal y otra sin ella, la etiqueta canonical, el título, el JSON-LD, el enlace desde /menu, que los 2 productos sin permalink sigan abriendo la ventana y que `pink_box` muestre la 404 con noindex. Además, se confirma que el sitemap tenga 114 direcciones y que el sitio compile sin errores.
+## Cambios
+1. **Páginas por separado**: en App.tsx, home, /menu y producto siguen cargando al inicio; todas las demás (admin, dashboard, checkout, cuenta, cotizar, propuesta, login, etc.) se cargan al entrar, con un indicador de carga discreto mientras.
+2. **Stripe solo en checkout**: la ventana de pago se carga al abrir el paso de pago; `loadStripe` se llama ahí mismo (no antes).
+3. **Librerías pesadas**: recharts queda dentro de la página de historial; el calendario y el PDF de /cotizar se cargan solo cuando se muestra el calendario o al pulsar "Descargar PDF" (import dinámico de `multiDeliveryPdf`/`pdfTemplate`).
+4. **Mixpanel async**: el script pasa a `async` y el `init` se ejecuta en su `onload`; la guardia `if (window.mixpanel)` se mantiene.
+5. **Montserrat**: URL de Google Fonts con `wght@400;500;600;700`.
 
 ## Detalles técnicos
-- Un nuevo hook `useProductoPorSlug(slug)` reutiliza `mapProducto` de `useMenuCatalogo` y lee `permalink`.
-- Un helper `slugFromPermalink()` va en `src/lib/`.
-- La ruta sigue siendo `/producto/:slug`. React Router ya acepta la diagonal final y la normalización se hace con `navigate(..., { replace: true })`.
-- `Seo` recibe un canonical absoluto con diagonal y `noindex` en la 404.
+- `React.lazy` + `<Suspense>` alrededor de `<Routes>`; los proveedores (Auth, Cart, Query) no cambian.
+- `StripePaymentDialog` vía `lazy()` en CheckoutPage, montado solo cuando hay `session`.
+- `generateMultiDeliveryPdf` y jsPDF en ProposalStep por `await import(...)` en el handler.
+- Verificación: build y revisión en navegador de que el home no pide los archivos de admin, checkout, Stripe, recharts ni jsPDF.
+
+## No se toca
+Lógica de negocio, precios, base de datos, autenticación, flujo de pago.

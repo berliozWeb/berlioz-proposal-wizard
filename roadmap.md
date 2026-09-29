@@ -83,3 +83,10 @@
 - [x] Título, descripción, precio + IVA, alt, JSON-LD Product/Offer MXN sin IVA
 - [x] Sitemap: 5 páginas + 109 productos Woo; slugs viejos → 404 noindex
 - [ ] Regenerar sitemap cuando Woo agregue productos (lista fija)
+
+## Accesibilidad + WhatsApp flotante (29 sep)
+- [x] Botón flotante WhatsApp móvil (wa.me/5215582375469, mensaje prellenado, evento Mixpanel whatsapp_click con page)
+- [x] aria-label logo/carrito/login; aria-expanded + aria-controls en hamburguesa
+- [x] aria-hidden en copia duplicada de logos y emojis de ocasiones
+- [x] Tap targets 44x44 en carrito, Agregar y Ver detalles
+- [x] "¿Por qué BERLIOZ?" con una sola versión por breakpoint

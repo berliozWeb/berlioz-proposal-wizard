@@ -92,6 +92,6 @@
 - [x] "¿Por qué BERLIOZ?" con una sola versión por breakpoint
 
 ## Ajustes del hero (5 oct)
-- [ ] Actualizar subtítulo y colocar Cotizar evento antes de Hacer pedido
-- [ ] Mantener solo los videos 2 y 3 y optimizar su transferencia
-- [ ] Verificar que los videos retirados no se descarguen
+- [x] Actualizar subtítulo y colocar Cotizar evento antes de Hacer pedido
+- [x] Mantener solo los videos 2 y 3 y optimizar su transferencia
+- [x] Verificar que los videos retirados no se descarguen

@@ -90,3 +90,8 @@
 - [x] aria-hidden en copia duplicada de logos y emojis de ocasiones
 - [x] Tap targets 44x44 en carrito, Agregar y Ver detalles
 - [x] "¿Por qué BERLIOZ?" con una sola versión por breakpoint
+
+## Ajustes del hero (5 oct)
+- [x] Actualizar subtítulo y colocar Cotizar evento antes de Hacer pedido
+- [x] Mantener solo los videos 2 y 3 y optimizar su transferencia
+- [x] Verificar que los videos retirados no se descarguen

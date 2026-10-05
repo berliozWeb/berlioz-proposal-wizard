@@ -3,22 +3,13 @@ import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
-import boxlunchImg from "@/assets/food-boxlunch.jpg";
 import coffeeAmImg from "@/assets/imagenes_menu/cb_coffee-break-am-cafe.jpg";
-import coffeePmImg from "@/assets/imagenes_menu/cb_coffee-break-pm.jpg";
-import juntaImg from "@/assets/imagenes_menu/wl_comedor-berlioz.jpg";
-import veganoImg from "@/assets/imagenes_menu/veg_pink-box-vegana.jpg";
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const BUCKET = `${SUPABASE_URL}/storage/v1/object/public/hero-videos`;
+import coffeeVideo from "@/assets/hero-coffee-break-optimized.mp4.asset.json";
+import breakfastVideo from "@/assets/hero-breakfast-optimized.mp4.asset.json";
 
 const SLIDES = [
-  { video: `${BUCKET}/hero-6-colorful-spread.mp4`, poster: boxlunchImg, alt: "Selección de boxes Berlioz" },
-  { video: `${BUCKET}/hero-5-coffee-break.mp4`, poster: coffeeAmImg, alt: "Coffee break corporativo" },
-  { video: `${BUCKET}/hero-1-overhead-pan.mp4`, poster: breakfastImg, alt: "Desayuno corporativo Berlioz" },
-  { video: `${BUCKET}/hero-2-hands-rotating.mp4`, poster: juntaImg, alt: "Working lunch para equipos" },
-  { video: `${BUCKET}/hero-7-drinks.mp4`, poster: coffeePmImg, alt: "Bebidas para eventos corporativos" },
-  { video: `${BUCKET}/hero-8-practical-products.mp4`, poster: veganoImg, alt: "Opciones prácticas Berlioz" },
+  { video: coffeeVideo.url, poster: coffeeAmImg, alt: "Coffee break corporativo" },
+  { video: breakfastVideo.url, poster: breakfastImg, alt: "Desayuno corporativo Berlioz" },
 ];
 
 type NavigatorWithConnection = Navigator & {
@@ -90,7 +81,7 @@ const HeroVideoCarousel = () => {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           onCanPlay={() => {
             if (!paused) videoRef.current?.play().catch(() => {});
           }}
@@ -106,14 +97,14 @@ const HeroVideoCarousel = () => {
             Catering corporativo y box lunch en CDMX
           </h1>
           <p className="mx-auto mt-5 max-w-3xl font-body text-lg leading-relaxed text-primary-foreground sm:text-xl md:text-2xl">
-            Boxes, coffee breaks y catering para empresas y equipos en CDMX y Área Metropolitana.
+            Desayuno, comida y coffee breaks para tus eventos y juntas de trabajo.
           </p>
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-            <Button asChild size="lg" className="min-w-44 bg-accent text-accent-foreground hover:bg-accent/90">
-              <Link to="/menu">Hacer pedido</Link>
-            </Button>
             <Button asChild size="lg" variant="outline" className="min-w-44 border-primary-foreground/70 bg-background/10 text-primary-foreground backdrop-blur-sm hover:bg-background/20 hover:text-primary-foreground">
               <Link to="/cotizar">Cotizar evento</Link>
+            </Button>
+            <Button asChild size="lg" className="min-w-44 bg-accent text-accent-foreground hover:bg-accent/90">
+              <Link to="/menu">Hacer pedido</Link>
             </Button>
           </div>
         </div>

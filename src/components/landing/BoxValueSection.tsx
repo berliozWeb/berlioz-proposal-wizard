@@ -10,7 +10,8 @@ import {
   ArrowRight,
   type LucideIcon,
 } from "lucide-react";
-import boxAsset from "@/assets/berlioz-box-beige.png.asset.json";
+import boxSmallAsset from "@/assets/berlioz-box-800.webp.asset.json";
+import boxAsset from "@/assets/berlioz-box-1600.webp.asset.json";
 
 const NAVY = "#014D6F";
 const CREAM = "#FDFAF7";
@@ -239,6 +240,11 @@ const BoxValueSection = () => {
             >
               <img
                 src={boxAsset.url}
+                srcSet={`${boxSmallAsset.url} 800w, ${boxAsset.url} 1600w`}
+                sizes="(min-width: 1600px) 1120px, 75vw"
+                width={1600}
+                height={900}
+                decoding="async"
                 alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
                 className="w-full rounded-[24px]"
                 loading="lazy"
@@ -287,6 +293,11 @@ const BoxValueSection = () => {
           >
             <img
               src={boxAsset.url}
+              srcSet={`${boxSmallAsset.url} 800w, ${boxAsset.url} 1600w`}
+              sizes="(min-width: 768px) calc(100vw - 80px), calc(100vw - 48px)"
+              width={1600}
+              height={900}
+              decoding="async"
               alt="Box Berlioz con pasta, postre, ensalada y bebida artesanal"
               className="w-full rounded-[24px]"
               loading="lazy"

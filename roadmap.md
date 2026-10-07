@@ -1,9 +1,9 @@
 # Roadmap — WooCommerce como fuente de verdad
 
 ## Tarjetas del home (7 oct)
-- [ ] Mover selección debajo del hero y encima de ¿Por qué BERLIOZ?, cambiar título y quitar subtítulo.
-- [ ] Cuatro tarjetas: DESAYUNO, COFFEE BREAK, WORKING LUNCH y BOXES ECONÓMICAS; MXN, VER MENÚ y colores invertidos al pasar el cursor.
-- [ ] Categoría económica derivada de boxes Woo con precio menor a $250, sin cambiar datos.
+- [x] Mover selección debajo del hero y encima de ¿Por qué BERLIOZ?, cambiar título y quitar subtítulo.
+- [x] Cuatro tarjetas: DESAYUNO, COFFEE BREAK, WORKING LUNCH y BOXES ECONÓMICAS; MXN, VER MENÚ y colores invertidos al pasar el cursor.
+- [x] Categoría económica derivada de boxes Woo con precio menor a $250, sin cambiar datos; seis productos verificados en navegador.
 
 ## Fase 1 — Espejo fiel de Woo ✅
 - [x] Sync por nombre de categoría + todas las categorías del producto

@@ -5,18 +5,18 @@ import berliozLogoCream from "@/assets/berlioz-logo-cream-header.png";
 const Footer = () => (
   <footer style={{ background: '#014D6F', color: 'white' }}>
     {/* ── CTA strip ── */}
-    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.12)', background: '#F2DDD5' }}>
       <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
-          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 24, color: '#EDD9C8', marginBottom: 4 }}>ORGANIZA UNA EXPERIENCIA FANTÁSTICA</h2>
-          <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 24, color: '#014D6F', marginBottom: 4 }}>UNA EXPERIENCIA FANTÁSTICA</h2>
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(1,77,111,0.7)' }}>
             Te ayudamos a crear una experiencia a tu medida: Tapas personalizadas, meseros, carritos de snacks, productos de temporada, etc.
           </p>
         </div>
         <Link
           to="/cotizar"
           className="shrink-0 inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
-          style={{ height: 44, padding: '0 28px', borderRadius: 6, background: '#EDD9C8', color: '#014D6F', fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: 'none' }}
+          style={{ height: 44, padding: '0 28px', borderRadius: 6, background: '#014D6F', color: '#EDD9C8', fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 14, textDecoration: 'none' }}
         >
           Cotizar ahora
           <ArrowRight style={{ width: 16, height: 16 }} />

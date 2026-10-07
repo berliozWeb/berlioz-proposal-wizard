@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Phone, Instagram, Mail, ArrowRight } from "lucide-react";
-import berliozLogoCream from "@/assets/berlioz-logo-cream.png";
+import berliozLogoCream from "@/assets/berlioz-logo-cream-header.png";
 
 const Footer = () => (
   <footer style={{ background: '#014D6F', color: 'white' }}>

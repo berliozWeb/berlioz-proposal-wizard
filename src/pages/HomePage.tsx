@@ -130,12 +130,12 @@ const LogoCarousel = () => {
         src={logo.src}
         alt={duplicate ? "" : logo.alt}
         aria-hidden={duplicate ? "true" : undefined}
-        style={{ height: 48, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
+        style={{ height: 68, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
       />
     ));
 
   return (
-    <div className="relative overflow-hidden" style={{ height: 80 }}>
+    <div className="relative overflow-hidden" style={{ height: 108 }}>
       <div
         className="flex items-center gap-20 animate-scroll-logos"
         style={{ width: 'max-content' }}

@@ -8,9 +8,9 @@ const Footer = () => (
     <div style={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
       <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
-          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 24, color: '#EDD9C8', marginBottom: 4 }}>¿Listo para cotizar?</h2>
+          <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 24, color: '#EDD9C8', marginBottom: 4 }}>ORGANIZA UNA EXPERIENCIA FANTÁSTICA</h2>
           <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
-            Recibe una propuesta personalizada en minutos, sin compromiso.
+            Te ayudamos a crear una experiencia a tu medida: Tapas personalizadas, meseros, carritos de snacks, productos de temporada, etc.
           </p>
         </div>
         <Link

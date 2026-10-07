@@ -11,7 +11,8 @@ export type CategoriaMenu =
   | "Bebidas"
   | "Tortas Piropo"
   | "Entrega Especial"
-  | "Vegano / Vegetariano";
+  | "Vegano / Vegetariano"
+  | "Boxes económicas";
 
 const CATEGORIAS_MENU: { db: string; label: CategoriaMenu }[] = [
   { db: "Comida", label: "Working Lunch" },
@@ -48,6 +49,7 @@ export const CATEGORIAS_MENU_ORDEN: CategoriaMenu[] = [
   "Tortas Piropo",
   "Entrega Especial",
   "Vegano / Vegetariano",
+  "Boxes económicas",
 ];
 
 export function mapCategoriaMenu(raw: string | null): CategoriaMenu | null {
@@ -219,6 +221,7 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
     "Tortas Piropo": [],
     "Entrega Especial": [],
     "Vegano / Vegetariano": [],
+    "Boxes económicas": [],
   };
 
   const productos: ProductoCotizador[] = [];
@@ -229,6 +232,10 @@ async function fetchMenuCatalogo(): Promise<MenuCatalogoData> {
     // igual que en berlioz.mx.
     for (const cat of categoriasDeRow(row)) {
       porCategoria[cat]?.push(producto);
+    }
+    const prices = producto.variantes.map((v) => Number(v.precio)).filter((price) => price > 0);
+    if (/\bbox(?:es)?\b/i.test(producto.nombre) && prices.length > 0 && Math.min(...prices) < 250) {
+      porCategoria["Boxes económicas"].push(producto);
     }
   }
 

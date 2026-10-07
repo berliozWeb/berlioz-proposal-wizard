@@ -100,4 +100,4 @@
 - [x] Actualizar subtítulo y colocar Cotizar evento antes de Hacer pedido
 - [x] Mantener solo los videos 2 y 3 y optimizar su transferencia
 - [x] Verificar que los videos retirados no se descarguen
-- [ ] Mover EL COMEDOR BERLIOZ debajo de ¿Qué vas a pedir hoy? (antes de ¿Por qué BERLIOZ?)
+- [x] Mover EL COMEDOR BERLIOZ debajo de ¿Qué vas a pedir hoy? (antes de ¿Por qué BERLIOZ?)

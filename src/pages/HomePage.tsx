@@ -243,8 +243,6 @@ const HomePage = () => {
         </div>
       </section>
 
-      <BoxValueSection />
-
       {/* ═══ SECTION — BERLIOZ LUNCH BOX ═══ */}
       <section className="relative w-full overflow-hidden py-16 md:py-24" style={{ backgroundColor: '#F2DDD5' }}>
         <div className="max-w-7xl mx-auto px-6 md:px-12">
@@ -308,6 +306,8 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      <BoxValueSection />
 
       {/* ═══ SECTION 5 — SOCIAL PROOF ═══ */}
       <section className="py-24 bg-white border-y border-border">

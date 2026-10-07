@@ -354,11 +354,8 @@ const QuotePage = () => {
 
       {/* ═══ STEP 0 — SINGLE PAGE, CONTINUOUS SCROLL ═══ */}
       {step === 0 && (
-        <div className="max-w-5xl mx-auto px-6 py-4 space-y-12">
-
-
-          {/* ── Section A: Event mode (compact cards) ── */}
-          <section className="animate-slide-up">
+        <section className="animate-slide-up bg-card py-10 md:py-12 mb-10">
+          <div className="max-w-5xl mx-auto px-6">
             <div className="text-center mb-6">
               <h2 className="font-heading text-3xl md:text-4xl text-primary mb-2 tracking-tight">¿Cuántas entregas necesitas?</h2>
               <p className="font-body text-sm text-muted-foreground">Ayúdanos a entender la logística de tu evento para ofrecerte una EXPERIENCIA FANTÁSTICA.</p>
@@ -366,33 +363,37 @@ const QuotePage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
               {([
-                { mode: 'single' as const, title: 'Una sola entrega', subtitle: '' },
-                { mode: 'multi' as const, title: 'Varias entregas', subtitle: 'Distintos momentos del día o alimentos por varios días.' },
-              ]).map(({ mode, title, subtitle }) => {
+                { mode: 'single' as const, title: 'Una sola entrega' },
+                { mode: 'multi' as const, title: 'Varias entregas' },
+              ]).map(({ mode, title }) => {
                 const selected = eventMode === mode;
                 return (
                   <button
                     key={mode}
+                    aria-pressed={selected}
                     onClick={() => {
                       setEventMode(mode);
                       if (mode === 'single') setDeliveryGroups(buildSingleDeliveryGroup());
                     }}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all text-left min-h-[88px]",
+                      "w-full flex items-center justify-center min-h-[88px] px-4 py-3 rounded-2xl border-2 text-center transition-all",
                       selected
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border bg-card hover:border-primary/40",
+                        ? "border-cream-light bg-primary shadow-lg ring-2 ring-cream-light/50"
+                        : "border-primary bg-primary hover:bg-secondary",
                     )}
                   >
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{title}</h3>
-                      {subtitle && <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{subtitle}</p>}
-                    </div>
+                    <h3 className="font-heading text-sm font-bold uppercase tracking-wide text-primary-foreground leading-tight">{title}</h3>
                   </button>
                 );
               })}
             </div>
-          </section>
+          </div>
+        </section>
+      )}
+
+      {step === 0 && (
+        <div className="max-w-5xl mx-auto px-6 py-4 space-y-12">
+
 
           {/* ── Section B: Multi delivery config (only if multi) ── */}
           {eventMode === 'multi' && (

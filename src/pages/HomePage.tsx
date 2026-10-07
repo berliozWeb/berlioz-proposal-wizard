@@ -120,11 +120,6 @@ const TESTIMONIALS = [
   },
 ];
 
-const STEPS = [
-  { icon: Utensils, title: "Elige tu menú", desc: "Explora opciones por tipo de evento o arma tu pedido desde el catálogo completo." },
-  { icon: Clock, title: "Selecciona fecha y horario", desc: "Elige cuándo y a qué hora necesitas tu entrega. Disponibilidad en tiempo real." },
-  { icon: Truck, title: "Lo entregamos en tu oficina", desc: "Llegamos puntuales con todo listo para servir. Sin complicaciones." },
-];
 
 /* ── Infinite Logo Carousel ── */
 const LogoCarousel = () => {

@@ -147,6 +147,7 @@ const QuotePage = () => {
   const [date, setDate] = useState<Date | undefined>();
   const [eventTime, setEventTime] = useState("");
   const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
+  const [hasBudget, setHasBudget] = useState<boolean | null>(null);
   const [budget, setBudget] = useState(300);
   const [hasDietary, setHasDietary] = useState<boolean | null>(null);
   const [dietary, setDietary] = useState<string[]>([]);

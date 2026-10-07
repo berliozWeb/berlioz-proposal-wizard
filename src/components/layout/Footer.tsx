@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Phone, Instagram, Mail, ArrowRight } from "lucide-react";
-import berliozLogoCream from "@/assets/berlioz-logo-cream.png";
+import berliozLogoCream from "@/assets/berlioz-logo-cream-header.png";
 
 const Footer = () => (
   <footer style={{ background: '#014D6F', color: 'white' }}>
@@ -26,36 +26,13 @@ const Footer = () => (
 
     {/* ── main columns ── */}
     <div className="max-w-7xl mx-auto px-6 py-16">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
         {/* Brand */}
         <div className="md:col-span-1">
-          <img src={berliozLogoCream} alt="Berlioz" style={{ height: 52, width: 'auto', display: 'block', marginBottom: 16 }} />
-          <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+          <img src={berliozLogoCream} alt="Berlioz" style={{ height: 30, width: 'auto', display: 'block', marginBottom: 16 }} />
+          <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
             Catering corporativo premium en Ciudad de México. Desayunos, coffee breaks y working lunches.
           </p>
-        </div>
-
-        {/* Nav */}
-        <div>
-          <p style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, fontSize: 12, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.15em', textTransform: 'uppercase' as const, marginBottom: 16, paddingBottom: 8, borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
-            Navegar
-          </p>
-          <ul className="space-y-2.5">
-            {[
-              { to: "/menu", label: "Realizar Pedido" },
-              { to: "/cotizar", label: "Cotizar evento" },
-              { to: "/recompensas", label: "Recompensas" },
-            ].map((link) => (
-              <li key={link.to}>
-                <Link to={link.to} className="transition-colors" style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = '#EDD9C8'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; }}
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* Company */}

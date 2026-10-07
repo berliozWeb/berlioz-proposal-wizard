@@ -228,7 +228,7 @@ const HomePage = () => {
                 className="group bg-card rounded-lg border border-border overflow-hidden flex flex-col transition-colors duration-300 hover:bg-primary hover:border-primary focus-visible:bg-primary focus-visible:border-primary"
               >
                 <div className="h-44 overflow-hidden">
-                  <img src={o.image} alt={o.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                  <img src={o.image} alt={o.name} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110 group-focus-visible:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100" loading="lazy" decoding="async" />
                 </div>
                 <div className="p-5 flex flex-col flex-1">
                   <h3 className="font-body font-bold text-foreground text-base group-hover:text-primary-foreground group-focus-visible:text-primary-foreground transition-colors">{o.name}</h3>

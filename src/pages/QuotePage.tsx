@@ -109,6 +109,18 @@ function calcDeliveryTime(eventTime: string): string {
   return `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
 }
 
+// Franja de entrega prometida al cliente: una hora antes y la hora exacta del evento.
+function calcDeliveryWindow(eventTime: string): { from: string; to: string } {
+  const [h, m] = eventTime.split(":").map(Number);
+  let total = h * 60 + m - 60;
+  if (total < 0) total = 0;
+  const from = `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
+  return { from, to: eventTime };
+}
+
+// El recargo temprano deja de aplicar en cuanto el evento inicia a las 7:30 am.
+const EARLY_DELIVERY_CUTOFF = "07:30";
+
 function isCutoff(selectedDate: Date | undefined): boolean {
   if (!selectedDate) return false;
   const now = new Date();

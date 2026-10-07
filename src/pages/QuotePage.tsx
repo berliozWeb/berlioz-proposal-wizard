@@ -146,7 +146,7 @@ const QuotePage = () => {
   const [postalCode, setPostalCode] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [eventTime, setEventTime] = useState("");
-  const [hasBudget, setHasBudget] = useState<boolean | null>(null);
+  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
   const [budget, setBudget] = useState(300);
   const [hasDietary, setHasDietary] = useState<boolean | null>(null);
   const [dietary, setDietary] = useState<string[]>([]);
@@ -235,6 +235,7 @@ const QuotePage = () => {
     numPeople >= 1 &&
     !!date &&
     eventTime !== "" &&
+    deliveryConfirmed &&
     !cutoffBlocked &&
     postalCode.length === 5 &&
     !isSpecialQuoteCP;
@@ -278,7 +279,7 @@ const QuotePage = () => {
         if (data) setSmartData(data);
       });
     }
-  }, [canNextStep1, canNextStep2, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, hasBudget, budget, dietary, clientName, empresa, generateQuote]);
+  }, [canNextStep1, canNextStep2, deliveryConfirmed, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, hasBudget, budget, dietary, clientName, empresa, generateQuote]);
 
   const goBack = () => { setStep(0); setEventType(""); setEventMode(null); setDeliveryGroups(buildSingleDeliveryGroup()); };
 
@@ -900,46 +901,52 @@ const QuotePage = () => {
               {/* Time card — separado para mejor distribución del disclaimer */}
               <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-2 h-full bg-primary/20" />
-                <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-8 items-start">
-                  <div>
-                    <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora inicia tu evento?</label>
-                    <div className="relative">
-                      <select value={eventTime} onChange={e => setEventTime(e.target.value)}
-                        className={cn("w-full h-14 pl-5 pr-12 rounded-2xl border-2 transition-all font-body text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 appearance-none cursor-pointer",
-                          eventTime ? "border-primary/30 bg-primary/5 font-semibold text-primary" : "border-border bg-background text-muted-foreground"
-                        )}>
-                        <option value="">Selecciona horario</option>
-                        {TIME_SLOTS.map(t => <option key={t} value={t} className="text-foreground">{t}</option>)}
-                      </select>
-                      <ChevronRight className={cn("absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rotate-90 pointer-events-none", eventTime ? "text-primary" : "text-muted-foreground")} />
-                    </div>
-                    {isEarlyDelivery && (
-                      <div className="mt-3 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
-                        <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
-                      </div>
-                    )}
+                <div>
+                  <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora inicia tu evento?</label>
+                  <div className="relative">
+                    <select value={eventTime} onChange={e => { setEventTime(e.target.value); setDeliveryConfirmed(false); }}
+                      className={cn("w-full h-14 pl-5 pr-12 rounded-2xl border-2 transition-all font-body text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 appearance-none cursor-pointer",
+                        eventTime ? "border-primary/30 bg-primary/5 font-semibold text-primary" : "border-border bg-background text-muted-foreground"
+                      )}>
+                      <option value="">Selecciona horario</option>
+                      {TIME_SLOTS.map(t => <option key={t} value={t} className="text-foreground">{t}</option>)}
+                    </select>
+                    <ChevronRight className={cn("absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rotate-90 pointer-events-none", eventTime ? "text-primary" : "text-muted-foreground")} />
                   </div>
-                  {/* Franja de entrega prometida — al lado, ocupa el espacio restante */}
-                  <div className={cn(
-                    "border rounded-2xl flex gap-3 items-start transition-all duration-300 px-4 py-4",
-                    eventTime
-                      ? "bg-primary/5 border-primary/20"
-                      : "bg-muted/40 border-border/50"
-                  )}>
-                    <Truck className={cn("mt-0.5 shrink-0 transition-all", eventTime ? "w-5 h-5 text-primary" : "w-4 h-4 text-muted-foreground")} />
-                    {deliveryWindow ? (
-                      <p className="font-body text-sm leading-relaxed text-foreground">
+                  {isEarlyDelivery && (
+                    <div className="mt-3 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
+                      <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
+                    </div>
+                  )}
+                  {/* Franja de entrega prometida — debajo del dropdown, con confirmación */}
+                  {eventTime && deliveryWindow ? (
+                    <label className={cn(
+                      "mt-4 flex items-start gap-3 rounded-2xl border-2 px-4 py-3.5 cursor-pointer select-none transition-all duration-300",
+                      deliveryConfirmed
+                        ? "border-primary/40 bg-primary/5"
+                        : "border-border bg-background hover:border-primary/40"
+                    )}>
+                      <input
+                        type="checkbox"
+                        checked={deliveryConfirmed}
+                        onChange={e => setDeliveryConfirmed(e.target.checked)}
+                        className="mt-0.5 h-5 w-5 shrink-0 accent-primary cursor-pointer"
+                      />
+                      <span className="font-body text-sm leading-relaxed text-foreground">
                         Te entregaremos tu pedido entre las{" "}
                         <span className="font-mono font-bold text-primary">{deliveryWindow.from}</span>{" "}
                         y las{" "}
                         <span className="font-mono font-bold text-primary">{deliveryWindow.to}</span>.
-                      </p>
-                    ) : (
-                      <p className="font-body text-xs leading-relaxed text-muted-foreground">
+                      </span>
+                    </label>
+                  ) : (
+                    <p className="mt-4 flex items-start gap-3 font-body text-xs leading-relaxed text-muted-foreground">
+                      <Truck className="w-4 h-4 mt-0.5 shrink-0" />
+                      <span>
                         Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-bold text-primary">90 minutos de margen</span> para la entrega.
-                      </p>
-                    )}
-                  </div>
+                      </span>
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1074,6 +1081,11 @@ const QuotePage = () => {
                       </Button>
                     )}
                   </div>
+                  {eventTime !== "" && !deliveryConfirmed && (
+                    <p className="font-body text-xs text-muted-foreground text-right">
+                      Confirma la franja de entrega para continuar.
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -366,7 +366,7 @@ const QuotePage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
               {([
-                { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Ideal para Junta de Trabajo o Evento único.' },
+                { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: '' },
                 { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Distintos momentos del día o alimentos por varios días.' },
               ]).map(({ mode, Icon, title, subtitle }) => {
                 const selected = eventMode === mode;
@@ -392,7 +392,7 @@ const QuotePage = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{title}</h3>
-                      <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{subtitle}</p>
+                      {subtitle && <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{subtitle}</p>}
                     </div>
                   </button>
                 );

@@ -109,6 +109,18 @@ function calcDeliveryTime(eventTime: string): string {
   return `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
 }
 
+// Franja de entrega prometida al cliente: una hora antes y la hora exacta del evento.
+function calcDeliveryWindow(eventTime: string): { from: string; to: string } {
+  const [h, m] = eventTime.split(":").map(Number);
+  let total = h * 60 + m - 60;
+  if (total < 0) total = 0;
+  const from = `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
+  return { from, to: eventTime };
+}
+
+// El recargo temprano deja de aplicar en cuanto el evento inicia a las 7:30 am.
+const EARLY_DELIVERY_CUTOFF = "07:30";
+
 function isCutoff(selectedDate: Date | undefined): boolean {
   if (!selectedDate) return false;
   const now = new Date();
@@ -169,7 +181,8 @@ const QuotePage = () => {
 
   const tomorrow = addDays(new Date(), 1);
   const deliveryTime = eventTime ? calcDeliveryTime(eventTime) : "";
-  const isEarlyDelivery = deliveryTime !== "" && (parseInt(deliveryTime.split(":")[0]) < 7 || (deliveryTime.startsWith("07:") && parseInt(deliveryTime.split(":")[1]) < 30));
+  const deliveryWindow = eventTime ? calcDeliveryWindow(eventTime) : null;
+  const isEarlyDelivery = eventTime !== "" && eventTime < EARLY_DELIVERY_CUTOFF;
   const cutoffBlocked = isCutoff(date);
   const isInZone = postalCode.length === 5 && TOP_DELIVERY_ZONES.some(z => postalCode === z || postalCode.startsWith(z.slice(0, 3)));
   const isSmallGroup = typeof people === "number" && people >= 1 && people <= 3;
@@ -900,13 +913,13 @@ const QuotePage = () => {
                       </select>
                       <ChevronRight className={cn("absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rotate-90 pointer-events-none", eventTime ? "text-primary" : "text-muted-foreground")} />
                     </div>
-                    {deliveryTime && isEarlyDelivery && (
+                    {isEarlyDelivery && (
                       <div className="mt-3 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
                         <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
                       </div>
                     )}
                   </div>
-                  {/* Disclaimer logística — al lado, ocupa el espacio restante */}
+                  {/* Franja de entrega prometida — al lado, ocupa el espacio restante */}
                   <div className={cn(
                     "border rounded-2xl flex gap-3 items-start transition-all duration-300 px-4 py-4",
                     eventTime
@@ -914,12 +927,18 @@ const QuotePage = () => {
                       : "bg-muted/40 border-border/50"
                   )}>
                     <Truck className={cn("mt-0.5 shrink-0 transition-all", eventTime ? "w-5 h-5 text-primary" : "w-4 h-4 text-muted-foreground")} />
-                    <p className={cn(
-                      "font-body leading-relaxed transition-all",
-                      eventTime ? "text-sm text-foreground" : "text-xs text-muted-foreground"
-                    )}>
-                      Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-bold text-primary">90 minutos de margen</span> para la entrega.
-                    </p>
+                    {deliveryWindow ? (
+                      <p className="font-body text-sm leading-relaxed text-foreground">
+                        Te entregaremos tu pedido entre las{" "}
+                        <span className="font-mono font-bold text-primary">{deliveryWindow.from}</span>{" "}
+                        y las{" "}
+                        <span className="font-mono font-bold text-primary">{deliveryWindow.to}</span>.
+                      </p>
+                    ) : (
+                      <p className="font-body text-xs leading-relaxed text-muted-foreground">
+                        Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-bold text-primary">90 minutos de margen</span> para la entrega.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

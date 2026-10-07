@@ -101,3 +101,8 @@
 - [x] Mantener solo los videos 2 y 3 y optimizar su transferencia
 - [x] Verificar que los videos retirados no se descarguen
 - [x] Mover EL COMEDOR BERLIOZ debajo de ¿Qué vas a pedir hoy? (antes de ¿Por qué BERLIOZ?)
+
+## Cotizar: pregunta de entregas (7 oct)
+- [x] Pregunta "¿Cuántas entregas necesitas?" con subtítulo de logística y EXPERIENCIA FANTÁSTICA
+- [x] "Una sola entrega" sin descripción; "Varias entregas": "Distintos momentos del día o alimentos por varios días."
+- [ ] Quitar los íconos de las tarjetas "Una sola entrega" y "Varias entregas"

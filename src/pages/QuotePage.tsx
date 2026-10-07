@@ -181,7 +181,8 @@ const QuotePage = () => {
 
   const tomorrow = addDays(new Date(), 1);
   const deliveryTime = eventTime ? calcDeliveryTime(eventTime) : "";
-  const isEarlyDelivery = deliveryTime !== "" && (parseInt(deliveryTime.split(":")[0]) < 7 || (deliveryTime.startsWith("07:") && parseInt(deliveryTime.split(":")[1]) < 30));
+  const deliveryWindow = eventTime ? calcDeliveryWindow(eventTime) : null;
+  const isEarlyDelivery = eventTime !== "" && eventTime < EARLY_DELIVERY_CUTOFF;
   const cutoffBlocked = isCutoff(date);
   const isInZone = postalCode.length === 5 && TOP_DELIVERY_ZONES.some(z => postalCode === z || postalCode.startsWith(z.slice(0, 3)));
   const isSmallGroup = typeof people === "number" && people >= 1 && people <= 3;

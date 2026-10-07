@@ -367,7 +367,7 @@ const QuotePage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
               {([
                 { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Ideal para Junta de Trabajo o Evento único.' },
-                { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Requieres de comida para varios momentos del día o necesitas comida por varios días.' },
+                { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Distintos momentos del día o alimentos por varios días.' },
               ]).map(({ mode, Icon, title, subtitle }) => {
                 const selected = eventMode === mode;
                 return (

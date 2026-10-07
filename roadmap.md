@@ -105,4 +105,4 @@
 ## Cotizar: pregunta de entregas (7 oct)
 - [x] Pregunta "¿Cuántas entregas necesitas?" con subtítulo de logística y EXPERIENCIA FANTÁSTICA
 - [x] "Una sola entrega" sin descripción; "Varias entregas": "Distintos momentos del día o alimentos por varios días."
-- [ ] Quitar los íconos de las tarjetas "Una sola entrega" y "Varias entregas"
+- [x] Quitar los íconos de las tarjetas "Una sola entrega" y "Varias entregas"

@@ -64,7 +64,7 @@ const OCCASIONS = [
   { category: "Desayuno", name: "DESAYUNO", subtitle: "desde $185 MXN por persona", image: breakfastImg },
   { category: "Coffee Break", name: "COFFEE BREAK", subtitle: "desde $145 MXN por persona", image: coffeeAmImg },
   { category: "Working Lunch", name: "WORKING LUNCH", subtitle: "desde $280 MXN por persona", image: boxlunchImg },
-  { category: "Boxes económicas", name: "BOXES ECONÓMICAS", subtitle: "Boxes por menos de $250 MXN", image: boxlunchImg },
+  { category: "Boxes económicas", name: "BOXES ECONÓMICAS", subtitle: <>por <em>menos</em> de $250 MXN por persona</>, image: boxlunchImg },
 ];
 
 const STATS = [

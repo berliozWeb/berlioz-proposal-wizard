@@ -15,28 +15,28 @@ import lunchboxVideo from "@/assets/lunchbox.mp4.asset.json";
 import coffeeAmImg from "@/assets/imagenes_menu/cb_coffee-break-am-cafe.jpg";
 
 // Client logos
-import logoAE from "@/assets/logos/clientesBerlioz_AE.png";
-import logoAmex from "@/assets/logos/clientesBerlioz_Amex.png";
-import logoAxxa from "@/assets/logos/clientesBerlioz_axxa.png";
-import logoBalenciaga from "@/assets/logos/clientesBerlioz_balenciaga.png";
-import logoBimbo from "@/assets/logos/clientesBerlioz_bimbo.png";
-import logoGucci from "@/assets/logos/clientesBerlioz_gucci.png";
-import logoHermanMiller from "@/assets/logos/clientesBerlioz_hermanmiller.png";
-import logoIos from "@/assets/logos/clientesBerlioz_ios.png";
-import logoKavak from "@/assets/logos/clientesBerlioz_kavak.png";
-import logoMarriott from "@/assets/logos/clientesBerlioz_marriott.png";
-import logoPepsico from "@/assets/logos/clientesBerlioz_pepsico.png";
-import logoPrada from "@/assets/logos/clientesBerlioz_prada.png";
-import logoShell from "@/assets/logos/clientesBerlioz_shell.png";
-import logoWalmart from "@/assets/logos/clientesBerlioz_walmart.png";
-import logoWework from "@/assets/logos/clientesBerlioz_wework.png";
-import logoZebra from "@/assets/logos/clientesBerlioz_zebra.png";
-import logoGrupoMex from "@/assets/logos/grupomex-1.png";
+import logoAE from "@/assets/logos/clientesBerlioz_AE-t.png";
+import logoAmex from "@/assets/logos/clientesBerlioz_Amex-t.png";
+import logoAxxa from "@/assets/logos/clientesBerlioz_axxa-t.png";
+import logoBalenciaga from "@/assets/logos/clientesBerlioz_balenciaga-t.png";
+import logoBimbo from "@/assets/logos/clientesBerlioz_bimbo-t.png";
+import logoGucci from "@/assets/logos/clientesBerlioz_gucci-t.png";
+import logoHermanMiller from "@/assets/logos/clientesBerlioz_hermanmiller-t.png";
+import logoIos from "@/assets/logos/clientesBerlioz_ios-t.png";
+import logoKavak from "@/assets/logos/clientesBerlioz_kavak-t.png";
+import logoMarriott from "@/assets/logos/clientesBerlioz_marriott-t.png";
+import logoPepsico from "@/assets/logos/clientesBerlioz_pepsico-t.png";
+import logoPrada from "@/assets/logos/clientesBerlioz_prada-t.png";
+import logoShell from "@/assets/logos/clientesBerlioz_shell-t.png";
+import logoWalmart from "@/assets/logos/clientesBerlioz_walmart-t.png";
+import logoWework from "@/assets/logos/clientesBerlioz_wework-t.png";
+import logoZebra from "@/assets/logos/clientesBerlioz_zebra-t.png";
+import logoGrupoMex from "@/assets/logos/grupomex-1-t.png";
 
 // Testimonial logos
 import testimoniosEyAsset from "@/assets/logos/ey.png.asset.json";
 import testimoniosPalmolive from "@/assets/logos/testimonios_palmolive.png";
-import testimoniosIos from "@/assets/logos/clientesBerlioz_ios.png";
+import testimoniosIos from "@/assets/logos/clientesBerlioz_ios-t.png";
 import logoDhl from "@/assets/logos/dhl.svg";
 
 /* ── data ── */

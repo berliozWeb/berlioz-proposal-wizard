@@ -13,9 +13,6 @@ import breakfastImg from "@/assets/imagenes_menu/des_breakfast-in-roma.jpg";
 import boxlunchImg from "@/assets/food-boxlunch.jpg";
 import lunchboxVideo from "@/assets/lunchbox.mp4.asset.json";
 import coffeeAmImg from "@/assets/imagenes_menu/cb_coffee-break-am-cafe.jpg";
-import coffeePmImg from "@/assets/imagenes_menu/cb_coffee-break-pm.jpg";
-import juntaImg from "@/assets/imagenes_menu/wl_comedor-berlioz.jpg";
-import veganoImg from "@/assets/imagenes_menu/veg_pink-box-vegana.jpg";
 
 // Client logos
 import logoAE from "@/assets/logos/clientesBerlioz_AE.png";
@@ -63,13 +60,11 @@ const CLIENT_LOGOS = [
   { src: logoGrupoMex, alt: "Grupo México" },
 ];
 
-const OCCASIONS: { id: string; name: string; price: number; emoji: string; image?: string }[] = [
-  { id: "desayuno", name: "Desayuno de trabajo", price: 185, emoji: "🍳", image: breakfastImg },
-  { id: "coffee_am", name: "Coffee Break AM", price: 145, emoji: "☕", image: coffeeAmImg },
-  { id: "coffee_pm", name: "Coffee Break PM", price: 145, emoji: "🍪", image: coffeePmImg },
-  { id: "working_lunch", name: "Working Lunch", price: 280, emoji: "🍱", image: boxlunchImg },
-  { id: "junta", name: "Junta Ejecutiva", price: 350, emoji: "💼", image: juntaImg },
-  { id: "vegano", name: "Pedido Vegano", price: 240, emoji: "🌱", image: veganoImg },
+const OCCASIONS = [
+  { category: "Desayuno", name: "DESAYUNO", subtitle: "desde $185 MXN por persona", image: breakfastImg },
+  { category: "Coffee Break", name: "COFFEE BREAK", subtitle: "desde $145 MXN por persona", image: coffeeAmImg },
+  { category: "Working Lunch", name: "WORKING LUNCH", subtitle: "desde $280 MXN por persona", image: boxlunchImg },
+  { category: "Boxes económicas", name: "BOXES ECONÓMICAS", subtitle: "Boxes por menos de $250 MXN", image: boxlunchImg },
 ];
 
 const STATS = [
@@ -209,6 +204,35 @@ const HomePage = () => {
         <HeroCarousel />
       </div>
 
+      {/* ═══ MENU BY OCCASION ═══ */}
+      <section className="py-20 bg-background" aria-labelledby="home-menu-heading">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 id="home-menu-heading" className="font-heading text-[36px] text-foreground text-center mb-12">¿Qué vas a pedir hoy?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {OCCASIONS.map((o) => (
+              <a
+                key={o.category}
+                href={`/menu?categoria=${encodeURIComponent(o.category)}`}
+                className="group bg-card rounded-lg border border-border overflow-hidden flex flex-col transition-colors duration-300 hover:bg-primary hover:border-primary focus-visible:bg-primary focus-visible:border-primary"
+              >
+                <div className="h-44 overflow-hidden">
+                  <img src={o.image} alt={o.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+                </div>
+                <div className="p-5 flex flex-col flex-1">
+                  <h3 className="font-body font-bold text-foreground text-base group-hover:text-primary-foreground group-focus-visible:text-primary-foreground transition-colors">{o.name}</h3>
+                  <p className="font-body text-sm text-secondary mt-1 mb-4 group-hover:text-primary-foreground group-focus-visible:text-primary-foreground transition-colors">{o.subtitle}</p>
+                  <span className="mt-auto self-end inline-flex min-h-11 items-center gap-1 rounded-full bg-primary px-4 font-body text-xs font-bold text-primary-foreground group-hover:bg-primary-foreground group-hover:text-primary group-focus-visible:bg-primary-foreground group-focus-visible:text-primary transition-colors">
+                    VER MENÚ <ChevronRight className="w-3.5 h-3.5" />
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <BoxValueSection />
+
       {/* ═══ SECTION 2 — TRUST BAR ═══ */}
       <section style={{ background: '#014D6F', padding: '20px 0 12px 0' }}>
         <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -223,49 +247,6 @@ const HomePage = () => {
               <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 400, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>{desc}</span>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ═══ SECTION 2.5 — BOX VALUE PROPS ═══ */}
-      <BoxValueSection />
-
-      {/* ═══ SECTION 3 — MENU BY OCCASION ═══ */}
-      <section className="py-20 bg-background">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="font-heading text-[36px] text-foreground text-center mb-2">¿Qué necesitas hoy?</h2>
-          <p className="font-body text-muted-foreground text-center mb-12 text-base">Selecciona el tipo de momento</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {OCCASIONS.map((o) => (
-              <a
-                key={o.id}
-                href={`/menu?occasion=${o.id}`}
-                className="group relative bg-card rounded-2xl border border-border overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/20"
-              >
-                <span className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                {o.image ? (
-                  <div className="relative h-44 overflow-hidden">
-                    <img src={o.image} alt={o.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                    <span aria-hidden="true" className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-2xl shadow">{o.emoji}</span>
-                  </div>
-                ) : (
-                  <div className="h-44 bg-gradient-to-br from-muted/80 to-muted flex items-center justify-center">
-                    <div aria-hidden="true" className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-5xl shadow-inner transition-transform duration-300 group-hover:scale-110">{o.emoji}</div>
-                  </div>
-                )}
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="font-body font-semibold text-foreground text-base">{o.name}</h3>
-                  <p className="font-body text-sm text-secondary mt-1 mb-4">desde ${o.price} por persona</p>
-                  <div className="mt-auto flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 font-body text-xs font-semibold text-primary/80 group-hover:text-primary transition-colors">
-                      Ver opciones <ChevronRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-                    </span>
-                    <span className="text-[10px] font-mono font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">desde ${o.price}/pp</span>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
         </div>
       </section>
 

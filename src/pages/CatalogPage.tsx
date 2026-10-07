@@ -27,6 +27,7 @@ const CATEGORY_EMOJIS: Record<CategoriaMenu | "favoritos", string> = {
   "Tortas Piropo": "🥖",
   "Entrega Especial": "🚚",
   "Vegano / Vegetariano": "🌿",
+  "Boxes económicas": "🍱",
 };
 
 const PAGE_SIZE = 15;

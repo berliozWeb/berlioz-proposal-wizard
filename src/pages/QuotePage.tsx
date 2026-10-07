@@ -2,7 +2,7 @@ import Seo from "@/components/seo/Seo";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { format, addDays, isBefore } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck, Package, Phone, Target, CalendarDays, Coffee, UtensilsCrossed, Croissant, Sparkles } from "lucide-react";
+import { CalendarIcon, Minus, Plus, MapPin, AlertTriangle, CheckCircle, Info, ChevronRight, Truck, Package, Phone, Coffee, UtensilsCrossed, Croissant, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { lookupCP, type ShippingResult } from "@/data/shippingZones";
 import BaseLayout from "@/components/layout/BaseLayout";
@@ -366,9 +366,9 @@ const QuotePage = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
               {([
-                { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Ideal para Junta de Trabajo o Evento único.' },
-                { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Distintos momentos del día o alimentos por varios días.' },
-              ]).map(({ mode, Icon, title, subtitle }) => {
+                { mode: 'single' as const, title: 'Una sola entrega', subtitle: '' },
+                { mode: 'multi' as const, title: 'Varias entregas', subtitle: 'Distintos momentos del día o alimentos por varios días.' },
+              ]).map(({ mode, title, subtitle }) => {
                 const selected = eventMode === mode;
                 return (
                   <button
@@ -384,15 +384,9 @@ const QuotePage = () => {
                         : "border-border bg-card hover:border-primary/40",
                     )}
                   >
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                      selected ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
-                    )}>
-                      <Icon className="w-5 h-5" />
-                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-heading text-sm font-bold text-foreground leading-tight">{title}</h3>
-                      <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{subtitle}</p>
+                      {subtitle && <p className="font-body text-xs text-muted-foreground leading-snug mt-0.5">{subtitle}</p>}
                     </div>
                   </button>
                 );

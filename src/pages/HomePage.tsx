@@ -251,9 +251,19 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
             <RevealOnScroll>
               <div>
-                <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl mb-6 tracking-tight leading-[1.05] text-primary">BERLIOZ <br className="hidden sm:block"/> LUNCH BOX</h2>
-                <p className="font-body text-lg md:text-xl mb-8 leading-relaxed text-muted-foreground">Berlioz ofrece productos de tipo gourmet para tus reuniones, coffee breaks, desayunos y eventos. Todo servido en empaques biodegradables pero con una calidad y presentación inigualables.</p>
-                <p className="font-heading text-xl md:text-2xl italic text-secondary font-medium leading-tight">&ldquo;Crea experiencias en tu oficina con BERLIOZ. Comida fantástica desde 2015.&rdquo;</p>
+                <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl mb-6 tracking-tight leading-[1.05] text-primary">EL COMEDOR <br className="hidden sm:block"/> BERLIOZ</h2>
+                <p className="font-body text-lg md:text-xl mb-4 leading-relaxed text-muted-foreground">Lleva el sabor y la calidad de BERLIOZ al día a día de tu empresa. Nuestro servicio de comedor ofrece comidas deliciosas y variadas para que tu equipo disfrute su pausa sin salir de la oficina.</p>
+                <p className="font-body text-lg md:text-xl mb-8 leading-relaxed text-muted-foreground">Una solución a la medida de tu empresa, con el cuidado y la presentación que hacen especial cada comida.</p>
+                <p className="font-heading text-xl md:text-2xl italic text-secondary font-medium leading-tight mb-8">&ldquo;Comida fantástica. Todos los días.&rdquo;</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/cotizar')}
+                  className="inline-flex items-center gap-2 transition-transform duration-300 hover:-translate-y-1"
+                  style={{ padding: '14px 32px', borderRadius: 9999, background: '#014D6F', color: '#FDFAF7', fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: '0.08em' }}
+                >
+                  COTIZAR COMEDOR
+                  <ChevronRight style={{ width: 16, height: 16 }} />
+                </button>
               </div>
             </RevealOnScroll>
 

@@ -23,7 +23,7 @@ const WhatsAppIcon = ({ size = 20, color = "#014D6F" }: { size?: number; color?:
 import berliozLogo from "@/assets/berlioz-logo.png";
 
 const NAV_LINKS = [
-  { to: "/menu", label: "Realizar Pedido" },
+  { to: "/menu", label: "Hacer pedido" },
   { to: "/cotizar", label: "Cotizar" },
   { to: "/recompensas", label: "Recompensas" },
   { to: "/contacto", label: "Contacto" },
@@ -84,7 +84,7 @@ const Navbar = () => {
           <img src={berliozLogo} alt="Berlioz" style={{ height: 44, width: 'auto', display: 'block' }} />
         </Link>
 
-        {/* Desktop nav — "Realizar Pedido" se separa como botón de color */}
+        {/* Desktop nav — "Hacer pedido" se separa como botón de color */}
         <div className="hidden md:flex items-center" style={{ gap: 28 }}>
           {NAV_LINKS.filter((link) => link.to !== "/menu").map((link) => (
             <Link
@@ -127,7 +127,7 @@ const Navbar = () => {
               marginLeft: 4,
             }}
           >
-            Realizar Pedido
+            Hacer pedido
           </Link>
         </div>
 

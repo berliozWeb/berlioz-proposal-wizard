@@ -374,7 +374,7 @@ const HomePage = () => {
           {/* Client Logos Carousel */}
            <div className="mt-20 pt-16 border-t border-border/50">
             <p className="text-center font-body text-[11px] text-muted-foreground uppercase tracking-[0.2em] mb-10">
-              EMPRESAS QUE HAN PROBADO COMIDA FANTÁSTICA
+              EMPRESAS QUE HAN PROBADO NUESTRA COMIDA FANTÁSTICA
             </p>
             <LogoCarousel />
           </div>

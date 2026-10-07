@@ -106,3 +106,5 @@
 - [x] Pregunta "¿Cuántas entregas necesitas?" con subtítulo de logística y EXPERIENCIA FANTÁSTICA
 - [x] "Una sola entrega" sin descripción; "Varias entregas": "Distintos momentos del día o alimentos por varios días."
 - [x] Quitar los íconos de las tarjetas "Una sola entrega" y "Varias entregas"
+- [x] Tarjetas en azul con texto blanco, títulos en mayúsculas y centrados; sin subtítulos
+- [x] Fondo de la sección "¿Cuántas entregas necesitas?" en blanco (alto contraste)

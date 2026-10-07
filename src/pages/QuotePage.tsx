@@ -360,14 +360,14 @@ const QuotePage = () => {
           {/* ── Section A: Event mode (compact cards) ── */}
           <section className="animate-slide-up">
             <div className="text-center mb-6">
-              <h2 className="font-heading text-3xl md:text-4xl text-primary mb-2 tracking-tight">¿Cómo es tu evento?</h2>
-              <p className="font-body text-sm text-muted-foreground">Cuéntanos cuántas entregas necesitas</p>
+              <h2 className="font-heading text-3xl md:text-4xl text-primary mb-2 tracking-tight">¿Cuántas entregas necesitas?</h2>
+              <p className="font-body text-sm text-muted-foreground">Ayúdanos a entender la logística de tu evento para ofrecerte una EXPERIENCIA FANTÁSTICA.</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 max-w-xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
               {([
-                { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Evento de un momento' },
-                { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Varios días o entregas' },
+                { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Ideal para Junta de Trabajo o Evento único.' },
+                { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Ideal para Lunch and Learn, Capacitaciones, Reuniones periódicas o Eventos de varios días.' },
               ]).map(({ mode, Icon, title, subtitle }) => {
                 const selected = eventMode === mode;
                 return (

@@ -913,13 +913,13 @@ const QuotePage = () => {
                       </select>
                       <ChevronRight className={cn("absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 rotate-90 pointer-events-none", eventTime ? "text-primary" : "text-muted-foreground")} />
                     </div>
-                    {deliveryTime && isEarlyDelivery && (
+                    {isEarlyDelivery && (
                       <div className="mt-3 text-[10px] text-amber-700 font-bold bg-amber-50 px-2.5 py-1 rounded-full inline-flex items-center gap-1 border border-amber-200 uppercase tracking-tighter">
                         <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
                       </div>
                     )}
                   </div>
-                  {/* Disclaimer logística — al lado, ocupa el espacio restante */}
+                  {/* Franja de entrega prometida — al lado, ocupa el espacio restante */}
                   <div className={cn(
                     "border rounded-2xl flex gap-3 items-start transition-all duration-300 px-4 py-4",
                     eventTime
@@ -927,12 +927,18 @@ const QuotePage = () => {
                       : "bg-muted/40 border-border/50"
                   )}>
                     <Truck className={cn("mt-0.5 shrink-0 transition-all", eventTime ? "w-5 h-5 text-primary" : "w-4 h-4 text-muted-foreground")} />
-                    <p className={cn(
-                      "font-body leading-relaxed transition-all",
-                      eventTime ? "text-sm text-foreground" : "text-xs text-muted-foreground"
-                    )}>
-                      Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-bold text-primary">90 minutos de margen</span> para la entrega.
-                    </p>
+                    {deliveryWindow ? (
+                      <p className="font-body text-sm leading-relaxed text-foreground">
+                        Te entregaremos tu pedido entre las{" "}
+                        <span className="font-mono font-bold text-primary">{deliveryWindow.from}</span>{" "}
+                        y las{" "}
+                        <span className="font-mono font-bold text-primary">{deliveryWindow.to}</span>.
+                      </p>
+                    ) : (
+                      <p className="font-body text-xs leading-relaxed text-muted-foreground">
+                        Esta ciudad puede ser impredecible — te recomendamos contemplar <span className="font-bold text-primary">90 minutos de margen</span> para la entrega.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

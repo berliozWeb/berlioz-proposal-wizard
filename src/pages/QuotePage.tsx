@@ -364,7 +364,7 @@ const QuotePage = () => {
               <p className="font-body text-sm text-muted-foreground">Ayúdanos a entender la logística de tu evento para ofrecerte una EXPERIENCIA FANTÁSTICA.</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 max-w-xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
               {([
                 { mode: 'single' as const, Icon: Target, title: 'Una sola entrega', subtitle: 'Ideal para Junta de Trabajo o Evento único.' },
                 { mode: 'multi' as const, Icon: CalendarDays, title: 'Varias entregas', subtitle: 'Ideal para Lunch and Learn, Capacitaciones, Reuniones periódicas o Eventos de varios días.' },

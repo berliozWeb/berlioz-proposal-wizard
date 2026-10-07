@@ -253,7 +253,7 @@ const HomePage = () => {
               <div>
                 <h2 className="font-heading text-4xl sm:text-5xl md:text-6xl mb-6 tracking-tight leading-[1.05] text-primary">EL COMEDOR <br className="hidden sm:block"/> BERLIOZ</h2>
                 <p className="font-body text-lg md:text-xl mb-4 leading-relaxed text-muted-foreground">Lleva el sabor y la calidad de BERLIOZ al día a día de tu empresa. Nuestro servicio de comedor ofrece comidas deliciosas y variadas para que tu equipo disfrute su pausa sin salir de la oficina.</p>
-                <p className="font-body text-lg md:text-xl mb-8 leading-relaxed text-muted-foreground">Una solución a la medida de tu empresa, con el cuidado y la presentación que hacen especial cada comida.</p>
+                <p className="font-body text-lg md:text-xl mb-8 leading-relaxed text-muted-foreground">Con el cuidado y la presentación que nos caracterizan.</p>
                 <p className="font-heading text-xl md:text-2xl italic text-secondary font-medium leading-tight mb-8">&ldquo;Comida fantástica. Todos los días.&rdquo;</p>
                 <button
                   type="button"

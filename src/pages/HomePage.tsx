@@ -204,6 +204,23 @@ const HomePage = () => {
         <HeroCarousel />
       </div>
 
+      {/* ═══ TRUST BAR ═══ */}
+      <section style={{ background: '#014D6F', padding: '20px 0 12px 0' }}>
+        <div className="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            { icon: Clock, title: "Pide antes de las 3pm", desc: "Para entrega al día siguiente" },
+            { icon: CreditCard, title: "Paga en línea", desc: "Compra mínima $1,000 MXN" },
+            { icon: MapPin, title: "Entrega en CDMX", desc: "Y Área Metropolitana" },
+          ].map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex flex-col items-center text-center" style={{ gap: 8 }}>
+              <Icon style={{ width: 28, height: 28, color: 'white' }} />
+              <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 700, fontSize: 14, color: 'white', textTransform: 'uppercase' as const }}>{title}</span>
+              <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 400, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ═══ MENU BY OCCASION ═══ */}
       <section className="py-20 bg-background" aria-labelledby="home-menu-heading">
         <div className="max-w-6xl mx-auto px-6">

@@ -767,7 +767,7 @@ const QuotePage = () => {
                           <div className="font-body text-xs text-foreground">
                             <p className="font-bold mb-1">Pick up disponible</p>
                             <p className="text-muted-foreground leading-relaxed">Para grupos pequeños recolecta en nuestra cocina sin costo de envío.</p>
-                            <a href="https://maps.google.com/?q=Lago+Onega+285+Col+Modelo+Pensil+CDMX" target="_blank" rel="noopener"
+                            <a href="https://maps.app.goo.gl/96uLi4VntiYq8yyg9" target="_blank" rel="noopener"
                               className="text-secondary hover:underline font-bold mt-2 inline-block">Ver mapa →</a>
                           </div>
                         </div>

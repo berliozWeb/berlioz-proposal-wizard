@@ -227,7 +227,7 @@ const CotizaForm = ({ form, onChange, canSubmit, onSubmit, onBack }: CotizaFormP
             📍 Lago Onega 285, Col. Modelo Pensil, CDMX
             <br />
             <a
-              href="https://maps.google.com/?q=Lago+Onega+285,+Col.+Modelo+Pensil,+CDMX"
+              href="https://maps.app.goo.gl/96uLi4VntiYq8yyg9"
               target="_blank"
               rel="noopener noreferrer"
               className="font-medium hover:underline"

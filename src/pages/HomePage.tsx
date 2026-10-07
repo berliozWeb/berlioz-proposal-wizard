@@ -377,9 +377,9 @@ const HomePage = () => {
           </div>
 
           {/* Client Logos Carousel */}
-          <div className="mt-20 pt-16 border-t border-border/50">
+           <div className="mt-20 pt-16 border-t border-border/50">
             <p className="text-center font-body text-[11px] text-muted-foreground uppercase tracking-[0.2em] mb-10">
-              EMPRESAS QUE HAN DISFRUTADO DE NUESTRO CATERING
+              EMPRESAS QUE HAN PROBADO COMIDA FANTÁSTICA
             </p>
             <LogoCarousel />
           </div>
@@ -387,7 +387,7 @@ const HomePage = () => {
       </section>
 
       {/* ═══ SECTION 6 — HOW IT WORKS ═══ */}
-      <section className="py-20 bg-background">
+      <section className="py-20 bg-background hidden">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="font-heading text-[36px] text-foreground mb-3">Así de fácil</h2>
           <p className="font-body text-muted-foreground text-sm mb-14">Desde tu pantalla hasta tu sala de juntas, en minutos</p>

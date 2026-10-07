@@ -117,13 +117,6 @@ const Footer = () => (
         </div>
       </div>
 
-      <div style={{ marginTop: 40, fontFamily: "'Montserrat', sans-serif", fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.8, textAlign: 'center' }}>
-        <p>Cocina en Modelo Pensil, Miguel Hidalgo, CDMX</p>
-        <p>Entregas en CDMX y Área Metropolitana</p>
-        <p>Pedidos hasta las 3 pm del día anterior</p>
-        <p>Desayunos desde las 7:00 am · Comidas desde las 10:00 am</p>
-      </div>
-
       <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
         <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
           © {new Date().getFullYear()} Berlioz. Todos los derechos reservados. Ciudad de México.

@@ -429,6 +429,7 @@ function TierCarousel({
 /* ═══ COMPONENT ═══ */
 export default function ProposalStep(props: ProposalStepProps) {
   const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback, onSelectTier, hideConfirmBar, budgetPerPerson, dietaryDistribution } = props;
+  const deliveryWindow = eventTime ? calcDeliveryWindow(eventTime) : null;
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem, clearCart } = useCart();
@@ -684,7 +685,8 @@ export default function ProposalStep(props: ProposalStepProps) {
           title: "Detalles del evento",
           fields: [
             ["Fecha", date ? format(date, "d 'de' MMMM 'de' yyyy", { locale: es }) : "—"],
-            ["Hora", deliveryTime || eventTime || "—"],
+            ["Hora del evento", eventTime || "—"],
+            ["Rango de entrega", deliveryWindow ? `${deliveryWindow.from} – ${deliveryWindow.to}` : "—"],
             ["CP", postalCode || "—"],
           ],
         });
@@ -784,7 +786,7 @@ export default function ProposalStep(props: ProposalStepProps) {
           </div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 border-t border-border/60 pt-8 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 border-t border-border/60 pt-8 mt-4">
             <div className="space-y-1">
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Atención</p>
               <p className="font-heading text-sm font-bold truncate">{clientName || "—"}</p>
@@ -798,11 +800,15 @@ export default function ProposalStep(props: ProposalStepProps) {
               <p className="font-heading text-sm font-bold">{people}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Entrega</p>
-              <p className="font-heading text-sm font-bold text-primary italic">{deliveryTime || "—"}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Hora del evento</p>
+              <p className="font-heading text-sm font-bold text-primary italic">{eventTime || "—"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Duración</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Rango de entrega</p>
+              <p className="font-heading text-sm font-bold text-primary italic">{deliveryWindow ? `${deliveryWindow.from} – ${deliveryWindow.to}` : "—"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Duración del evento</p>
               <p className="font-heading text-sm font-bold">{duration || "—"}</p>
             </div>
             <div className="space-y-1">

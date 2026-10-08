@@ -109,10 +109,14 @@ function calcDeliveryTime(eventTime: string): string {
   return `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
 }
 
-// Franja de entrega prometida al cliente: una hora antes y la hora exacta del evento.
+// Franja de entrega prometida al cliente: hasta las 8:00 am es de 30 minutos
+// (p. ej. evento a las 8:00 → entrega entre 7:30 y 8:00); después, de una hora.
+const SHORT_WINDOW_UNTIL = "08:00";
+
 function calcDeliveryWindow(eventTime: string): { from: string; to: string } {
   const [h, m] = eventTime.split(":").map(Number);
-  let total = h * 60 + m - 60;
+  const windowMinutes = eventTime <= SHORT_WINDOW_UNTIL ? 30 : 60;
+  let total = h * 60 + m - windowMinutes;
   if (total < 0) total = 0;
   const from = `${Math.floor(total / 60).toString().padStart(2, "0")}:${(total % 60).toString().padStart(2, "0")}`;
   return { from, to: eventTime };

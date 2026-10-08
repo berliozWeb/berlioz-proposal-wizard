@@ -45,6 +45,7 @@ import { useCatalogoCotizador, getCategoryFallback, QUOTER_SIDEBAR_CATEGORIES } 
 import AdminFeedbackPanel from "@/components/proposal/AdminFeedbackPanel";
 import UpsellModal, { type UpsellRecommendation } from "@/components/quoter/UpsellModal";
 import InlineUpsell from "@/components/quoter/InlineUpsell";
+import { calcDeliveryWindow } from "@/lib/deliveryWindow";
 import {
   CATALOG, findProduct, SIDEBAR_CATEGORIES, getDefaultItems,
   QUOTE_ADDONS, BASE_SHIPPING_COST, EARLY_DELIVERY_SURCHARGE, IVA_RATE,

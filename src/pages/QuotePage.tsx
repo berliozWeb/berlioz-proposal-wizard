@@ -912,7 +912,7 @@ const QuotePage = () => {
                 <div>
                   <label className="block font-heading text-sm font-bold text-foreground mb-4 uppercase tracking-wider">¿A qué hora inicia tu evento?</label>
                   <div className="relative">
-                    <select value={eventTime} onChange={e => { setEventTime(e.target.value); setDeliveryConfirmed(false); }}
+                    <select value={eventTime} onChange={e => setEventTime(e.target.value)}
                       className={cn("w-full h-14 pl-5 pr-12 rounded-2xl border-2 transition-all font-body text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 appearance-none cursor-pointer",
                         eventTime ? "border-primary/30 bg-primary/5 font-semibold text-primary" : "border-border bg-background text-muted-foreground"
                       )}>

@@ -986,31 +986,33 @@ const QuotePage = () => {
                 {/* Budget Selection */}
                 <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm">
                   <label className="block font-heading text-sm font-bold text-foreground mb-6 uppercase tracking-wider">¿Presupuesto por persona?</label>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <button onClick={() => setHasBudget(true)}
-                      className={cn("p-6 rounded-3xl border-2 text-center transition-all flex flex-col items-center justify-center gap-2",
-                        hasBudget === true ? "border-primary bg-primary/5" : "border-border bg-background hover:border-primary/40")}>
-                      <span className="font-heading text-lg font-bold">Sí</span>
-                      <p className="font-body text-[11px] text-muted-foreground uppercase font-bold tracking-tighter">Tengo un rango</p>
-                    </button>
-                    <button onClick={() => setHasBudget(false)}
-                      className={cn("p-6 rounded-3xl border-2 text-center transition-all flex flex-col items-center justify-center gap-2",
-                        hasBudget === false ? "border-primary bg-primary/5" : "border-border bg-background hover:border-primary/40")}>
-                      <span className="font-heading text-lg font-bold text-muted-foreground">No</span>
-                      <p className="font-body text-[11px] text-muted-foreground uppercase font-bold tracking-tighter">Sorpréndeme</p>
-                    </button>
-                  </div>
-                  {hasBudget && (
-                    <div className="p-6 bg-muted/30 rounded-[32px] border border-border/50 animate-in zoom-in-95 duration-300">
-                      <div className="text-center mb-6">
-                        <span className="font-mono text-4xl text-primary font-black tracking-tighter">${budget}</span>
-                        <span className="font-body text-muted-foreground text-xs uppercase font-bold tracking-widest block mt-1">MXN / PERSONA</span>
-                      </div>
-                      <input type="range" min={150} max={800} step={10} value={budget}
-                        onChange={e => setBudget(Number(e.target.value))} className="w-full h-2 bg-border rounded-full appearance-none cursor-pointer accent-primary" />
-                      <div className="flex justify-between font-mono text-[10px] text-muted-foreground mt-3 font-bold"><span>$150</span><span>$800</span></div>
+                  <div className="p-6 bg-muted/30 rounded-[32px] border border-border/50">
+                    <div className="text-center mb-6">
+                      <span className="font-mono text-4xl text-primary font-black tracking-tighter">${budgetMin} – ${budgetMax}</span>
+                      <span className="font-body text-muted-foreground text-xs uppercase font-bold tracking-widest block mt-1">MXN / PERSONA</span>
                     </div>
-                  )}
+                    <div className="space-y-5">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-body text-[11px] uppercase font-bold tracking-widest text-muted-foreground">Mínimo</span>
+                          <span className="font-mono text-sm font-bold text-primary">${budgetMin}</span>
+                        </div>
+                        <input type="range" min={150} max={800} step={10} value={budgetMin}
+                          onChange={e => setBudgetMin(Math.min(Number(e.target.value), budgetMax - 10))}
+                          className="w-full h-2 bg-border rounded-full appearance-none cursor-pointer accent-primary" aria-label="Presupuesto mínimo por persona" />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-body text-[11px] uppercase font-bold tracking-widest text-muted-foreground">Máximo</span>
+                          <span className="font-mono text-sm font-bold text-primary">${budgetMax}</span>
+                        </div>
+                        <input type="range" min={150} max={800} step={10} value={budgetMax}
+                          onChange={e => setBudgetMax(Math.max(Number(e.target.value), budgetMin + 10))}
+                          className="w-full h-2 bg-border rounded-full appearance-none cursor-pointer accent-primary" aria-label="Presupuesto máximo por persona" />
+                      </div>
+                    </div>
+                    <div className="flex justify-between font-mono text-[10px] text-muted-foreground mt-4 font-bold"><span>$150</span><span>$800</span></div>
+                  </div>
                 </div>
 
                 {/* Distribución de invitados con restricciones */}

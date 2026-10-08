@@ -154,8 +154,10 @@ const QuotePage = () => {
   const [date, setDate] = useState<Date | undefined>();
   const [eventTime, setEventTime] = useState("");
   const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
-  const [hasBudget, setHasBudget] = useState<boolean | null>(null);
-  const [budget, setBudget] = useState(300);
+  const [budgetMin, setBudgetMin] = useState(200);
+  const [budgetMax, setBudgetMax] = useState(400);
+  // La propuesta se arma sobre el punto medio del rango elegido.
+  const budgetMid = Math.round((budgetMin + budgetMax) / 20) * 10;
   const [hasDietary, setHasDietary] = useState<boolean | null>(null);
   const [dietary, setDietary] = useState<string[]>([]);
   const [clientName, setClientName] = useState("");
@@ -275,8 +277,8 @@ const QuotePage = () => {
         deliveryTime,
         zipCode: postalCode,
         durationHours,
-        budgetEnabled: hasBudget === true,
-        budgetPerPerson: hasBudget === true ? budget : undefined,
+        budgetEnabled: true,
+        budgetPerPerson: budgetMid,
         dietaryRestrictions: dietary,
         dietaryCounts: Object.entries(dietaryDistribution)
           .filter(([, v]) => v > 0)
@@ -287,7 +289,7 @@ const QuotePage = () => {
         if (data) setSmartData(data);
       });
     }
-  }, [canNextStep1, canNextStep2, deliveryConfirmed, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, hasBudget, budget, dietary, clientName, empresa, generateQuote]);
+  }, [canNextStep1, canNextStep2, deliveryConfirmed, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, budgetMid, dietary, clientName, empresa, generateQuote]);
 
   const goBack = () => { setStep(0); setEventType(""); setEventMode(null); setDeliveryGroups(buildSingleDeliveryGroup()); };
 
@@ -1177,7 +1179,7 @@ const QuotePage = () => {
                         smartQuoteLoading={smartLoading}
                         onSubmitFeedback={submitFeedback}
                         hideConfirmBar
-                        budgetPerPerson={hasBudget === true ? budget : undefined}
+                        budgetPerPerson={budgetMid}
                         onSelectTier={(info) => {
                           setSlotSelections(prev => ({ ...prev, [slot.slot_id]: info }));
                           // Advance to next unselected slot
@@ -1316,7 +1318,7 @@ const QuotePage = () => {
                 smartQuoteData={smartData}
                 smartQuoteLoading={smartLoading}
                 onSubmitFeedback={submitFeedback}
-                budgetPerPerson={hasBudget === true ? budget : undefined}
+                budgetPerPerson={budgetMid}
                 dietaryDistribution={dietaryDistribution}
               />
             </div>

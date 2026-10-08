@@ -153,7 +153,6 @@ const QuotePage = () => {
   const [postalCode, setPostalCode] = useState("");
   const [date, setDate] = useState<Date | undefined>();
   const [eventTime, setEventTime] = useState("");
-  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
   const [budgetMin, setBudgetMin] = useState(200);
   const [budgetMax, setBudgetMax] = useState(400);
   // La propuesta se arma sobre el punto medio del rango elegido.
@@ -245,7 +244,6 @@ const QuotePage = () => {
     numPeople >= 1 &&
     !!date &&
     eventTime !== "" &&
-    deliveryConfirmed &&
     !cutoffBlocked &&
     postalCode.length === 5 &&
     !isSpecialQuoteCP;
@@ -289,7 +287,7 @@ const QuotePage = () => {
         if (data) setSmartData(data);
       });
     }
-  }, [canNextStep1, canNextStep2, deliveryConfirmed, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, budgetMid, dietary, clientName, empresa, generateQuote]);
+  }, [canNextStep1, canNextStep2, eventType, numPeople, date, eventTime, deliveryTime, postalCode, durationHours, budgetMid, dietary, clientName, empresa, generateQuote]);
 
   const goBack = () => { setStep(0); setEventType(""); setEventMode(null); setDeliveryGroups(buildSingleDeliveryGroup()); };
 
@@ -928,27 +926,17 @@ const QuotePage = () => {
                       <AlertTriangle className="w-3 h-3" /> Recargo temprano (+$290)
                     </div>
                   )}
-                  {/* Franja de entrega prometida — debajo del dropdown, con confirmación */}
+                  {/* Franja de entrega prometida — debajo del dropdown, solo informativo */}
                   {eventTime && deliveryWindow ? (
-                    <label className={cn(
-                      "mt-4 flex items-start gap-3 rounded-2xl border-2 px-4 py-3.5 cursor-pointer select-none transition-all duration-300",
-                      deliveryConfirmed
-                        ? "border-primary/40 bg-primary/5"
-                        : "border-border bg-background hover:border-primary/40"
-                    )}>
-                      <input
-                        type="checkbox"
-                        checked={deliveryConfirmed}
-                        onChange={e => setDeliveryConfirmed(e.target.checked)}
-                        className="mt-0.5 h-5 w-5 shrink-0 accent-primary cursor-pointer"
-                      />
-                      <span className="font-body text-sm leading-relaxed text-foreground">
+                    <p className="mt-4 flex items-start gap-3 rounded-2xl border border-border bg-muted/30 px-4 py-3.5 font-body text-sm leading-relaxed text-foreground">
+                      <Truck className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
+                      <span>
                         Te entregaremos tu pedido entre las{" "}
                         <span className="font-mono font-bold text-primary">{deliveryWindow.from}</span>{" "}
                         y las{" "}
                         <span className="font-mono font-bold text-primary">{deliveryWindow.to}</span>.
                       </span>
-                    </label>
+                    </p>
                   ) : (
                     <p className="mt-4 flex items-start gap-3 font-body text-xs leading-relaxed text-muted-foreground">
                       <Truck className="w-4 h-4 mt-0.5 shrink-0" />
@@ -1093,11 +1081,6 @@ const QuotePage = () => {
                       </Button>
                     )}
                   </div>
-                  {eventTime !== "" && !deliveryConfirmed && (
-                    <p className="font-body text-xs text-muted-foreground text-right">
-                      Confirma la franja de entrega para continuar.
-                    </p>
-                  )}
                 </div>
               </div>
 

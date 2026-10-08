@@ -997,7 +997,7 @@ const QuotePage = () => {
                           <span className="font-body text-[11px] uppercase font-bold tracking-widest text-muted-foreground">Mínimo</span>
                           <span className="font-mono text-sm font-bold text-primary">${budgetMin}</span>
                         </div>
-                        <input type="range" min={150} max={800} step={10} value={budgetMin}
+                        <input type="range" min={150} max={budgetMax - 10} step={10} value={budgetMin}
                           onChange={e => setBudgetMin(Math.min(Number(e.target.value), budgetMax - 10))}
                           className="w-full h-2 bg-border rounded-full appearance-none cursor-pointer accent-primary" aria-label="Presupuesto mínimo por persona" />
                       </div>
@@ -1006,7 +1006,7 @@ const QuotePage = () => {
                           <span className="font-body text-[11px] uppercase font-bold tracking-widest text-muted-foreground">Máximo</span>
                           <span className="font-mono text-sm font-bold text-primary">${budgetMax}</span>
                         </div>
-                        <input type="range" min={150} max={800} step={10} value={budgetMax}
+                        <input type="range" min={budgetMin + 10} max={800} step={10} value={budgetMax}
                           onChange={e => setBudgetMax(Math.max(Number(e.target.value), budgetMin + 10))}
                           className="w-full h-2 bg-border rounded-full appearance-none cursor-pointer accent-primary" aria-label="Presupuesto máximo por persona" />
                       </div>

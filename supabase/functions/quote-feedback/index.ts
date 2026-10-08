@@ -27,6 +27,21 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // La propuesta puede no existir (p. ej. propuesta de respaldo o no guardada).
+    // En ese caso no se registra feedback y no se considera error.
+    const { data: proposal } = await supabase
+      .from('quote_proposals')
+      .select('id')
+      .eq('id', proposalId)
+      .maybeSingle();
+
+    if (!proposal) {
+      console.warn('Feedback omitido: propuesta inexistente', proposalId);
+      return new Response(JSON.stringify({ success: false, skipped: true, reason: "proposal_not_found" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data, error } = await supabase
       .from('quote_feedback')
       .insert({

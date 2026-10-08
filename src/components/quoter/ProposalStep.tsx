@@ -428,7 +428,7 @@ function TierCarousel({
 
 /* ═══ COMPONENT ═══ */
 export default function ProposalStep(props: ProposalStepProps) {
-  const { eventType, eventLabel, people, date, eventTime, deliveryTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback, onSelectTier, hideConfirmBar, budgetPerPerson, dietaryDistribution } = props;
+  const { eventType, eventLabel, people, date, eventTime, isEarlyDelivery, postalCode, clientName, empresa, duration, onBack, onRestart, smartQuoteData, smartQuoteLoading, onSubmitFeedback, onSelectTier, hideConfirmBar, budgetPerPerson, dietaryDistribution } = props;
   const deliveryWindow = eventTime ? calcDeliveryWindow(eventTime) : null;
   const navigate = useNavigate();
   const { user } = useAuth();

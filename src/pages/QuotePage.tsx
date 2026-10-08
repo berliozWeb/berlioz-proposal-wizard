@@ -615,7 +615,7 @@ const QuotePage = () => {
                         };
                         return (
                           <div className="pt-2 border-t border-border/60">
-                            <label className="block font-body text-xs font-semibold text-foreground mb-1">Distribución de invitados</label>
+                            <label className="block font-body text-xs font-semibold text-foreground mb-1">RESTRICCIONES ALIMENTICIAS</label>
                             <p className="font-body text-[11px] text-muted-foreground mb-3">
                               Distribución para <span className="font-bold text-foreground">{slotPeople}</span> personas
                             </p>
@@ -1017,7 +1017,7 @@ const QuotePage = () => {
 
                 {/* Distribución de invitados con restricciones */}
                 <div className="bg-card rounded-[40px] border border-border p-8 md:p-10 shadow-sm">
-                  <label className="block font-heading text-sm font-bold text-foreground mb-2 uppercase tracking-wider">Distribución de invitados</label>
+                  <label className="block font-heading text-sm font-bold text-foreground mb-2 uppercase tracking-wider">Restricciones alimenticias</label>
                   <p className="font-body text-xs text-muted-foreground mb-5">
                     Distribución para <span className="font-bold text-foreground">{numPeople}</span> personas
                   </p>
